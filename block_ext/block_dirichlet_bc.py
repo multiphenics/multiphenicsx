@@ -42,4 +42,9 @@ class BlockDirichletBC(object):
         if x is None:
             self.block_rhs_bc.apply(b)
         else:
-            raise RuntimeError("BlockDirichletBC::_apply_b method not yet implemented")
+            # Simplified version from cbc.block method block_rhs_bc::apply
+            # Not accounting for symmetric variant (which is hardcoded to False) and
+            # neither for scalar values in blocks
+            for i, bcs in enumerate(self.block_rhs_bc):
+                for bc in bcs:
+                    bc.apply(b[i], x[i])

@@ -16,10 +16,12 @@
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from block_solve import block_solve
 from block_assemble import block_assemble
 from block_dirichlet_bc import BlockDirichletBC
 from block_function import BlockFunction
+from block_solve import block_solve
+from block_nonlinear_problem import BlockNonlinearProblem
+from block_petsc_snes_solver import BlockPETScSNESSolver
 
 import sys, petsc4py
 petsc4py.init(sys.argv)

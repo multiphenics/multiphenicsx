@@ -17,6 +17,14 @@
 #
 
 from dolfin import PETScSNESSolver
+from monolithic_matrix import MonolithicMatrix
 
 class BlockPETScSNESSolver(PETScSNESSolver):
-    pass
+    def __init__(self, problem):
+        PETScSNESSolver.__init__(self)
+        self.problem = problem
+    
+    def solve(self):
+        PETScSNESSolver.solve(self, self.problem, self.problem.monolithic_solution)
+        # Convert monolithic_solution into block_solution
+        self.problem.monolithic_solution.copy_values_to(self.problem.block_solution.block_vector())

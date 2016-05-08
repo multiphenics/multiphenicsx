@@ -18,14 +18,13 @@
 
 from dolfin import PETScVector, as_backend_type
 from petsc4py import PETSc
+from monolithic_index_helper import MonolithicIndexHelper
 
 class MonolithicVector(PETScVector):
     # The values of block_vector are not really used, just the
     # block sparsity pattern. vec object has been already allocated
     # by the MonolithicMatrix::create_monolithic_vectors method
     def __init__(self, block_vector, vec):
-        PETScVector.__init__(self, vec)
-        
         # Outer dimensions
         N = block_vector.blocks.shape[0]
         
@@ -37,6 +36,9 @@ class MonolithicVector(PETScVector):
         
         # Store dimensions
         self.N, self.n = N, n
+        
+        # Init PETScVector
+        PETScVector.__init__(self, vec)
         
     def block_add(self, block_vector):
         N, n = self.N, self.n
@@ -56,32 +58,14 @@ class MonolithicVector(PETScVector):
         assert N == block_vector.blocks.shape[0]
         
         row_start, row_end = self.vec().getOwnershipRange()
-        
-        def block_index_init():
-            # The block index is equal to the smallest integer I for which
-            # the integer division row_start/sum(n[:(I+1)]) is zero
-            for I in range(N):
-                if row_start/sum(n[:(I+1)]) == 0:
-                    break
-            return I
-        
-        def local_index_init(I):
-            return row_start - sum(n[:I])
-            
-        def indices_increment(I, i):
-            i = i + 1
-            if i < sum(n[:(I+1)]):
-                return I, i
-            else:
-                return I+1, 0
-            
-        I = block_index_init()
-        i = local_index_init(I)
+        index_helper = MonolithicIndexHelper(row_start, N, n)
+        I = index_helper.block_index_init()
+        i = index_helper.local_index_init(I)
         for k in range(row_start, row_end):
             val = self.vec().array[k - row_start]
             block = as_backend_type(block_vector[I]).vec()
             block.setValues(i, val, addv=PETSc.InsertMode.INSERT)
-            I, i = indices_increment(I, i)
+            I, i = index_helper.indices_increment(I, i)
         for I in range(N):
             as_backend_type(block_vector[I]).vec().assemble()
             as_backend_type(block_vector[I]).vec().ghostUpdate()
