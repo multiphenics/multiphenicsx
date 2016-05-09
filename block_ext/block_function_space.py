@@ -16,28 +16,22 @@
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import Function
-from block_vector import BlockVector
+from dolfin import FunctionSpace
 
-class BlockFunction(list):
-    def __init__(self, arg1):
-        assert isinstance(arg1, list)
-        if isinstance(arg1[0], Function):
-            functions = arg1
-            vectors = [f.vector() for f in arg1]
+class BlockFunctionSpace(list):
+    def __init__(self, arg1, arg2=None):
+        if isinstance(arg1, list):
+            function_spaces = arg1
         else:
-            functions = []
-            vectors = []
-            for V in arg1:
-                current_function = Function(V)
-                functions.append(current_function)
-                vectors.append(current_function.vector())
-        list.__init__(self, functions)
-        self._block_vector = BlockVector(vectors)
+            assert arg2 is not None
+            mesh = arg1
+            block_element = arg2
+            function_spaces = []
+            for e in block_element:
+                function_spaces.append(FunctionSpace(mesh, e))
+
+        list.__init__(self, function_spaces)
         
-    def block_vector(self):
-        return self._block_vector
-        
-    def block_split(self):
-        return self
+    def sub(self, i):
+        return self[i]
         

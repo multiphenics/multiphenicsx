@@ -16,18 +16,14 @@
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from block_trial_function import BlockTrialFunction
-from block_test_function import BlockTestFunction
-from block_split import block_split
-from block_assemble import block_assemble
-from block_derivative import block_derivative
-from block_dirichlet_bc import BlockDirichletBC
-from block_function import BlockFunction
-from block_function_space import BlockFunctionSpace
-from block_element import BlockElement
-from block_solve import block_solve
-from block_nonlinear_problem import BlockNonlinearProblem
-from block_petsc_snes_solver import BlockPETScSNESSolver
+from dolfin import derivative
 
-import sys, petsc4py
-petsc4py.init(sys.argv)
+def block_derivative(F, u, du):
+    assert len(F) == len(u) == len(du)
+    J = []
+    for i in range(len(F)):
+        J_i = []
+        for j in range(len(u)):
+            J_i.append(derivative(F[i], u[j], du[j]))
+        J.append(J_i)
+    return J
