@@ -28,3 +28,7 @@ class BlockPETScSNESSolver(PETScSNESSolver):
         PETScSNESSolver.solve(self, self.problem, self.problem.monolithic_solution)
         # Convert monolithic_solution into block_solution
         self.problem.monolithic_solution.copy_values_to(self.problem.block_solution.block_vector())
+        # Clean up monolithic residual and jacobian, since the next time that solve will be called
+        # they will reference different petsc vector and matrix
+        self.problem.monolithic_residual = None
+        self.problem.monolithic_jacobian = None
