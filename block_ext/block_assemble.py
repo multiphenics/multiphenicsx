@@ -21,11 +21,12 @@
 
 from block_matrix import BlockMatrix
 from block_vector import BlockVector
+import numpy as np
 
 def block_assemble(block_form, block_tensor=None):
     from dolfin import assemble
     N = len(block_form)
-    if isinstance(block_form[0], list):
+    if isinstance(block_form[0], list) or isinstance(block_form[0], np.ndarray):
         M = len(block_form[0])
         if block_tensor is None:
             block_tensor_was_None = True
