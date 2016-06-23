@@ -131,3 +131,7 @@ class MonolithicMatrix(PETScMatrix):
         petsc_x, petsc_b = self.mat().createVecs()
         return MonolithicVector(block_x, petsc_x), MonolithicVector(block_b, petsc_b)
         
+    def create_monolithic_vector_left(self, block_b):
+        petsc_b = self.mat().createVecLeft()
+        return MonolithicVector(block_b, petsc_b)
+        

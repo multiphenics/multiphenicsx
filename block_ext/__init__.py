@@ -28,6 +28,7 @@ from block_element import BlockElement
 from block_solve import block_solve
 from block_nonlinear_problem import BlockNonlinearProblem
 from block_petsc_snes_solver import BlockPETScSNESSolver
+from block_matlab_export import block_matlab_export
 
 import sys, petsc4py
 petsc4py.init(sys.argv)
