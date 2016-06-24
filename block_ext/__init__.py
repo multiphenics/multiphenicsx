@@ -23,8 +23,9 @@ from block_assemble import block_assemble
 from block_derivative import block_derivative
 from block_dirichlet_bc import BlockDirichletBC
 from block_function import BlockFunction
-from block_function_space import BlockFunctionSpace
 from block_element import BlockElement
+from block_function_space import BlockFunctionSpace
+from block_discard_dofs import BlockDiscardDOFs
 from block_solve import block_solve
 from block_nonlinear_problem import BlockNonlinearProblem
 from block_petsc_snes_solver import BlockPETScSNESSolver

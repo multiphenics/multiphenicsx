@@ -19,13 +19,14 @@
 from block_matrix import BlockMatrix
 from block_vector import BlockVector
 from monolithic_matrix import MonolithicMatrix
+from block_discard_dofs import BlockDiscardDOFs
 from petsc4py import PETSc
 
-def block_matlab_export(block_A, name_A, block_b, name_b):
+def block_matlab_export(block_A, name_A, block_b, name_b, block_discard_dofs=None):
     assert isinstance(block_A, BlockMatrix)
     assert isinstance(block_b, BlockVector)
     # Init monolithic matrix/vector corresponding to block matrix/vector
-    A = MonolithicMatrix(block_A)
+    A = MonolithicMatrix(block_A, block_discard_dofs=block_discard_dofs)
     b = A.create_monolithic_vector_left(block_b)
     # Copy values from block matrix/vector to monolithic matrix/vector
     A.zero(); A.block_add(block_A)
