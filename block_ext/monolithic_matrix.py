@@ -62,29 +62,29 @@ class MonolithicMatrix(PETScMatrix):
                     
         if self.mat().size[0] < 0: # uninitialized matrix
             import numpy as np
+            # Auxiliary variables for parallel communication
+            comm = self.mat().comm.tompi4py()
+            comm_size = comm.size
+            comm_rank = comm.rank
             # Get local size as the sum of the local sizes of the block matrices
             ownership_range_sum = 0
             for I in range(M):
                 block = as_backend_type(block_matrix[I, 0]).mat() # is the same for all J = 0, ..., N - 1
                 row_start, row_end = block.getOwnershipRange()
                 ownership_range_sum += row_end - row_start
+            # Subtract rows to be discarded
+            if block_discard_dofs is not None:
+                total_rows_to_be_discarded = np.sum([len(block_discard_dofs.dofs_to_be_discarded[I]) for I in range(M) if block_discard_dofs.need_to_discard_dofs[I]])
+                rows_to_be_discarded_per_process = total_rows_to_be_discarded/comm_size # integer division
+                if comm_rank == comm_size - 1:
+                	rows_to_be_discarded_per_process = total_rows_to_be_discarded - (comm_size - 1)*rows_to_be_discarded_per_process
+                ownership_range_sum -= rows_to_be_discarded_per_process
             # Preallocation:
             if preallocate:
-                # Auxiliary variables for parallel communication
-                comm = self.mat().comm.tompi4py()
-                comm_size = comm.size
-                comm_rank = comm.rank
                 # List local sizes for all ranks with parallel communication
                 all_ownership_range_sum = []
                 for r in range(comm_size):
                     all_ownership_range_sum.append( comm.bcast(ownership_range_sum, root=r) )
-                # Subtract rows to be discarded
-                if block_discard_dofs is not None:
-                    total_rows_to_be_discarded = np.sum([len(block_discard_dofs.dofs_to_be_discarded[I]) for I in range(M) if block_discard_dofs.need_to_discard_dofs[I]])
-                    rows_to_be_discarded_per_process = total_rows_to_be_discarded/comm_size # integer division
-                    for r in range(comm_size - 1):
-                        all_ownership_range_sum[r] -= rows_to_be_discarded_per_process
-                    all_ownership_range_sum[comm_size - 1] -= total_rows_to_be_discarded - (comm_size - 1)*rows_to_be_discarded_per_process
                 # Define ownership ranges for self
                 ownership_range_start = np.array([sum(all_ownership_range_sum[: r   ]) for r in range(comm_size)], dtype='i')
                 ownership_range_end   = np.array([sum(all_ownership_range_sum[:(r+1)]) for r in range(comm_size)], dtype='i')
@@ -134,7 +134,7 @@ class MonolithicMatrix(PETScMatrix):
             # Initialize
             self.mat().setType("aij")
             assert sum(n) == sum(m) # otherwise you cannot use the same ownership range for columns
-            self.mat().setSizes([(all_ownership_range_sum[comm_rank], sum(n)), (all_ownership_range_sum[comm_rank], sum(m))])
+            self.mat().setSizes([(ownership_range_sum, sum(n)), (ownership_range_sum, sum(m))])
             if preallocate:
                 self.mat().setPreallocationNNZ([local_d_nnz, local_o_nnz])
                 self.mat().setOption(PETSc.Mat.Option.NEW_NONZERO_LOCATION_ERR, True)

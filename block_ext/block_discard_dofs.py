@@ -94,6 +94,8 @@ class BlockDiscardDOFs(list):
         for I in range(N):
             if self.need_to_discard_dofs[I]:
                 self.dofs_to_be_discarded.append( np.where(self.subspace_dofs_extendend[I] < 0)[0] )
+                # Non-discarded DOFs should be consecutive numbers, starting from 0
+                assert len(self.dofs_to_be_discarded[I]) + np.max(self.subspace_dofs_extendend[I]) + 1 == len(self.subspace_dofs_extendend[I])
             else:
                 self.dofs_to_be_discarded.append(None)
         

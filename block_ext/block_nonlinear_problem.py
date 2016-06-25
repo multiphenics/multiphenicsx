@@ -22,7 +22,7 @@ from monolithic_matrix import MonolithicMatrix
 from monolithic_vector import MonolithicVector
 
 class BlockNonlinearProblem(NonlinearProblem):
-    def __init__(self, residual_form, block_solution, bcs, jacobian_form):
+    def __init__(self, residual_form, block_solution, bcs, jacobian_form, block_discard_dofs=None):
         NonlinearProblem.__init__(self)
         # Store the input arguments
         self.residual_form = residual_form
@@ -39,7 +39,7 @@ class BlockNonlinearProblem(NonlinearProblem):
         self.monolithic_residual = None
         self.monolithic_jacobian = None
         # Declare a monolithic_solution vector. The easiest way is to define a temporary monolithic matrix
-        monolithic_jacobian = MonolithicMatrix(self.block_jacobian, preallocate=False)
+        monolithic_jacobian = MonolithicMatrix(self.block_jacobian, preallocate=False, block_discard_dofs=block_discard_dofs)
         monolithic_solution, monolithic_residual = monolithic_jacobian.create_monolithic_vectors(self.block_solution.block_vector(), self.block_residual)
         self.monolithic_solution = monolithic_solution
         # Add the current block_solution as initial guess
@@ -79,5 +79,3 @@ class BlockNonlinearProblem(NonlinearProblem):
         bcs.apply(block_jacobian)
         # Copy values from block_jacobian into monolithic_jacobian
         monolithic_jacobian.zero(); monolithic_jacobian.block_add(block_jacobian)
-        
-        
