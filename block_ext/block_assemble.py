@@ -23,7 +23,7 @@ from block_matrix import BlockMatrix
 from block_vector import BlockVector
 import numpy as np
 
-def block_assemble(block_form, block_tensor=None):
+def block_assemble(block_form, block_tensor=None, **kwargs):
     from dolfin import assemble
     N = len(block_form)
     if isinstance(block_form[0], list) or isinstance(block_form[0], np.ndarray):
@@ -36,9 +36,9 @@ def block_assemble(block_form, block_tensor=None):
         for I in range(N):
             for J in range(M):
                 if block_tensor_was_None:
-                    block_tensor.blocks[I, J] = assemble(block_form[I][J])
+                    block_tensor.blocks[I, J] = assemble(block_form[I][J], **kwargs)
                 else:
-                    assemble(block_form[I][J], tensor=block_tensor.blocks[I, J])
+                    assemble(block_form[I][J], tensor=block_tensor.blocks[I, J], **kwargs)
     else:
         if block_tensor is None:
             block_tensor_was_None = True
@@ -47,9 +47,9 @@ def block_assemble(block_form, block_tensor=None):
             block_tensor_was_None = False
         for I in range(N):
             if block_tensor_was_None:
-                block_tensor.blocks[I] = assemble(block_form[I])
+                block_tensor.blocks[I] = assemble(block_form[I], **kwargs)
             else:
-                assemble(block_form[I], tensor=block_tensor.blocks[I])
+                assemble(block_form[I], tensor=block_tensor.blocks[I], **kwargs)
     
     return block_tensor
     
