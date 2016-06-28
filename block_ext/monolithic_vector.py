@@ -57,7 +57,7 @@ class MonolithicVector(PETScVector):
         
         for I in range(N):
             if block_discard_dofs is not None and block_discard_dofs.need_to_discard_dofs[I]:
-                row_reposition_dofs = block_discard_dofs.subspace_dofs_extendend[I]
+                row_reposition_dofs = block_discard_dofs.subspace_dofs_extended[I]
             else:
                 row_reposition_dofs = None
             block = as_backend_type(block_vector[I]).vec()

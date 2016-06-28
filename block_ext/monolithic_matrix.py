@@ -95,12 +95,12 @@ class MonolithicMatrix(PETScMatrix):
                     o_nnz.append( np.zeros(ownership_range_end[r] - ownership_range_start[r], dtype='i') )
                 for I in range(M):
                     if block_discard_dofs is not None and block_discard_dofs.need_to_discard_dofs[I]:
-                        row_reposition_dofs = block_discard_dofs.subspace_dofs_extendend[I]
+                        row_reposition_dofs = block_discard_dofs.subspace_dofs_extended[I]
                     else:
                         row_reposition_dofs = None
                     for J in range(N):
                         if block_discard_dofs is not None and block_discard_dofs.need_to_discard_dofs[J]:
-                            col_reposition_dofs = block_discard_dofs.subspace_dofs_extendend[J]
+                            col_reposition_dofs = block_discard_dofs.subspace_dofs_extended[J]
                         else:
                             col_reposition_dofs = None
                         block = as_backend_type(block_matrix[I, J]).mat()
@@ -153,12 +153,12 @@ class MonolithicMatrix(PETScMatrix):
         
         for I in range(M):
             if block_discard_dofs is not None and block_discard_dofs.need_to_discard_dofs[I]:
-                row_reposition_dofs = block_discard_dofs.subspace_dofs_extendend[I]
+                row_reposition_dofs = block_discard_dofs.subspace_dofs_extended[I]
             else:
                 row_reposition_dofs = None
             for J in range(N):
                 if block_discard_dofs is not None and block_discard_dofs.need_to_discard_dofs[J]:
-                    col_reposition_dofs = block_discard_dofs.subspace_dofs_extendend[J]
+                    col_reposition_dofs = block_discard_dofs.subspace_dofs_extended[J]
                 else:
                     col_reposition_dofs = None
                 block = as_backend_type(block_matrix[I, J]).mat()

@@ -45,7 +45,7 @@ class BlockDiscardDOFs(list):
         interpolator = LagrangeInterpolator()
         
         # Create a map between subspace dofs and space dofs
-        self.subspace_dofs_extendend = []
+        self.subspace_dofs_extended = []
         for I in range(N):
             if self.need_to_discard_dofs[I]:
                 local_subspace_dofs = np.array(range(*V_subspaces[I].dofmap().ownership_range()), dtype=np.float)
@@ -63,13 +63,13 @@ class BlockDiscardDOFs(list):
                 # Need to (all_)gather the array because row indices operator only local dofs, but
                 # col indices operate on local and non-local dofs
                 comm = V_subspaces[I].mesh().mpi_comm().tompi4py()
-                subspace_dofs_extendend = comm.bcast(subspace_dofs_extended_rounded, root=0)
+                subspace_dofs_extended = comm.bcast(subspace_dofs_extended_rounded, root=0)
                 for r in range(1, comm.size):
-                    subspace_dofs_extendend = np.append( subspace_dofs_extendend, comm.bcast(subspace_dofs_extended_rounded, root=r) )
+                    subspace_dofs_extended = np.append( subspace_dofs_extended, comm.bcast(subspace_dofs_extended_rounded, root=r) )
 
-                self.subspace_dofs_extendend.append(subspace_dofs_extendend.astype('i'))
+                self.subspace_dofs_extended.append(subspace_dofs_extended.astype('i'))
             else:
-                self.subspace_dofs_extendend.append(None)
+                self.subspace_dofs_extended.append(None)
             
         # In a similar way, create a map between space dofs and subspace dofs
         self.space_dofs_restricted = []
@@ -93,9 +93,9 @@ class BlockDiscardDOFs(list):
         self.dofs_to_be_discarded = []
         for I in range(N):
             if self.need_to_discard_dofs[I]:
-                self.dofs_to_be_discarded.append( np.where(self.subspace_dofs_extendend[I] < 0)[0] )
+                self.dofs_to_be_discarded.append( np.where(self.subspace_dofs_extended[I] < 0)[0] )
                 # Non-discarded DOFs should be consecutive numbers, starting from 0
-                assert len(self.dofs_to_be_discarded[I]) + np.max(self.subspace_dofs_extendend[I]) + 1 == len(self.subspace_dofs_extendend[I])
+                assert len(self.dofs_to_be_discarded[I]) + np.max(self.subspace_dofs_extended[I]) + 1 == len(self.subspace_dofs_extended[I])
             else:
                 self.dofs_to_be_discarded.append(None)
         
