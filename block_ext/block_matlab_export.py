@@ -33,8 +33,10 @@ def block_matlab_export(block_A, name_A, block_b, name_b, block_discard_dofs=Non
     b.zero(); b.block_add(block_b)
     # Export
     A_viewer = PETSc.Viewer().createASCII(name_A + ".m", comm= PETSc.COMM_WORLD)
-    A_viewer.setFormat(PETSc.Viewer.Format.ASCII_MATLAB)
+    A_viewer.pushFormat(PETSc.Viewer.Format.ASCII_MATLAB)
     A_viewer.view(A.mat())
+    A_viewer.popFormat()
     b_viewer = PETSc.Viewer().createASCII(name_b + ".m", comm= PETSc.COMM_WORLD)
-    b_viewer.setFormat(PETSc.Viewer.Format.ASCII_MATLAB)
+    b_viewer.pushFormat(PETSc.Viewer.Format.ASCII_MATLAB)
     b_viewer.view(b.vec())
+    b_viewer.popFormat()
