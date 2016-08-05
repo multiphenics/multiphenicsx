@@ -41,3 +41,10 @@ class BlockFunction(list):
     def block_split(self):
         return self
         
+    def copy(self, deepcopy=False):
+        assert deepcopy # no usage envisioned for the other case
+        functions = [f.copy(deepcopy) for f in self]
+        return BlockFunction(functions)
+            
+        
+        
