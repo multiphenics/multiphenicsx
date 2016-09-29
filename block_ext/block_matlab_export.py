@@ -16,27 +16,30 @@
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from block_matrix import BlockMatrix
-from block_vector import BlockVector
-from monolithic_matrix import MonolithicMatrix
-from block_discard_dofs import BlockDiscardDOFs
+from block_ext.block_matrix import BlockMatrix
+from block_ext.block_vector import BlockVector
+from block_ext.monolithic_matrix import MonolithicMatrix
+from block_ext.block_discard_dofs import BlockDiscardDOFs
 from petsc4py import PETSc
 
-def block_matlab_export(block_A, name_A, block_b, name_b, block_discard_dofs=None):
+def block_matlab_export(block_A, name_A, block_b=None, name_b=None, block_discard_dofs=None):
     assert isinstance(block_A, BlockMatrix)
-    assert isinstance(block_b, BlockVector)
+    assert isinstance(block_b, BlockVector) or block_b is None
     # Init monolithic matrix/vector corresponding to block matrix/vector
     A = MonolithicMatrix(block_A, block_discard_dofs=block_discard_dofs)
-    b = A.create_monolithic_vector_left(block_b)
+    if block_b is not None:
+        b = A.create_monolithic_vector_left(block_b)
     # Copy values from block matrix/vector to monolithic matrix/vector
     A.zero(); A.block_add(block_A)
-    b.zero(); b.block_add(block_b)
+    if block_b is not None:
+        b.zero(); b.block_add(block_b)
     # Export
     A_viewer = PETSc.Viewer().createASCII(name_A + ".m", comm= PETSc.COMM_WORLD)
     A_viewer.pushFormat(PETSc.Viewer.Format.ASCII_MATLAB)
     A_viewer.view(A.mat())
     A_viewer.popFormat()
-    b_viewer = PETSc.Viewer().createASCII(name_b + ".m", comm= PETSc.COMM_WORLD)
-    b_viewer.pushFormat(PETSc.Viewer.Format.ASCII_MATLAB)
-    b_viewer.view(b.vec())
-    b_viewer.popFormat()
+    if block_b is not None:
+        b_viewer = PETSc.Viewer().createASCII(name_b + ".m", comm= PETSc.COMM_WORLD)
+        b_viewer.pushFormat(PETSc.Viewer.Format.ASCII_MATLAB)
+        b_viewer.view(b.vec())
+        b_viewer.popFormat()

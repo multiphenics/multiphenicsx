@@ -17,7 +17,7 @@
 #
 
 from dolfin import PETScMatrix, as_backend_type
-from monolithic_vector import MonolithicVector
+from block_ext.monolithic_vector import MonolithicVector
 from petsc4py import PETSc
 from mpi4py import MPI
 

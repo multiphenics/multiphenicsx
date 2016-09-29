@@ -16,28 +16,69 @@
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import Function
-from block_vector import BlockVector
+from dolfin import Function, FunctionSpace
+from block_ext.block_vector import BlockVector
+from block_ext.block_function_space import BlockFunctionSpace
 
 class BlockFunction(list):
-    def __init__(self, arg1):
-        assert isinstance(arg1, list)
-        if isinstance(arg1[0], Function):
-            functions = arg1
-            vectors = [f.vector() for f in arg1]
-        else:
-            functions = []
-            vectors = []
-            for V in arg1:
+    def __init__(self, arg1, arg2=None):
+        def init_from_block_function(self, block_function):
+            list.__init__(self, block_function)
+            self._block_vector = BlockVector([f.vector() for f in self])
+            self._block_function_space = BlockFunctionSpace([f.function_space() for f in self])
+            
+        def init_from_block_function_space(self, block_function_space):
+            functions = list()
+            vectors = list()
+            for V in block_function_space:
                 current_function = Function(V)
                 functions.append(current_function)
                 vectors.append(current_function.vector())
-        list.__init__(self, functions)
-        self._block_vector = BlockVector(vectors)
+            list.__init__(self, functions)
+            self._block_vector = BlockVector(vectors)
+            self._block_function_space = block_function_space
+            
+        def init_from_block_function_space_and_block_vector(self, block_function_space, block_vector):
+            functions = list()
+            vectors = list()
+            for (V, vec) in zip(block_function_space, block_vector):
+                current_function = Function(V, vec)
+                functions.append(current_function)
+                vectors.append(current_function.vector())
+            list.__init__(self, functions)
+            self._block_vector = BlockVector(vectors)
+            self._block_function_space = block_function_space
+        
+        assert isinstance(arg1, list) or isinstance(arg1, BlockFunction) or isinstance(arg1, BlockFunctionSpace)
+        assert isinstance(arg2, BlockVector) or arg2 is None
+        if isinstance(arg1, list):
+            assert isinstance(arg1[0], (Function, FunctionSpace))
+            if isinstance(arg1[0], Function):
+                init_from_block_function(self, arg1)
+            elif isinstance(arg1[0], FunctionSpace):
+                arg1 = BlockFunctionSpace(arg1)
+                if arg2 is not None:
+                    init_from_block_function_space_and_block_vector(self, arg1, arg2)
+                else:
+                    init_from_block_function_space(self, arg1)
+            else: # impossible to arrive here anyway, thanks to the assert
+                raise AssertionError("Invalid arguments in BlockFunction constructor.")
+        elif isinstance(arg1, BlockFunction):
+            init_from_block_function(self, arg1)
+        elif isinstance(arg1, BlockFunctionSpace):
+            if arg2 is not None:
+                init_from_block_function_space_and_block_vector(self, arg1, arg2)
+            else:
+                init_from_block_function_space(self, arg1)
+        else: # impossible to arrive here anyway, thanks to the assert
+            raise AssertionError("Invalid arguments in BlockFunction constructor.")
         
     def block_vector(self):
         return self._block_vector
-        
+
+    def block_function_space(self):
+        return self._block_function_space
+                
     def block_split(self):
         return self
         
@@ -45,6 +86,9 @@ class BlockFunction(list):
         assert deepcopy # no usage envisioned for the other case
         functions = [f.copy(deepcopy) for f in self]
         return BlockFunction(functions)
+        
+    def sub(self, i):
+        return self[i]
             
         
         

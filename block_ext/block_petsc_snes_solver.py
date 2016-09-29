@@ -17,7 +17,7 @@
 #
 
 from dolfin import PETScSNESSolver
-from monolithic_matrix import MonolithicMatrix
+from block_ext.monolithic_matrix import MonolithicMatrix
 
 class BlockPETScSNESSolver(PETScSNESSolver):
     def __init__(self, problem):

@@ -16,20 +16,39 @@
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from block_trial_function import BlockTrialFunction
-from block_test_function import BlockTestFunction
-from block_split import block_split
-from block_assemble import block_assemble
-from block_derivative import block_derivative
-from block_dirichlet_bc import BlockDirichletBC
-from block_function import BlockFunction
-from block_element import BlockElement
-from block_function_space import BlockFunctionSpace
-from block_discard_dofs import BlockDiscardDOFs
-from block_solve import block_solve
-from block_nonlinear_problem import BlockNonlinearProblem
-from block_petsc_snes_solver import BlockPETScSNESSolver
-from block_matlab_export import block_matlab_export
-
 import sys, petsc4py
 petsc4py.init(sys.argv)
+
+from block_ext.block_assemble import block_assemble
+from block_ext.block_derivative import block_derivative
+from block_ext.block_dirichlet_bc import BlockDirichletBC
+from block_ext.block_discard_dofs import BlockDiscardDOFs
+from block_ext.block_element import BlockElement
+from block_ext.block_function import BlockFunction
+from block_ext.block_function_space import BlockFunctionSpace
+from block_ext.block_matlab_export import block_matlab_export
+from block_ext.block_nonlinear_problem import BlockNonlinearProblem
+from block_ext.block_petsc_snes_solver import BlockPETScSNESSolver
+from block_ext.block_slepc_eigen_solver import BlockSLEPcEigenSolver
+from block_ext.block_solve import block_solve
+from block_ext.block_split import block_split
+from block_ext.block_trial_function import BlockTrialFunction
+from block_ext.block_test_function import BlockTestFunction
+
+__all__ = [
+    'block_assemble',
+    'block_derivative',
+    'BlockDirichletBC',
+    'BlockDiscardDOFs',
+    'BlockElement',
+    'BlockFunction',
+    'BlockFunctionSpace',
+    'block_matlab_export',
+    'BlockNonlinearProblem',
+    'BlockPETScSNESSolver',
+    'BlockSLEPcEigenSolver',
+    'block_solve',
+    'block_split',
+    'BlockTrialFunction',
+    'BlockTestFunction'
+]

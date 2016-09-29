@@ -16,8 +16,8 @@
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from block_matrix import BlockMatrix
-from block_vector import BlockVector
+from block_ext.block_matrix import BlockMatrix
+from block_ext.block_vector import BlockVector
 from block.block_bc import block_bc, block_rhs_bc
 
 class BlockDirichletBC(object):
@@ -48,3 +48,23 @@ class BlockDirichletBC(object):
             for i, bcs in enumerate(self.block_rhs_bc):
                 for bc in bcs:
                     bc.apply(b[i], x[i])
+                    
+    def zero(self, A):
+        assert isinstance(A, BlockMatrix)
+        for i, bcs in enumerate(self.block_bc):
+            for bc in bcs:
+                for j in range(len(self.block_bc)):
+                    bc.zero(A[i, j])
+        
+    def zero_columns(self, A, b, diag_value):
+        assert isinstance(A, BlockMatrix)
+        assert isinstance(b, BlockVector)
+        assert len(b) == len(self.block_bc)
+        for i, bcs in enumerate(self.block_bc):
+            for bc in bcs:
+                for j in range(len(self.block_bc)):
+                    if i == j:
+                        bc.zero_columns(A[j, i], b[i], diag_value)
+                    else:
+                        bc.zero_columns(A[j, i], b[j])
+                

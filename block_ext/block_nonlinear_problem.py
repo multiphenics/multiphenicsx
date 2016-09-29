@@ -17,9 +17,9 @@
 #
 
 from dolfin import NonlinearProblem, as_backend_type
-from block_assemble import block_assemble
-from monolithic_matrix import MonolithicMatrix
-from monolithic_vector import MonolithicVector
+from block_ext.block_assemble import block_assemble
+from block_ext.monolithic_matrix import MonolithicMatrix
+from block_ext.monolithic_vector import MonolithicVector
 
 class BlockNonlinearProblem(NonlinearProblem):
     def __init__(self, residual_form, block_solution, bcs, jacobian_form, block_discard_dofs=None):

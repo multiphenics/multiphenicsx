@@ -19,8 +19,8 @@
 # We provide here a simplified versione of cbc.block block_assemble, that however
 # allows for the optional tensor argument
 
-from block_matrix import BlockMatrix
-from block_vector import BlockVector
+from block_ext.block_matrix import BlockMatrix
+from block_ext.block_vector import BlockVector
 import numpy as np
 
 def block_assemble(block_form, block_tensor=None, **kwargs):
