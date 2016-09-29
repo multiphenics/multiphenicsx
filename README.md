@@ -29,8 +29,10 @@ python block_ext_example.py
 ### 3. Tutorials
 Several tutorials are provided the [**tutorials** subfolder](https://gitlab.com/block_ext/block_ext/tree/master/tutorials).
 * **Tutorial 1**: block poisson test.
-* **Tutorial 2**: Navier-Stokes problem.
-* **Tutorial 3**: weak imposition of boundary conditions by Lagrange multipliers.
+* **Tutorial 2**: Navier-Stokes problem using block matrices.
+* **Tutorial 3**: weak imposition of boundary conditions by Lagrange multipliers using block matrices and discarding interior degrees of freedom.
+* **Tutorial 4**: computation of the inf-sup constant for a Stokes problem assembled using block matrices.
+* **Tutorial 5**: computation of the inf-sup constant for the problem presented in tutorial 3.
 
 ### 4. Authors and contributors
 **block_ext** is currently developed and mantained at [SISSA mathLab](http://mathlab.sissa.it/) by [Dr. Francesco Ballarin](mailto:francesco.ballarin@sissa.it).
