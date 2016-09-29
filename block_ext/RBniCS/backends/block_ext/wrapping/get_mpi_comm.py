@@ -15,3 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
+
+def get_mpi_comm(block_V):
+    return block_V[0].mesh().mpi_comm().tompi4py()
+

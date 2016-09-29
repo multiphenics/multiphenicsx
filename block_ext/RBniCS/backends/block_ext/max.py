@@ -15,3 +15,13 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
+
+from block_ext.RBniCS.backends.block_ext.abs import AbsOutput
+from RBniCS.utils.decorators import backend_for
+
+# max function to compute the maximum absolute value of entries in EIM. To be used in combination with abs,
+# even though abs actually carries out both the max and the abs!
+@backend_for("block_ext", inputs=(AbsOutput, ))
+def max(abs_output):
+    return (abs_output.max_abs_return_value, abs_output.max_abs_return_location)
+        

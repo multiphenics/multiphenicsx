@@ -15,3 +15,12 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
+
+from block_ext import BlockFunction, BlockFunctionSpace
+from RBniCS.utils.decorators import backend_for
+
+_Function_Type = BlockFunction
+
+@backend_for("block_ext", inputs=(list_of(BlockFunctionSpace), ), output=_Function_Type)
+def Function(block_V):
+    return _Function_Type(block_V)

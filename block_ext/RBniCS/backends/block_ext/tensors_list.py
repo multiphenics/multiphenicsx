@@ -15,3 +15,18 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
+
+from block_ext import BlockFunctionSpace
+from RBniCS.backends.basic import TensorsList as BasicTensorsList
+import block_ext.RBniCS.backends.block_ext
+import block_ext.RBniCS.backends.block_ext.wrapping
+import RBniCS.backends.numpy
+from RBniCS.utils.decorators import BackendFor, Extends, override
+
+@Extends(BasicTensorsList)
+@BackendFor("block_ext", online_backend="NumPy", inputs=(BlockFunctionSpace, ))
+class TensorsList(BasicTensorsList):
+    @override
+    def __init__(self, V_or_Z):
+        BasicTensorsList.__init__(self, V_or_Z, block_ext.RBniCS.backends.block_ext, block_ext.RBniCS.backends.block_ext.wrapping, RBniCS.backends.numpy)
+        

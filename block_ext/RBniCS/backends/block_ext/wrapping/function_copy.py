@@ -15,3 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
+
+def function_copy(function):
+    return function.copy(deepcopy=True)
+

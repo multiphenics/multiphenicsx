@@ -15,3 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
+
+def gram_schmidt_projection_step(new_basis, X, old_basis, transpose):
+    new_basis.block_vector().add_local( - (transpose(new_basis)*X*old_basis) * old_basis.block_vector().block_array() )
+    new_basis.block_vector().apply("add")
+    return new_basis
+

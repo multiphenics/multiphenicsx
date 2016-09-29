@@ -15,3 +15,13 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
+
+from block_ext.RBniCS.backends.block_ext.function import Function
+
+def vector_mul_vector(vector1, vector2):
+    if isinstance(vector1, Function.Type()):
+        vector1 = vector1.block_vector()
+    if isinstance(vector2, Function.Type()):
+        vector2 = vector2.block_vector()
+    return vector1.inner(vector2)
+

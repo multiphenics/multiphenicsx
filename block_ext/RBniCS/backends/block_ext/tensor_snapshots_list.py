@@ -15,3 +15,13 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
+
+from block_ext import BlockFunctionSpace
+from block_ext.RBniCS.backends.block_ext.tensors_list import TensorsList
+from RBniCS.utils.decorators import BackendFor, Extends
+
+@Extends(TensorsList)
+@BackendFor("block_ext", online_backend="NumPy", inputs=(BlockFunctionSpace, ))
+class TensorSnapshotsList(TensorsList):
+    pass
+
