@@ -67,4 +67,13 @@ class BlockDirichletBC(object):
                         bc.zero_columns(A[j, i], b[i], diag_value)
                     else:
                         bc.zero_columns(A[j, i], b[j])
+                        
+    def __getitem__(self, key):
+        return self.block_bc[key]
+        
+    def __iter__(self):
+        return self.block_bc.__iter__()
+        
+    def __len__(self):
+        return len(self.block_bc)
                 
