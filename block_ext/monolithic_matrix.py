@@ -107,9 +107,9 @@ class MonolithicMatrix(PETScMatrix):
                         row_start, row_end = block.getOwnershipRange()
                         for i in range(row_start, row_end):
                             if row_reposition_dofs is not None:
-                                row = row_reposition_dofs[i]
-                                if row < 0:
+                                if i not in row_reposition_dofs:
                                     continue
+                                row = row_reposition_dofs[i]
                             else:
                                 row = i
                             row += sum(m[:I])
@@ -117,8 +117,9 @@ class MonolithicMatrix(PETScMatrix):
                             a = row - ownership_range_start[A]
                             cols, _ = block.getRow(i)
                             if col_reposition_dofs is not None:
-                                cols = np.setdiff1d(cols, block_discard_dofs.dofs_to_be_discarded[J])
-                                cols = col_reposition_dofs[cols]
+                                cols = set(cols).difference(block_discard_dofs.dofs_to_be_discarded[J])
+                                cols = [col_reposition_dofs[c] for c in cols]
+                                cols = np.array(cols)
                             cols[:] += sum(n[:J])
                             for c in cols:
                                 if c >= ownership_range_start[A] and c < ownership_range_end[A]:
@@ -165,18 +166,23 @@ class MonolithicMatrix(PETScMatrix):
                 row_start, row_end = block.getOwnershipRange()
                 for i in range(row_start, row_end):
                     if row_reposition_dofs is not None:
-                        row = row_reposition_dofs[i]
-                        if row < 0:
+                        if i not in row_reposition_dofs:
                             continue
+                        row = row_reposition_dofs[i]
                     else:
                         row = i
                     row += sum(m[:I])
                     cols, vals = block.getRow(i)
                     if col_reposition_dofs is not None:
-                        cols_after_discard = np.setdiff1d(cols, block_discard_dofs.dofs_to_be_discarded[J])
-                        kept_cols_indices = np.in1d(cols, cols_after_discard)
-                        cols = col_reposition_dofs[cols_after_discard]
-                        vals = vals[kept_cols_indices]
+                        cols_to_vals = dict(zip(cols, vals))
+                        cols_after_discard = set(cols).difference(block_discard_dofs.dofs_to_be_discarded[J])
+                        cols = [col_reposition_dofs[c] for c in cols_after_discard]
+                        vals = [cols_to_vals[c] for c in cols_after_discard]
+                        assert len(cols) == len(vals)
+                        if len(cols) == 0:
+                            continue
+                        cols = np.array(cols)
+                        vals = np.array(vals)
                     cols[:] += sum(n[:J])
                     self.mat().setValues(row, cols, vals, addv=PETSc.InsertMode.ADD)
         self.mat().assemble()

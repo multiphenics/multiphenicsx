@@ -44,8 +44,10 @@ class BlockDiscardDOFs(list):
         # Interpolator
         interpolator = LagrangeInterpolator()
         
-        # Create a map between subspace dofs and space dofs
-        self.subspace_dofs_extended = []
+        # Create a map from space dofs to subspace dofs,
+        # and precompute and store the number of DOFs to be discarded by row/columns
+        self.subspace_dofs_extended = list()
+        self.dofs_to_be_discarded = list()
         for I in range(N):
             if self.need_to_discard_dofs[I]:
                 local_subspace_dofs = np.array(range(*V_subspaces[I].dofmap().ownership_range()), dtype=np.float)
@@ -60,19 +62,34 @@ class BlockDiscardDOFs(list):
                 subspace_dofs_extended_rounded = np.round(subspace_dofs_extended.vector().array())
                 assert np.max(np.abs( subspace_dofs_extended_rounded - subspace_dofs_extended.vector().array() )) < 1.e-10, \
                     "Extension has produced non-integer DOF IDs. Are you sure that the function space and subspace are conforming?"
+                    
+                subspace_dofs_extended_integer = subspace_dofs_extended_rounded.astype('i')
+                dofs_to_be_kept_local_indices = np.where(subspace_dofs_extended_integer >= 0)[0]
+                dofs_to_be_kept_global_indices = [V_spaces[I].dofmap().local_to_global_index(local_dof) for local_dof in dofs_to_be_kept_local_indices]
+                subspace_dofs_extended_dict = dict(zip(dofs_to_be_kept_global_indices, subspace_dofs_extended_integer[dofs_to_be_kept_local_indices]))
+                
                 # Need to (all_)gather the array because row indices operator only local dofs, but
                 # col indices operate on local and non-local dofs
                 comm = V_subspaces[I].mesh().mpi_comm().tompi4py()
-                subspace_dofs_extended = comm.bcast(subspace_dofs_extended_rounded, root=0)
+                allgathered_subspace_dofs_extended_dict = comm.bcast(subspace_dofs_extended_dict, root=0)
                 for r in range(1, comm.size):
-                    subspace_dofs_extended = np.append( subspace_dofs_extended, comm.bcast(subspace_dofs_extended_rounded, root=r) )
+                    allgathered_subspace_dofs_extended_dict.update( comm.bcast(subspace_dofs_extended_dict, root=r) )
 
-                self.subspace_dofs_extended.append(subspace_dofs_extended.astype('i'))
+                self.subspace_dofs_extended.append(allgathered_subspace_dofs_extended_dict)
+                
+                # In contrast, negative dofs should be discarded
+                dofs_to_be_discarded_local_indices = np.where(subspace_dofs_extended_integer < 0)[0]
+                dofs_to_be_discarded_global_indices = [V_spaces[I].dofmap().local_to_global_index(local_dof) for local_dof in dofs_to_be_discarded_local_indices]
+                allgathered_dofs_to_be_discarded = comm.bcast(dofs_to_be_discarded_global_indices, root=0)
+                for r in range(1, comm.size):
+                    allgathered_dofs_to_be_discarded.extend( comm.bcast(dofs_to_be_discarded_global_indices, root=r) )
+                self.dofs_to_be_discarded.append(set(allgathered_dofs_to_be_discarded))
             else:
                 self.subspace_dofs_extended.append(None)
+                self.dofs_to_be_discarded.append(None)
             
-        # In a similar way, create a map between space dofs and subspace dofs
-        self.space_dofs_restricted = []
+        # In a similar way, create a map from subspace dofs to space dofs
+        self.space_dofs_restricted = list()
         for I in range(N):
             if self.need_to_discard_dofs[I]:
                 local_space_dofs = np.array(range(*V_spaces[I].dofmap().ownership_range()), dtype=np.float)
@@ -84,18 +101,14 @@ class BlockDiscardDOFs(list):
                 space_dofs_restricted_rounded = np.round(space_dofs_restricted.vector().array())
                 assert np.max(np.abs( space_dofs_restricted_rounded - space_dofs_restricted.vector().array() )) < 1.e-10, \
                     "Restriction has produced non-integer DOF IDs. Are you sure that the function space and subspace are conforming?"
+                    
+                space_dofs_restricted_integer = space_dofs_restricted_rounded.astype('i')
+                subspace_global_indices = [V_subspaces[I].dofmap().local_to_global_index(local_dof) for local_dof in range(len(space_dofs_restricted_integer))]
+                space_dofs_restricted_dict = dict(zip(subspace_global_indices, space_dofs_restricted_integer))
+    
                 # No need to gather the result, since we only use this in for local row indices
-                self.space_dofs_restricted.append(space_dofs_restricted_rounded.astype('i'))
+                self.space_dofs_restricted.append(space_dofs_restricted_dict)
             else:
                 self.space_dofs_restricted.append(None)
-        
-        # Precompute and store the number of DOFs to be discarded by row/columns
-        self.dofs_to_be_discarded = []
-        for I in range(N):
-            if self.need_to_discard_dofs[I]:
-                self.dofs_to_be_discarded.append( np.where(self.subspace_dofs_extended[I] < 0)[0] )
-                # Non-discarded DOFs should be consecutive numbers, starting from 0
-                assert len(self.dofs_to_be_discarded[I]) + np.max(self.subspace_dofs_extended[I]) + 1 == len(self.subspace_dofs_extended[I])
-            else:
-                self.dofs_to_be_discarded.append(None)
+                
         

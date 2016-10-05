@@ -64,9 +64,9 @@ class MonolithicVector(PETScVector):
             row_start, row_end = block.getOwnershipRange()
             for i in range(row_start, row_end):
                 if row_reposition_dofs is not None:
-                    row = row_reposition_dofs[i]
-                    if row < 0:
+                    if i not in row_reposition_dofs:
                         continue
+                    row = row_reposition_dofs[i]
                 else:
                     row = i
                 row += sum(n[:I])
