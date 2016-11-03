@@ -19,14 +19,15 @@
 # We provide here a simplified versione of cbc.block block_assemble, that however
 # allows for the optional tensor argument
 
+from numpy import ndarray as array
+from dolfin import assemble
 from block_ext.block_matrix import BlockMatrix
 from block_ext.block_vector import BlockVector
-import numpy as np
 
 def block_assemble(block_form, block_tensor=None, **kwargs):
-    from dolfin import assemble
+    assert isinstance(block_form, list) or isinstance(block_form, array)
     N = len(block_form)
-    if isinstance(block_form[0], list) or isinstance(block_form[0], np.ndarray):
+    if isinstance(block_form[0], list) or isinstance(block_form[0], array):
         M = len(block_form[0])
         if block_tensor is None:
             block_tensor_was_None = True
