@@ -19,9 +19,10 @@
 
 from ufl import Form
 from RBniCS.backends.abstract import SeparatedParametrizedForm as AbstractSeparatedParametrizedForm
+from RBniCS.utils.decorators import BackendFor, Extends, override
 
 @Extends(AbstractSeparatedParametrizedForm)
-@BackendFor("block_ext", inputs=(Form, ))
+@BackendFor("block_ext", inputs=(int, )) # TODO temporarily disable input to avoid assertion in backend for
 class SeparatedParametrizedForm(AbstractSeparatedParametrizedForm):
     pass # TODO 
 

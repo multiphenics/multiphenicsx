@@ -17,7 +17,7 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from block_ext import BlockMatrix
+from block_ext.block_matrix import BlockMatrix
 
 def Matrix():
     raise NotImplementedError("This is dummy function (not required by the interface) just store the Type")
@@ -25,3 +25,9 @@ def Matrix():
 def _Matrix_Type():
     return BlockMatrix
 Matrix.Type = _Matrix_Type
+
+# Enable matrix*function product (i.e. matrix*function.vector())
+# TODO
+
+# Preserve generator attribute in algebraic operators, as required by DEIM
+# TODO

@@ -17,26 +17,18 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from block_ext import BlockDirichletBC, block_solve
-from RBniCS.backends.abstract import LinearSolver as AbstractLinearSolver
 from block_ext.RBniCS.backends.block_ext.matrix import Matrix
 from block_ext.RBniCS.backends.block_ext.vector import Vector
 from block_ext.RBniCS.backends.block_ext.function import Function
-from RBniCS.utils.decorators import BackendFor, Extends, list_of, override
+from block_ext.RBniCS.backends.block_ext.functions_list import FunctionsList
+from block_ext.RBniCS.backends.block_ext.tensors_list import TensorsList
+from block_ext.RBniCS.backends.block_ext.projected_parametrized_tensor import ProjectedParametrizedTensor
+from block_ext.RBniCS.backends.block_ext.projected_parametrized_expression import ProjectedParametrizedExpression
+from block_ext.RBniCS.backends.block_ext.reduced_mesh import ReducedMesh
+from block_ext.RBniCS.backends.block_ext.reduced_vertices import ReducedVertices
+from RBniCS.utils.decorators import backend_for, tuple_of
 
-@Extends(AbstractLinearSolver)
-@BackendFor("block_ext", inputs=(Matrix.Type(), Function.Type(), Vector.Type(), (list_of(BlockDirichletBC), None)))
-class LinearSolver(AbstractLinearSolver):
-    @override
-    def __init__(self, lhs, solution, rhs, bcs=None): # TODO deve mettere il block discard dofs?
-        assert False # TODO considerare le BCs
-        
-    @override
-    def set_parameters(self, parameters):
-        assert len(parameters) == 0, "block_ext linear solver does not accept parameters yet"
-        
-    @override
-    def solve(self):
-        block_solve(self.lhs, self.solution.block_vector(), self.rhs)
-        return self.solution
-        
+# Evaluate a parametrized expression, possibly at a specific location
+@backend_for("block_ext", inputs=((Matrix.Type(), Vector.Type(), Function.Type(), TensorsList, FunctionsList, ProjectedParametrizedTensor, ProjectedParametrizedExpression), (ReducedMesh, ReducedVertices, None)))
+def evaluate(expression_, at=None):
+    pass # TODO

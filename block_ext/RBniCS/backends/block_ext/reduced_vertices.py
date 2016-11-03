@@ -22,7 +22,7 @@ from RBniCS.backends.abstract import ReducedVertices as AbstractReducedVertices
 from RBniCS.utils.decorators import BackendFor, Extends, override
 
 @Extends(AbstractReducedVertices)
-@BackendFor("block_ext", inputs=(Mesh, ))
+@BackendFor("block_ext", inputs=(int, )) # TODO temporarily disable input to avoid assertion in backend for
 class ReducedVertices(AbstractReducedVertices):
     pass # TODO
         

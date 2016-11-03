@@ -17,13 +17,13 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import ALE, cells, Expression, Function, FunctionSpace, LagrangeInterpolator, MeshFunctionSizet, VectorFunctionSpace
-from block_ext.block_function_space import BlockFunctionSpace
-from RBniCS.backends.abstract import MeshMotion as AbstractMeshMotion
-from RBniCS.utils.decorators import BackendFor, Extends, override, tuple_of
+from ufl import Form
+from dolfin import FunctionSpace
+from RBniCS.backends.abstract import ParametrizedTensorFactory as AbstractParametrizedTensorFactory
+from RBniCS.utils.decorators import BackendFor, Extends, override, list_of
 
-@Extends(AbstractMeshMotion)
-@BackendFor("block_ext", inputs=(BlockFunctionSpace, MeshFunctionSizet, tuple_of(tuple_of(str))))
-class MeshMotion(AbstractMeshMotion):
+@Extends(AbstractParametrizedTensorFactory)
+@BackendFor("block_ext", inputs=(list_of(Form), FunctionSpace))
+class ParametrizedTensorFactory(AbstractParametrizedTensorFactory):
     pass # TODO
         

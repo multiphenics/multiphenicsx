@@ -17,6 +17,10 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
+# Make sure that the parent block_ext package is imported (rather than the one
+# in this folder which has the same name!)
+from __future__ import absolute_import
+
 # Import RBniCS backends
 import RBniCS.backends
 

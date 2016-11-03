@@ -17,12 +17,12 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import FunctionSpace
+from block_ext.block_function_space import BlockFunctionSpace
 from RBniCS.backends.abstract import ReducedMesh as AbstractReducedMesh
 from RBniCS.utils.decorators import BackendFor, Extends, override
 
 @Extends(AbstractReducedMesh)
-@BackendFor("block_ext", inputs=(FunctionSpace, ))
+@BackendFor("block_ext", inputs=(BlockFunctionSpace, ))
 class ReducedMesh(AbstractReducedMesh):
     pass # TODO
         

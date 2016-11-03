@@ -34,3 +34,5 @@ class HighOrderProperOrthogonalDecomposition(HighOrderProperOrthogonalDecomposit
     def __init__(self, V_or_Z):
         HighOrderProperOrthogonalDecompositionBase.__init__(self, V_or_Z, None, block_ext.RBniCS.backends.block_ext, block_ext.RBniCS.backends.block_ext.wrapping, block_ext.RBniCS.backends.block_ext.TensorSnapshotsList, block_ext.RBniCS.backends.block_ext.TensorBasisList)
         
+    # TODO manca store_snapshot
+        

@@ -17,13 +17,15 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ufl import Form
-from dolfin import FunctionSpace
-from RBniCS.backends.abstract import ProjectedParametrizedTensor as AbstractProjectedParametrizedTensor
-from RBniCS.utils.decorators import BackendFor, Extends, override, list_of
+from RBniCS.backends.basic import copy as basic_copy
+import block_ext.RBniCS.backends.block_ext
+from block_ext.RBniCS.backends.block_ext.function import Function
+from block_ext.RBniCS.backends.block_ext.matrix import Matrix
+from block_ext.RBniCS.backends.block_ext.vector import Vector
+import block_ext.RBniCS.backends.block_ext.wrapping
+from RBniCS.utils.decorators import backend_for
 
-@Extends(AbstractProjectedParametrizedTensor)
-@BackendFor("block_ext", inputs=(list_of(Form), FunctionSpace))
-class ProjectedParametrizedTensor(AbstractProjectedParametrizedTensor):
-    pass # TODO
-        
+@backend_for("block_ext", inputs=((Function.Type(), Matrix.Type(), Vector.Type()), ))
+def copy(arg):
+    return basic_copy(arg, block_ext.RBniCS.backends.block_ext, block_ext.RBniCS.backends.block_ext.wrapping)
+    

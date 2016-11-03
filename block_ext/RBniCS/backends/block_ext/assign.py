@@ -17,12 +17,12 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import Expression, FunctionSpace
-from RBniCS.backends.fenics import ProjectedParametrizedExpression as FEniCSProjectedParametrizedExpression
+from block_ext import block_assign
+from RBniCS.utils.decorators import backend_for
+from block_ext.RBniCS.backends.block_ext.function import Function
 
-@Extends(FEniCSProjectedParametrizedExpression)
-@BackendFor("block_ext", inputs=(Expression, FunctionSpace))
-class ProjectedParametrizedExpression(FEniCSProjectedParametrizedExpression):
-    def __init__(self, expression, original_space):
-        FEniCSProjectedParametrizedExpression.__init__(self, expression, original_space)
-                
+@backend_for("block_ext", inputs=(Function.Type(), Function.Type()))
+def assign(function_to, function_from):
+    block_assign(function_to, function_from)
+        
+        

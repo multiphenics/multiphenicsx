@@ -26,10 +26,10 @@ from RBniCS.utils.decorators import BackendFor, Extends, override
 @BackendFor("block_ext", inputs=(Matrix.Type(), (Matrix.Type(), None), (BlockFunctionSpace, None)))
 class EigenSolver(AbstractEigenSolver):
     @override
-    def __init__(self, A, B=None, V=None): # TODO deve mettere il block discard dofs?
-        self.eigen_solver = BlockSLEPcEigenSolver(A, B)
-        assert V is not None
+    def __init__(self, V, A, B=None, bcs=None): # TODO deve mettere il block discard dofs?
         self.V = V
+        self.eigen_solver = BlockSLEPcEigenSolver(A, B)
+        assert bcs is None # TODO considerare BCs
         
     @override
     def set_parameters(self, parameters):

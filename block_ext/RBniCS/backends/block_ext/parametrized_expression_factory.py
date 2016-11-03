@@ -17,13 +17,15 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import ALE, cells, Expression, Function, FunctionSpace, LagrangeInterpolator, MeshFunctionSizet, VectorFunctionSpace
+from dolfin import Expression
 from block_ext.block_function_space import BlockFunctionSpace
-from RBniCS.backends.abstract import MeshMotion as AbstractMeshMotion
-from RBniCS.utils.decorators import BackendFor, Extends, override, tuple_of
+from RBniCS.backends.fenics import ParametrizedExpressionFactory as FEniCSParametrizedExpressionFactory
+from RBniCS.utils.decorators import BackendFor, Extends, override
 
-@Extends(AbstractMeshMotion)
-@BackendFor("block_ext", inputs=(BlockFunctionSpace, MeshFunctionSizet, tuple_of(tuple_of(str))))
-class MeshMotion(AbstractMeshMotion):
-    pass # TODO
-        
+@Extends(FEniCSParametrizedExpressionFactory)
+@BackendFor("block_ext", inputs=(Expression, BlockFunctionSpace))
+class ParametrizedExpressionFactory(FEniCSParametrizedExpressionFactory):
+    @override
+    def __init__(self, expression, original_space):
+        FEniCSParametrizedExpressionFactory.__init__(self, expression, original_space)
+                

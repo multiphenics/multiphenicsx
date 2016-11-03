@@ -17,7 +17,7 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from block_ext import BlockVector
+from block_ext.block_vector import BlockVector
 
 def Vector():
     raise NotImplementedError("This is dummy function (not required by the interface) just store the Type")
@@ -25,3 +25,6 @@ def Vector():
 def _Vector_Type():
     return BlockVector
 Vector.Type = _Vector_Type
+
+# Preserve generator attribute in algebraic operators, as required by DEIM
+# TODO

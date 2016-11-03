@@ -22,6 +22,6 @@ from RBniCS.utils.decorators import backend_for
 
 _Function_Type = BlockFunction
 
-@backend_for("block_ext", inputs=(list_of(BlockFunctionSpace), ), output=_Function_Type)
+@backend_for("block_ext", inputs=(BlockFunctionSpace, ), output=_Function_Type)
 def Function(block_V):
     return _Function_Type(block_V)

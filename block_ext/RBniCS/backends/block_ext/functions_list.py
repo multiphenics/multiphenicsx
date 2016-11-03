@@ -31,3 +31,5 @@ class FunctionsList(BasicFunctionsList):
     def __init__(self, V_or_Z):
         BasicFunctionsList.__init__(self, V_or_Z, block_ext.RBniCS.backends.block_ext, block_ext.RBniCS.backends.block_ext.wrapping, RBniCS.backends.numpy)
         
+    # TODO considerare la somma, il prodotto ecc.
+        

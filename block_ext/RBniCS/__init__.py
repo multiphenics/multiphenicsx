@@ -17,13 +17,11 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import ALE, cells, Expression, Function, FunctionSpace, LagrangeInterpolator, MeshFunctionSizet, VectorFunctionSpace
-from block_ext.block_function_space import BlockFunctionSpace
-from RBniCS.backends.abstract import MeshMotion as AbstractMeshMotion
-from RBniCS.utils.decorators import BackendFor, Extends, override, tuple_of
+__author__ = "Francesco Ballarin, Gianluigi Rozza, Alberto Sartori (RBniCS) and Francesco Ballarin (block_ext)"
+__copyright__ = "Copyright 2015-2016 by the RBniCS authors and 2016 by the block_ext authors"
+__license__ = "LGPL"
+__version__ = "0.0.1"
+__email__ = "francesco.ballarin@sissa.it, gianluigi.rozza@sissa.it, alberto.sartori@sissa.it"
 
-@Extends(AbstractMeshMotion)
-@BackendFor("block_ext", inputs=(BlockFunctionSpace, MeshFunctionSizet, tuple_of(tuple_of(str))))
-class MeshMotion(AbstractMeshMotion):
-    pass # TODO
-        
+# Import the minimum subset of RBniCS interface to block_ext required to run tutorials
+import block_ext.RBniCS.backends.block_ext

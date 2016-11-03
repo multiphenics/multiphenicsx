@@ -27,8 +27,9 @@ assert has_slepc()
 # Import modules
 from block_ext.RBniCS.backends.block_ext.abs import abs
 from block_ext.RBniCS.backends.block_ext.affine_expansion_storage import AffineExpansionStorage
+from block_ext.RBniCS.backends.block_ext.assign import assign
 from block_ext.RBniCS.backends.block_ext.basis_functions_matrix import BasisFunctionsMatrix
-from block_ext.RBniCS.backends.block_ext.difference import difference
+from block_ext.RBniCS.backends.block_ext.copy import copy
 from block_ext.RBniCS.backends.block_ext.eigen_solver import EigenSolver
 from block_ext.RBniCS.backends.block_ext.evaluate import evaluate
 from block_ext.RBniCS.backends.block_ext.export import export
@@ -40,27 +41,29 @@ from block_ext.RBniCS.backends.block_ext.linear_solver import LinearSolver
 from block_ext.RBniCS.backends.block_ext.matrix import Matrix
 from block_ext.RBniCS.backends.block_ext.max import max
 from block_ext.RBniCS.backends.block_ext.mesh_motion import MeshMotion
+#from block_ext.RBniCS.backends.block_ext.nonlinear_solver import NonlinearSolver
+from block_ext.RBniCS.backends.block_ext.parametrized_expression_factory import ParametrizedExpressionFactory
+from block_ext.RBniCS.backends.block_ext.parametrized_tensor_factory import ParametrizedTensorFactory
 from block_ext.RBniCS.backends.block_ext.product import product
-from block_ext.RBniCS.backends.block_ext.projected_parametrized_expression import ProjectedParametrizedExpression
-from block_ext.RBniCS.backends.block_ext.projected_parametrized_tensor import ProjectedParametrizedTensor
 from block_ext.RBniCS.backends.block_ext.proper_orthogonal_decomposition import ProperOrthogonalDecomposition
 from block_ext.RBniCS.backends.block_ext.reduced_mesh import ReducedMesh
 from block_ext.RBniCS.backends.block_ext.reduced_vertices import ReducedVertices
-from block_ext.RBniCS.backends.block_ext.rescale import rescale
 from block_ext.RBniCS.backends.block_ext.separated_parametrized_form import SeparatedParametrizedForm
 from block_ext.RBniCS.backends.block_ext.snapshots_matrix import SnapshotsMatrix
 from block_ext.RBniCS.backends.block_ext.sum import sum
 from block_ext.RBniCS.backends.block_ext.tensor_basis_list import TensorBasisList
 from block_ext.RBniCS.backends.block_ext.tensor_snapshots_list import TensorSnapshotsList
 from block_ext.RBniCS.backends.block_ext.tensors_list import TensorsList
+#from block_ext.RBniCS.backends.block_ext.time_stepping import TimeStepping
 from block_ext.RBniCS.backends.block_ext.transpose import transpose
 from block_ext.RBniCS.backends.block_ext.vector import Vector
 
 __all__ = [
     'abs',
     'AffineExpansionStorage',
+    'assign',
     'BasisFunctionsMatrix',
-    'difference',
+    'copy',
     'EigenSolver',
     'evaluate',
     'export',
@@ -72,19 +75,20 @@ __all__ = [
     'Matrix',
     'max',
     'MeshMotion',
+#    'NonlinearSolver',
+    'ParametrizedExpressionFactory',
+    'ParametrizedTensorFactory',
     'product',
-    'ProjectedParametrizedExpression',
-    'ProjectedParametrizedTensor',
     'ProperOrthogonalDecomposition',
     'ReducedMesh',
     'ReducedVertices',
-    'rescale',
     'SeparatedParametrizedForm',
     'SnapshotsMatrix',
     'sum',
     'TensorBasisList',
     'TensorSnapshotsList',
     'TensorsList',
+#    'TimeStepping',
     'transpose',
     'Vector'
 ]
