@@ -22,7 +22,7 @@ from RBniCS.utils.decorators import backend_for
 from block_ext.RBniCS.backends.block_ext.function import Function
 
 @backend_for("block_ext", inputs=(Function.Type(), Function.Type()))
-def assign(function_to, function_from):
-    block_assign(function_to, function_from)
+def assign(block_function_to, block_function_from):
+    block_assign(block_function_to, block_function_from)
         
         
