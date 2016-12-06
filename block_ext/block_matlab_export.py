@@ -19,12 +19,14 @@
 from block_ext.block_matrix import BlockMatrix
 from block_ext.block_vector import BlockVector
 from block_ext.monolithic_matrix import MonolithicMatrix
-from block_ext.block_discard_dofs import BlockDiscardDOFs
 from petsc4py import PETSc
 
-def block_matlab_export(block_A, name_A, block_b=None, name_b=None, block_discard_dofs=None):
+def block_matlab_export(block_A, name_A, block_b=None, name_b=None):
     assert isinstance(block_A, BlockMatrix)
     assert isinstance(block_b, BlockVector) or block_b is None
+    if block_b is not None:
+        assert block_A._block_discard_dofs == block_b._block_discard_dofs
+    block_discard_dofs = block_A._block_discard_dofs
     # Init monolithic matrix/vector corresponding to block matrix/vector
     A = MonolithicMatrix(block_A, block_discard_dofs=block_discard_dofs)
     if block_b is not None:

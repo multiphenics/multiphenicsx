@@ -19,39 +19,74 @@
 from dolfin import Function, FunctionSpace
 from block_ext.block_vector import BlockVector
 from block_ext.block_function_space import BlockFunctionSpace
+from block_ext.block_discard_dofs import BlockDiscardDOFs
 
-class BlockFunction(list):
-    def __init__(self, arg1, arg2=None):
-        def init_from_block_function(self, block_function):
-            list.__init__(self, block_function)
-            self._block_vector = BlockVector([f.vector() for f in self])
-            self._block_function_space = BlockFunctionSpace([f.function_space() for f in self])
+class BlockFunction(tuple):
+    def __new__(cls, arg1, arg2=None):
+        def new_from_block_function(cls, block_function):
+            return tuple.__new__(cls, block_function)
             
-        def init_from_block_function_space(self, block_function_space):
+        def new_from_block_function_space(cls, block_function_space):
             functions = list()
-            vectors = list()
             for V in block_function_space:
                 current_function = Function(V)
                 functions.append(current_function)
-                vectors.append(current_function.vector())
-            list.__init__(self, functions)
-            self._block_vector = BlockVector(vectors)
-            self._block_function_space = block_function_space
+            return tuple.__new__(cls, functions)
             
-        def init_from_block_function_space_and_block_vector(self, block_function_space, block_vector):
+        def new_from_block_function_space_and_block_vector(cls, block_function_space, block_vector):
             functions = list()
-            vectors = list()
             for (V, vec) in zip(block_function_space, block_vector):
                 current_function = Function(V, vec)
                 functions.append(current_function)
-                vectors.append(current_function.vector())
-            list.__init__(self, functions)
-            self._block_vector = BlockVector(vectors)
+            return tuple.__new__(cls, functions)
+        
+        assert isinstance(arg1, (list, tuple, BlockFunction, BlockFunctionSpace))
+        assert isinstance(arg2, BlockVector) or arg2 is None
+        if isinstance(arg1, BlockFunction):
+            return new_from_block_function(cls, arg1)
+        elif isinstance(arg1, BlockFunctionSpace):
+            if arg2 is not None:
+                return new_from_block_function_space_and_block_vector(cls, arg1, arg2)
+            else:
+                return new_from_block_function_space(cls, arg1)
+        elif isinstance(arg1, (list, tuple)):
+            assert isinstance(arg1[0], (Function, FunctionSpace))
+            if isinstance(arg1[0], Function):
+                return new_from_block_function(cls, arg1)
+            elif isinstance(arg1[0], FunctionSpace):
+                arg1 = BlockFunctionSpace(arg1)
+                if arg2 is not None:
+                    return new_from_block_function_space_and_block_vector(cls, arg1, arg2)
+                else:
+                    return new_from_block_function_space(cls, arg1)
+            else: # impossible to arrive here anyway, thanks to the assert
+                raise AssertionError("Invalid arguments in BlockFunction constructor.")
+        else: # impossible to arrive here anyway, thanks to the assert
+            raise AssertionError("Invalid arguments in BlockFunction constructor.")
+        
+    def __init__(self, arg1, arg2=None):
+        def init_from_block_function(self, block_function):
+            self._block_vector = block_function.block_vector()
+            self._block_function_space = block_function.block_function_space()
+            
+        def init_from_block_function_space(self, block_function_space):
+            self._block_vector = BlockVector([f.vector() for f in self])
+            self._block_function_space = block_function_space
+            
+        def init_from_block_function_space_and_block_vector(self, block_function_space, block_vector):
+            self._block_vector = block_vector
             self._block_function_space = block_function_space
         
-        assert isinstance(arg1, list) or isinstance(arg1, BlockFunction) or isinstance(arg1, BlockFunctionSpace)
+        assert isinstance(arg1, (list, tuple, BlockFunction, BlockFunctionSpace))
         assert isinstance(arg2, BlockVector) or arg2 is None
-        if isinstance(arg1, list):
+        if isinstance(arg1, BlockFunction):
+            init_from_block_function(self, arg1)
+        elif isinstance(arg1, BlockFunctionSpace):
+            if arg2 is not None:
+                init_from_block_function_space_and_block_vector(self, arg1, arg2)
+            else:
+                init_from_block_function_space(self, arg1)
+        elif isinstance(arg1, (list, tuple)):
             assert isinstance(arg1[0], (Function, FunctionSpace))
             if isinstance(arg1[0], Function):
                 init_from_block_function(self, arg1)
@@ -63,15 +98,14 @@ class BlockFunction(list):
                     init_from_block_function_space(self, arg1)
             else: # impossible to arrive here anyway, thanks to the assert
                 raise AssertionError("Invalid arguments in BlockFunction constructor.")
-        elif isinstance(arg1, BlockFunction):
-            init_from_block_function(self, arg1)
-        elif isinstance(arg1, BlockFunctionSpace):
-            if arg2 is not None:
-                init_from_block_function_space_and_block_vector(self, arg1, arg2)
-            else:
-                init_from_block_function_space(self, arg1)
         else: # impossible to arrive here anyway, thanks to the assert
             raise AssertionError("Invalid arguments in BlockFunction constructor.")
+        
+        # Setup block discard dofs, if any
+        if self._block_function_space.keep is not None:
+            self._block_discard_dofs = BlockDiscardDOFs(self._block_function_space.keep, self._block_function_space)
+        else:
+            self._block_discard_dofs = None
         
     def block_vector(self):
         return self._block_vector
@@ -89,6 +123,5 @@ class BlockFunction(list):
         
     def sub(self, i):
         return self[i]
-            
         
         

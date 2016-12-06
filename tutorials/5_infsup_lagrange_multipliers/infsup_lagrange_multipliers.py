@@ -34,23 +34,20 @@ mesh = generate_mesh(domain, 15)
 boundary_mesh = BoundaryMesh(mesh, "exterior")
 
 ## FUNCTION SPACES ##
-# For interior meshes
+# Interior space
 V = FunctionSpace(mesh, "Lagrange", 2)
-# For boundary
+# Boundary space
 boundary_V = FunctionSpace(boundary_mesh, "Lagrange", 2)
+# For block problem definition
+W = BlockFunctionSpace([V, V], keep=[V, boundary_V])
 
 ## TRIAL/TEST FUNCTIONS ##
-# For interior meshes
-u = TrialFunction(V)
-v = TestFunction(V)
-
-## EXTENDEND TRIAL/TEST FUNCTIONS ##
-# For boundary
-l = TrialFunction(V)
-m = TestFunction(V)
+ul = BlockTrialFunction(W)
+(u, l) = block_split(ul)
+vm = BlockTestFunction(W)
+(v, m) = block_split(vm)
 
 ## MEASURES ##
-# For interior meshes
 dx = Measure("dx")(domain=mesh)
 ds = Measure("ds")(domain=mesh)
 
@@ -59,15 +56,11 @@ a = [[inner(grad(u),grad(v))*dx , - l*v*ds             ],
      [- u*m*ds                  , Constant(0.)*l*m*ds  ]]
 b = [[Constant(0.)*inner(u,v)*dx, Constant(0.)*l*v*ds  ], 
      [Constant(0.)*u*m*ds       , - l*m*ds             ]]
-discard_dofs = BlockDiscardDOFs(
-    [V, boundary_V],
-    [V,          V]
-)
 
 ## SOLVE ##
 A = block_assemble(a)
 B = block_assemble(b)
-eigensolver = BlockSLEPcEigenSolver(A, B, discard_dofs)
+eigensolver = BlockSLEPcEigenSolver(A, B)
 eigensolver.parameters["problem_type"] = "gen_non_hermitian"
 eigensolver.parameters["spectrum"] = "smallest real"
 eigensolver.parameters["spectral_transform"] = "shift-and-invert"
@@ -80,5 +73,5 @@ print "Inf-sup constant: ", sqrt(r)
 
 # Export matrices to MATLAB format to double check the result.
 # You will need to convert the matrix to dense storage and use eig()
-block_matlab_export(A, "A", block_discard_dofs=discard_dofs)
-block_matlab_export(B, "B", block_discard_dofs=discard_dofs)
+block_matlab_export(A, "A")
+block_matlab_export(B, "B")

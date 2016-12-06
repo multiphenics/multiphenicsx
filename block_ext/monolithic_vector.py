@@ -80,13 +80,6 @@ class MonolithicVector(PETScVector):
         assert N == block_vector.blocks.shape[0]
         block_range_start, block_range_end = self.block_range_start, self.block_range_end
         block_discard_dofs = self.block_discard_dofs
-        # this method is used only to copy the monolithic solution to the block solution:
-        # since we assume that the block solution has been already sized properly
-        # (employing subspaces rather than spaces and DOF discard), we have actually
-        # never tested this method in the case block_discard_dofs != None,
-        # although it should work. For safety we assert to be in the case
-        # that we have tested; this assert can be remove after further testing
-        assert block_discard_dofs is None
         
         row_start, row_end = self.vec().getOwnershipRange()
         I = np.argmax(block_range_end > row_start)

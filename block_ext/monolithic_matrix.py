@@ -190,7 +190,7 @@ class MonolithicMatrix(PETScMatrix):
     def create_monolithic_vectors(self, block_x, block_b):
         petsc_x, petsc_b = self.mat().createVecs()
         return (
-            MonolithicVector(block_x, petsc_x, block_discard_dofs=None), # this vector is already sized on the space with discarded DOFs
+            MonolithicVector(block_x, petsc_x, block_discard_dofs=self.block_discard_dofs),
             MonolithicVector(block_b, petsc_b, block_discard_dofs=self.block_discard_dofs)
         )
         

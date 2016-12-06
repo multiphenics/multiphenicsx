@@ -19,12 +19,13 @@
 from block_ext.block_matrix import BlockMatrix
 from block_ext.block_vector import BlockVector
 from block_ext.monolithic_matrix import MonolithicMatrix
-from block_ext.block_discard_dofs import BlockDiscardDOFs
 
-def block_solve(block_A, block_x, block_b, block_discard_dofs=None):
+def block_solve(block_A, block_x, block_b):
     assert isinstance(block_A, BlockMatrix)
     assert isinstance(block_x, BlockVector)
     assert isinstance(block_b, BlockVector)
+    assert block_A._block_discard_dofs == block_b._block_discard_dofs
+    block_discard_dofs = block_A._block_discard_dofs
     # Init monolithic matrix/vector corresponding to block matrix/vector
     A = MonolithicMatrix(block_A, block_discard_dofs=block_discard_dofs)
     x, b = A.create_monolithic_vectors(block_x, block_b)

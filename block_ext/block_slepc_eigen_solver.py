@@ -21,16 +21,16 @@ from block_ext.monolithic_matrix import MonolithicMatrix
 from block_ext.monolithic_vector import MonolithicVector
 
 class BlockSLEPcEigenSolver(SLEPcEigenSolver):
-    def __init__(self, block_A=None, block_B=None, block_discard_dofs=None):
+    def __init__(self, block_A=None, block_B=None):
         self.block_A = block_A
-        (A, B) = self._convert_block_matrices_to_monolithic_matrices(block_A, block_B, block_discard_dofs)
+        (A, B) = self._convert_block_matrices_to_monolithic_matrices(block_A, block_B)
         self._init_monolithic_vectors_for_eigenvectors(A)
         SLEPcEigenSolver.__init__(self, A, B)
         
-    def set_operators(self, block_A=None, block_B=None, block_discard_dofs=None):
+    def set_operators(self, block_A=None, block_B=None):
         assert block_A is not None
         self.block_A = block_A
-        (A, B) = self._convert_block_matrices_to_monolithic_matrices(block_A, block_B, block_discard_dofs)
+        (A, B) = self._convert_block_matrices_to_monolithic_matrices(block_A, block_B)
         self._init_monolithic_vectors_for_eigenvectors(A)
         SLEPcEigenSolver.set_operators(self, A, B)
     
@@ -46,14 +46,16 @@ class BlockSLEPcEigenSolver(SLEPcEigenSolver):
         self._convert_monolithic_vectors_to_block_vectors(r_vec, c_vec, block_r_vec, block_c_vec)
         return r, c, block_r_vec, block_c_vec
         
-    def _convert_block_matrices_to_monolithic_matrices(self, block_A=None, block_B=None, block_discard_dofs=None):
+    def _convert_block_matrices_to_monolithic_matrices(self, block_A=None, block_B=None):
+        if block_A is not None and block_B is not None:
+            assert block_A._block_discard_dofs == block_B._block_discard_dofs
         if block_A is not None:
-            A = MonolithicMatrix(block_A, block_discard_dofs=block_discard_dofs)
+            A = MonolithicMatrix(block_A, block_discard_dofs=block_A._block_discard_dofs)
             A.zero(); A.block_add(block_A)
         else:
             A = None
         if block_B is not None:
-            B = MonolithicMatrix(block_B, block_discard_dofs=block_discard_dofs)
+            B = MonolithicMatrix(block_B, block_discard_dofs=block_B._block_discard_dofs)
             B.zero(); B.block_add(block_B)
         else:
             B = None

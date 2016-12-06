@@ -22,7 +22,7 @@ from block_ext.monolithic_matrix import MonolithicMatrix
 from block_ext.monolithic_vector import MonolithicVector
 
 class BlockNonlinearProblem(NonlinearProblem):
-    def __init__(self, residual_form, block_solution, bcs, jacobian_form, block_discard_dofs=None):
+    def __init__(self, residual_form, block_solution, bcs, jacobian_form):
         NonlinearProblem.__init__(self)
         # Store the input arguments
         self.residual_form = residual_form
@@ -38,8 +38,10 @@ class BlockNonlinearProblem(NonlinearProblem):
         # the first time F or J are called
         self.monolithic_residual = None
         self.monolithic_jacobian = None
+        # Extract block discard dofs from block solution
+        self.block_discard_dofs = block_solution._block_discard_dofs
         # Declare a monolithic_solution vector. The easiest way is to define a temporary monolithic matrix
-        monolithic_jacobian = MonolithicMatrix(self.block_jacobian, preallocate=False, block_discard_dofs=block_discard_dofs)
+        monolithic_jacobian = MonolithicMatrix(self.block_jacobian, preallocate=False, block_discard_dofs=self.block_discard_dofs)
         monolithic_solution, monolithic_residual = monolithic_jacobian.create_monolithic_vectors(self.block_solution.block_vector(), self.block_residual)
         self.monolithic_solution = monolithic_solution
         # Add the current block_solution as initial guess
@@ -48,7 +50,7 @@ class BlockNonlinearProblem(NonlinearProblem):
     def F(self, fenics_residual, fenics_solution):
         # Initialize monolithic wrappers (only once)
         if self.monolithic_residual is None:
-            self.monolithic_residual = MonolithicVector(self.block_residual, as_backend_type(fenics_residual).vec())
+            self.monolithic_residual = MonolithicVector(self.block_residual, as_backend_type(fenics_residual).vec(), block_discard_dofs=self.block_discard_dofs)
         # Shorthands
         residual_form = self.residual_form
         block_residual = self.block_residual
@@ -65,10 +67,16 @@ class BlockNonlinearProblem(NonlinearProblem):
         monolithic_residual.zero(); monolithic_residual.block_add(block_residual)
         monolithic_solution.zero(); monolithic_solution.block_add(block_solution.block_vector())
         
+        from petsc4py import PETSc
+        b_viewer = PETSc.Viewer().createASCII("r.m", comm= PETSc.COMM_WORLD)
+        b_viewer.pushFormat(PETSc.Viewer.Format.ASCII_MATLAB)
+        b_viewer.view(monolithic_residual.vec())
+        b_viewer.popFormat()
+        
     def J(self, fenics_jacobian, _):
         # Initialize monolithic wrappers (only once)
         if self.monolithic_jacobian is None:
-            self.monolithic_jacobian = MonolithicMatrix(self.block_jacobian, as_backend_type(fenics_jacobian).mat())
+            self.monolithic_jacobian = MonolithicMatrix(self.block_jacobian, as_backend_type(fenics_jacobian).mat(), block_discard_dofs=self.block_discard_dofs)
         # Shorthands
         jacobian_form = self.jacobian_form
         block_jacobian = self.block_jacobian

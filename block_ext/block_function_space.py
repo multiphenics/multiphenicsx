@@ -18,9 +18,10 @@
 
 from dolfin import FunctionSpace
 
-class BlockFunctionSpace(list):
-    def __init__(self, arg1, arg2=None):
-        if isinstance(arg1, list):
+class BlockFunctionSpace(tuple):
+    def __new__(cls, arg1, arg2=None, keep=None):
+        if isinstance(arg1, (list, tuple)):
+            assert arg2 is None
             function_spaces = arg1
         else:
             assert arg2 is not None
@@ -29,8 +30,14 @@ class BlockFunctionSpace(list):
             function_spaces = []
             for e in block_element:
                 function_spaces.append(FunctionSpace(mesh, e))
-
-        list.__init__(self, function_spaces)
+                
+        return tuple.__new__(cls, function_spaces)
+        
+    def __init__(self, arg1, arg2=None, keep=None):
+        if keep is not None:
+            self.keep = BlockFunctionSpace(keep)
+        else:
+            self.keep = None
         
     def sub(self, i):
         return self[i]

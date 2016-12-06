@@ -16,6 +16,6 @@
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-class BlockElement(list):
-    def __init__(self, *elements):
-        list.__init__(self, elements)        
+class BlockElement(tuple):
+    def __new__(cls, *elements):
+        return tuple.__new__(cls, elements)

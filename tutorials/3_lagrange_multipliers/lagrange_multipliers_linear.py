@@ -42,23 +42,20 @@ mesh = generate_mesh(domain, 15)
 boundary_mesh = BoundaryMesh(mesh, "exterior")
 
 ## FUNCTION SPACES ##
-# For interior meshes
+# Interior space
 V = FunctionSpace(mesh, "Lagrange", 2)
-# For boundary
+# Boundary space
 boundary_V = FunctionSpace(boundary_mesh, "Lagrange", 2)
+# For block problem definition
+W = BlockFunctionSpace([V, V], keep=[V, boundary_V])
 
 ## TRIAL/TEST FUNCTIONS ##
-# For interior meshes
-u = TrialFunction(V)
-v = TestFunction(V)
-
-## EXTENDEND TRIAL/TEST FUNCTIONS ##
-# For boundary
-l = TrialFunction(V)
-m = TestFunction(V)
+ul = BlockTrialFunction(W)
+(u, l) = block_split(ul)
+vm = BlockTestFunction(W)
+(v, m) = block_split(vm)
 
 ## MEASURES ##
-# For interior meshes
 dx = Measure("dx")(domain=mesh)
 ds = Measure("ds")(domain=mesh)
 
@@ -67,18 +64,14 @@ g = Expression("sin(3*x[0] + 1)*sin(3*x[1] + 1)", element=V.ufl_element())
 a = [[inner(grad(u),grad(v))*dx, l*v*ds               ], 
      [u*m*ds                   , Constant(0.)*l*m*ds]]
 f = [v*dx                      , g*m*ds                ]
-discard_dofs = BlockDiscardDOFs(
-    [V, boundary_V],
-    [V,           V]
-)
 
 ## SOLVE ##
 A = block_assemble(a)
 F = block_assemble(f)
-block_matlab_export(A, "A", F, "F", discard_dofs)
+block_matlab_export(A, "A", F, "F")
 
-U = BlockFunction([V, boundary_V])
-block_solve(A, U.block_vector(), F, discard_dofs)
+U = BlockFunction(W)
+block_solve(A, U.block_vector(), F)
 
 #plot(U[0])
 #plot(U[1])

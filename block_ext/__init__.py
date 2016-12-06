@@ -22,7 +22,6 @@ petsc4py.init(sys.argv)
 from block_ext.block_assemble import block_assemble
 from block_ext.block_derivative import block_derivative
 from block_ext.block_dirichlet_bc import BlockDirichletBC
-from block_ext.block_discard_dofs import BlockDiscardDOFs
 from block_ext.block_element import BlockElement
 from block_ext.block_function import BlockFunction
 from block_ext.block_function_space import BlockFunctionSpace
@@ -39,7 +38,6 @@ __all__ = [
     'block_assemble',
     'block_derivative',
     'BlockDirichletBC',
-    'BlockDiscardDOFs',
     'BlockElement',
     'BlockFunction',
     'BlockFunctionSpace',

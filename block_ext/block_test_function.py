@@ -16,13 +16,12 @@
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import TestFunction, FunctionSpace
+from dolfin import TestFunction
+from block_ext.block_test_trial_function_base import BlockTestTrialFunction_Base
 
-class BlockTestFunction(list):
-    def __init__(self, arg1):
-        assert isinstance(arg1, list)
-        if isinstance(arg1[0], FunctionSpace):
-            list.__init__(self, [TestFunction(V) for V in arg1])
-        else:
-            list.__init__(self, arg1)
+class BlockTestFunction(BlockTestTrialFunction_Base):
+    def __new__(cls, arg1):
+        return BlockTestTrialFunction_Base.__new__(cls, arg1, TestFunction)
         
+    def __init__(self, arg1):
+        BlockTestTrialFunction_Base.__init__(self, arg1, TestFunction)
