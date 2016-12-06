@@ -27,7 +27,7 @@ from mpi4py import MPI
 # This class allows you to assemble on the larger space V
 # (otherwise FEniCS would give an error) and then discard
 # unnecessary dofs
-class BlockDiscardDOFs(list):
+class _BlockDiscardDOFs(object):
     def __init__(self, V_subspaces, V_spaces):
         assert len(V_subspaces) == len(V_spaces)
         N = len(V_subspaces)
@@ -66,6 +66,7 @@ class BlockDiscardDOFs(list):
                 subspace_dofs_extended_integer = subspace_dofs_extended_rounded.astype('i')
                 dofs_to_be_kept_local_indices = np.where(subspace_dofs_extended_integer >= 0)[0]
                 dofs_to_be_kept_global_indices = [V_spaces[I].dofmap().local_to_global_index(local_dof) for local_dof in dofs_to_be_kept_local_indices]
+                assert len(np.unique(subspace_dofs_extended_integer[dofs_to_be_kept_local_indices])) == len(subspace_dofs_extended_integer[dofs_to_be_kept_local_indices])
                 subspace_dofs_extended_dict = dict(zip(dofs_to_be_kept_global_indices, subspace_dofs_extended_integer[dofs_to_be_kept_local_indices]))
                 
                 # Need to (all_)gather the array because row indices operator only local dofs, but
@@ -74,12 +75,13 @@ class BlockDiscardDOFs(list):
                 allgathered_subspace_dofs_extended_dict = comm.bcast(subspace_dofs_extended_dict, root=0)
                 for r in range(1, comm.size):
                     allgathered_subspace_dofs_extended_dict.update( comm.bcast(subspace_dofs_extended_dict, root=r) )
-
+                    
                 self.subspace_dofs_extended.append(allgathered_subspace_dofs_extended_dict)
                 
                 # In contrast, negative dofs should be discarded
                 dofs_to_be_discarded_local_indices = np.where(subspace_dofs_extended_integer < 0)[0]
                 dofs_to_be_discarded_global_indices = [V_spaces[I].dofmap().local_to_global_index(local_dof) for local_dof in dofs_to_be_discarded_local_indices]
+                assert len(np.unique(dofs_to_be_discarded_global_indices)) == len(dofs_to_be_discarded_global_indices)
                 allgathered_dofs_to_be_discarded = comm.bcast(dofs_to_be_discarded_global_indices, root=0)
                 for r in range(1, comm.size):
                     allgathered_dofs_to_be_discarded.extend( comm.bcast(dofs_to_be_discarded_global_indices, root=r) )
@@ -92,23 +94,13 @@ class BlockDiscardDOFs(list):
         self.space_dofs_restricted = list()
         for I in range(N):
             if self.need_to_discard_dofs[I]:
-                local_space_dofs = np.array(range(*V_spaces[I].dofmap().ownership_range()), dtype=np.float)
-                space_dofs = Function(V_spaces[I])
-                space_dofs.vector().set_local(local_space_dofs)
-                space_dofs.vector().apply("")
-                space_dofs_restricted = Function(V_subspaces[I])
-                interpolator.interpolate(space_dofs_restricted, space_dofs)
-                space_dofs_restricted_rounded = np.round(space_dofs_restricted.vector().array())
-                assert np.max(np.abs( space_dofs_restricted_rounded - space_dofs_restricted.vector().array() )) < 1.e-10, \
-                    "Restriction has produced non-integer DOF IDs. Are you sure that the function space and subspace are conforming?"
-                    
-                space_dofs_restricted_integer = space_dofs_restricted_rounded.astype('i')
-                subspace_global_indices = [V_subspaces[I].dofmap().local_to_global_index(local_dof) for local_dof in range(len(space_dofs_restricted_integer))]
-                space_dofs_restricted_dict = dict(zip(subspace_global_indices, space_dofs_restricted_integer))
-    
-                # No need to gather the result, since we only use this in for local row indices
-                self.space_dofs_restricted.append(space_dofs_restricted_dict)
+                self.space_dofs_restricted.append(dict(zip(self.subspace_dofs_extended[I].values(), self.subspace_dofs_extended[I].keys())))
             else:
                 self.space_dofs_restricted.append(None)
                 
-        
+def BlockDiscardDOFs(V_subspaces, V_spaces):
+    if (V_subspaces, V_spaces) not in _all_block_discard_dofs:
+        _all_block_discard_dofs[(V_subspaces, V_spaces)] = _BlockDiscardDOFs(V_subspaces, V_spaces)
+    return _all_block_discard_dofs[(V_subspaces, V_spaces)]
+
+_all_block_discard_dofs = dict()
