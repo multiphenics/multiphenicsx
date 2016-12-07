@@ -75,10 +75,8 @@ bc_m = DirichletBC(W_m.sub(0), Constant((0., 0.)), boundaries, 1)
 
 # Assemble lhs and rhs matrices, "removing" dofs associated to Dirichlet BCs
 def constrain_m(matrix_m, diag_value_m):
-    dummy_m = Function(W_m)
-    DUMMY_m = dummy_m.vector()
-    bc_m.zero(matrix_m)
-    bc_m.zero_columns(matrix_m, DUMMY_m, diag_value_m)
+    constrained_dofs_m = [bc_m.function_space().dofmap().local_to_global_index(local_dof_index) for local_dof_index in bc_m.get_boundary_values().keys()]
+    as_backend_type(matrix_m).mat().zeroRowsColumns(constrained_dofs_m, diag_value_m)
 LHS_m = assemble(lhs_m)
 RHS_m = assemble(rhs_m)
 diag_value_m = 10. # this will insert a spurious eigenvalue equal to 10, which hopefully will not be the smallest one
@@ -108,6 +106,7 @@ normalize(u_fun_1_m, u_fun_2_m, p_fun_m)
 plot(u_fun_1_m, title="Velocity 1 monolithic", mode="color")
 plot(u_fun_2_m, title="Velocity 2 monolithic", mode="color")
 plot(p_fun_m, title="Pressure monolithic", mode="color")
+interactive()
 
 ## -------------------------------------------------- ##
 ##                  block_ext FORMULATION             ##
@@ -131,20 +130,12 @@ rhs_b = [[Constant(0.)*inner(u_b, v_b)*dx, Constant(0.)*div(v_b)*p_b*dx],
 wall_bc_b = DirichletBC(W_b.sub(0), Constant((0., 0.)), boundaries, 1)
 bc_b = BlockDirichletBC([[wall_bc_b], []])
 
-# Assemble lhs and rhs matrices, "removing" dofs associated to Dirichlet BCs
-def constrain_b(matrix_b, diag_value_b):
-    dummy_b = BlockFunction(W_b)
-    DUMMY_b = dummy_b.block_vector()
-    bc_b.zero(matrix_b)
-    bc_b.zero_columns(matrix_b, DUMMY_b, diag_value_b)
+# Assemble lhs and rhs matrices
 LHS_b = block_assemble(lhs_b)
 RHS_b = block_assemble(rhs_b)
-diag_value_b = 10. # this will insert a spurious eigenvalue equal to 10, which hopefully will not be the smallest one
-constrain_b(LHS_b, diag_value_b)
-constrain_b(RHS_b, 1.)
 
 # Solve
-eigensolver_b = BlockSLEPcEigenSolver(LHS_b, RHS_b)
+eigensolver_b = BlockSLEPcEigenSolver(LHS_b, RHS_b, bc_b)
 eigensolver_b.parameters["problem_type"] = "gen_non_hermitian"
 eigensolver_b.parameters["spectrum"] = "smallest real"
 eigensolver_b.parameters["spectral_transform"] = "shift-and-invert"
@@ -164,6 +155,7 @@ normalize(u_fun_1_b, u_fun_2_b, p_fun_b)
 plot(u_fun_1_b, title="Velocity 1 block", mode="color")
 plot(u_fun_2_b, title="Velocity 2 block", mode="color")
 plot(p_fun_b, title="Pressure block", mode="color")
+interactive()
 
 ## -------------------------------------------------- ##
 

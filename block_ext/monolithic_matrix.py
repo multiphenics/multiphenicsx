@@ -24,7 +24,7 @@ from mpi4py import MPI
 class MonolithicMatrix(PETScMatrix):
     # The values of block_matrix are not really used, just the
     # block sparsity pattern
-    def __init__(self, block_matrix, mat=None, preallocate=True, block_discard_dofs=None):
+    def __init__(self, block_matrix, mat=None, preallocate=True, block_discard_dofs=None, block_constrain_dofs=None):
         # Outer dimensions
         M, N = block_matrix.blocks.shape
         
@@ -145,19 +145,37 @@ class MonolithicMatrix(PETScMatrix):
             
         # Store dofs to be discarded while adding
         self.block_discard_dofs = block_discard_dofs
+        # Store dofs to be constrained while adding
+        assert block_constrain_dofs is None or isinstance(block_constrain_dofs, tuple)
+        if block_constrain_dofs is None or len(block_constrain_dofs[0]) == 0:
+            self.block_constrain_dofs = None
+            self.block_constrain_dofs__value = None
+        else:
+            self.block_constrain_dofs = block_constrain_dofs[0]
+            self.block_constrain_dofs__value = block_constrain_dofs[1]
         
     def block_add(self, block_matrix):
         import numpy as np
         M, N, m, n = self.M, self.N, self.m, self.n
         assert M, N == block_matrix.blocks.shape
         block_discard_dofs = self.block_discard_dofs
+        block_constrain_dofs = self.block_constrain_dofs
+        block_constrain_dofs__value = self.block_constrain_dofs__value
         
         for I in range(M):
+            if block_constrain_dofs is not None and len(block_constrain_dofs[I]) > 0:
+                row_constrain_dofs = block_constrain_dofs[I]
+            else:
+                row_constrain_dofs = None
             if block_discard_dofs is not None and block_discard_dofs.need_to_discard_dofs[I]:
                 row_reposition_dofs = block_discard_dofs.subspace_dofs_extended[I]
             else:
                 row_reposition_dofs = None
             for J in range(N):
+                if block_constrain_dofs is not None and len(block_constrain_dofs[J]) > 0:
+                    col_constrain_dofs = block_constrain_dofs[J]
+                else:
+                    col_constrain_dofs = None
                 if block_discard_dofs is not None and block_discard_dofs.need_to_discard_dofs[J]:
                     col_reposition_dofs = block_discard_dofs.subspace_dofs_extended[J]
                 else:
@@ -172,15 +190,28 @@ class MonolithicMatrix(PETScMatrix):
                     else:
                         row = i
                     row += sum(m[:I])
-                    cols, vals = block.getRow(i)
+                    if row_constrain_dofs is not None and i in row_constrain_dofs:
+                        if I == J:
+                            cols = np.array([i], dtype='i')
+                            vals = np.array([block_constrain_dofs__value])
+                            cols_to_preserve = set([i])
+                        else:
+                            continue # zero the row
+                    else:
+                        cols, vals = block.getRow(i)
+                        cols_to_preserve = set()
                     if col_reposition_dofs is not None:
                         cols_to_vals = dict(zip(cols, vals))
                         cols_after_discard = set(cols).difference(block_discard_dofs.dofs_to_be_discarded[J])
+                        if len(cols_after_discard) == 0:
+                            continue
+                        if col_constrain_dofs is not None:
+                            cols_after_discard = set(cols_after_discard).difference(col_constrain_dofs.difference(cols_to_preserve))
+                            if len(cols_after_discard) == 0:
+                                continue
                         cols = [col_reposition_dofs[c] for c in cols_after_discard]
                         vals = [cols_to_vals[c] for c in cols_after_discard]
                         assert len(cols) == len(vals)
-                        if len(cols) == 0:
-                            continue
                         cols = np.array(cols)
                         vals = np.array(vals)
                     cols[:] += sum(n[:J])
