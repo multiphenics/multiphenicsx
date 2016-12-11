@@ -118,10 +118,101 @@ class BlockFunction(tuple):
         
     def copy(self, deepcopy=False):
         assert deepcopy # no usage envisioned for the other case
-        functions = [f.copy(deepcopy) for f in self]
-        return BlockFunction(functions)
+        block_vector_copy = BlockVector([f.copy(deepcopy).vector() for f in self])
+        return BlockFunction(self._block_function_space, block_vector_copy)
         
     def sub(self, i):
         return self[i]
         
-        
+    def __add__(self, other):
+        if isinstance(other, BlockFunction):
+            output = self.copy(deepcopy=True)
+            for (block_fun_output, block_fun_other) in zip(output, other):
+                block_fun_output.vector().add_local(block_fun_other.vector().array())
+                block_fun_output.vector().apply("add")
+            return output
+        else:
+            return NotImplemented
+
+    def __sub__(self, other):
+        if isinstance(other, BlockFunction):
+            output = self.copy(deepcopy=True)
+            for (block_fun_output, block_fun_other) in zip(output, other):
+                block_fun_output.vector().add_local(- block_fun_other.vector().array())
+                block_fun_output.vector().apply("add")
+            return output
+        else:
+            return NotImplemented
+
+    def __mul__(self, other):
+        if isinstance(other, float):
+            output = self.copy(deepcopy=True)
+            for block_fun_output in output:
+                block_fun_output.vector()._scale(other)
+            return output
+        else:
+            return NotImplemented
+
+    def __div__(self, other):
+        if isinstance(other, float):
+            output = self.copy(deepcopy=True)
+            for block_fun_output in output:
+                block_fun_output.vector()._scale(1./other)
+            return output
+        else:
+            return NotImplemented
+
+    def __truediv__(self, other):
+        return self.__div__(other)
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __rsub__(self, other):
+        output = self.__sub__(other)
+        output.__imul__(-1.0)
+        return output
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __rdiv__(self, other):
+        return NotImplemented
+
+    def __iadd__(self, other):
+        if isinstance(other, BlockFunction):
+            for (block_fun_output, block_fun_other) in zip(self, other):
+                block_fun_output.vector().add_local(block_fun_other.vector().array())
+                block_fun_output.vector().apply("add")
+            return self
+        else:
+            return NotImplemented
+
+    def __isub__(self, other):
+        if isinstance(other, BlockFunction):
+            for (block_fun_output, block_fun_other) in zip(self, other):
+                block_fun_output.vector().add_local(- block_fun_other.vector().array())
+                block_fun_output.vector().apply("add")
+            return self
+        else:
+            return NotImplemented
+
+    def __imul__(self, other):
+        if isinstance(other, float):
+            for block_fun_output in self:
+                block_fun_output.vector()._scale(other)
+            return self
+        else:
+            return NotImplemented
+
+    def __idiv__(self, other):
+        if isinstance(other, float):
+            for block_fun_output in self:
+                block_fun_output.vector()._scale(1./other)
+            return self
+        else:
+            return NotImplemented
+
+    def __itruediv__(self, other):
+        return self.__idiv__(other)
+
