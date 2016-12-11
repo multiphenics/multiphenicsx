@@ -42,3 +42,6 @@ class BlockFunctionSpace(tuple):
     def sub(self, i):
         return self[i]
         
+    def mesh(self):
+        return self[0].mesh()
+        
