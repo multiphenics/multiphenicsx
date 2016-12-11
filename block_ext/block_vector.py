@@ -19,3 +19,16 @@
 from block import block_vec
 
 BlockVector = block_vec
+
+# Preserve _block_discard_dofs attribute in algebraic operators
+def preserve_block_discard_dofs_attribute(operator):
+    original_operator = getattr(BlockVector, operator)
+    def custom_operator(self, other):
+        assert hasattr(self, "_block_discard_dofs")
+        output = original_operator(self, other)
+        output._block_discard_dofs = self._block_discard_dofs
+        return output
+    setattr(BlockVector, operator, custom_operator)
+    
+for operator in ("__add__", "__radd__", "__iadd__", "__sub__", "__rsub__", "__isub__", "__mul__", "__rmul__", "__imul__"):
+    preserve_block_discard_dofs_attribute(operator)
