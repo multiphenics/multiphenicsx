@@ -75,9 +75,6 @@ solver = BlockPETScSNESSolver(problem)
 solver.parameters.update(snes_solver_parameters["snes_solver"])
 solver.solve()
 
-z = Function(V, assemble(F[0]))
-plot(z, interactive=True)
-
 plot(u)
 plot(l)
 interactive()
