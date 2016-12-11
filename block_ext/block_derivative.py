@@ -16,14 +16,13 @@
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from numpy import empty
 from dolfin import derivative
 
 def block_derivative(F, u, du):
     assert len(F) == len(u) == len(du)
-    J = []
+    J = empty((len(F), len(u)), dtype=object)
     for i in range(len(F)):
-        J_i = []
         for j in range(len(u)):
-            J_i.append(derivative(F[i], u[j], du[j]))
-        J.append(J_i)
+            J[i, j] = derivative(F[i], u[j], du[j])
     return J
