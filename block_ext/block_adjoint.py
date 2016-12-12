@@ -27,5 +27,10 @@ def block_adjoint(block_form):
     block_adjoint_form = empty((N, M), dtype=object)
     for I in range(N):
         for J in range(M):
-            block_adjoint_form[I, J] = adjoint(block_form[I, J])
+            if isinstance(block_form, list):
+                block_adjoint_form[I, J] = adjoint(block_form[I][J])
+            elif isinstance(block_form, array):
+                block_adjoint_form[I, J] = adjoint(block_form[I, J])
+            else:
+                raise AssertionError("Invalid case in block_adjoint.")
     return block_adjoint_form
