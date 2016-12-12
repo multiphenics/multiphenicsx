@@ -25,7 +25,7 @@ import RBniCS.backends.numpy
 from RBniCS.utils.decorators import BackendFor, Extends, override
 
 @Extends(BasicBasisFunctionsMatrix)
-@BackendFor("block_ext", online_backend="NumPy", inputs=(BlockFunctionSpace, ))
+@BackendFor("block_ext", online_backend="numpy", inputs=(BlockFunctionSpace, ))
 class BasisFunctionsMatrix(BasicBasisFunctionsMatrix):
     @override
     def __init__(self, V_or_Z):

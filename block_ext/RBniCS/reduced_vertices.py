@@ -17,12 +17,8 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import Mesh, Point
-from RBniCS.backends.abstract import ReducedVertices as AbstractReducedVertices
-from RBniCS.utils.decorators import BackendFor, Extends, override
+from dolfin import Mesh
+from RBniCS.backends.fenics import ReducedVertices
+from RBniCS.utils.decorators import SameBackendFor
 
-@Extends(AbstractReducedVertices)
-@BackendFor("block_ext", inputs=(int, )) # TODO temporarily disable input to avoid assertion in backend for
-class ReducedVertices(AbstractReducedVertices):
-    pass # TODO
-        
+SameBackendFor("block_ext", "fenics", ReducedVertices, inputs=(Mesh, ))

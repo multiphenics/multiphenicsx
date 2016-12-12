@@ -27,4 +27,16 @@ def _Vector_Type():
 Vector.Type = _Vector_Type
 
 # Preserve generator attribute in algebraic operators, as required by DEIM
-# TODO
+def preserve_generator_attribute(operator):
+    original_operator = getattr(BlockVector, operator)
+    def custom_operator(self, other):
+        if hasattr(self, "generator"):
+            output = original_operator(self, other)
+            output.generator = self.generator
+            return output
+        else:
+            return original_operator(self, other)
+    setattr(BlockVector, operator, custom_operator)
+    
+for operator in ("__add__", "__radd__", "__iadd__", "__sub__", "__rsub__", "__isub__", "__mul__", "__rmul__", "__imul__"):
+    preserve_generator_attribute(operator)

@@ -17,14 +17,25 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from block_ext.block_function_space import BlockFunctionSpace
-from RBniCS.backends.fenics import ReducedMesh as FEniCSReducedMesh
+import types
+from block_ext import BlockDirichletBC, BlockNonlinearProblem, BlockPETScSNESSolver
+from RBniCS.backends.abstract import NonlinearSolver as AbstractNonlinearSolver
+from block_ext.RBniCS.function import Function
 from RBniCS.utils.decorators import BackendFor, Extends, override
 
-@Extends(FEniCSReducedMesh)
-@BackendFor("block_ext", inputs=(BlockFunctionSpace, ))
-class ReducedMesh(FEniCSReducedMesh):
-    def __init__(self, V, subdomain_data=None, **kwargs):
-        FEniCSReducedMesh.__init__(self, V, subdomain_data, **kwargs)
+@Extends(AbstractNonlinearSolver)
+@BackendFor("block_ext", inputs=(types.FunctionType, Function.Type(), types.FunctionType, (BlockDirichletBC, None)))
+class NonlinearSolver(AbstractNonlinearSolver):
+    @override
+    def __init__(self, block_jacobian_eval, block_solution, block_residual_eval, block_bcs=None):
+        problem = BlockNonlinearProblem(block_residual_eval, block_solution, block_bcs, block_jacobian_eval)
+        self.solver  = BlockPETScSNESSolver(problem)
+            
+    @override
+    def set_parameters(self, parameters):
+        self.solver.parameters.update(parameters)
         
+    @override
+    def solve(self):
+        return self.solver.solve()
         

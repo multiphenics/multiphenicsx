@@ -17,15 +17,9 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import ALE, cells, Expression, Function, FunctionSpace, LagrangeInterpolator, MeshFunctionSizet, VectorFunctionSpace
-from block_ext.block_function_space import BlockFunctionSpace
-from RBniCS.backends.fenics import MeshMotion as FEniCSMeshMotion
-from RBniCS.utils.decorators import BackendFor, Extends, override, tuple_of
+from block_ext.RBniCS.wrapping_utils.get_zero_form import get_zero_rank_1_form, get_zero_rank_2_form
 
-@Extends(FEniCSMeshMotion)
-@BackendFor("block_ext", inputs=(BlockFunctionSpace, MeshFunctionSizet, tuple_of(tuple_of(str))))
-class MeshMotion(FEniCSMeshMotion):
-    @override
-    def __init__(self, V, subdomains, shape_parametrization_expression):
-        FEniCSMeshMotion.__init__(self, V, subdomains, shape_parametrization_expression)
-        
+__all__ = [
+    'get_zero_rank_1_form',
+    'get_zero_rank_2_form'
+]

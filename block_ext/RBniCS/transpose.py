@@ -27,7 +27,7 @@ import block_ext.RBniCS.wrapping
 import RBniCS.backends.numpy
 from RBniCS.utils.decorators import backend_for
 
-@backend_for("block_ext", online_backend="NumPy", inputs=((BasisFunctionsMatrix, Function.Type(), FunctionsList, Vector.Type()), ))
+@backend_for("block_ext", online_backend="numpy", inputs=((BasisFunctionsMatrix, Function.Type(), FunctionsList, Vector.Type()), ))
 def transpose(arg):
     return basic_transpose(arg, block_ext.RBniCS, block_ext.RBniCS.wrapping, RBniCS.backends.numpy)
     

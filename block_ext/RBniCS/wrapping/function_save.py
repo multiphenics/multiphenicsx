@@ -18,12 +18,13 @@
 #
 
 from dolfin import File
+from RBniCS.backends.fenics.wrapping.function_save import _write_to_pvd_file
 
-def function_save(fun, directory, filename):
+def function_save(fun, directory, filename, suffix=None):
     for (block_index, block_fun) in enumerate(fun):
-        full_filename = str(directory) + "/" + filename + "_block_" + str(block_index) + ".pvd"
-        file = File(full_filename, "compressed")
-        file << block_fun
+        _write_to_pvd_file(block_fun, directory, filename + "_block_" + str(block_index), suffix)
+        if suffix is not None:
+            filename = filename + "." + str(suffix)
         full_filename = str(directory) + "/" + filename + "_block_" + str(block_index) + ".xml"
         file = File(full_filename)
         file << block_fun

@@ -20,7 +20,9 @@
 from dolfin import File
 from block_ext import BlockFunction
 
-def function_load(directory, filename, block_V):
+def function_load(directory, filename, block_V, suffix=None):
+    if suffix is not None:
+        filename = filename + "." + str(suffix)
     fun = BlockFunction(block_V)
     for (block_index, block_fun) in enumerate(fun):
         full_filename = str(directory) + "/" + filename + "_block_" + str(block_index) + ".xml"

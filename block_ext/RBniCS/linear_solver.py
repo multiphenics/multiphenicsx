@@ -22,14 +22,29 @@ from RBniCS.backends.abstract import LinearSolver as AbstractLinearSolver
 from block_ext.RBniCS.matrix import Matrix
 from block_ext.RBniCS.vector import Vector
 from block_ext.RBniCS.function import Function
-from RBniCS.utils.decorators import BackendFor, Extends, list_of, override
+from RBniCS.utils.decorators import BackendFor, Extends, override
 
 @Extends(AbstractLinearSolver)
-@BackendFor("block_ext", inputs=(Matrix.Type(), Function.Type(), Vector.Type(), (list_of(BlockDirichletBC), None)))
+@BackendFor("block_ext", inputs=(Matrix.Type(), Function.Type(), Vector.Type(), (BlockDirichletBC, None)))
 class LinearSolver(AbstractLinearSolver):
     @override
-    def __init__(self, lhs, solution, rhs, bcs=None): # TODO deve mettere il block discard dofs?
-        assert False # TODO considerare le BCs
+    def __init__(self, lhs, solution, rhs, bcs=None):
+        self.solution = solution
+        if bcs is not None:
+            # Create a copy of lhs and rhs, in order not to 
+            # change the original references when applying bcs
+            self.lhs = lhs.copy()
+            self.lhs._block_discard_dofs = lhs._block_discard_dofs
+            self.rhs = rhs.copy()
+            self.rhs._block_discard_dofs = lhs._block_discard_dofs
+            self.bcs = bcs
+            # Apply BCs
+            self.bcs.apply(self.lhs)
+            self.bcs.apply(self.rhs)
+        else:
+            self.lhs = lhs
+            self.rhs = rhs
+            self.bcs = bcs
         
     @override
     def set_parameters(self, parameters):

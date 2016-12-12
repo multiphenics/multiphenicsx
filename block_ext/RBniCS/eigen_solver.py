@@ -18,18 +18,24 @@
 #
 
 from block_ext import BlockFunction, BlockFunctionSpace, BlockSLEPcEigenSolver
+from block_ext.RBniCS.affine_expansion_storage import AffineExpansionStorage
 from block_ext.RBniCS.matrix import Matrix
+from block_ext.RBniCS.product import product
+from block_ext.RBniCS.sum import sum
 from RBniCS.backends.abstract import EigenSolver as AbstractEigenSolver
 from RBniCS.utils.decorators import BackendFor, Extends, override
 
 @Extends(AbstractEigenSolver)
-@BackendFor("block_ext", inputs=(Matrix.Type(), (Matrix.Type(), None), (BlockFunctionSpace, None)))
+@BackendFor("block_ext", inputs=(BlockFunctionSpace, Matrix.Type(), (Matrix.Type(), None), (AffineExpansionStorage, None)))
 class EigenSolver(AbstractEigenSolver):
     @override
-    def __init__(self, V, A, B=None, bcs=None): # TODO deve mettere il block discard dofs?
+    def __init__(self, V, A, B=None, bcs=None):
         self.V = V
-        self.eigen_solver = BlockSLEPcEigenSolver(A, B)
-        assert bcs is None # TODO considerare BCs
+        if bcs is not None:
+            bcs_sum = sum(product(len(bcs)*(1., ), bcs))
+            self.eigen_solver = BlockSLEPcEigenSolver(A, B, bcs_sum)
+        else:
+            self.eigen_solver = BlockSLEPcEigenSolver(A, B, None)
         
     @override
     def set_parameters(self, parameters):

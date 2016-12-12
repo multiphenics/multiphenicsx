@@ -18,14 +18,8 @@
 #
 
 from dolfin import Expression
-from block_ext.block_function_space import BlockFunctionSpace
-from RBniCS.backends.fenics import ParametrizedExpressionFactory as FEniCSParametrizedExpressionFactory
-from RBniCS.utils.decorators import BackendFor, Extends, override
+from RBniCS.backends.fenics import ParametrizedExpressionFactory
+from RBniCS.utils.decorators import SameBackendFor
 
-@Extends(FEniCSParametrizedExpressionFactory)
-@BackendFor("block_ext", inputs=(Expression, BlockFunctionSpace))
-class ParametrizedExpressionFactory(FEniCSParametrizedExpressionFactory):
-    @override
-    def __init__(self, expression, original_space):
-        FEniCSParametrizedExpressionFactory.__init__(self, expression, original_space)
+SameBackendFor("block_ext", "fenics", ParametrizedExpressionFactory, inputs=(Expression, ))
                 

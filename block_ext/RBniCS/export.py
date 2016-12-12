@@ -17,21 +17,17 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from RBniCS.backends.basic import export as basic_export
+import block_ext.RBniCS
 from block_ext.RBniCS.function import Function
 from block_ext.RBniCS.matrix import Matrix
 from block_ext.RBniCS.vector import Vector
-from block_ext.RBniCS.wrapping import function_save, tensor_save
+import block_ext.RBniCS.wrapping
 from RBniCS.utils.decorators import backend_for
 from RBniCS.utils.io import Folders
 
 # Export a solution to file
-@backend_for("block_ext", inputs=((Function.Type(), Matrix.Type(), Vector.Type()), (Folders.Folder, str), str))
-def export(solution, directory, filename):
-    assert isinstance(solution, (Function.Type(), Matrix.Type(), Vector.Type()))
-    if isinstance(solution, Function.Type()):
-        function_save(solution, directory, filename)
-    elif isinstance(solution, (Matrix.Type(), Vector.Type())):
-        tensor_save(solution, directory, filename)
-    else: # impossible to arrive here anyway, thanks to the assert
-        raise AssertionError("Invalid arguments in export.")
+@backend_for("block_ext", inputs=((Function.Type(), Matrix.Type(), Vector.Type()), (Folders.Folder, str), str, (int, None)))
+def export(solution, directory, filename, suffix=None, component=None):
+    basic_export(solution, directory, filename, suffix, component, block_ext.RBniCS, block_ext.RBniCS.wrapping)
     

@@ -18,7 +18,7 @@
 #
 
 from block_ext.RBniCS.function import Function
-from RBniCS.backends.fenics.wrapping import vectorized_matrix_inner_vectorized_matrix as fenics_vectorized_matrix_inner_vectorized_matrix
+from RBniCS.backends.fenics.wrapping import matrix_mul_vector as fenics_matrix_mul_vector, vectorized_matrix_inner_vectorized_matrix as fenics_vectorized_matrix_inner_vectorized_matrix
 
 def matrix_mul_vector(matrix, vector):
     if isinstance(vector, Function.Type()):

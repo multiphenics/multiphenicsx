@@ -22,7 +22,7 @@ from block_ext.RBniCS.tensors_list import TensorsList
 from RBniCS.utils.decorators import BackendFor, Extends
 
 @Extends(TensorsList)
-@BackendFor("block_ext", online_backend="NumPy", inputs=(BlockFunctionSpace, ))
+@BackendFor("block_ext", online_backend="numpy", inputs=(BlockFunctionSpace, ))
 class TensorSnapshotsList(TensorsList):
     pass
 

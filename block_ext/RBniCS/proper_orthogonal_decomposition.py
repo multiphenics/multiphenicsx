@@ -34,5 +34,7 @@ class ProperOrthogonalDecomposition(ProperOrthogonalDecompositionBase):
     def __init__(self, V_or_Z, X):
         ProperOrthogonalDecompositionBase.__init__(self, V_or_Z, X, block_ext.RBniCS, block_ext.RBniCS.wrapping, block_ext.RBniCS.SnapshotsMatrix, block_ext.RBniCS.FunctionsList)
         
-    # TODO manca store_snapshot
+    @override
+    def store_snapshot(self, snapshot, component=None, weight=None):
+        self.snapshots_matrix.enrich(snapshot, component, weight)
         

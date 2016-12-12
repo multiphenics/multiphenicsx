@@ -27,14 +27,18 @@ def tensors_list_mul_online_function(tensors_list, online_function):
     online_vector = online_function.block_vector()
     
     output = tensor_copy(tensors_list._list[0])
-    output.zero()
     assert isinstance(output, (Matrix.Type(), Vector.Type()))
     if isinstance(output, Matrix.Type()):
-        for (i, matrix_i) in enumerate(tensors_list._list):
-            output += matrix_i*online_vector.item(i)
+        for (block_index_I, block_output_I) in enumerate(output):
+            for (block_index_I, block_output_IJ) in enumerate(block_output_I):
+                block_output_IJ.zero()
+                for (i, matrix_i) in enumerate(tensors_list._list):
+                    block_output_IJ += matrix_i[block_index_I, block_index_J]*online_vector.item(i)
     elif isinstance(output, Vector.Type()):
-        for (i, vector_i) in enumerate(tensors_list._list):
-            output.add_local(vector_i.block_array()*online_vector.item(i))
+        for (block_index, block_output) in enumerate(output):
+            block_output.zero()
+            for (i, vector_i) in enumerate(tensors_list._list):
+                block_output.add_local(vector_i[block_index].array()*online_vector.item(i))
         output.apply("add")
     else: # impossible to arrive here anyway, thanks to the assert
         raise AssertionError("Invalid arguments in tensors_list_mul_online_function.")

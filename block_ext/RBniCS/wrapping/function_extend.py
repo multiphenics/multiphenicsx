@@ -20,8 +20,10 @@
 from dolfin import assign
 from block_ext.RBniCS.function import Function
 
-def function_extend(function, component, V):
+def function_extend(function, component, V, weight):
     extended_function = Function(V)
     assign(extended_function[component], function)
-    return function
+    if weight is not None:
+        extended_function[component].vector()[:] *= weight
+    return extended_function
 

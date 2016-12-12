@@ -18,7 +18,9 @@
 #
 
 def gram_schmidt_projection_step(new_basis, X, old_basis, transpose):
-    new_basis.block_vector().add_local( - (transpose(new_basis)*X*old_basis) * old_basis.block_vector().block_array() )
-    new_basis.block_vector().apply("add")
+    angle = - (transpose(new_basis)*X*old_basis)
+    for (block_index, (block_new_basis, block_old_basis)) in enumerate(zip(new_basis, old_basis)):
+        block_new_basis.vector().add_local( angle * block_old_basis.vector().array() )
+        block_new_basis.vector().apply("add")
     return new_basis
 

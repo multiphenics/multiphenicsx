@@ -22,7 +22,7 @@ from block_ext.RBniCS.functions_list import FunctionsList
 from RBniCS.utils.decorators import BackendFor, Extends
 
 @Extends(FunctionsList)
-@BackendFor("block_ext", online_backend="NumPy", inputs=(BlockFunctionSpace, ))
+@BackendFor("block_ext", online_backend="numpy", inputs=(BlockFunctionSpace, ))
 class SnapshotsMatrix(FunctionsList):
     pass
 

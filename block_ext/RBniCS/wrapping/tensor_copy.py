@@ -22,5 +22,10 @@ from block_ext.RBniCS.vector import Vector
 
 def tensor_copy(tensor):
     assert isinstance(tensor, (Matrix.Type(), Vector.Type()))
-    return tensor.copy()
+    output = tensor.copy()
+    # Preserve generator for I/O
+    if hasattr(tensor, "generator"):
+        output.generator = tensor.generator
+    #
+    return output
 

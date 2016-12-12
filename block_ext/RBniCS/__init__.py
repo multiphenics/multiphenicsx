@@ -32,6 +32,7 @@ assert has_slepc()
 
 # Import modules
 from block_ext.RBniCS.abs import abs
+from block_ext.RBniCS.adjoint import adjoint
 from block_ext.RBniCS.affine_expansion_storage import AffineExpansionStorage
 from block_ext.RBniCS.assign import assign
 from block_ext.RBniCS.basis_functions_matrix import BasisFunctionsMatrix
@@ -47,7 +48,7 @@ from block_ext.RBniCS.linear_solver import LinearSolver
 from block_ext.RBniCS.matrix import Matrix
 from block_ext.RBniCS.max import max
 from block_ext.RBniCS.mesh_motion import MeshMotion
-#from block_ext.RBniCS.nonlinear_solver import NonlinearSolver
+from block_ext.RBniCS.nonlinear_solver import NonlinearSolver
 from block_ext.RBniCS.parametrized_expression_factory import ParametrizedExpressionFactory
 from block_ext.RBniCS.parametrized_tensor_factory import ParametrizedTensorFactory
 from block_ext.RBniCS.product import product
@@ -60,12 +61,13 @@ from block_ext.RBniCS.sum import sum
 from block_ext.RBniCS.tensor_basis_list import TensorBasisList
 from block_ext.RBniCS.tensor_snapshots_list import TensorSnapshotsList
 from block_ext.RBniCS.tensors_list import TensorsList
-#from block_ext.RBniCS.time_stepping import TimeStepping
+from block_ext.RBniCS.time_stepping import TimeStepping
 from block_ext.RBniCS.transpose import transpose
 from block_ext.RBniCS.vector import Vector
 
 __all__ = [
     'abs',
+    'adjoint',
     'AffineExpansionStorage',
     'assign',
     'BasisFunctionsMatrix',
@@ -81,7 +83,7 @@ __all__ = [
     'Matrix',
     'max',
     'MeshMotion',
-#    'NonlinearSolver',
+    'NonlinearSolver',
     'ParametrizedExpressionFactory',
     'ParametrizedTensorFactory',
     'product',
@@ -94,11 +96,7 @@ __all__ = [
     'TensorBasisList',
     'TensorSnapshotsList',
     'TensorsList',
-#    'TimeStepping',
+    'TimeStepping',
     'transpose',
     'Vector'
 ]
-
-# Enable block_ext backend
-from RBniCS.utils.factories import enable_backend
-enable_backend("block_ext")

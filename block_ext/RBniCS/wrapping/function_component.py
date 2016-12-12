@@ -21,11 +21,15 @@ from dolfin import assign
 from block_ext import BlockFunction
 from block_ext.RBniCS.wrapping.function_copy import function_copy
 
-def function_component(function, component, copy):
+def function_component(function, component, copy, weight):
     if component is None:
         if copy is True:
-            return function_copy(function)
+            output = function_copy(function)
+            if weight is not None:
+                output.vector()[:] *= weight
+            return output
         else:
+            assert weight is None, "It is not possible to weigh components without copying the vector"
             return function
     else:
         assert copy is True, "It is not possible to clear components without copying the vector"
@@ -38,5 +42,7 @@ def function_component(function, component, copy):
         )
         function_component = Function(block_V) # zero by default
         assign(function_component.sub(component), function.sub(component))
+        if weight is not None:
+            function_component.vector()[:] *= weight
         return function_component
 

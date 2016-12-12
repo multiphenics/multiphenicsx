@@ -18,11 +18,13 @@
 #
 
 from ufl import Form
-from dolfin import Constant, DirichletBC
-from block_ext import BlockDirichletBC
+from dolfin import Constant, DirichletBC, project
+from block_ext.block_dirichlet_bc import BlockDirichletBC
 from block_ext.RBniCS.affine_expansion_storage import AffineExpansionStorage
 from block_ext.RBniCS.matrix import Matrix
 from block_ext.RBniCS.vector import Vector
+from block_ext.RBniCS.function import Function
+from block_ext.RBniCS.wrapping import function_copy, tensor_copy
 from RBniCS.utils.decorators import backend_for, ThetaType
 
 # product function to assemble truth/reduced affine expansions. To be used in combination with sum,
@@ -31,45 +33,65 @@ from RBniCS.utils.decorators import backend_for, ThetaType
 def product(thetas, operators, thetas2=None):
     assert thetas2 is None
     assert len(thetas) == len(operators)
-    if operators.type() == "BlockDirichletBC": 
-        # Detect BCs defined on the same boundary
-        combined_list = list() # of dict() from (function space, boundary) to value
-        for (op_index, op) in enumerate(operators):
-            for component in op:
-                combined = dict() # from (function space, boundary) to value
-                for bc in component:
+    if operators.type() == "BlockDirichletBC":
+        n_components = len(operators[0])
+        output = list()
+        for block_index in range(n_components):
+            # Detect BCs defined on the same boundary
+            combined = dict() # from (function space, boundary) to value
+            for (op_index, op) in enumerate(operators):
+                for bc in op[block_index]:
                     key = (bc.function_space, bc.subdomains, bc.subdomain_id)
                     if not key in combined:
                         combined[key] = list()
                     combined[key].append((bc.value, op_index))
-                combined_list.append(combined)
-        # Sum them
-        output_list = list()
-        num_components = len(operators[0])
-        for component in range(num_components):
-            output = list()
+            # Sum them
+            output_current_component = list()
             for (key, item) in combined.iteritems():
                 value = 0
                 for addend in item:
                     value += Constant(thetas[ addend[1] ]) * addend[0]
-                output.append(DirichletBC(key[0], value, key[1], key[2]))
-            output_list.append(output)
-        return ProductOutput( BlockDirichletBC(output_list) )
+                try:
+                    dirichlet_bc = DirichletBC(key[0], value, key[1], key[2])
+                except RuntimeError: # key[0] was a subspace, and DirichletBC does not handle collapsing
+                    V_collapsed = key[0].collapse()
+                    value_projected_collapsed = project(value, V_collapsed)
+                    dirichlet_bc = DirichletBC(key[0], value_projected_collapsed, key[1], key[2])
+                output_current_component.append(dirichlet_bc)
+            output.append(output_current_component)
+        return ProductOutput(BlockDirichletBC(output))
+    elif operators.type() == "BlockFunction":
+        output = function_copy(operators[0])
+        output.vector().zero()
+        for (block_index, block_output) in enumerate(output):
+            for (theta, operator) in zip(thetas, operators):
+                block_output.vector().add_local(theta*operator.block_vector()[block_index].array())
+            block_output.vector().apply("add")
+        return ProductOutput(output)
     elif operators.type() == "BlockForm":
         assert isinstance(operators[0], (Matrix.Type(), Vector.Type()))
         # Carry out the dot product (with respect to the index q over the affine expansion)
         if isinstance(operators[0], Matrix.Type()):
-            output = operators[0].copy()
-            output.zero()
-            for (theta, operator) in zip(thetas, operators):
-                output += theta*operator
+            output = tensor_copy(operators[0])
+            for (block_index_I, block_output_I) in enumerate(output):
+                for (block_index_J, block_output_IJ) in enumerate(block_output_I):
+                    block_output_IJ.zero()
+                    for (theta, operator) in zip(thetas, operators):
+                        block_output_IJ += theta*operator[block_index_I, block_index_J]
+            output._block_discard_dofs = operators[0]._block_discard_dofs
+            for operator in operators:
+                assert output._block_discard_dofs == operator._block_discard_dofs
             return ProductOutput(output)
         elif isinstance(operators[0], Vector.Type()):
-            output = operators[0].copy()
-            output.zero()
-            for (theta, operator) in zip(thetas, operators):
-                output.add_local(theta*operator.array())
-            output.apply("add")
+            output = tensor_copy(operators[0])
+            for (block_index, block_output) in enumerate(output):
+                block_output.zero()
+                for (theta, operator) in zip(thetas, operators):
+                    block_output.add_local(theta*operator[block_index].array())
+                block_output.apply("add")
+            output._block_discard_dofs = operators[0]._block_discard_dofs
+            for operator in operators:
+                assert output._block_discard_dofs == operator._block_discard_dofs
             return ProductOutput(output)
         else: # impossible to arrive here anyway thanks to the assert
             raise AssertionError("product(): invalid operands.")
