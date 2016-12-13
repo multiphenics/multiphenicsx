@@ -89,79 +89,92 @@ Q_element = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 ## -------------------------------------------------- ##
 
 ## STANDARD FEniCS FORMULATION BY FEniCS MixedElement ##
-# Function spaces
-W_element_m = MixedElement(V_element, Q_element)
-W_m = FunctionSpace(mesh, W_element_m)
+def run_monolithic():
+    # Function spaces
+    W_element = MixedElement(V_element, Q_element)
+    W = FunctionSpace(mesh, W_element)
 
-# Test and trial functions: monolithic
-vq_m  = TestFunction(W_m)
-(v_m, q_m) = split(vq_m)
-dup_m = TrialFunction(W_m)
-up_m = Function(W_m)
-(u_m, p_m) = split(up_m)
+    # Test and trial functions: monolithic
+    vq  = TestFunction(W)
+    (v, q) = split(vq)
+    dup = TrialFunction(W)
+    up = Function(W)
+    (u, p) = split(up)
 
-# Variational forms
-F_m = (   nu*inner(grad(u_m), grad(v_m))*dx
-      + inner(grad(u_m)*u_m, v_m)*dx
-      - div(v_m)*p_m*dx
-      + div(u_m)*q_m*dx
-    )
-J_m = derivative(F_m, up_m, dup_m)
+    # Variational forms
+    F = (   nu*inner(grad(u), grad(v))*dx
+          + inner(grad(u)*u, v)*dx
+          - div(v)*p*dx
+          + div(u)*q*dx
+        )
+    J = derivative(F, up, dup)
 
-# Boundary conditions
-inlet_bc_m = DirichletBC(W_m.sub(0), u_in, boundaries, 1)
-wall_bc_m = DirichletBC(W_m.sub(0), u_wall, boundaries, 2)
-bc_m = [inlet_bc_m, wall_bc_m]
+    # Boundary conditions
+    inlet_bc = DirichletBC(W.sub(0), u_in, boundaries, 1)
+    wall_bc = DirichletBC(W.sub(0), u_wall, boundaries, 2)
+    bc = [inlet_bc, wall_bc]
 
-# Solve
-problem_m = NonlinearVariationalProblem(F_m, up_m, bc_m, J_m)
-solver_m  = NonlinearVariationalSolver(problem_m)
-solver_m.parameters.update(snes_solver_parameters)
-solver_m.solve()
+    # Solve
+    problem = NonlinearVariationalProblem(F, up, bc, J)
+    solver  = NonlinearVariationalSolver(problem)
+    solver.parameters.update(snes_solver_parameters)
+    solver.solve()
 
-# Extract solutions
-(u_m, p_m) = up_m.split()
-#plot(u_m, title="Velocity monolithic", mode="color")
-#plot(p, title="Pressure monolithic", mode="color")
+    # Extract solutions
+    (u, p) = up.split()
+    #plot(u, title="Velocity monolithic", mode="color")
+    #plot(p, title="Pressure monolithic", mode="color")
+    
+    return (u, p)
+    
+(u_m, p_m) = run_monolithic()
 
 ## -------------------------------------------------- ##
 
 ##                  block_ext FORMULATION             ##
-# Function spaces
-W_element_b = BlockElement(V_element, Q_element)
-W_b = BlockFunctionSpace(mesh, W_element_b)
+def run_block():
+    # Function spaces
+    W_element = BlockElement(V_element, Q_element)
+    W = BlockFunctionSpace(mesh, W_element)
 
-# Test and trial functions
-vq_b  = BlockTestFunction(W_b)
-(v_b, q_b) = block_split(vq_b)
-dup_b = BlockTrialFunction(W_b)
-up_b = BlockFunction(W_b)
-u_b, p_b = block_split(up_b)
+    # Test and trial functions
+    vq  = BlockTestFunction(W)
+    (v, q) = block_split(vq)
+    dup = BlockTrialFunction(W)
+    up = BlockFunction(W)
+    u, p = block_split(up)
 
-# Variational forms
-F_b = [nu*inner(grad(u_b), grad(v_b))*dx + inner(grad(u_b)*u_b, v_b)*dx - div(v_b)*p_b*dx,
-       div(u_b)*q_b*dx]
-J_b = block_derivative(F_b, up_b, dup_b)
+    # Variational forms
+    F = [nu*inner(grad(u), grad(v))*dx + inner(grad(u)*u, v)*dx - div(v)*p*dx,
+           div(u)*q*dx]
+    J = block_derivative(F, up, dup)
 
-# Boundary conditions
-inlet_bc_b = DirichletBC(W_b.sub(0), u_in, boundaries, 1)
-wall_bc_b = DirichletBC(W_b.sub(0), u_wall, boundaries, 2)
-bc_b = BlockDirichletBC([[inlet_bc_b, wall_bc_b], []])
+    # Boundary conditions
+    inletc = DirichletBC(W.sub(0), u_in, boundaries, 1)
+    wallc = DirichletBC(W.sub(0), u_wall, boundaries, 2)
+    bc = BlockDirichletBC([[inletc, wallc], []])
 
-# Solve
-problem_b = BlockNonlinearProblem(F_b, up_b, bc_b, J_b)
-solver_b  = BlockPETScSNESSolver(problem_b)
-solver_b.parameters.update(snes_solver_parameters["snes_solver"])
-solver_b.solve()
+    # Solve
+    problem = BlockNonlinearProblem(F, up, bc, J)
+    solver  = BlockPETScSNESSolver(problem)
+    solver.parameters.update(snes_solver_parameters["snes_solver"])
+    solver.solve()
 
-# Extract solutions
-(u_b, p_b) = up_b.block_split()
-#plot(u_b, title="Velocity block", mode="color")
-#plot(p_b, title="Pressure block", mode="color")
+    # Extract solutions
+    (u, p) = up.block_split()
+    #plot(u, title="Velocity block", mode="color")
+    #plot(p, title="Pressure block", mode="color")
+    
+    return (u, p)
+    
+(u_b, p_b) = run_block()
 
 ## -------------------------------------------------- ##
 
 ##                  ERROR COMPUTATION                 ##
-plot(u_b - u_m, title="Velocity error", mode="color")
-plot(p_b - p_m, title="Pressure error", mode="color")
-interactive()
+def run_error(u_m, u_b, p_m, p_b):
+    plot(u_b - u_m, title="Velocity error", mode="color")
+    plot(p_b - p_m, title="Pressure error", mode="color")
+    interactive()
+
+run_error(u_m, u_b, p_m, p_b)
