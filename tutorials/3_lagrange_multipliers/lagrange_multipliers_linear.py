@@ -81,7 +81,7 @@ block_solve(A, U.block_vector(), F)
 A_ex = assemble(a[0][0])
 F_ex = assemble(f[0])
 def boundary(x, on_boundary):
-	return on_boundary
+    return on_boundary
 bc_ex = DirichletBC(V, g, boundary)
 bc_ex.apply(A_ex)
 bc_ex.apply(F_ex)

@@ -84,7 +84,7 @@ u_ex = Function(V)
 F_ex = replace(F[0], {u: u_ex})
 J_ex = derivative(F_ex, u_ex, du)
 def boundary(x, on_boundary):
-	return on_boundary
+    return on_boundary
 bc_ex = DirichletBC(V, g, boundary)
 problem_ex = NonlinearVariationalProblem(F_ex, u_ex, bc_ex, J_ex)
 solver_ex = NonlinearVariationalSolver(problem_ex)

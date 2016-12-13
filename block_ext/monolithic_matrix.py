@@ -77,7 +77,7 @@ class MonolithicMatrix(PETScMatrix):
                 total_rows_to_be_discarded = np.sum([len(block_discard_dofs.dofs_to_be_discarded[I]) for I in range(M) if block_discard_dofs.need_to_discard_dofs[I]])
                 rows_to_be_discarded_per_process = total_rows_to_be_discarded/comm_size # integer division
                 if comm_rank == comm_size - 1:
-                	rows_to_be_discarded_per_process = total_rows_to_be_discarded - (comm_size - 1)*rows_to_be_discarded_per_process
+                    rows_to_be_discarded_per_process = total_rows_to_be_discarded - (comm_size - 1)*rows_to_be_discarded_per_process
                 ownership_range_sum -= rows_to_be_discarded_per_process
             # Preallocation:
             if preallocate:
