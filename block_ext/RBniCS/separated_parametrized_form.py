@@ -19,7 +19,7 @@
 
 import hashlib
 from numpy import array, copy, ndarray as array_type
-from ufl import Form
+from ufl import Form, replace
 from dolfin import dx
 from RBniCS.backends.abstract import SeparatedParametrizedForm as AbstractSeparatedParametrizedForm
 from RBniCS.backends.fenics import SeparatedParametrizedForm as FEniCSSeparatedParametrizedForm
@@ -37,7 +37,7 @@ class SeparatedParametrizedForm(AbstractSeparatedParametrizedForm):
         self._separated_parametrized_block_forms__indices = list() # of int or tuple of int
         # Prepare them
         if isinstance(block_form, list):
-            for block_form_I in block_form:
+            for (I, block_form_I) in enumerate(block_form):
                 assert isinstance(block_form_I, (Form, list))
                 if isinstance(block_form_I, Form): # block vector
                     self._reference_zero_block_form.append( get_zero_rank_1_form(block_form_I) )
@@ -45,7 +45,7 @@ class SeparatedParametrizedForm(AbstractSeparatedParametrizedForm):
                     self._separated_parametrized_block_forms__indices.append(I)
                 elif isinstance(block_form_I, list): # block matrix
                     self._reference_zero_block_form.append( list() )
-                    for block_form_IJ in block_form_I:
+                    for (J, block_form_IJ) in enumerate(block_form_I):
                         assert isinstance(block_form_IJ, Form)
                         self._reference_zero_block_form[-1].append( get_zero_rank_2_form(block_form_IJ) )
                         self._separated_parametrized_block_forms.append( FEniCSSeparatedParametrizedForm(block_form_IJ) )
@@ -74,7 +74,7 @@ class SeparatedParametrizedForm(AbstractSeparatedParametrizedForm):
             raise AssertionError("Invalid argument to SeparatedParametrizedForm.__init__")
         self._reference_zero_block_form = array(self._reference_zero_block_form, dtype=object)
         
-        # Prepare
+        # Storage for separation
         self._separated_parametrized_block_forms__coefficients = list()
         self._separated_parametrized_block_forms__form_unchanged = list()
         self._separated_parametrized_block_forms__form_with_placeholders = list()
@@ -97,14 +97,24 @@ class SeparatedParametrizedForm(AbstractSeparatedParametrizedForm):
         
     @override
     def separate(self):
-        assert len(self._separated_parametrized_block_forms__placeholders_length) == 0
-        for f in self._separated_parametrized_block_forms:
+        assert len(self._separated_parametrized_block_forms__coefficients) == 0
+        assert len(self._separated_parametrized_block_forms__form_unchanged) == 0
+        assert len(self._separated_parametrized_block_forms__form_with_placeholders) == 0
+        assert len(self._separated_parametrized_block_forms__placeholders) == 0
+        assert len(self._separated_parametrized_block_forms__placeholder_names) == 0
+        for (idx, f) in zip(self._separated_parametrized_block_forms__indices, self._separated_parametrized_block_forms):
             f.separate()
             self._separated_parametrized_block_forms__coefficients.extend(f._coefficients)
-            self._separated_parametrized_block_forms__form_unchanged.extend(f._form_unchanged)
-            self._separated_parametrized_block_forms__form_with_placeholders.extend(f._form_with_placeholders)
             self._separated_parametrized_block_forms__placeholders.extend(f._placeholders)
             self._separated_parametrized_block_forms__placeholder_names.extend(f._placeholder_names)
+            for u in f._form_unchanged:
+                block_form = array(self._reference_zero_block_form, copy=True)
+                block_form[idx] = u
+                self._separated_parametrized_block_forms__form_unchanged.append(block_form)
+            for p in f._form_with_placeholders:
+                block_form = array(self._reference_zero_block_form, copy=True)
+                block_form[idx] = p
+                self._separated_parametrized_block_forms__form_with_placeholders.append(block_form)
             
     @override        
     @property
@@ -118,9 +128,12 @@ class SeparatedParametrizedForm(AbstractSeparatedParametrizedForm):
 
     @override        
     def replace_placeholders(self, i, new_coefficients):
-        assert len(new_coefficients) == len(self._placeholders[i])
+        assert len(new_coefficients) == len(self._separated_parametrized_block_forms__placeholders[i])
         replacements = dict((placeholder, new_coefficient) for (placeholder, new_coefficient) in zip(self._separated_parametrized_block_forms__placeholders[i], new_coefficients))
-        return replace(self._separated_parametrized_block_forms__form_with_placeholders[i], replacements)
+        replaced_form = array(self._separated_parametrized_block_forms__form_with_placeholders[i], copy=True)
+        idx = self._separated_parametrized_block_forms__indices[i]
+        replaced_form[idx] = replace(replaced_form[idx], replacements)
+        return replaced_form
         
     @override
     def placeholders_names(self, i):
