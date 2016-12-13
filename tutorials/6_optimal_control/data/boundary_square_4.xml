@@ -1,0 +1,180 @@
+<?xml version="1.0"?>
+<dolfin xmlns:dolfin="http://fenicsproject.org">
+  <mesh celltype="interval" dim="2">
+    <vertices size="33">
+      <vertex index="0" x="1.000000000000000e+00" y="0.000000000000000e+00" />
+      <vertex index="1" x="1.000000000000000e+00" y="3.125000000000000e-02" />
+      <vertex index="2" x="1.000000000000000e+00" y="1.000000000000000e+00" />
+      <vertex index="3" x="1.000000000000000e+00" y="9.687500000000000e-01" />
+      <vertex index="4" x="1.000000000000000e+00" y="5.000000000000000e-01" />
+      <vertex index="5" x="1.000000000000000e+00" y="4.687500000000000e-01" />
+      <vertex index="6" x="1.000000000000000e+00" y="5.312500000000000e-01" />
+      <vertex index="7" x="1.000000000000000e+00" y="2.500000000000000e-01" />
+      <vertex index="8" x="1.000000000000000e+00" y="2.187500000000000e-01" />
+      <vertex index="9" x="1.000000000000000e+00" y="2.812500000000000e-01" />
+      <vertex index="10" x="1.000000000000000e+00" y="7.500000000000000e-01" />
+      <vertex index="11" x="1.000000000000000e+00" y="7.812500000000000e-01" />
+      <vertex index="12" x="1.000000000000000e+00" y="7.187500000000000e-01" />
+      <vertex index="13" x="1.000000000000000e+00" y="8.750000000000000e-01" />
+      <vertex index="14" x="1.000000000000000e+00" y="9.062500000000000e-01" />
+      <vertex index="15" x="1.000000000000000e+00" y="8.437500000000000e-01" />
+      <vertex index="16" x="1.000000000000000e+00" y="3.750000000000000e-01" />
+      <vertex index="17" x="1.000000000000000e+00" y="3.437500000000000e-01" />
+      <vertex index="18" x="1.000000000000000e+00" y="4.062500000000000e-01" />
+      <vertex index="19" x="1.000000000000000e+00" y="1.250000000000000e-01" />
+      <vertex index="20" x="1.000000000000000e+00" y="1.562500000000000e-01" />
+      <vertex index="21" x="1.000000000000000e+00" y="9.375000000000000e-02" />
+      <vertex index="22" x="1.000000000000000e+00" y="6.250000000000000e-01" />
+      <vertex index="23" x="1.000000000000000e+00" y="6.562500000000000e-01" />
+      <vertex index="24" x="1.000000000000000e+00" y="5.937500000000000e-01" />
+      <vertex index="25" x="1.000000000000000e+00" y="9.375000000000000e-01" />
+      <vertex index="26" x="1.000000000000000e+00" y="6.250000000000000e-02" />
+      <vertex index="27" x="1.000000000000000e+00" y="5.625000000000000e-01" />
+      <vertex index="28" x="1.000000000000000e+00" y="3.125000000000000e-01" />
+      <vertex index="29" x="1.000000000000000e+00" y="4.375000000000000e-01" />
+      <vertex index="30" x="1.000000000000000e+00" y="1.875000000000000e-01" />
+      <vertex index="31" x="1.000000000000000e+00" y="6.875000000000000e-01" />
+      <vertex index="32" x="1.000000000000000e+00" y="8.125000000000000e-01" />
+    </vertices>
+    <cells size="32">
+      <interval index="0" v0="0" v1="1" />
+      <interval index="1" v0="2" v1="3" />
+      <interval index="2" v0="4" v1="5" />
+      <interval index="3" v0="4" v1="6" />
+      <interval index="4" v0="7" v1="8" />
+      <interval index="5" v0="7" v1="9" />
+      <interval index="6" v0="10" v1="11" />
+      <interval index="7" v0="10" v1="12" />
+      <interval index="8" v0="13" v1="14" />
+      <interval index="9" v0="13" v1="15" />
+      <interval index="10" v0="16" v1="17" />
+      <interval index="11" v0="16" v1="18" />
+      <interval index="12" v0="19" v1="20" />
+      <interval index="13" v0="19" v1="21" />
+      <interval index="14" v0="22" v1="23" />
+      <interval index="15" v0="22" v1="24" />
+      <interval index="16" v0="14" v1="25" />
+      <interval index="17" v0="3" v1="25" />
+      <interval index="18" v0="1" v1="26" />
+      <interval index="19" v0="21" v1="26" />
+      <interval index="20" v0="6" v1="27" />
+      <interval index="21" v0="24" v1="27" />
+      <interval index="22" v0="17" v1="28" />
+      <interval index="23" v0="9" v1="28" />
+      <interval index="24" v0="18" v1="29" />
+      <interval index="25" v0="5" v1="29" />
+      <interval index="26" v0="8" v1="30" />
+      <interval index="27" v0="20" v1="30" />
+      <interval index="28" v0="23" v1="31" />
+      <interval index="29" v0="12" v1="31" />
+      <interval index="30" v0="11" v1="32" />
+      <interval index="31" v0="15" v1="32" />
+    </cells>
+    <data>
+      <mesh_function>
+        <mesh_value_collection name="parent_vertex_indices" type="uint" dim="0" size="64">
+          <value cell_index="0" local_entity="0" value="6" />
+          <value cell_index="0" local_entity="1" value="8" />
+          <value cell_index="1" local_entity="0" value="9" />
+          <value cell_index="1" local_entity="1" value="10" />
+          <value cell_index="2" local_entity="0" value="15" />
+          <value cell_index="2" local_entity="1" value="16" />
+          <value cell_index="3" local_entity="0" value="15" />
+          <value cell_index="3" local_entity="1" value="17" />
+          <value cell_index="4" local_entity="0" value="36" />
+          <value cell_index="4" local_entity="1" value="37" />
+          <value cell_index="5" local_entity="0" value="36" />
+          <value cell_index="5" local_entity="1" value="38" />
+          <value cell_index="6" local_entity="0" value="42" />
+          <value cell_index="6" local_entity="1" value="43" />
+          <value cell_index="7" local_entity="0" value="42" />
+          <value cell_index="7" local_entity="1" value="44" />
+          <value cell_index="8" local_entity="0" value="54" />
+          <value cell_index="8" local_entity="1" value="55" />
+          <value cell_index="9" local_entity="0" value="54" />
+          <value cell_index="9" local_entity="1" value="56" />
+          <value cell_index="10" local_entity="0" value="78" />
+          <value cell_index="10" local_entity="1" value="79" />
+          <value cell_index="11" local_entity="0" value="78" />
+          <value cell_index="11" local_entity="1" value="80" />
+          <value cell_index="12" local_entity="0" value="84" />
+          <value cell_index="12" local_entity="1" value="85" />
+          <value cell_index="13" local_entity="0" value="84" />
+          <value cell_index="13" local_entity="1" value="86" />
+          <value cell_index="14" local_entity="0" value="93" />
+          <value cell_index="14" local_entity="1" value="94" />
+          <value cell_index="15" local_entity="0" value="93" />
+          <value cell_index="15" local_entity="1" value="95" />
+          <value cell_index="16" local_entity="0" value="55" />
+          <value cell_index="16" local_entity="1" value="100" />
+          <value cell_index="17" local_entity="0" value="10" />
+          <value cell_index="17" local_entity="1" value="100" />
+          <value cell_index="18" local_entity="0" value="8" />
+          <value cell_index="18" local_entity="1" value="107" />
+          <value cell_index="19" local_entity="0" value="86" />
+          <value cell_index="19" local_entity="1" value="107" />
+          <value cell_index="20" local_entity="0" value="17" />
+          <value cell_index="20" local_entity="1" value="114" />
+          <value cell_index="21" local_entity="0" value="95" />
+          <value cell_index="21" local_entity="1" value="114" />
+          <value cell_index="22" local_entity="0" value="79" />
+          <value cell_index="22" local_entity="1" value="116" />
+          <value cell_index="23" local_entity="0" value="38" />
+          <value cell_index="23" local_entity="1" value="116" />
+          <value cell_index="24" local_entity="0" value="80" />
+          <value cell_index="24" local_entity="1" value="117" />
+          <value cell_index="25" local_entity="0" value="16" />
+          <value cell_index="25" local_entity="1" value="117" />
+          <value cell_index="26" local_entity="0" value="37" />
+          <value cell_index="26" local_entity="1" value="119" />
+          <value cell_index="27" local_entity="0" value="85" />
+          <value cell_index="27" local_entity="1" value="119" />
+          <value cell_index="28" local_entity="0" value="94" />
+          <value cell_index="28" local_entity="1" value="126" />
+          <value cell_index="29" local_entity="0" value="44" />
+          <value cell_index="29" local_entity="1" value="126" />
+          <value cell_index="30" local_entity="0" value="43" />
+          <value cell_index="30" local_entity="1" value="127" />
+          <value cell_index="31" local_entity="0" value="56" />
+          <value cell_index="31" local_entity="1" value="127" />
+        </mesh_value_collection>
+      </mesh_function>
+      <mesh_function>
+        <mesh_value_collection name="parent_cell_indices" type="uint" dim="1" size="32">
+          <value cell_index="0" local_entity="0" value="5" />
+          <value cell_index="1" local_entity="0" value="6" />
+          <value cell_index="2" local_entity="0" value="10" />
+          <value cell_index="3" local_entity="0" value="11" />
+          <value cell_index="4" local_entity="0" value="24" />
+          <value cell_index="5" local_entity="0" value="25" />
+          <value cell_index="6" local_entity="0" value="28" />
+          <value cell_index="7" local_entity="0" value="29" />
+          <value cell_index="8" local_entity="0" value="36" />
+          <value cell_index="9" local_entity="0" value="37" />
+          <value cell_index="10" local_entity="0" value="52" />
+          <value cell_index="11" local_entity="0" value="53" />
+          <value cell_index="12" local_entity="0" value="56" />
+          <value cell_index="13" local_entity="0" value="57" />
+          <value cell_index="14" local_entity="0" value="62" />
+          <value cell_index="15" local_entity="0" value="63" />
+          <value cell_index="16" local_entity="0" value="72" />
+          <value cell_index="17" local_entity="0" value="73" />
+          <value cell_index="18" local_entity="0" value="86" />
+          <value cell_index="19" local_entity="0" value="87" />
+          <value cell_index="20" local_entity="0" value="100" />
+          <value cell_index="21" local_entity="0" value="101" />
+          <value cell_index="22" local_entity="0" value="104" />
+          <value cell_index="23" local_entity="0" value="105" />
+          <value cell_index="24" local_entity="0" value="106" />
+          <value cell_index="25" local_entity="0" value="107" />
+          <value cell_index="26" local_entity="0" value="110" />
+          <value cell_index="27" local_entity="0" value="111" />
+          <value cell_index="28" local_entity="0" value="124" />
+          <value cell_index="29" local_entity="0" value="125" />
+          <value cell_index="30" local_entity="0" value="126" />
+          <value cell_index="31" local_entity="0" value="127" />
+        </mesh_value_collection>
+      </mesh_function>
+    </data>
+  </mesh>
+</dolfin>
