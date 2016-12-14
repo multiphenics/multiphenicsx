@@ -57,7 +57,7 @@ W = BlockFunctionSpace(mesh, W_el)
 
 ## PROBLEM DATA ##
 alpha = Constant(1.e-5)
-x, y = symbols('x[0], x[1]')
+x, y = symbols("x[0], x[1]")
 psi_d = 10*(1-cos(0.8*pi*x))*(1-cos(0.8*pi*y))*(1-x)**2*(1-y)**2
 v_d = Expression((ccode(psi_d.diff(y, 1)), ccode(-psi_d.diff(x, 1))), element=W.sub(0).ufl_element())
 f = Constant((0., 0.))

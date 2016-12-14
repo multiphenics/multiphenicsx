@@ -48,7 +48,7 @@ using an adjoint formulation solved by a one shot approach
 # Interior mesh
 mesh = Mesh("data/square.xml")
 boundaries = MeshFunction("size_t", mesh, "data/square_facet_region.xml")
-# Dirichlet boundary mesh
+# Neumann boundary mesh
 boundary_mesh = Mesh("data/boundary_square_2.xml")
 
 ## FUNCTION SPACES ##

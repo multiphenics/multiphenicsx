@@ -23,11 +23,14 @@ from sympy import ccode, cos, symbols
 """
 In this tutorial we solve the optimal control problem
 
-min J(y, u) = 1/2 \int_{\Omega} (v - v_d)^2 dx + \alpha/2 \int_{\Omega} u^2 dx
+min J(y, u) = 1/2 \int_{\Omega} (v - v_d)^2 dx + \alpha/2 \int_{\Gamma_2} u^2 dx
 s.t.
-    - \nu \Delta v + v \cdot \nabla v + \nabla p = f + u   in \Omega
+    - \nu \Delta v + v \cdot \nabla v + \nabla p = f       in \Omega
                                            div v = 0       in \Omega
-                                               v = 0       on \partial\Omega
+                                               v = 0       on \Gamma_1
+                           pn - \nu \partial_n v = u       on \Gamma_2
+                                               v = 0       on \Gamma_3
+                                               v = 0       on \Gamma_4
              
 where
     \Omega                      unit square
@@ -43,25 +46,30 @@ using an adjoint formulation solved by a one shot approach
 """
 
 ## MESH ##
+# Interior mesh
 mesh = Mesh("data/square.xml")
 boundaries = MeshFunction("size_t", mesh, "data/square_facet_region.xml")
+# Neumann boundary mesh
+boundary_mesh = Mesh("data/boundary_square_2.xml")
 
 ## FUNCTION SPACES ##
-Y_velocity = VectorElement("Lagrange", mesh.ufl_cell(), 2)
-Y_pressure = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
-U = VectorElement("Lagrange", mesh.ufl_cell(), 2)
-L = FiniteElement("R", mesh.ufl_cell(), 0)
-Q_velocity = VectorElement("Lagrange", mesh.ufl_cell(), 2)
-Q_pressure = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
-W_el = BlockElement(Y_velocity, Y_pressure, U, L, Q_velocity, Q_pressure)
-W = BlockFunctionSpace(mesh, W_el)
+# Interior spaces
+Y_velocity = VectorFunctionSpace(mesh, "Lagrange", 2)
+Y_pressure = FunctionSpace(mesh, "Lagrange", 1)
+U = VectorFunctionSpace(mesh, "Lagrange", 2)
+Q_velocity = VectorFunctionSpace(mesh, "Lagrange", 2)
+Q_pressure = FunctionSpace(mesh, "Lagrange", 1)
+# Boundary control space
+boundary_U = VectorFunctionSpace(boundary_mesh, "Lagrange", 2)
+# Block space
+W = BlockFunctionSpace([Y_velocity, Y_pressure, U, Q_velocity, Q_pressure], keep=[Y_velocity, Y_pressure, boundary_U, Q_velocity, Q_pressure])
 
 ## PROBLEM DATA ##
 alpha = Constant(1.e-5)
 x, y = symbols("x[0], x[1]")
 psi_d = 10*(1-cos(0.8*pi*x))*(1-cos(0.8*pi*y))*(1-x)**2*(1-y)**2
 v_d = Expression((ccode(psi_d.diff(y, 1)), ccode(-psi_d.diff(x, 1))), element=W.sub(0).ufl_element())
-nu = Constant(0.01)
+nu = Constant(0.1)
 f = Constant((0., 0.))
 
 ## NONLINEAR SOLVER PARAMETERS ##
@@ -74,36 +82,37 @@ snes_solver_parameters = {"nonlinear_solver": "snes",
 ## TRIAL/TEST FUNCTIONS AND SOLUTION ##
 trial = BlockTrialFunction(W)
 solution = BlockFunction(W)
-(v, p, u, l, z, b) = block_split(solution)
+(v, p, u, z, b) = block_split(solution)
 test = BlockTestFunction(W)
-(w, q, r, m, s, d) = block_split(test)
+(w, q, r, s, d) = block_split(test)
+
+## MEASURES ##
+ds = Measure("ds")(subdomain_data=boundaries)
 
 ## OPTIMALITY CONDITIONS  ##
 r =  [nu*inner(grad(z), grad(s))*dx + inner(grad(s)*v, z)*dx + inner(grad(v)*s, z)*dx - b*div(s)*dx + inner(v - v_d, s)*dx,
-      - d*div(z)*dx + l*d*dx                                                                                              ,
-      alpha*inner(u, r)*dx - inner(z, r)*dx                                                                               ,
-      p*m*dx                                                                                                              ,
-      nu*inner(grad(v), grad(w))*dx + inner(grad(v)*v, w)*dx - p*div(w)*dx - inner(u + f, w)*dx                           ,
+      - d*div(z)*dx                                                                                                       ,
+      alpha*inner(u, r)*ds(2) - inner(z, r)*ds(2)                                                                         ,
+      nu*inner(grad(v), grad(w))*dx + inner(grad(v)*v, w)*dx - p*div(w)*dx - inner(f, w)*dx - inner(u, w)*ds(2)           ,
       - q*div(v)*dx                                                                                                        ]
 dr = block_derivative(r, solution, trial)
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant((0., 0.)), boundaries, idx) for idx in (1, 2, 3, 4)],
+bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant((0., 0.)), boundaries, idx) for idx in (1, 3, 4)],
                        [],
                        [],
-                       [],
-                       [DirichletBC(W.sub(4), Constant((0., 0.)), boundaries, idx) for idx in (1, 2, 3, 4)],
+                       [DirichletBC(W.sub(3), Constant((0., 0.)), boundaries, idx) for idx in (1, 3, 4)],
                        []])
 
 
 ## FUNCTIONAL ##
-J = 0.5*inner(v - v_d, v - v_d)*dx + 0.5*alpha*inner(u, u)*dx
+J = 0.5*inner(v - v_d, v - v_d)*dx + 0.5*alpha*inner(u, u)*ds(2)
 
 ## UNCONTROLLED FUNCTIONAL VALUE ##
-r_state = [r[4],
-           r[5]]
-dr_state = [[dr[4, 0], dr[4, 1]],
-            [dr[5, 0], dr[5, 1]]]
-bc_state = BlockDirichletBC([bc[4],
-                             bc[5]])
+r_state = [r[3],
+           r[4]]
+dr_state = [[dr[3, 0], dr[3, 1]],
+            [dr[4, 0], dr[4, 1]]]
+bc_state = BlockDirichletBC([bc[3],
+                             bc[4]])
 solution_state = BlockFunction([v, p])
 problem_state = BlockNonlinearProblem(r_state, solution_state, bc_state, dr_state)
 solver_state = BlockPETScSNESSolver(problem_state)
@@ -123,7 +132,6 @@ print "Optimal J =", assemble(J)
 plot(v, title="state velocity")
 plot(p, title="state pressure")
 plot(u, title="control")
-plot(l, title="lambda")
 plot(z, title="adjoint velocity")
 plot(b, title="adjoint pressure")
 interactive()
