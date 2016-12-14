@@ -42,7 +42,7 @@ class Gaussian(EllipticCoerciveProblem):
         (self.u, ) = block_split(block_u)
         (self.v, ) = block_split(block_v)
         self.dx = Measure("dx")(subdomain_data=subdomains)
-        self.f = ParametrizedExpression(self, "exp( - 2*pow(x[0]-mu[0], 2) - 2*pow(x[1]-mu[1], 2) )", mu=(0., 0.), element=V.ufl_element())
+        self.f = ParametrizedExpression(self, "exp( - 2*pow(x[0]-mu[0], 2) - 2*pow(x[1]-mu[1], 2) )", mu=(0., 0.), element=block_V[0].ufl_element(), domain=block_V[0].mesh())
         # note that we cannot use self.mu in the initialization of self.f, because self.mu has not been initialized yet
         
     #  @}
