@@ -39,6 +39,9 @@ class BlockFunction(tuple):
                 current_function = Function(V, vec)
                 functions.append(current_function)
             return tuple.__new__(cls, functions)
+            
+        def new_from_functions(cls, functions):
+            return tuple.__new__(cls, functions)
         
         assert isinstance(arg1, (list, tuple, BlockFunction, BlockFunctionSpace))
         assert isinstance(arg2, BlockVector) or arg2 is None
@@ -52,7 +55,7 @@ class BlockFunction(tuple):
         elif isinstance(arg1, (list, tuple)):
             assert isinstance(arg1[0], (Function, FunctionSpace))
             if isinstance(arg1[0], Function):
-                return new_from_block_function(cls, arg1)
+                return new_from_functions(cls, arg1)
             elif isinstance(arg1[0], FunctionSpace):
                 arg1 = BlockFunctionSpace(arg1)
                 if arg2 is not None:
@@ -76,6 +79,10 @@ class BlockFunction(tuple):
         def init_from_block_function_space_and_block_vector(self, block_function_space, block_vector):
             self._block_vector = block_vector
             self._block_function_space = block_function_space
+            
+        def init_from_functions(self, _):
+            self._block_vector = BlockVector([f.vector() for f in self])
+            self._block_function_space = BlockFunctionSpace([f.function_space() for f in self])
         
         assert isinstance(arg1, (list, tuple, BlockFunction, BlockFunctionSpace))
         assert isinstance(arg2, BlockVector) or arg2 is None
@@ -89,7 +96,7 @@ class BlockFunction(tuple):
         elif isinstance(arg1, (list, tuple)):
             assert isinstance(arg1[0], (Function, FunctionSpace))
             if isinstance(arg1[0], Function):
-                init_from_block_function(self, arg1)
+                init_from_functions(self, arg1)
             elif isinstance(arg1[0], FunctionSpace):
                 arg1 = BlockFunctionSpace(arg1)
                 if arg2 is not None:
