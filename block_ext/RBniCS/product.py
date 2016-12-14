@@ -17,7 +17,6 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ufl import Form
 from dolfin import Constant, DirichletBC, project
 from block_ext.block_dirichlet_bc import BlockDirichletBC
 from block_ext.RBniCS.affine_expansion_storage import AffineExpansionStorage

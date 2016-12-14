@@ -18,11 +18,18 @@
 
 from numpy import empty
 from dolfin import derivative
+from block_ext.block_replace_zero import block_replace_zero
+from block_ext.block_function_space import extract_block_function_space
 
 def block_derivative(F, u, du):
+    # Extract BlockFunctionSpace from the current form
+    block_V = extract_block_function_space(F, (len(F),))
+    
+    # Compute the derivative
     assert len(F) == len(u) == len(du)
     J = empty((len(F), len(u)), dtype=object)
     for i in range(len(F)):
         for j in range(len(u)):
-            J[i, j] = derivative(F[i], u[j], du[j])
+            F_i = block_replace_zero(F, (i,), block_V)
+            J[i, j] = derivative(F_i, u[j], du[j])
     return J

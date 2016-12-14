@@ -78,25 +78,24 @@ zvmq = BlockTestFunction(W)
 ds = Measure("ds")(subdomain_data=boundaries)
 
 ## OPTIMALITY CONDITIONS ##
-zero = Constant(0.)
-a = [[y*q*dx                   , zero*u1*q*ds(2)  , zero*u2*q*ds(2)  , zero*u3*q*ds(2)  , l*q*ds(2)      , inner(grad(p), grad(q))*dx], 
-     [zero*y*v1*ds(2)          , alpha*u1*v1*ds(2), zero*u2*v1*ds(2) , zero*u3*v1*ds(2) , - l1*l*v1*ds(2), - p*v1*ds(2)              ],
-     [zero*y*v2*ds(2)          , zero*u1*v2*ds(2) , alpha*u2*v2*ds(2), zero*u3*v2*ds(2) , - l2*l*v2*ds(2), - p*v2*ds(2)              ],
-     [zero*y*v3*ds(2)          , zero*u1*v3*ds(2) , zero*u2*v3*ds(2) , alpha*u3*v3*ds(2), - l3*l*v3*ds(2), - p*v3*ds(2)              ],
-     [y*m*ds(2)                , - l1*u1*m*ds(2)  , - l2*u2*m*ds(2)  , - l3*u3*m*ds(2)  , zero*l*m*ds(2) , zero*p*m*ds(2)            ],
-     [inner(grad(y),grad(z))*dx, zero*u1*z*ds(2)  , zero*u2*z*ds(2)  , zero*u3*z*ds(2)  , zero*l*z*ds(2) , zero*p*z*dx               ]]
-f =  [y_d*q*dx     ,
-      zero*v1*ds(2),
-      zero*v2*ds(2),
-      zero*v3*ds(2),
-      zero*m*ds(2) ,
-      f*z*dx        ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant((0.)), boundaries, 4)],
+a = [[y*q*dx                   , 0                , 0                , 0                , l*q*ds(2)      , inner(grad(p), grad(q))*dx], 
+     [0                        , alpha*u1*v1*ds(2), 0                , 0                , - l1*l*v1*ds(2), - p*v1*ds(2)              ],
+     [0                        , 0                , alpha*u2*v2*ds(2), 0                , - l2*l*v2*ds(2), - p*v2*ds(2)              ],
+     [0                        , 0                , 0                , alpha*u3*v3*ds(2), - l3*l*v3*ds(2), - p*v3*ds(2)              ],
+     [y*m*ds(2)                , - l1*u1*m*ds(2)  , - l2*u2*m*ds(2)  , - l3*u3*m*ds(2)  , 0              , 0                         ],
+     [inner(grad(y),grad(z))*dx, 0                , 0                , 0                , 0              , 0                         ]]
+f =  [y_d*q*dx,
+      0       ,
+      0       ,
+      0       ,
+      0       ,
+      f*z*dx   ]
+bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant(0.), boundaries, 4)],
                        [],
                        [],
                        [],
                        [],
-                       [DirichletBC(W.sub(5), Constant((0.)), boundaries, idx) for idx in (2, 4)]])
+                       [DirichletBC(W.sub(5), Constant(0.), boundaries, idx) for idx in (2, 4)]])
 
 ## SOLUTION ##
 yulp = BlockFunction(W)
@@ -108,7 +107,7 @@ J = 0.5*inner(y - y_d, y - y_d)*dx + 0.5*alpha*inner(u1, u1)*ds(2) + 0.5*alpha*i
 ## UNCONTROLLED FUNCTIONAL VALUE ##
 A_state = assemble(a[5][0])
 F_state = assemble(f[5])
-bc_state = [DirichletBC(W.sub(0), Constant((0.)), boundaries, idx) for idx in (2, 4)]
+bc_state = [DirichletBC(W.sub(0), Constant(0.), boundaries, idx) for idx in (2, 4)]
 [bc_state_.apply(A_state) for bc_state_ in bc_state]
 [bc_state_.apply(F_state)  for bc_state_ in bc_state]
 solve(A_state, y.vector(), F_state)

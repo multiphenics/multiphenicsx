@@ -61,9 +61,9 @@ ds = Measure("ds")(domain=mesh)
 
 ## ASSEMBLE ##
 g = Expression("sin(3*x[0] + 1)*sin(3*x[1] + 1)", element=V.ufl_element())
-a = [[inner(grad(u),grad(v))*dx, l*v*ds               ], 
-     [u*m*ds                   , Constant(0.)*l*m*ds]]
-f = [v*dx                      , g*m*ds                ]
+a = [[inner(grad(u),grad(v))*dx, l*v*ds], 
+     [u*m*ds                   , 0     ]]
+f =  [v*dx                     , g*m*ds]
 
 ## SOLVE ##
 A = block_assemble(a)

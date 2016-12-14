@@ -17,9 +17,9 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from block_ext.RBniCS.wrapping_utils.get_zero_form import get_zero_rank_1_form, get_zero_rank_2_form
+from block_ext.RBniCS.wrapping_utils.block_form_types import BlockFormTypes, TupleOfBlockFormTypes
 
 __all__ = [
-    'get_zero_rank_1_form',
-    'get_zero_rank_2_form'
+    'BlockFormTypes',
+    'TupleOfBlockFormTypes'
 ]

@@ -81,15 +81,15 @@ ds = Measure("ds")(subdomain_data=boundaries)
 ## OPTIMALITY CONDITIONS ##
 state_operator = epsilon*inner(grad(y),grad(z))*dx + inner(beta, grad(y))*z*dx + sigma*y*z*dx
 adjoint_operator = epsilon*inner(grad(p),grad(q))*dx - inner(beta, grad(p))*q*dx + sigma*p*q*dx
-a = [[y*q*dx                , Constant(0.)*u*q*ds(2), adjoint_operator   ], 
-     [Constant(0.)*y*v*ds(2), alpha*u*v*ds(2)       , - p*v*ds(2)        ],
-     [state_operator        , - u*z*ds(2)           , Constant(0.)*p*z*dx]]
-f =  [y_d*q*dx            ,
-      Constant(0.)*v*ds(2),
-      f*z*dx               ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant((0.)), boundaries, 4)],
+a = [[y*q*dx        , 0              , adjoint_operator], 
+     [0             , alpha*u*v*ds(2), - p*v*ds(2)     ],
+     [state_operator, - u*z*ds(2)    , 0               ]]
+f =  [y_d*q*dx,
+      0       ,
+      f*z*dx   ]
+bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant(0.), boundaries, 4)],
                        [],
-                       [DirichletBC(W.sub(2), Constant((0.)), boundaries, 4)]])
+                       [DirichletBC(W.sub(2), Constant(0.), boundaries, 4)]])
 
 ## SOLUTION ##
 yup = BlockFunction(W)
@@ -113,7 +113,6 @@ A = block_assemble(a)
 F = block_assemble(f)
 bc.apply(A)
 bc.apply(F)
-block_matlab_export(A, "A", F, "F")
 block_solve(A, yup.block_vector(), F)
 print "Optimal J =", assemble(J)
 plot(y, title="state")

@@ -23,11 +23,11 @@ from ufl import Form, replace
 from dolfin import dx
 from RBniCS.backends.abstract import SeparatedParametrizedForm as AbstractSeparatedParametrizedForm
 from RBniCS.backends.fenics import SeparatedParametrizedForm as FEniCSSeparatedParametrizedForm
-from RBniCS.backends.block_ext.wrapping_utils import get_zero_rank_1_form, get_zero_rank_2_form
-from RBniCS.utils.decorators import array_of, BackendFor, Extends, list_of, override, tuple_of
+from RBniCS.utils.decorators import BackendFor, Extends, override
+from block_ext.RBniCS.wrapping_utils import BlockFormTypes
 
 @Extends(AbstractSeparatedParametrizedForm)
-@BackendFor("block_ext", inputs=((list_of(Form), list_of(list_of(Form)), array_of(Form), array_of(array_of(Form))), ))
+@BackendFor("block_ext", inputs=(BlockFormTypes, ))
 class SeparatedParametrizedForm(AbstractSeparatedParametrizedForm):
     def __init__(self, block_form):
         # A block form of the same size as the input, with blocks equal to zero
@@ -38,36 +38,56 @@ class SeparatedParametrizedForm(AbstractSeparatedParametrizedForm):
         # Prepare them
         if isinstance(block_form, list):
             for (I, block_form_I) in enumerate(block_form):
-                assert isinstance(block_form_I, (Form, list))
-                if isinstance(block_form_I, Form): # block vector
-                    self._reference_zero_block_form.append( get_zero_rank_1_form(block_form_I) )
+                assert isinstance(block_form_I, (float, Form, int, list))
+                if isinstance(block_form_I, (float, int)): # trivial case
+                    self._reference_zero_block_form.append(0)
+                    self._separated_parametrized_block_forms.append(None)
+                    self._separated_parametrized_block_forms__indices.append(I)
+                elif isinstance(block_form_I, Form): # block vector
+                    self._reference_zero_block_form.append(0)
                     self._separated_parametrized_block_forms.append( FEniCSSeparatedParametrizedForm(block_form_I) )
                     self._separated_parametrized_block_forms__indices.append(I)
                 elif isinstance(block_form_I, list): # block matrix
                     self._reference_zero_block_form.append( list() )
                     for (J, block_form_IJ) in enumerate(block_form_I):
-                        assert isinstance(block_form_IJ, Form)
-                        self._reference_zero_block_form[-1].append( get_zero_rank_2_form(block_form_IJ) )
-                        self._separated_parametrized_block_forms.append( FEniCSSeparatedParametrizedForm(block_form_IJ) )
-                        self._separated_parametrized_block_forms__indices.append((I, J))
+                        if isinstance(block_form_IJ, (float, int)): # trivial case
+                            self._reference_zero_block_form[-1].append(0)
+                            self._separated_parametrized_block_forms.append(None)
+                            self._separated_parametrized_block_forms__indices.append((I, J))
+                        elif isinstance(block_form_IJ, Form): # block matrix
+                            self._reference_zero_block_form[-1].append(0)
+                            self._separated_parametrized_block_forms.append( FEniCSSeparatedParametrizedForm(block_form_IJ) )
+                            self._separated_parametrized_block_forms__indices.append((I, J))
                 else: # impossible to arrive here anyway thanks to the assert
                     raise AssertionError("Invalid argument to SeparatedParametrizedForm.__init__")
         elif isinstance(block_form, array_type):
             assert len(block_form.shape) in (1, 2)
             if len(block_form.shape) == 1:
                 for I in block_form.shape[0]:
-                    assert isinstance(block_form[I], Form)
-                    self._reference_zero_block_form.append( get_zero_rank_1_form(block_form[I]) )
-                    self._separated_parametrized_block_forms.append( FEniCSSeparatedParametrizedForm(block_form[I]) )
-                    self._separated_parametrized_block_forms__indices.append(I)
+                    assert isinstance(block_form[I], float, Form, int)
+                    if isinstance(block_form[I], (float, int)): # trivial case
+                        self._reference_zero_block_form.append(0)
+                        self._separated_parametrized_block_forms.append(None)
+                        self._separated_parametrized_block_forms__indices.append(I)
+                    elif isinstance(block_form[I], Form): # block vector
+                        self._reference_zero_block_form.append(0)
+                        self._separated_parametrized_block_forms.append( FEniCSSeparatedParametrizedForm(block_form[I]) )
+                        self._separated_parametrized_block_forms__indices.append(I)
+                    else: # impossible to arrive here anyway thanks to the assert
+                        raise AssertionError("Invalid argument to SeparatedParametrizedForm.__init__")
             elif len(block_form.shape) == 2:
                 for I in block_form.shape[0]:
                     self._reference_zero_block_form.append( list() )
                     for J in block_form.shape[1]:
-                        assert isinstance(block_form[I, J], Form)
-                        self._reference_zero_block_form[-1].append( get_zero_rank_2_form(block_form[I, J]) )
-                        self._separated_parametrized_block_forms.append( FEniCSSeparatedParametrizedForm(block_form[I, J]) )
-                        self._separated_parametrized_block_forms__indices.append((I, J))
+                        assert isinstance(block_form[I, J], float, Form, int)
+                        if isinstance(block_form[I, J], (float, int)): # trivial case
+                            self._reference_zero_block_form[-1].append(0)
+                            self._separated_parametrized_block_forms.append(None)
+                            self._separated_parametrized_block_forms__indices.append((I, J))
+                        elif isinstance(block_form[I, J], Form): # block matrix
+                            self._reference_zero_block_form[-1].append(0)
+                            self._separated_parametrized_block_forms.append( FEniCSSeparatedParametrizedForm(block_form[I, J]) )
+                            self._separated_parametrized_block_forms__indices.append((I, J))
             else: # impossible to arrive here anyway thanks to the assert
                 raise AssertionError("Invalid argument to SeparatedParametrizedForm.__init__")
         else: # impossible to arrive here anyway thanks to the assert
@@ -103,18 +123,21 @@ class SeparatedParametrizedForm(AbstractSeparatedParametrizedForm):
         assert len(self._separated_parametrized_block_forms__placeholders) == 0
         assert len(self._separated_parametrized_block_forms__placeholder_names) == 0
         for (idx, f) in zip(self._separated_parametrized_block_forms__indices, self._separated_parametrized_block_forms):
-            f.separate()
-            self._separated_parametrized_block_forms__coefficients.extend(f._coefficients)
-            self._separated_parametrized_block_forms__placeholders.extend(f._placeholders)
-            self._separated_parametrized_block_forms__placeholder_names.extend(f._placeholder_names)
-            for u in f._form_unchanged:
-                block_form = array(self._reference_zero_block_form, copy=True)
-                block_form[idx] = u
-                self._separated_parametrized_block_forms__form_unchanged.append(block_form)
-            for p in f._form_with_placeholders:
-                block_form = array(self._reference_zero_block_form, copy=True)
-                block_form[idx] = p
-                self._separated_parametrized_block_forms__form_with_placeholders.append(block_form)
+            if f is not None:
+                f.separate()
+                self._separated_parametrized_block_forms__coefficients.extend(f._coefficients)
+                self._separated_parametrized_block_forms__placeholders.extend(f._placeholders)
+                self._separated_parametrized_block_forms__placeholder_names.extend(f._placeholder_names)
+                for u in f._form_unchanged:
+                    block_form = array(self._reference_zero_block_form, copy=True)
+                    block_form[idx] = u
+                    self._separated_parametrized_block_forms__form_unchanged.append(block_form)
+                for p in f._form_with_placeholders:
+                    block_form = array(self._reference_zero_block_form, copy=True)
+                    block_form[idx] = p
+                    self._separated_parametrized_block_forms__form_with_placeholders.append(block_form)
+            else:
+                self._separated_parametrized_block_forms__form_unchanged.append(0)
             
     @override        
     @property

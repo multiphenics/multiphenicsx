@@ -17,6 +17,7 @@
 #
 
 from dolfin import FunctionSpace
+from block_replace_zero import zeros
 
 class BlockFunctionSpace(tuple):
     def __new__(cls, arg1, arg2=None, keep=None):
@@ -42,6 +43,40 @@ class BlockFunctionSpace(tuple):
     def sub(self, i):
         return self[i]
         
-    def mesh(self):
-        return self[0].mesh()
+def extract_block_function_space(block_form, size, recursive=False):
+    block_function_space = None
+    block_function_space_set = False
+    
+    assert len(size) in (1, 2)
+    if len(size) == 2:
+        for I in range(size[0]):
+            (block_function_space_I, block_function_space_set_I) = extract_block_function_space(block_form[I], (size[1], ), recursive=True)
+            if block_function_space_set_I:
+                if not block_function_space_set:
+                    block_function_space = block_function_space_I
+                    block_function_space_set = True
+                else:
+                    assert block_function_space == block_function_space_I
+    else:
+        block_function_space = None
+        for I in range(size[0]):
+            if block_form[I] in zeros or block_form[I].empty():
+                continue
+            for (index, arg) in enumerate(block_form[I].arguments()):
+                try:
+                    block_function_space_arg = arg.block_function_space()
+                except AttributeError: # Arguments were defined without using Block{Trial,Test}Function
+                    block_function_space_arg = None
+                finally:
+                    if not block_function_space_set:
+                        block_function_space = block_function_space_arg
+                        block_function_space_set = True
+                    else:
+                        assert block_function_space == block_function_space_arg
+                        
+    if not recursive:
+        assert block_function_space_set is True
+        return block_function_space
+    else:
+        return block_function_space, block_function_space_set
         

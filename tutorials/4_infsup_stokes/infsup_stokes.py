@@ -128,9 +128,9 @@ def run_block():
 
     # Variational forms
     lhs = [[inner(grad(u), grad(v))*dx, - div(v)*p*dx],
-             [- div(u)*q*dx, Constant(0.)*p*q*dx]]
-    rhs = [[Constant(0.)*inner(u, v)*dx, Constant(0.)*div(v)*p*dx],
-             [- Constant(0.)*div(u)*q*dx, - p*q*dx]]
+           [- div(u)*q*dx             , 0            ]]
+    rhs = [[0                         , 0            ],
+           [0                         , - p*q*dx     ]]
 
     # Boundary conditions
     wallc = DirichletBC(W.sub(0), Constant((0., 0.)), boundaries, 1)

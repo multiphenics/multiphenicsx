@@ -17,20 +17,30 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import ndarray as array
-from dolfin import adjoint as dolfin_adjoint
-from RBniCS.utils.decorators import backend_for
-from block_ext.block_adjoint import block_adjoint
-from block_ext.RBniCS.wrapping_utils import BlockFormTypes, TupleOfBlockFormTypes
+from ufl import Form
+from RBniCS.utils.decorators import array_of, list_of, tuple_of
 
-@backend_for("block_ext", inputs=(BlockFormTypes + TupleOfBlockFormTypes, ))
-def adjoint(arg):
-    assert isinstance(arg, (array, list, tuple))
-    if not isinstance(arg, tuple):
-        return block_adjoint(arg)
-    else:
-        adjoint_arg = list()
-        for a in arg:
-            adjoint_arg.append(block_adjoint(a))
-        return tuple(adjoint_arg)
-        
+BlockFormTypes = (
+    list_of(Form),
+    list_of(list_of(Form)), 
+    array_of(Form), 
+    array_of(array_of(Form)), 
+    # Forms with 0 placeholders
+    list_of((Form, int)),
+    list_of(list_of((Form, int))), 
+    array_of((Form, int)), 
+    array_of(array_of((Form, int))), 
+    # Forms with 0. placeholders
+    list_of((Form, float)),
+    list_of(list_of((Form, float))), 
+    array_of((Form, float)), 
+    array_of(array_of((Form, float))), 
+    # Forms with 0. and 0 placeholders
+    list_of((Form, float, int)),
+    list_of(list_of((Form, float, int))), 
+    array_of((Form, float, int)), 
+    array_of(array_of((Form, float, int))), 
+)
+
+TupleOfBlockFormTypes = tuple(tuple_of(BlockFormType) for BlockFormType in BlockFormTypes)
+

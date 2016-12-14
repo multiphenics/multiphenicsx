@@ -17,13 +17,12 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ufl import Form
-from dolfin import FunctionSpace
 from RBniCS.backends.abstract import ParametrizedTensorFactory as AbstractParametrizedTensorFactory
 from RBniCS.utils.decorators import BackendFor, Extends, override, list_of
+from block_ext.RBniCS.wrapping_utils import BlockFormTypes
 
 @Extends(AbstractParametrizedTensorFactory)
-@BackendFor("block_ext", inputs=(list_of(Form), FunctionSpace))
+@BackendFor("block_ext", inputs=(BlockFormTypes, ))
 class ParametrizedTensorFactory(AbstractParametrizedTensorFactory):
     pass # TODO
         

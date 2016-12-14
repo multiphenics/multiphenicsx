@@ -69,15 +69,15 @@ zvq = BlockTestFunction(W)
 ## OPTIMALITY CONDITIONS ##
 state_operator = epsilon*inner(grad(y),grad(z))*dx + inner(beta, grad(y))*z*dx + sigma*y*z*dx
 adjoint_operator = epsilon*inner(grad(p),grad(q))*dx - inner(beta, grad(p))*q*dx + sigma*p*q*dx
-a = [[y*q*dx             , Constant(0.)*u*q*dx, adjoint_operator   ], 
-     [Constant(0.)*y*v*dx, alpha*u*v*dx       , - p*v*dx           ],
-     [state_operator     , - u*z*dx           , Constant(0.)*p*z*dx]]
-f =  [y_d*q*dx         ,
-      Constant(0.)*v*dx,
-      f*z*dx            ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant((0.)), boundaries, idx) for idx in (1, 2, 3, 4)],
+a = [[y*q*dx        , 0           , adjoint_operator], 
+     [0             , alpha*u*v*dx, - p*v*dx        ],
+     [state_operator, - u*z*dx    , 0               ]]
+f =  [y_d*q*dx,
+      0       ,
+      f*z*dx   ]
+bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant(0.), boundaries, idx) for idx in (1, 2, 3, 4)],
                        [],
-                       [DirichletBC(W.sub(2), Constant((0.)), boundaries, idx) for idx in (1, 2, 3, 4)]])
+                       [DirichletBC(W.sub(2), Constant(0.), boundaries, idx) for idx in (1, 2, 3, 4)]])
 
 ## SOLUTION ##
 yup = BlockFunction(W)

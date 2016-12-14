@@ -135,8 +135,8 @@ class ElasticBlock(EllipticCoerciveProblem):
         elif term == "inner_product":
             ux = self.ux
             uy = self.uy
-            x0 = [[ux*vx*dx + inner(grad(ux),grad(vx))*dx, Constant(0.)*ux*vy*dx],
-                  [Constant(0.)*uy*vx*dx, uy*vy*dx + inner(grad(uy),grad(vy))*dx]]
+            x0 = [[ux*vx*dx + inner(grad(ux),grad(vx))*dx, 0                                     ],
+                  [0                                     , uy*vy*dx + inner(grad(uy),grad(vy))*dx]]
             return (x0,)
         else:
             raise ValueError("Invalid term for assemble_operator().")

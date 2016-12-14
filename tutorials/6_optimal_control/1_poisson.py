@@ -61,15 +61,15 @@ zvq = BlockTestFunction(W)
 (z, v, q) = block_split(zvq)
 
 ## OPTIMALITY CONDITIONS ##
-a = [[y*q*dx                   , Constant(0.)*u*q*dx, inner(grad(p), grad(q))*dx], 
-     [Constant(0.)*y*v*dx      , alpha*u*v*dx       , - p*v*dx                  ],
-     [inner(grad(y),grad(z))*dx, - u*z*dx           , Constant(0.)*p*z*dx       ]]
-f =  [y_d*q*dx         ,
-      Constant(0.)*v*dx,
-      f*z*dx            ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant((0.)), boundaries, idx) for idx in (1, 2, 3, 4)],
+a = [[y*q*dx                   , 0           , inner(grad(p), grad(q))*dx], 
+     [0                        , alpha*u*v*dx, - p*v*dx                  ],
+     [inner(grad(y),grad(z))*dx, - u*z*dx    , 0                         ]]
+f =  [y_d*q*dx,
+      0       ,
+      f*z*dx   ]
+bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant(0.), boundaries, idx) for idx in (1, 2, 3, 4)],
                        [],
-                       [DirichletBC(W.sub(2), Constant((0.)), boundaries, idx) for idx in (1, 2, 3, 4)]])
+                       [DirichletBC(W.sub(2), Constant(0.), boundaries, idx) for idx in (1, 2, 3, 4)]])
 
 ## SOLUTION ##
 yup = BlockFunction(W)

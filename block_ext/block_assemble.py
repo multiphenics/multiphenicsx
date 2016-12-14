@@ -19,45 +19,64 @@
 # We provide here a simplified versione of cbc.block block_assemble, that however
 # allows for the optional tensor argument
 
-from numpy import ndarray as array
+from numpy import ndarray as array, empty
 from dolfin import assemble
 from block_ext.block_matrix import BlockMatrix
 from block_ext.block_vector import BlockVector
 from block_ext.block_discard_dofs import BlockDiscardDOFs
+from block_ext.block_replace_zero import block_replace_zero
+from block_ext.block_function_space import extract_block_function_space
 
 def block_assemble(block_form, block_tensor=None, **kwargs):
     assert isinstance(block_form, list) or isinstance(block_form, array)
     N = len(block_form)
     if isinstance(block_form[0], list) or isinstance(block_form[0], array):
         M = len(block_form[0])
+        
+        # Preprocess kwargs because keep_diagonal is needed only on diagonal blocks
+        block_kwargs = empty((N, M), dtype=object)
+        for I in range(N):
+            for J in range(M):
+                block_kwargs[I, J] = dict(kwargs)
+                if "keep_diagonal" in kwargs and I != J:
+                    del block_kwargs[I, J]["keep_diagonal"]
+        
+        # Prepare storage
         if block_tensor is None:
             block_tensor_was_None = True
             block_tensor = BlockMatrix(N, M)
         else:
             block_tensor_was_None = False
+            
+        # Extract BlockFunctionSpace from the current form
+        block_function_space = extract_block_function_space(block_form, (N, M))
+        
         # Assemble
         for I in range(N):
             for J in range(M):
+                block_form_IJ = block_replace_zero(block_form, (I, J), block_function_space)
                 if block_tensor_was_None:
-                    block_tensor.blocks[I, J] = assemble(block_form[I][J], **kwargs)
+                    block_tensor.blocks[I, J] = assemble(block_form_IJ, **block_kwargs[I, J])
                 else:
-                    assemble(block_form[I][J], tensor=block_tensor.blocks[I, J], **kwargs)
-        # Extract BlockFunctionSpace from the current form
-        block_function_space = _extract_block_function_space(block_form, (N, M))
+                    assemble(block_form_IJ, tensor=block_tensor.blocks[I, J], **block_kwargs[I, J])
     else:
+        # Prepare storage
         if block_tensor is None:
             block_tensor_was_None = True
             block_tensor = BlockVector(N)
         else:
             block_tensor_was_None = False
+            
+        # Extract BlockFunctionSpace from the current form
+        block_function_space = extract_block_function_space(block_form, (N,))
+        
         # Assemble
         for I in range(N):
+            block_form_I = block_replace_zero(block_form, (I, ), block_function_space)
             if block_tensor_was_None:
-                block_tensor.blocks[I] = assemble(block_form[I], **kwargs)
+                block_tensor.blocks[I] = assemble(block_form_I, **kwargs)
             else:
-                assemble(block_form[I], tensor=block_tensor.blocks[I], **kwargs)
-        # Extract BlockFunctionSpace from the current form
-        block_function_space = _extract_block_function_space(block_form, (N,))
+                assemble(block_form_I, tensor=block_tensor.blocks[I], **kwargs)
     
     # Attach BlockDiscardDOFs to the assembled tensor
     if (
@@ -71,29 +90,3 @@ def block_assemble(block_form, block_tensor=None, **kwargs):
     
     return block_tensor
     
-def _extract_block_function_space(form, size):
-    assert len(size) in (1, 2)
-    if len(size) == 2:
-        block_function_space = None
-        for I in range(size[0]):
-            block_function_space_I = _extract_block_function_space(form[I], (size[1], ))
-            if I == 0:
-                block_function_space = block_function_space_I
-            else:
-                assert block_function_space == block_function_space_I
-        return block_function_space
-    else:
-        block_function_space = None
-        for I in range(size[0]):
-            for (index, arg) in enumerate(form[I].arguments()):
-                try:
-                    block_function_space_arg = arg.block_function_space()
-                except AttributeError: # Arguments were defined without using Block{Trial,Test}Function
-                    block_function_space_arg = None
-                finally:
-                    if I == 0 and index == 0:
-                        block_function_space = block_function_space_arg
-                    else:
-                        assert block_function_space == block_function_space_arg
-        return block_function_space
-            

@@ -52,10 +52,10 @@ dx = Measure("dx")(domain=mesh)
 ds = Measure("ds")(domain=mesh)
 
 ## ASSEMBLE ##
-a = [[inner(grad(u),grad(v))*dx , - l*v*ds             ], 
-     [- u*m*ds                  , Constant(0.)*l*m*ds  ]]
-b = [[Constant(0.)*inner(u,v)*dx, Constant(0.)*l*v*ds  ], 
-     [Constant(0.)*u*m*ds       , - l*m*ds             ]]
+a = [[inner(grad(u),grad(v))*dx , - l*v*ds], 
+     [- u*m*ds                  , 0       ]]
+b = [[0                         , 0       ], 
+     [0                         , - l*m*ds]]
 
 ## SOLVE ##
 A = block_assemble(a)
