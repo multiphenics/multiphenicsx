@@ -21,6 +21,7 @@ from ufl.algorithms import expand_derivatives
 from ufl.algorithms.analysis import has_exact_type
 from ufl.classes import CoefficientDerivative
 from dolfin import Constant, div, dx, inner, TestFunction, tr, TrialFunction
+from block_ext.block_outer import BlockOuterForm1, BlockOuterForm2
 
 zeros = (0, 0.)
 
@@ -29,7 +30,9 @@ def block_replace_zero(block_form, index, block_function_space):
     if len(index) == 2:
         I = index[0]
         J = index[1]
-        if block_form[I][J] in zeros:
+        if isinstance(block_form[I][J], BlockOuterForm2):
+            return block_form[I][J]
+        elif block_form[I][J] in zeros:
             block_form_IJ = block_form[I][J]
         elif has_exact_type(block_form[I][J], CoefficientDerivative):
             block_form_IJ = expand_derivatives(block_form[I][J])
@@ -42,6 +45,8 @@ def block_replace_zero(block_form, index, block_function_space):
             return block_form_IJ
     else:
         I = index[0]
+        if isinstance(block_form[I], BlockOuterForm1):
+            return block_form[I]
         block_form_I = block_form[I]
         assert isinstance(block_form_I, Form) or block_form_I in zeros
         if block_form_I in zeros:

@@ -57,6 +57,7 @@ from block_ext.block_function import BlockFunction
 from block_ext.block_function_space import BlockFunctionSpace
 from block_ext.block_matlab_export import block_matlab_export
 from block_ext.block_nonlinear_problem import BlockNonlinearProblem
+from block_ext.block_outer import outer
 from block_ext.block_petsc_snes_solver import BlockPETScSNESSolver
 from block_ext.block_slepc_eigen_solver import BlockSLEPcEigenSolver
 from block_ext.block_solve import block_solve
@@ -78,5 +79,6 @@ __all__ = [
     'block_solve',
     'block_split',
     'BlockTrialFunction',
-    'BlockTestFunction'
+    'BlockTestFunction',
+    'outer'
 ]

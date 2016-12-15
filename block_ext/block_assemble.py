@@ -26,6 +26,7 @@ from block_ext.block_vector import BlockVector
 from block_ext.block_discard_dofs import BlockDiscardDOFs
 from block_ext.block_replace_zero import block_replace_zero
 from block_ext.block_function_space import extract_block_function_space
+from block_ext.block_outer import BlockOuterForm1, BlockOuterForm2, BlockOuterMatrix, BlockOuterVector
 
 def block_assemble(block_form, block_tensor=None, **kwargs):
     assert isinstance(block_form, list) or isinstance(block_form, array)
@@ -55,10 +56,16 @@ def block_assemble(block_form, block_tensor=None, **kwargs):
         for I in range(N):
             for J in range(M):
                 block_form_IJ = block_replace_zero(block_form, (I, J), block_function_space)
-                if block_tensor_was_None:
-                    block_tensor.blocks[I, J] = assemble(block_form_IJ, **block_kwargs[I, J])
+                if not isinstance(block_form_IJ, BlockOuterForm2):
+                    if block_tensor_was_None:
+                        block_tensor.blocks[I, J] = assemble(block_form_IJ, **block_kwargs[I, J])
+                    else:
+                        assemble(block_form_IJ, tensor=block_tensor.blocks[I, J], **block_kwargs[I, J])
                 else:
-                    assemble(block_form_IJ, tensor=block_tensor.blocks[I, J], **block_kwargs[I, J])
+                    if block_tensor_was_None:
+                        block_tensor.blocks[I, J] = BlockOuterMatrix(block_form_IJ, **block_kwargs[I, J])
+                    else:
+                        block_tensor.blocks[I, J].assemble(block_form_IJ, **block_kwargs[I, J])
     else:
         # Prepare storage
         if block_tensor is None:
@@ -73,10 +80,16 @@ def block_assemble(block_form, block_tensor=None, **kwargs):
         # Assemble
         for I in range(N):
             block_form_I = block_replace_zero(block_form, (I, ), block_function_space)
-            if block_tensor_was_None:
-                block_tensor.blocks[I] = assemble(block_form_I, **kwargs)
+            if not isinstance(block_form_I, BlockOuterForm1):
+                if block_tensor_was_None:
+                    block_tensor.blocks[I] = assemble(block_form_I, **kwargs)
+                else:
+                    assemble(block_form_I, tensor=block_tensor.blocks[I], **kwargs)
             else:
-                assemble(block_form_I, tensor=block_tensor.blocks[I], **kwargs)
+                if block_tensor_was_None:
+                    block_tensor.blocks[I] = BlockOuterVector(block_form_I, **kwargs)
+                else:
+                    block_tensor.blocks[I].assemble(block_form_I, **kwargs)
     
     # Attach BlockDiscardDOFs to the assembled tensor
     if (

@@ -18,6 +18,7 @@
 
 from dolfin import PETScVector, as_backend_type
 from petsc4py import PETSc
+from block_ext.block_outer import BlockOuterVector
 
 class MonolithicVector(PETScVector):
     # The values of block_vector are not really used, just the
@@ -31,7 +32,10 @@ class MonolithicVector(PETScVector):
         # Inner dimensions
         n = []
         for I in range(N):
-            block = as_backend_type(block_vector[I]).vec()
+            if not isinstance(block_vector[I], BlockOuterVector):
+                block = as_backend_type(block_vector[I]).vec()
+            else:
+                block = as_backend_type(block_vector[I].vec).vec()
             current_n = block.getSize()
             if block_discard_dofs is not None and block_discard_dofs.need_to_discard_dofs[I]:
                 current_n -= len(block_discard_dofs.dofs_to_be_discarded[I])
@@ -60,18 +64,10 @@ class MonolithicVector(PETScVector):
                 row_reposition_dofs = block_discard_dofs.subspace_dofs_extended[I]
             else:
                 row_reposition_dofs = None
-            block = as_backend_type(block_vector[I]).vec()
-            row_start, row_end = block.getOwnershipRange()
-            for i in range(row_start, row_end):
-                if row_reposition_dofs is not None:
-                    if i not in row_reposition_dofs:
-                        continue
-                    row = row_reposition_dofs[i]
-                else:
-                    row = i
-                row += sum(n[:I])
-                val = block.array[i - row_start]
-                self.vec().setValues(row, val, addv=PETSc.InsertMode.ADD)
+            if not isinstance(block_vector[I], BlockOuterVector):
+                self._block_add(block_vector[I], I, n, row_reposition_dofs)
+            else:
+                self._block_add(block_vector[I].vec, I, n, row_reposition_dofs)
         self.vec().assemble()
         
     def copy_values_to(self, block_vector):
@@ -94,6 +90,7 @@ class MonolithicVector(PETScVector):
             else:
                 block_row = i
             val = self.vec().array[k - row_start]
+            assert not isinstance(block_vector[I], BlockOuterVector)
             block = as_backend_type(block_vector[I]).vec()
             block.setValues(block_row, val, addv=PETSc.InsertMode.INSERT)
             if k < row_end - 1:
@@ -111,3 +108,16 @@ class MonolithicVector(PETScVector):
             as_backend_type(block_vector[I]).vec().assemble()
             as_backend_type(block_vector[I]).vec().ghostUpdate()
         
+    def _block_add(self, block, I, n, row_reposition_dofs):
+        block = as_backend_type(block).vec()
+        row_start, row_end = block.getOwnershipRange()
+        for i in range(row_start, row_end):
+            if row_reposition_dofs is not None:
+                if i not in row_reposition_dofs:
+                    continue
+                row = row_reposition_dofs[i]
+            else:
+                row = i
+            row += sum(n[:I])
+            val = block.array[i - row_start]
+            self.vec().setValues(row, val, addv=PETSc.InsertMode.ADD)
