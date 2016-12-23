@@ -17,13 +17,18 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import assign
-from block_ext.RBniCS.function import Function
+from block_ext.block_function_space import BlockFunctionSpace
 
-def function_extend(function, component, V, weight):
-    extended_function = Function(V)
-    assign(extended_function[component], function)
-    if weight is not None:
-        extended_function[component].vector()[:] *= weight
-    return extended_function
+def get_function_subspace(block_function_space, block_components):
+    assert isinstance(block_components, (int, list))
+    assert not isinstance(block_components, tuple), "block_ext does not handle yet the case of sub components"
+    if isinstance(block_components, int):
+        return BlockFunctionSpace([block_function_space[block_components]])
+    else:
+        extracted_block_function_spaces = list()
+        for block_component in block_components:
+            assert isinstance(block_component, int)
+            assert not isinstance(block_component, tuple), "block_ext does not handle yet the case of sub components"
+            extracted_block_function_spaces.append(block_function_space[block_component])
+        return BlockFunctionSpace(extracted_block_function_spaces)
 
