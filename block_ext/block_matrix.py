@@ -1,4 +1,4 @@
-# Copyright (C) 2016 by the block_ext authors
+# Copyright (C) 2016-2017 by the block_ext authors
 #
 # This file is part of block_ext.
 #

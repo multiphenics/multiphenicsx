@@ -1,5 +1,5 @@
-# Copyright (C) 2015-2016 by the RBniCS authors
-# Copyright (C) 2016 by the block_ext authors
+# Copyright (C) 2015-2017 by the RBniCS authors
+# Copyright (C) 2016-2017 by the block_ext authors
 #
 # This file is part of the RBniCS interface to block_ext.
 #
@@ -18,7 +18,7 @@
 #
 
 __author__ = "Francesco Ballarin, Gianluigi Rozza, Alberto Sartori (RBniCS) and Francesco Ballarin (block_ext)"
-__copyright__ = "Copyright 2015-2016 by the RBniCS authors and 2016 by the block_ext authors"
+__copyright__ = "Copyright 2015-2017 by the RBniCS authors and 2016-2017 by the block_ext authors"
 __license__ = "LGPL"
 __version__ = "0.0.1"
 __email__ = "francesco.ballarin@sissa.it, gianluigi.rozza@sissa.it, alberto.sartori@sissa.it"
