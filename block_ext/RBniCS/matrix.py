@@ -48,5 +48,5 @@ def preserve_generator_attribute(operator):
             return original_operator(self, other)
     setattr(BlockMatrix, operator, custom_operator)
     
-for operator in ("__add__", "__radd__", "__sub__", "__rsub__", "__mul__", "__rmul__"):
+for operator in ("__add__", "__radd__", "__sub__", "__rsub__", "__mul__", "__rmul__", "__neg__"):
     preserve_generator_attribute(operator)
