@@ -73,8 +73,20 @@ class AffineExpansionStorage(AbstractAffineExpansionStorage):
         if isinstance(arg, list):
             if isinstance(arg[0], Form): # block vector
                 return True
+            elif isinstance(arg[0], int): # block vector with 0 placeholder
+                assert arg[0] == 0
+                return True
+            elif isinstance(arg[0], float): # block vector with 0. placeholder
+                assert arg[0] == 0.
+                return True
             elif isinstance(arg[0], list):
                 if isinstance(arg[0][0], Form): # block matrix
+                    return True
+                elif isinstance(arg[0][0], int): # block matrix with 0 placeholder
+                    assert arg[0][0] == 0
+                    return True
+                elif isinstance(arg[0][0], float): # block matrix with 0. placeholder
+                    assert arg[0][0] == 0.
                     return True
                 else:
                     return False
@@ -82,7 +94,13 @@ class AffineExpansionStorage(AbstractAffineExpansionStorage):
                 return False
         elif isinstance(arg, array):
             assert len(arg.shape) in (1, 2)
-            if isinstance(arg.item(0), Form):
+            if isinstance(arg.item(0), Form): # block form
+                return True
+            elif isinstance(arg.item(0), int): # block form with 0 placeholder
+                assert arg.item(0) == 0
+                return True
+            elif isinstance(arg.item(0), float): # block form with 0. placeholder
+                assert arg.item(0) == 0.
                 return True
             else:
                 return False
