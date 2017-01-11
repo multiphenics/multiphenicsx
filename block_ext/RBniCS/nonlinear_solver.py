@@ -21,14 +21,28 @@ import types
 from block_ext import BlockDirichletBC, BlockNonlinearProblem, BlockPETScSNESSolver
 from RBniCS.backends.abstract import NonlinearSolver as AbstractNonlinearSolver
 from block_ext.RBniCS.function import Function
-from RBniCS.utils.decorators import BackendFor, Extends, override
+from RBniCS.utils.decorators import BackendFor, dict_of, Extends, override
 
 @Extends(AbstractNonlinearSolver)
-@BackendFor("block_ext", inputs=(types.FunctionType, Function.Type(), types.FunctionType, (BlockDirichletBC, None)))
+@BackendFor("block_ext", inputs=(types.FunctionType, Function.Type(), types.FunctionType, (BlockDirichletBC, dict_of(str, BlockDirichletBC), None)))
 class NonlinearSolver(AbstractNonlinearSolver):
     @override
     def __init__(self, block_jacobian_eval, block_solution, block_residual_eval, block_bcs=None):
-        problem = BlockNonlinearProblem(block_residual_eval, block_solution, block_bcs, block_jacobian_eval)
+        assert isinstance(block_bcs, (dict, BlockDirichletBC))
+        if isinstance(block_bcs, BlockDirichletBC):
+            block_bcs_preprocessed = block_bcs
+        elif isinstance(block_bcs, dict):
+            block_bcs_preprocessed = list()
+            for key in block_bcs:
+                for (index, bcs) in enumerate(block_bcs[key].bcs):
+                    if len(block_bcs_preprocessed) < index:
+                        assert len(block_bcs_preprocessed) == index - 1
+                        block_bcs_preprocessed.append(list())
+                    block_bcs_preprocessed[index].extend(bcs)
+            block_bcs_preprocessed = BlockDirichletBC(block_bcs_preprocessed)
+        else:
+            raise AssertionError("Invalid type for bcs.")
+        problem = BlockNonlinearProblem(block_residual_eval, block_solution, block_bcs_preprocessed, block_jacobian_eval)
         self.solver  = BlockPETScSNESSolver(problem)
             
     @override
