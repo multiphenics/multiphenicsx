@@ -24,8 +24,10 @@ from block_ext.RBniCS.function import Function
 def function_extend_or_restrict(block_function, block_function_components, block_V, block_V_components, weight, copy):
     block_function_block_V = block_function.block_function_space()
     if block_function_components is not None:
-        assert isinstance(block_function_components, (int, list))
+        assert isinstance(block_function_components, (int, str, list))
         assert not isinstance(block_function_components, tuple), "block_ext does not handle yet the case of sub components"
+        if isinstance(block_function_components, str):
+            block_function_components = block_function_block_V.component_to_index(block_function_components)
         if isinstance(block_function_components, int):
             block_function_block_V_index_list = [block_function_components]
         else:
@@ -36,8 +38,10 @@ def function_extend_or_restrict(block_function, block_function_components, block
     else:
         block_function_block_V_index_list = range(len(block_function_block_V))
     if block_V_components is not None:
-        assert isinstance(block_V_components, (int, list))
+        assert isinstance(block_V_components, (int, str, list))
         assert not isinstance(block_V_components, tuple), "block_ext does not handle yet the case of sub components"
+        if isinstance(block_V_components, str):
+            block_V_components = block_V.component_to_index(block_V_components)
         if isinstance(block_V_components, int):
             block_V_index_list = [block_V_components]
         else:

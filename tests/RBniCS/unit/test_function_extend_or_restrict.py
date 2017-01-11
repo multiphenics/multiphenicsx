@@ -121,9 +121,10 @@ element_1 = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 element_V  = BlockElement(element_0)
 element_W  = BlockElement(element_0, element_1)
 V = BlockFunctionSpace(mesh, element_V)
-W = BlockFunctionSpace(mesh, element_W)
 s = BlockFunction(V)
 s[0].vector()[:] = 1.
+
+W = BlockFunctionSpace(mesh, element_W)
 
 try:
     extended_s = function_extend_or_restrict(s, None, W, 0, weight=None, copy=False)
@@ -138,6 +139,27 @@ assert isclose(extended_s[0].vector().array(), 1.).all()
 assert isclose(extended_s[1].vector().array(), 0.).all()
 
 extended_s = function_extend_or_restrict(s, None, W, 0, weight=2., copy=True)
+assert len(extended_s) == 2
+assert extended_s[0].vector().size() == W[0].dim()
+assert extended_s[1].vector().size() == W[1].dim()
+assert isclose(extended_s[0].vector().array(), 2.).all()
+assert isclose(extended_s[1].vector().array(), 0.).all()
+
+W = BlockFunctionSpace(mesh, element_W, components=[["u", "s"], "p"])
+
+try:
+    extended_s = function_extend_or_restrict(s, None, W, "s", weight=None, copy=False)
+except AssertionError as e:
+    assert str(e) == "It is not possible to extract block function components without copying the vector"
+    
+extended_s = function_extend_or_restrict(s, None, W, "s", weight=None, copy=True)
+assert len(extended_s) == 2
+assert extended_s[0].vector().size() == W[0].dim()
+assert extended_s[1].vector().size() == W[1].dim()
+assert isclose(extended_s[0].vector().array(), 1.).all()
+assert isclose(extended_s[1].vector().array(), 0.).all()
+
+extended_s = function_extend_or_restrict(s, None, W, "s", weight=2., copy=True)
 assert len(extended_s) == 2
 assert extended_s[0].vector().size() == W[0].dim()
 assert extended_s[1].vector().size() == W[1].dim()
@@ -210,7 +232,7 @@ except RuntimeError as e:
 element_0 = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 element_1 = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 element_V  = BlockElement(element_0, element_1)
-V = BlockFunctionSpace(mesh, element_V)
+V = BlockFunctionSpace(mesh, element_V, components=["u", "p"])
 up = BlockFunction(V)
 up[0].vector()[:] = 1.
 up[1].vector()[:] = 2.
@@ -233,6 +255,21 @@ assert len(u) == 1
 assert u[0].vector().size() == W[0].dim()
 assert isclose(u[0].vector().array(), 2.).all()
 
+try:
+    u = function_extend_or_restrict(up, "u", W, None, weight=None, copy=False)
+except AssertionError as e:
+    assert str(e) == "It is not possible to extract block function components without copying the vector"
+
+u = function_extend_or_restrict(up, "u", W, None, weight=None, copy=True)
+assert len(u) == 1
+assert u[0].vector().size() == W[0].dim()
+assert isclose(u[0].vector().array(), 1.).all()
+
+u = function_extend_or_restrict(up, "u", W, None, weight=2., copy=True)
+assert len(u) == 1
+assert u[0].vector().size() == W[0].dim()
+assert isclose(u[0].vector().array(), 2.).all()
+
 element_W  = BlockElement(element_1)
 W = BlockFunctionSpace(mesh, element_W)
 
@@ -251,11 +288,26 @@ assert len(p) == 1
 assert p[0].vector().size() == W[0].dim()
 assert isclose(p[0].vector().array(), 4.).all()
 
+try:
+    p = function_extend_or_restrict(up, "p", W, None, weight=None, copy=False)
+except AssertionError as e:
+    assert str(e) == "It is not possible to extract block function components without copying the vector"
+
+p = function_extend_or_restrict(up, "p", W, None, weight=None, copy=True)
+assert len(p) == 1
+assert p[0].vector().size() == W[0].dim()
+assert isclose(p[0].vector().array(), 2.).all()
+
+p = function_extend_or_restrict(up, "p", W, None, weight=2., copy=True)
+assert len(p) == 1
+assert p[0].vector().size() == W[0].dim()
+assert isclose(p[0].vector().array(), 4.).all()
+
 # ~~~ Mixed case to mixed case: copy only a component, in the same location ~~~ #
 element_0 = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 element_1 = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 element   = BlockElement(element_0, element_1)
-V = BlockFunctionSpace(mesh, element)
+V = BlockFunctionSpace(mesh, element, components=["ux", "uy"])
 W = V
 u = BlockFunction(V)
 u[0].vector()[:] = 1.
@@ -280,11 +332,30 @@ assert copied_u[1].vector().size() == W[1].dim()
 assert isclose(copied_u[0].vector().array(), 2.).all()
 assert isclose(copied_u[1].vector().array(), 0.).all()
 
+try:
+    copied_u = function_extend_or_restrict(u, "ux", W, "ux", weight=None, copy=False)
+except AssertionError as e:
+    assert str(e) == "It is not possible to extract block function components without copying the vector"
+
+copied_u = function_extend_or_restrict(u, "ux", W, "ux", weight=None, copy=True)
+assert len(copied_u) == 2
+assert copied_u[0].vector().size() == W[0].dim()
+assert copied_u[1].vector().size() == W[1].dim()
+assert isclose(copied_u[0].vector().array(), 1.).all()
+assert isclose(copied_u[1].vector().array(), 0.).all()
+
+copied_u = function_extend_or_restrict(u, "ux", W, "ux", weight=2., copy=True)
+assert len(copied_u) == 2
+assert copied_u[0].vector().size() == W[0].dim()
+assert copied_u[1].vector().size() == W[1].dim()
+assert isclose(copied_u[0].vector().array(), 2.).all()
+assert isclose(copied_u[1].vector().array(), 0.).all()
+
 # ~~~ Mixed case to mixed case: copy only a component, to a different location ~~~ #
 element_0 = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 element_1 = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 element   = BlockElement(element_0, element_1)
-V = BlockFunctionSpace(mesh, element)
+V = BlockFunctionSpace(mesh, element, components=["ux", "uy"])
 W = V
 u = BlockFunction(V)
 u[0].vector()[:] = 1.
@@ -303,6 +374,25 @@ assert isclose(copied_u[0].vector().array(), 0.).all()
 assert isclose(copied_u[1].vector().array(), 1.).all()
 
 copied_u = function_extend_or_restrict(u, 0, W, 1, weight=2., copy=True)
+assert len(copied_u) == 2
+assert copied_u[0].vector().size() == W[0].dim()
+assert copied_u[1].vector().size() == W[1].dim()
+assert isclose(copied_u[0].vector().array(), 0.).all()
+assert isclose(copied_u[1].vector().array(), 2.).all()
+
+try:
+    copied_u = function_extend_or_restrict(u, "ux", W, "uy", weight=None, copy=False)
+except AssertionError as e:
+    assert str(e) == "It is not possible to extract block function components without copying the vector"
+
+copied_u = function_extend_or_restrict(u, "ux", W, "uy", weight=None, copy=True)
+assert len(copied_u) == 2
+assert copied_u[0].vector().size() == W[0].dim()
+assert copied_u[1].vector().size() == W[1].dim()
+assert isclose(copied_u[0].vector().array(), 0.).all()
+assert isclose(copied_u[1].vector().array(), 1.).all()
+
+copied_u = function_extend_or_restrict(u, "ux", W, "uy", weight=2., copy=True)
 assert len(copied_u) == 2
 assert copied_u[0].vector().size() == W[0].dim()
 assert copied_u[1].vector().size() == W[1].dim()

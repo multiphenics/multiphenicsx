@@ -17,15 +17,17 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from block_ext.RBniCS.wrapping_utils.block_form_types import BlockFormTypes, TupleOfBlockFormTypes
-from block_ext.RBniCS.wrapping_utils.block_function_space import BlockFunctionSpace
+import types
+from block_ext.block_function_space import BlockFunctionSpace as block_ext_BlockFunctionSpace
+from RBniCS.backends.fenics.wrapping_utils.function_space import _enable_string_components, _convert_component_to_int
 
-__all__ = [
-    'BlockFormTypes',
-    'BlockFunctionSpace',
-    'TupleOfBlockFormTypes'
-]
-
-__overridden__ = [
-    'BlockFunctionSpace'
-]
+def BlockFunctionSpace(*args, **kwargs):
+    if "components" in kwargs:
+        components = kwargs["components"]
+        del kwargs["components"]
+    else:
+        components = None
+    output = block_ext_BlockFunctionSpace(*args, **kwargs)
+    if components is not None:
+        _enable_string_components(components, output)
+    return output
