@@ -18,7 +18,6 @@
 #
 
 from block_ext import BlockFunctionSpace
-from block_ext.RBniCS.matrix import Matrix
 from RBniCS.backends.abstract import HighOrderProperOrthogonalDecomposition as AbstractHighOrderProperOrthogonalDecomposition
 from RBniCS.backends.basic import ProperOrthogonalDecompositionBase as BasicHighOrderProperOrthogonalDecomposition
 import block_ext.RBniCS
@@ -28,11 +27,11 @@ from RBniCS.utils.decorators import BackendFor, Extends, override
 HighOrderProperOrthogonalDecompositionBase = BasicHighOrderProperOrthogonalDecomposition(AbstractHighOrderProperOrthogonalDecomposition)
 
 @Extends(HighOrderProperOrthogonalDecompositionBase)
-@BackendFor("block_ext", inputs=(Matrix.Type(), BlockFunctionSpace))
+@BackendFor("block_ext", inputs=(BlockFunctionSpace, ))
 class HighOrderProperOrthogonalDecomposition(HighOrderProperOrthogonalDecompositionBase):
     @override
-    def __init__(self, V_or_Z):
-        HighOrderProperOrthogonalDecompositionBase.__init__(self, V_or_Z, None, block_ext.RBniCS, block_ext.RBniCS.wrapping, block_ext.RBniCS.TensorSnapshotsList, block_ext.RBniCS.TensorBasisList)
+    def __init__(self, V):
+        HighOrderProperOrthogonalDecompositionBase.__init__(self, V, None, None, block_ext.RBniCS, block_ext.RBniCS.wrapping, block_ext.RBniCS.TensorSnapshotsList, block_ext.RBniCS.TensorBasisList)
         
     @override
     def store_snapshot(self, snapshot):

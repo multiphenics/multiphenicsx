@@ -25,9 +25,9 @@ import RBniCS.backends.numpy
 from RBniCS.utils.decorators import BackendFor, Extends, override
 
 @Extends(BasicFunctionsList)
-@BackendFor("block_ext", online_backend="numpy", inputs=(BlockFunctionSpace, ))
+@BackendFor("block_ext", online_backend="numpy", inputs=(BlockFunctionSpace, (str, None)))
 class FunctionsList(BasicFunctionsList):
     @override
-    def __init__(self, V_or_Z):
-        BasicFunctionsList.__init__(self, V_or_Z, block_ext.RBniCS, block_ext.RBniCS.wrapping, RBniCS.backends.numpy)
+    def __init__(self, V, component=None):
+        BasicFunctionsList.__init__(self, V, component, block_ext.RBniCS, block_ext.RBniCS.wrapping, RBniCS.backends.numpy)
         
