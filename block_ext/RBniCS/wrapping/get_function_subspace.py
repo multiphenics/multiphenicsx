@@ -17,20 +17,25 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from dolfin import FunctionSpace
 from block_ext.block_function import BlockFunction
-from block_ext.block_function_space import BlockFunctionSpace
+from block_ext.block_function_space import BlockFunctionSpace as BlockFunctionSpace_Class
+from block_ext.RBniCS.wrapping_utils.block_function_space import BlockFunctionSpace
 
 def get_function_subspace(block_function_space__or__block_function, block_component):
     if isinstance(block_function_space__or__block_function, BlockFunction):
         block_function = block_function_space__or__block_function
         return get_function_subspace(block_function.block_function_space(), block_component)
     else:
-        assert isinstance(block_function_space__or__block_function, BlockFunctionSpace)
+        assert isinstance(block_function_space__or__block_function, BlockFunctionSpace_Class)
         block_function_space = block_function_space__or__block_function
         assert isinstance(block_component, (int, str, list))
         assert not isinstance(block_component, tuple), "block_ext does not handle yet the case of sub components"
         if isinstance(block_component, (int, str)):
-            return block_function_space.sub(block_component)
+            block_function_subspace = block_function_space.sub(block_component)
+            if isinstance(block_function_subspace, FunctionSpace):
+                block_function_subspace = BlockFunctionSpace([block_function_subspace], components=block_function_subspace._component_to_index)
+            return block_function_subspace
         else:
             extracted_block_function_spaces = list()
             for block_component in block_component:

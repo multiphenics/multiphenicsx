@@ -17,7 +17,6 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import Function as dolfin_Function
 from block_ext import BlockFunction, BlockFunctionSpace
 from block_ext.RBniCS.wrapping_utils.block_function_space import _convert_component_to_int
 from RBniCS.utils.decorators import backend_for
@@ -29,10 +28,8 @@ def Function(block_V, component=None):
     if component is None:
         return _Function_Type(block_V)
     else:
-        if block_V.keep is not None:
-            return dolfin_Function(block_V.keep.sub(component))
-        else:
-            return dolfin_Function(block_V.sub(component))
+        from block_ext.RBniCS.wrapping.get_function_subspace import get_function_subspace
+        return _Function_Type(get_function_subspace(block_V, component))
         
 # Make BlockFunction hashable
 def block_function__hash__(self):
