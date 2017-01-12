@@ -18,7 +18,7 @@
 #
 
 from block_ext import BlockFunction, BlockFunctionSpace
-from block_ext.RBniCS.wrapping_utils.block_function_space import _convert_component_to_int
+from block_ext.RBniCS.wrapping_utils.block_function_space import _convert_component_to_int_or_list_of_int
 from RBniCS.utils.decorators import backend_for
 
 _Function_Type = BlockFunction
@@ -39,8 +39,8 @@ BlockFunction.__hash__ = block_function__hash__
 # Also make _Function_Type.sub() aware of string components    
 original_sub = _Function_Type.sub
 def custom_sub(self, i, deepcopy=False):
-    if hasattr(self, "_component_to_index"):
-        i_int = _convert_component_to_int(self, i)
+    if hasattr(self, "_component_to_indices"):
+        i_int = _convert_component_to_int_or_list_of_int(self, i)
         assert isinstance(i_int, (int, tuple))
         if isinstance(i_int, int):
             return original_sub(self, i_int, deepcopy)

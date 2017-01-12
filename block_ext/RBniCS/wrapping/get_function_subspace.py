@@ -31,10 +31,12 @@ def get_function_subspace(block_function_space__or__block_function, block_compon
         block_function_space = block_function_space__or__block_function
         assert isinstance(block_component, (int, str, list))
         assert not isinstance(block_component, tuple), "block_ext does not handle yet the case of sub components"
-        if isinstance(block_component, (int, str)):
+        if isinstance(block_component, int):
+            return block_function_space.sub(block_component) # this will be a FEniCS FunctionSpace
+        elif isinstance(block_component, str):
             block_function_subspace = block_function_space.sub(block_component)
             if isinstance(block_function_subspace, FunctionSpace):
-                block_function_subspace = BlockFunctionSpace([block_function_subspace], components=block_function_subspace._component_to_index)
+                block_function_subspace = BlockFunctionSpace([block_function_subspace], components=[block_component])
             return block_function_subspace
         else:
             extracted_block_function_spaces = list()

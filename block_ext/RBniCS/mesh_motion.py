@@ -17,7 +17,7 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import ALE, cells, Expression, Function, FunctionSpace, LagrangeInterpolator, MeshFunctionSizet, VectorFunctionSpace
+from dolfin import Mesh, MeshFunctionSizet
 from block_ext.block_function_space import BlockFunctionSpace
 from RBniCS.backends.fenics import MeshMotion as FEniCSMeshMotion
 from RBniCS.utils.decorators import BackendFor, Extends, override, tuple_of

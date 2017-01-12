@@ -19,7 +19,6 @@
 
 import types
 from block_ext.block_function_space import BlockFunctionSpace as block_ext_BlockFunctionSpace
-from RBniCS.backends.fenics.wrapping_utils.function_space import _enable_string_components, _convert_component_to_int
 
 def BlockFunctionSpace(*args, **kwargs):
     if "components" in kwargs:
@@ -31,3 +30,53 @@ def BlockFunctionSpace(*args, **kwargs):
     if components is not None:
         _enable_string_components(components, output)
     return output
+    
+def _enable_string_components(components, block_function_space):
+    _init_component_to_indices(components, block_function_space)
+    
+    original_sub = block_function_space.sub
+    def custom_sub(self_, i):
+        assert isinstance(i, (str, int))
+        i_int = _convert_component_to_int_or_list_of_int(self_, i)
+        assert isinstance(i_int, (int, list))
+        if isinstance(i_int, int):
+            output = original_sub(i_int)
+        else:
+            assert isinstance(i_int, list)
+            assert isinstance(i, str)
+            output = list()
+            for s in i_int:
+                output.append(original_sub(s))
+            output = BlockFunctionSpace(output, components=[i]*len(i_int))
+        return output
+    block_function_space.sub = types.MethodType(custom_sub, block_function_space)
+    
+def _init_component_to_indices(components, block_function_space):
+    assert isinstance(components, list)
+    block_function_space._component_to_indices = dict()
+    for (index, component) in enumerate(components):
+        _init_component_to_indices__recursive(component, block_function_space._component_to_indices, index)
+    def component_to_indices(self_, i):
+        return self_._component_to_indices[i]
+    block_function_space.component_to_indices = types.MethodType(component_to_indices, block_function_space)
+    
+def _init_component_to_indices__recursive(components, component_to_indices, index):
+    assert isinstance(components, (str, list))
+    if isinstance(components, str):
+        assert isinstance(index, int)
+        if components not in component_to_indices:
+            component_to_indices[components] = list()
+        component_to_indices[components].append(index)
+    elif isinstance(components, list):
+        for component in components:
+            _init_component_to_indices__recursive(component, component_to_indices, index)
+            
+def _convert_component_to_int_or_list_of_int(block_function_space, i):
+    if isinstance(i, str):
+        output = block_function_space._component_to_indices[i]
+        if len(output) == 1:
+            return output[0]
+        else:
+            return output
+    else:
+        return i
