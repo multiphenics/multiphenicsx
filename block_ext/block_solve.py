@@ -33,7 +33,8 @@ def block_solve(block_A, block_x, block_b):
     A.zero(); A.block_add(block_A)
     b.zero(); b.block_add(block_b)
     # Solve
-    from dolfin import solve
-    solve(A, x, b)
+    from dolfin import PETScLUSolver
+    solver = PETScLUSolver("mumps")
+    solver.solve(A, x, b)
     # Move back values from monolithic solution to block vector
     x.copy_values_to(block_x)
