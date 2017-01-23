@@ -38,8 +38,8 @@ class EllipticOptimalControl(EllipticOptimalControlProblem):
         self.subdomains, self.boundaries = kwargs["subdomains"], kwargs["boundaries"]
         block_yup = BlockTrialFunction(block_V)
         (self.y, self.u, self.p) = block_split(block_yup)
-        block_qvz = BlockTestFunction(block_V)
-        (self.q, self.v, self.z) = block_split(block_qvz)
+        block_zvq = BlockTestFunction(block_V)
+        (self.z, self.v, self.q) = block_split(block_zvq)
         self.dx = Measure("dx")(subdomain_data=self.subdomains)
         self.ds = Measure("ds")(subdomain_data=self.boundaries)
         # Regularization coefficient
@@ -80,7 +80,7 @@ class EllipticOptimalControl(EllipticOptimalControlProblem):
             theta_g1 = mu3
             return (theta_g0, theta_g1)
         elif term == "h":
-            theta_h0 = 0.64*mu2**2 + 0.78*mu3**2
+            theta_h0 = 0.24*mu2**2 + 0.52*mu3**2
             return (theta_h0,)
         elif term == "dirichlet_bc_y":
             theta_bc0 = 1.
@@ -103,7 +103,7 @@ class EllipticOptimalControl(EllipticOptimalControlProblem):
             p = self.p
             vel = self.vel
             at0 = [[0, 0, inner(grad(z),grad(p))*dx], [0, 0, 0], [0, 0, 0]]
-            at1 = [[0, 0, - vel*z.dx(0)*p*dx], [0, 0, 0], [0, 0, 0]]
+            at1 = [[0, 0, - vel*p.dx(0)*z*dx], [0, 0, 0], [0, 0, 0]]
             return (at0, at1)
         elif term == "c":
             u = self.u
@@ -145,8 +145,8 @@ class EllipticOptimalControl(EllipticOptimalControlProblem):
             return (bc0,)
         elif term == "inner_product_y":
             y = self.y
-            q = self.q
-            x0 = [[inner(grad(y),grad(q))*dx, 0, 0], [0, 0, 0], [0, 0, 0]]
+            z = self.z
+            x0 = [[inner(grad(y), grad(z))*dx, 0, 0], [0, 0, 0], [0, 0, 0]]
             return (x0,)
         elif term == "inner_product_u":
             u = self.u
@@ -154,9 +154,9 @@ class EllipticOptimalControl(EllipticOptimalControlProblem):
             x0 = [[0, 0, 0], [0, u*v*dx, 0], [0, 0, 0]]
             return (x0,)
         elif term == "inner_product_p":
-            z = self.z
             p = self.p
-            x0 = [[0, 0, 0], [0, 0, 0], [0, 0, inner(grad(z),grad(p))*dx]]
+            q = self.q
+            x0 = [[0, 0, 0], [0, 0, 0], [0, 0, inner(grad(p), grad(q))*dx]]
             return (x0,)
         else:
             raise ValueError("Invalid term for assemble_operator().")
@@ -192,10 +192,11 @@ pod_galerkin_method.initialize_training_set(100)
 reduced_elliptic_optimal_control = pod_galerkin_method.offline()
 
 # 6. Perform an online solve
-online_mu = (10.0, 0.6, 2.8)
+online_mu = (15.0, 0.6, 1.8)
 reduced_elliptic_optimal_control.set_mu(online_mu)
 reduced_elliptic_optimal_control.solve()
 reduced_elliptic_optimal_control.export_solution("EllipticOptimalControl", "online_solution")
+print "Reduced output for mu =", online_mu, "is", reduced_elliptic_optimal_control.output()
 
 # 7. Perform an error analysis
 pod_galerkin_method.initialize_testing_set(100)
