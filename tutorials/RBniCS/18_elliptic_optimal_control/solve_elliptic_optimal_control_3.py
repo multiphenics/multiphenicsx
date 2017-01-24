@@ -64,13 +64,13 @@ class EllipticOptimalControl(EllipticOptimalControlProblem):
         mu1 = self.mu[0]
         mu2 = self.mu[1]
         mu3 = self.mu[2]
-        if term == "a" or term == "at":
+        if term == "a" or term == "a*":
             theta_a0 = 1.0/mu1
             theta_a1 = 1.0/(mu1*mu2)
             theta_a2 = mu2/mu1
             theta_a3 = 1.0
             return (theta_a0, theta_a1, theta_a2, theta_a3)
-        elif term == "c" or term == "ct":
+        elif term == "c" or term == "c*":
             theta_c0 = mu2
             return (theta_c0,)
         elif term == "m":
@@ -107,25 +107,25 @@ class EllipticOptimalControl(EllipticOptimalControlProblem):
             a2 = [[0, 0, 0], [0, 0, 0], [y.dx(1)*q.dx(1)*dx(2) + y.dx(1)*q.dx(1)*dx(3), 0, 0]]
             a3 = [[0, 0, 0], [0, 0, 0], [vel*y.dx(0)*q*dx, 0, 0]]
             return (a0, a1, a2, a3)
-        elif term == "at":
+        elif term == "a*":
             z = self.z
             p = self.p
             vel = self.vel
-            at0 = [[0, 0, inner(grad(z),grad(p))*dx(1)], [0, 0, 0], [0, 0, 0]]
-            at1 = [[0, 0, z.dx(0)*p.dx(0)*dx(2) + z.dx(0)*p.dx(0)*dx(3)], [0, 0, 0], [0, 0, 0]]
-            at2 = [[0, 0, z.dx(1)*p.dx(1)*dx(2) + z.dx(1)*p.dx(1)*dx(3)], [0, 0, 0], [0, 0, 0]]
-            at3 = [[0, 0, - vel*p.dx(0)*z*dx], [0, 0, 0], [0, 0, 0]]
-            return (at0, at1, at2, at3)
+            as0 = [[0, 0, inner(grad(z),grad(p))*dx(1)], [0, 0, 0], [0, 0, 0]]
+            as1 = [[0, 0, z.dx(0)*p.dx(0)*dx(2) + z.dx(0)*p.dx(0)*dx(3)], [0, 0, 0], [0, 0, 0]]
+            as2 = [[0, 0, z.dx(1)*p.dx(1)*dx(2) + z.dx(1)*p.dx(1)*dx(3)], [0, 0, 0], [0, 0, 0]]
+            as3 = [[0, 0, - vel*p.dx(0)*z*dx], [0, 0, 0], [0, 0, 0]]
+            return (as0, as1, as2, as3)
         elif term == "c":
             u = self.u
             q = self.q
             c0 = [[0, 0, 0], [0, 0, 0], [0, u*q*ds(2), 0]]
             return (c0,)
-        elif term == "ct":
+        elif term == "c*":
             v = self.v
             p = self.p
-            ct0 = [[0, 0, 0], [0, 0, v*p*ds(2)], [0, 0, 0]]
-            return (ct0,)
+            cs0 = [[0, 0, 0], [0, 0, v*p*ds(2)], [0, 0, 0]]
+            return (cs0,)
         elif term == "m":
             y = self.y
             z = self.z

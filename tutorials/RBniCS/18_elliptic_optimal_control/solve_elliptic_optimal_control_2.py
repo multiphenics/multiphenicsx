@@ -59,11 +59,11 @@ class EllipticOptimalControl(EllipticOptimalControlProblem):
         mu1 = self.mu[0]
         mu2 = self.mu[1]
         mu3 = self.mu[2]
-        if term == "a" or term == "at":
+        if term == "a" or term == "a*":
             theta_a0 = 1.0/mu1
             theta_a1 = 1.0
             return (theta_a0, theta_a1)
-        elif term == "c" or term == "ct":
+        elif term == "c" or term == "c*":
             theta_c0 = 1.0
             return (theta_c0,)
         elif term == "m":
@@ -98,23 +98,23 @@ class EllipticOptimalControl(EllipticOptimalControlProblem):
             a0 = [[0, 0, 0], [0, 0, 0], [inner(grad(y),grad(q))*dx, 0, 0]]
             a1 = [[0, 0, 0], [0, 0, 0], [vel*y.dx(0)*q*dx, 0, 0]]
             return (a0, a1)
-        elif term == "at":
+        elif term == "a*":
             z = self.z
             p = self.p
             vel = self.vel
-            at0 = [[0, 0, inner(grad(z),grad(p))*dx], [0, 0, 0], [0, 0, 0]]
-            at1 = [[0, 0, - vel*p.dx(0)*z*dx], [0, 0, 0], [0, 0, 0]]
-            return (at0, at1)
+            as0 = [[0, 0, inner(grad(z),grad(p))*dx], [0, 0, 0], [0, 0, 0]]
+            as1 = [[0, 0, - vel*p.dx(0)*z*dx], [0, 0, 0], [0, 0, 0]]
+            return (as0, as1)
         elif term == "c":
             u = self.u
             q = self.q
             c0 = [[0, 0, 0], [0, 0, 0], [0, u*q*dx, 0]]
             return (c0,)
-        elif term == "ct":
+        elif term == "c*":
             v = self.v
             p = self.p
-            ct0 = [[0, 0, 0], [0, 0, v*p*dx], [0, 0, 0]]
-            return (ct0,)
+            cs0 = [[0, 0, 0], [0, 0, v*p*dx], [0, 0, 0]]
+            return (cs0,)
         elif term == "m":
             y = self.y
             z = self.z
