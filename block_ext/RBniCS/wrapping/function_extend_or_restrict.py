@@ -19,7 +19,7 @@
 
 from collections import OrderedDict
 from dolfin import assign
-from block_ext.RBniCS.function import Function
+import block_ext.RBniCS # avoid circular imports when importing RBniCS backend
 
 def function_extend_or_restrict(block_function, block_function_components, block_V, block_V_components, weight, copy):
     block_function_block_V = block_function.block_function_space()
@@ -64,7 +64,7 @@ def function_extend_or_restrict(block_function, block_function_components, block
             assert weight is None, "It is not possible to weigh components without copying the vector"
             return block_function
         else:
-            output = Function(block_V) # zero by default
+            output = block_ext.RBniCS.Function(block_V) # zero by default
             for (block_V_index, block_function_block_V_index) in zip(block_V_index_list, block_function_block_V_index_list):
                 assign(output[block_V_index], block_function[block_function_block_V_index])
                 if weight is not None:
@@ -76,7 +76,7 @@ def function_extend_or_restrict(block_function, block_function_components, block
         # block_V is the mixed (velocity, pressure) space, and you are interested in storing a extended block_function
         # (i.e. extended to zero on pressure DOFs) when defining basis functions for enriched velocity space
         assert copy is True, "It is not possible to extend block functions without copying the vector"
-        extended_block_function = Function(block_V) # zero by default
+        extended_block_function = block_ext.RBniCS.Function(block_V) # zero by default
         for (index_block_V, index_block_function_block_V) in block_V_to_block_function_block_V_mapping.iteritems():
             assign(extended_block_function[index_block_V], block_function[index_block_function_block_V])
             if weight is not None:
@@ -88,7 +88,7 @@ def function_extend_or_restrict(block_function, block_function_components, block
         # block_V is the collapsed state (== adjoint) solution space, and you are
         # interested in storing snapshots of y or p components because of an aggregrated approach
         assert copy is True, "It is not possible to restrict block functions without copying the vector"
-        restricted_block_function = Function(block_V) # zero by default
+        restricted_block_function = block_ext.RBniCS.Function(block_V) # zero by default
         for (index_block_function_block_V, index_block_V) in block_function_block_V_to_block_V_mapping.iteritems():
             assign(restricted_block_function[index_block_V], block_function[index_block_function_block_V])
             if weight is not None:

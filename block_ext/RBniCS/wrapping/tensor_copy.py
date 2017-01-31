@@ -17,11 +17,10 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from block_ext.RBniCS.matrix import Matrix
-from block_ext.RBniCS.vector import Vector
+import block_ext.RBniCS # avoid circular imports when importing RBniCS backend
 
 def tensor_copy(tensor):
-    assert isinstance(tensor, (Matrix.Type(), Vector.Type()))
+    assert isinstance(tensor, (block_ext.RBniCS.Matrix.Type(), block_ext.RBniCS.Vector.Type()))
     output = tensor.copy()
     # Preserve generator for I/O
     if hasattr(tensor, "generator"):

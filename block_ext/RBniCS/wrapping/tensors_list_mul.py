@@ -18,23 +18,22 @@
 #
 
 from block_ext.RBniCS.wrapping.tensor_copy import tensor_copy
-from block_ext.RBniCS.matrix import Matrix
-from block_ext.RBniCS.vector import Vector
-from RBniCS.backends.numpy.function import Function as OnlineFunction
+import block_ext.RBniCS # avoid circular imports when importing RBniCS backend
+import RBniCS.backends # avoid circular imports when importing numpy backend
 
 def tensors_list_mul_online_function(tensors_list, online_function):
-    assert isinstance(online_function, OnlineFunction.Type())
+    assert isinstance(online_function, RBniCS.backends.numpy.Function.Type())
     online_vector = online_function.block_vector()
     
     output = tensor_copy(tensors_list._list[0])
-    assert isinstance(output, (Matrix.Type(), Vector.Type()))
-    if isinstance(output, Matrix.Type()):
+    assert isinstance(output, (block_ext.RBniCS.Matrix.Type(), block_ext.RBniCS.Vector.Type()))
+    if isinstance(output, block_ext.RBniCS.Matrix.Type()):
         for (block_index_I, block_output_I) in enumerate(output):
             for (block_index_I, block_output_IJ) in enumerate(block_output_I):
                 block_output_IJ.zero()
                 for (i, matrix_i) in enumerate(tensors_list._list):
                     block_output_IJ += matrix_i[block_index_I, block_index_J]*online_vector.item(i)
-    elif isinstance(output, Vector.Type()):
+    elif isinstance(output, block_ext.RBniCS.Vector.Type()):
         for (block_index, block_output) in enumerate(output):
             block_output.zero()
             for (i, vector_i) in enumerate(tensors_list._list):
