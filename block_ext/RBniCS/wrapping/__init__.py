@@ -17,6 +17,8 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from block_ext.RBniCS.wrapping.block_form_types import BlockFormTypes, TupleOfBlockFormTypes
+from block_ext.RBniCS.wrapping.block_function_space import BlockFunctionSpace
 from block_ext.RBniCS.wrapping.function_copy import function_copy
 from block_ext.RBniCS.wrapping.function_extend_or_restrict import function_extend_or_restrict
 from block_ext.RBniCS.wrapping.function_load import function_load
@@ -33,6 +35,8 @@ from block_ext.RBniCS.wrapping.tensors_list_mul import tensors_list_mul_online_f
 from block_ext.RBniCS.wrapping.vector_mul import vector_mul_vector
 
 __all__ = [
+    'BlockFormTypes',
+    'BlockFunctionSpace',
     'function_copy',
     'function_extend_or_restrict',
     'function_load',
@@ -48,6 +52,12 @@ __all__ = [
     'tensor_load',
     'tensor_save',
     'tensors_list_mul_online_function',
+    'TupleOfBlockFormTypes',
     'vector_mul_vector',
     'vectorized_matrix_inner_vectorized_matrix'
+]
+
+
+__overridden__ = [
+    'BlockFunctionSpace'
 ]
