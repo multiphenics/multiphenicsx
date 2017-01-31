@@ -21,7 +21,7 @@ from numpy import ndarray as array
 from dolfin import adjoint as dolfin_adjoint
 from RBniCS.utils.decorators import backend_for
 from block_ext.block_adjoint import block_adjoint
-from block_ext.RBniCS.wrapping_utils import BlockFormTypes, TupleOfBlockFormTypes
+from block_ext.RBniCS.wrapping import BlockFormTypes, TupleOfBlockFormTypes
 
 @backend_for("block_ext", inputs=(BlockFormTypes + TupleOfBlockFormTypes, ))
 def adjoint(arg):

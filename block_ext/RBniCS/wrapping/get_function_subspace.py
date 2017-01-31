@@ -20,7 +20,7 @@
 from dolfin import FunctionSpace
 from block_ext.block_function import BlockFunction
 from block_ext.block_function_space import BlockFunctionSpace as BlockFunctionSpace_Class
-from block_ext.RBniCS.wrapping_utils.block_function_space import BlockFunctionSpace
+from block_ext.RBniCS.wrapping.block_function_space import BlockFunctionSpace
 
 def get_function_subspace(block_function_space__or__block_function, block_component):
     if isinstance(block_function_space__or__block_function, BlockFunction):

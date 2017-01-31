@@ -19,7 +19,7 @@
 
 from RBniCS.backends.abstract import ParametrizedTensorFactory as AbstractParametrizedTensorFactory
 from RBniCS.utils.decorators import BackendFor, Extends, override, list_of
-from block_ext.RBniCS.wrapping_utils import BlockFormTypes
+from block_ext.RBniCS.wrapping import BlockFormTypes
 
 @Extends(AbstractParametrizedTensorFactory)
 @BackendFor("block_ext", inputs=(BlockFormTypes, ))

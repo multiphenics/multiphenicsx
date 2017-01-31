@@ -24,7 +24,7 @@ from dolfin import dx
 from RBniCS.backends.abstract import SeparatedParametrizedForm as AbstractSeparatedParametrizedForm
 from RBniCS.backends.fenics import SeparatedParametrizedForm as FEniCSSeparatedParametrizedForm
 from RBniCS.utils.decorators import BackendFor, Extends, override
-from block_ext.RBniCS.wrapping_utils import BlockFormTypes
+from block_ext.RBniCS.wrapping import BlockFormTypes
 
 @Extends(AbstractSeparatedParametrizedForm)
 @BackendFor("block_ext", inputs=(BlockFormTypes, ))

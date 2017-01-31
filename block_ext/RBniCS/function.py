@@ -18,7 +18,7 @@
 #
 
 from block_ext import BlockFunction, BlockFunctionSpace
-from block_ext.RBniCS.wrapping_utils.block_function_space import _convert_component_to_int_or_list_of_int
+from block_ext.RBniCS.wrapping.block_function_space import _convert_component_to_int_or_list_of_int
 from RBniCS.utils.decorators import backend_for
 
 _Function_Type = BlockFunction

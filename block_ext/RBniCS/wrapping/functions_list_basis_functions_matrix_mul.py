@@ -19,7 +19,7 @@
 
 from block_ext import BlockFunctionSpace
 from block_ext.RBniCS.wrapping.function_copy import function_copy
-from RBniCS.backends.basic.wrapping_utils import functions_list_basis_functions_matrix_adapter
+from RBniCS.backends.basic.wrapping import functions_list_basis_functions_matrix_adapter
 from RBniCS.backends.numpy.matrix import Matrix as OnlineMatrix
 from RBniCS.backends.numpy.vector import Vector as OnlineVector
 from RBniCS.backends.numpy.function import Function as OnlineFunction

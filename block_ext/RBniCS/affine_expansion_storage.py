@@ -25,7 +25,7 @@ from RBniCS.utils.decorators import BackendFor, Extends, override, tuple_of
 from block_ext.RBniCS.matrix import Matrix
 from block_ext.RBniCS.vector import Vector
 from block_ext.RBniCS.function import Function
-from block_ext.RBniCS.wrapping_utils import TupleOfBlockFormTypes
+from block_ext.RBniCS.wrapping import TupleOfBlockFormTypes
 
 @Extends(AbstractAffineExpansionStorage)
 @BackendFor("block_ext", inputs=((tuple_of(BlockDirichletBC), tuple_of(Function.Type()), tuple_of(Matrix.Type()), tuple_of(Vector.Type())) + TupleOfBlockFormTypes, ))
