@@ -20,6 +20,7 @@ import numpy as np
 from dolfin import PETScMatrix, as_backend_type
 from block_ext.monolithic_vector import MonolithicVector
 from block_ext.block_outer import BlockOuterMatrix
+from block_ext.block_discard_dofs import _BlockDiscardDOFs
 from petsc4py import PETSc
 from mpi4py import MPI
 
@@ -27,6 +28,14 @@ class MonolithicMatrix(PETScMatrix):
     # The values of block_matrix are not really used, just the
     # block sparsity pattern
     def __init__(self, block_matrix, mat=None, preallocate=True, block_discard_dofs=None, block_constrain_dofs=None):
+        # Preprocessing on input
+        assert isinstance(block_discard_dofs, (_BlockDiscardDOFs, tuple))
+        if isinstance(block_discard_dofs, _BlockDiscardDOFs):
+            block_discard_dofs = (block_discard_dofs, block_discard_dofs)
+        elif isinstance(block_discard_dofs, tuple):
+            assert len(block_discard_dofs) == 2
+            assert block_discard_dofs[0] is None or isinstance(block_discard_dofs[0], _BlockDiscardDOFs)
+            assert block_discard_dofs[1] is None or isinstance(block_discard_dofs[1], _BlockDiscardDOFs)
         # Outer dimensions
         M, N = block_matrix.blocks.shape
         
@@ -52,8 +61,8 @@ class MonolithicMatrix(PETScMatrix):
                         if block_outer_matrix.addend_matrix is not None:
                             assert as_backend_type(block_outer_matrix.addend_matrix).mat().getSize()[0] == current_m
                         block_outer_matrix = block_outer_matrix.addend_block_outer_matrix
-            if block_discard_dofs is not None and block_discard_dofs.need_to_discard_dofs[I]:
-                current_m -= len(block_discard_dofs.dofs_to_be_discarded[I])
+            if block_discard_dofs[0] is not None and block_discard_dofs[0].need_to_discard_dofs[I]:
+                current_m -= len(block_discard_dofs[0].dofs_to_be_discarded[I])
             m.append(current_m)
         for J in range(N):
             if not isinstance(block_matrix[0, J], BlockOuterMatrix):
@@ -75,8 +84,8 @@ class MonolithicMatrix(PETScMatrix):
                         if block_outer_matrix.addend_matrix is not None:
                             assert as_backend_type(block_outer_matrix.addend_matrix).mat().getSize()[1] == current_n
                         block_outer_matrix = block_outer_matrix.addend_block_outer_matrix
-            if block_discard_dofs is not None and block_discard_dofs.need_to_discard_dofs[J]:
-                current_n -= len(block_discard_dofs.dofs_to_be_discarded[J])
+            if block_discard_dofs[1] is not None and block_discard_dofs[1].need_to_discard_dofs[J]:
+                current_n -= len(block_discard_dofs[1].dofs_to_be_discarded[J])
             n.append(current_n)
             
         # Store dimensions
@@ -103,8 +112,8 @@ class MonolithicMatrix(PETScMatrix):
                 row_start, row_end = block.getOwnershipRange()
                 ownership_range_sum += row_end - row_start
             # Subtract rows to be discarded
-            if block_discard_dofs is not None:
-                total_rows_to_be_discarded = np.sum([len(block_discard_dofs.dofs_to_be_discarded[I]) for I in range(M) if block_discard_dofs.need_to_discard_dofs[I]])
+            if block_discard_dofs[0] is not None:
+                total_rows_to_be_discarded = np.sum([len(block_discard_dofs[0].dofs_to_be_discarded[I]) for I in range(M) if block_discard_dofs[0].need_to_discard_dofs[I]])
                 rows_to_be_discarded_per_process = total_rows_to_be_discarded/comm_size # integer division
                 if comm_rank == comm_size - 1:
                     rows_to_be_discarded_per_process = total_rows_to_be_discarded - (comm_size - 1)*rows_to_be_discarded_per_process
@@ -124,13 +133,13 @@ class MonolithicMatrix(PETScMatrix):
                     d_nnz.append( np.zeros(ownership_range_end[r] - ownership_range_start[r], dtype='i') )
                     o_nnz.append( np.zeros(ownership_range_end[r] - ownership_range_start[r], dtype='i') )
                 for I in range(M):
-                    if block_discard_dofs is not None and block_discard_dofs.need_to_discard_dofs[I]:
-                        row_reposition_dofs = block_discard_dofs.subspace_dofs_extended[I]
+                    if block_discard_dofs[0] is not None and block_discard_dofs[0].need_to_discard_dofs[I]:
+                        row_reposition_dofs = block_discard_dofs[0].subspace_dofs_extended[I]
                     else:
                         row_reposition_dofs = None
                     for J in range(N):
-                        if block_discard_dofs is not None and block_discard_dofs.need_to_discard_dofs[J]:
-                            col_reposition_dofs = block_discard_dofs.subspace_dofs_extended[J]
+                        if block_discard_dofs[1] is not None and block_discard_dofs[1].need_to_discard_dofs[J]:
+                            col_reposition_dofs = block_discard_dofs[1].subspace_dofs_extended[J]
                         else:
                             col_reposition_dofs = None
                         if not isinstance(block_matrix[I, J], BlockOuterMatrix):
@@ -182,8 +191,8 @@ class MonolithicMatrix(PETScMatrix):
                 row_constrain_dofs = block_constrain_dofs[I]
             else:
                 row_constrain_dofs = None
-            if block_discard_dofs is not None and block_discard_dofs.need_to_discard_dofs[I]:
-                row_reposition_dofs = block_discard_dofs.subspace_dofs_extended[I]
+            if block_discard_dofs[0] is not None and block_discard_dofs[0].need_to_discard_dofs[I]:
+                row_reposition_dofs = block_discard_dofs[0].subspace_dofs_extended[I]
             else:
                 row_reposition_dofs = None
             for J in range(N):
@@ -191,8 +200,8 @@ class MonolithicMatrix(PETScMatrix):
                     col_constrain_dofs = block_constrain_dofs[J]
                 else:
                     col_constrain_dofs = None
-                if block_discard_dofs is not None and block_discard_dofs.need_to_discard_dofs[J]:
-                    col_reposition_dofs = block_discard_dofs.subspace_dofs_extended[J]
+                if block_discard_dofs[1] is not None and block_discard_dofs[1].need_to_discard_dofs[J]:
+                    col_reposition_dofs = block_discard_dofs[1].subspace_dofs_extended[J]
                 else:
                     col_reposition_dofs = None
                 if not isinstance(block_matrix[I, J], BlockOuterMatrix):
@@ -209,13 +218,13 @@ class MonolithicMatrix(PETScMatrix):
     def create_monolithic_vectors(self, block_x, block_b):
         petsc_x, petsc_b = self.mat().createVecs()
         return (
-            MonolithicVector(block_x, petsc_x, block_discard_dofs=self.block_discard_dofs),
-            MonolithicVector(block_b, petsc_b, block_discard_dofs=self.block_discard_dofs)
+            MonolithicVector(block_x, petsc_x, block_discard_dofs=self.block_discard_dofs[1]),
+            MonolithicVector(block_b, petsc_b, block_discard_dofs=self.block_discard_dofs[0])
         )
         
     def create_monolithic_vector_left(self, block_b):
         petsc_b = self.mat().createVecLeft()
-        return MonolithicVector(block_b, petsc_b, block_discard_dofs=self.block_discard_dofs)
+        return MonolithicVector(block_b, petsc_b, block_discard_dofs=self.block_discard_dofs[0])
         
     def _update_non_zeros_from_form(self, block, I, J, m, n, row_reposition_dofs, col_reposition_dofs, block_discard_dofs, ownership_range_start, ownership_range_end, d_nnz, o_nnz):
         block = as_backend_type(block).mat()
@@ -232,7 +241,7 @@ class MonolithicMatrix(PETScMatrix):
             a = row - ownership_range_start[A]
             cols, _ = block.getRow(i)
             if col_reposition_dofs is not None:
-                cols = set(cols).difference(block_discard_dofs.dofs_to_be_discarded[J])
+                cols = set(cols).difference(block_discard_dofs[1].dofs_to_be_discarded[J])
                 cols = [col_reposition_dofs[c] for c in cols]
                 cols = np.array(cols)
             cols[:] += sum(n[:J])
@@ -291,7 +300,7 @@ class MonolithicMatrix(PETScMatrix):
                 cols_to_preserve = set()
             if col_reposition_dofs is not None:
                 cols_to_vals = dict(zip(cols, vals))
-                cols_after_discard = set(cols).difference(block_discard_dofs.dofs_to_be_discarded[J])
+                cols_after_discard = set(cols).difference(block_discard_dofs[1].dofs_to_be_discarded[J])
                 if len(cols_after_discard) == 0:
                     continue
                 if col_constrain_dofs is not None:
@@ -337,7 +346,7 @@ class MonolithicMatrix(PETScMatrix):
                 cols_to_preserve = set()
             if col_reposition_dofs is not None:
                 cols_to_vals = dict(zip(cols, vals))
-                cols_after_discard = set(cols).difference(block_discard_dofs.dofs_to_be_discarded[J])
+                cols_after_discard = set(cols).difference(block_discard_dofs[1].dofs_to_be_discarded[J])
                 if len(cols_after_discard) == 0:
                     continue
                 if col_constrain_dofs is not None:

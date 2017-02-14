@@ -51,6 +51,7 @@ def block_assemble(block_form, block_tensor=None, **kwargs):
             
         # Extract BlockFunctionSpace from the current form
         block_function_space = extract_block_function_space(block_form, (N, M))
+        assert len(block_function_space) == 2
         
         # Assemble
         for I in range(N):
@@ -66,6 +67,28 @@ def block_assemble(block_form, block_tensor=None, **kwargs):
                         block_tensor.blocks[I, J] = BlockOuterMatrix(block_form_IJ, **block_kwargs[I, J])
                     else:
                         block_tensor.blocks[I, J].assemble(block_form_IJ, **block_kwargs[I, J])
+                        
+        # Attach BlockDiscardDOFs to the assembled tensor
+        assert (
+            block_function_space[0] is not None
+                and
+            block_function_space[0].keep is not None
+        ) == (
+            block_function_space[1] is not None
+                and
+            block_function_space[1].keep is not None
+        )
+        if (
+            block_function_space[0] is not None
+                and
+            block_function_space[0].keep is not None
+        ):
+            block_tensor._block_discard_dofs = (
+                BlockDiscardDOFs(block_function_space[0].keep, block_function_space[0]), 
+                BlockDiscardDOFs(block_function_space[1].keep, block_function_space[1])
+            )
+        else:
+            block_tensor._block_discard_dofs = (None, None)
     else:
         # Prepare storage
         if block_tensor is None:
@@ -76,6 +99,7 @@ def block_assemble(block_form, block_tensor=None, **kwargs):
             
         # Extract BlockFunctionSpace from the current form
         block_function_space = extract_block_function_space(block_form, (N,))
+        assert len(block_function_space) == 1
         
         # Assemble
         for I in range(N):
@@ -91,15 +115,15 @@ def block_assemble(block_form, block_tensor=None, **kwargs):
                 else:
                     block_tensor.blocks[I].assemble(block_form_I, **kwargs)
     
-    # Attach BlockDiscardDOFs to the assembled tensor
-    if (
-        block_function_space is not None
-            and
-        block_function_space.keep is not None
-    ):
-        block_tensor._block_discard_dofs = BlockDiscardDOFs(block_function_space.keep, block_function_space)
-    else:
-        block_tensor._block_discard_dofs = None
+        # Attach BlockDiscardDOFs to the assembled tensor
+        if (
+            block_function_space[0] is not None
+                and
+            block_function_space[0].keep is not None
+        ):
+            block_tensor._block_discard_dofs = BlockDiscardDOFs(block_function_space[0].keep, block_function_space[0])
+        else:
+            block_tensor._block_discard_dofs = None
     
     return block_tensor
     

@@ -24,7 +24,11 @@ def block_solve(block_A, block_x, block_b):
     assert isinstance(block_A, BlockMatrix)
     assert isinstance(block_x, BlockVector)
     assert isinstance(block_b, BlockVector)
-    assert block_A._block_discard_dofs == block_b._block_discard_dofs
+    if block_b._block_discard_dofs is None:
+        assert block_A._block_discard_dofs[0] is None
+        assert block_A._block_discard_dofs[1] is None
+    else:
+        assert block_A._block_discard_dofs[0] == block_b._block_discard_dofs
     block_discard_dofs = block_A._block_discard_dofs
     # Init monolithic matrix/vector corresponding to block matrix/vector
     A = MonolithicMatrix(block_A, block_discard_dofs=block_discard_dofs)

@@ -45,7 +45,7 @@ class BlockNonlinearProblem(NonlinearProblem):
         # Extract block discard dofs from block solution
         self.block_discard_dofs = block_solution._block_discard_dofs
         # Declare a monolithic_solution vector. The easiest way is to define a temporary monolithic matrix
-        monolithic_jacobian = MonolithicMatrix(self.block_jacobian, preallocate=False, block_discard_dofs=self.block_discard_dofs)
+        monolithic_jacobian = MonolithicMatrix(self.block_jacobian, preallocate=False, block_discard_dofs=(self.block_discard_dofs, self.block_discard_dofs))
         monolithic_solution, monolithic_residual = monolithic_jacobian.create_monolithic_vectors(self.block_solution.block_vector(), self.block_residual)
         self.monolithic_solution = monolithic_solution
         # Add the current block_solution as initial guess
@@ -98,7 +98,7 @@ class BlockNonlinearProblem(NonlinearProblem):
     def J(self, fenics_jacobian, _):
         # Initialize monolithic wrappers (only once)
         if self.monolithic_jacobian is None:
-            self.monolithic_jacobian = MonolithicMatrix(self.block_jacobian, as_backend_type(fenics_jacobian).mat(), block_discard_dofs=self.block_discard_dofs)
+            self.monolithic_jacobian = MonolithicMatrix(self.block_jacobian, as_backend_type(fenics_jacobian).mat(), block_discard_dofs=(self.block_discard_dofs, self.block_discard_dofs))
         # Shorthands
         block_jacobian = self.block_jacobian
         block_solution = self.block_solution

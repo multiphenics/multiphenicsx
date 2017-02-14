@@ -59,8 +59,8 @@ def _get_zero_form(block_function_space, index):
     zero = Constant(0.)
     assert len(index) in (1, 2)
     if len(index) == 2:
-        test = TestFunction(block_function_space[index[0]])
-        trial = TrialFunction(block_function_space[index[1]])
+        test = TestFunction(block_function_space[0][index[0]])
+        trial = TrialFunction(block_function_space[1][index[1]])
         len_test_shape = len(test.ufl_shape)
         len_trial_shape = len(trial.ufl_shape)
         assert len_test_shape in (0, 1, 2)
@@ -86,7 +86,7 @@ def _get_zero_form(block_function_space, index):
         else:
             raise AssertionError("Invalid case in _get_zero_form.")
     else:
-        test = TestFunction(block_function_space[index[0]])
+        test = TestFunction(block_function_space[0][index[0]])
         len_test_shape = len(test.ufl_shape)
         assert len_test_shape in (0, 1, 2)
         if len_test_shape == 0:

@@ -128,7 +128,8 @@ class BlockFunction(tuple):
         block_vector_copy = BlockVector([f.copy(deepcopy).vector() for f in self])
         return BlockFunction(self._block_function_space, block_vector_copy)
         
-    def sub(self, i):
+    def sub(self, i, deepcopy=False):
+        assert deepcopy is False # no usage envisioned for the other case
         return self[i]
         
     def __add__(self, other):

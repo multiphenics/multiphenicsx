@@ -25,7 +25,11 @@ def block_matlab_export(block_A, name_A, block_b=None, name_b=None, block_x=None
     assert isinstance(block_A, BlockMatrix)
     assert isinstance(block_b, BlockVector) or block_b is None
     if block_b is not None:
-        assert block_A._block_discard_dofs == block_b._block_discard_dofs
+        if block_b._block_discard_dofs is None:
+            assert block_A._block_discard_dofs[0] is None
+            assert block_A._block_discard_dofs[1] is None
+        else:
+            assert block_A._block_discard_dofs[0] == block_b._block_discard_dofs
     block_discard_dofs = block_A._block_discard_dofs
     # Init monolithic matrix/vector corresponding to block matrix/vector
     A = MonolithicMatrix(block_A, block_discard_dofs=block_discard_dofs)

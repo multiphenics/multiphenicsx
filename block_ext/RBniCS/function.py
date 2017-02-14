@@ -36,6 +36,14 @@ def block_function__hash__(self):
     return hash(tuple(self)) ^ hash(type(self))
 BlockFunction.__hash__ = block_function__hash__
 
+# Make sure that _Function_Type.function_space() preserves component to index map
+original__init__ = _Function_Type.__init__
+def custom__init__(self, *args, **kwargs):
+    if isinstance(args[0], BlockFunctionSpace) and hasattr(args[0], "_component_to_indices"):
+        self._component_to_indices = args[0]._component_to_indices
+    original__init__(self, *args, **kwargs)
+_Function_Type.__init__ = custom__init__
+
 # Also make _Function_Type.sub() aware of string components    
 original_sub = _Function_Type.sub
 def custom_sub(self, i, deepcopy=False):

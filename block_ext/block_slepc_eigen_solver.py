@@ -65,8 +65,8 @@ class BlockSLEPcEigenSolver(object):
         A = MonolithicMatrix(self.block_A, block_discard_dofs=self.block_A._block_discard_dofs, block_constrain_dofs=(self._constrained_dofs, self._spurious_eigenvalue))
         A.zero(); A.block_add(self.block_A)
         if self.block_B is not None:
-            assert self.block_A._block_discard_dofs == self.block_B._block_discard_dofs
-            B = MonolithicMatrix(self.block_B, block_discard_dofs=self.block_B._block_discard_dofs, block_constrain_dofs=(self._constrained_dofs, 1.))
+            assert block_A._block_discard_dofs == block_B._block_discard_dofs
+            B = MonolithicMatrix(self.block_B, block_discard_dofs=self.block_A._block_discard_dofs, block_constrain_dofs=(self._constrained_dofs, 1.))
             B.zero(); B.block_add(self.block_B)
         else:
             B = None

@@ -25,6 +25,8 @@ from block_ext.block_outer import BlockOuterForm1, BlockOuterForm2
 def block_derivative(F, u, du):
     # Extract BlockFunctionSpace from the current form
     block_V = extract_block_function_space(F, (len(F),))
+    assert len(block_V) == 1
+    block_V = block_V[0]
     
     # Compute the derivative
     assert len(F) == len(u) == len(du)
