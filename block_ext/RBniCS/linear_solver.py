@@ -36,7 +36,7 @@ class LinearSolver(AbstractLinearSolver):
             self.lhs = lhs.copy()
             self.lhs._block_discard_dofs = lhs._block_discard_dofs
             self.rhs = rhs.copy()
-            self.rhs._block_discard_dofs = lhs._block_discard_dofs
+            self.rhs._block_discard_dofs = rhs._block_discard_dofs
             self.bcs = bcs
             # Apply BCs
             assert isinstance(self.bcs, (dict, BlockDirichletBC))
