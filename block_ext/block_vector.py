@@ -26,6 +26,7 @@ def preserve_block_discard_dofs_attribute(operator):
     def custom_operator(self, other):
         assert hasattr(self, "_block_discard_dofs")
         output = original_operator(self, other)
+        assert self._block_discard_dofs == other._block_discard_dofs
         output._block_discard_dofs = self._block_discard_dofs
         return output
     setattr(BlockVector, operator, custom_operator)

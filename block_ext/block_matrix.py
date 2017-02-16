@@ -82,7 +82,7 @@ def custom__rmul__(self, other):
 BlockMatrix.__rmul__ = custom__rmul__
 
 def custom__neg__(self):
-    return self.__mul__(self, -1.)
+    return self.__mul__(-1.)
 BlockMatrix.__neg__ = custom__neg__
 
 # Preserve _block_discard_dofs attribute in algebraic operators
@@ -91,10 +91,44 @@ def preserve_block_discard_dofs_attribute(operator):
     def custom_operator(self, other):
         assert hasattr(self, "_block_discard_dofs")
         output = original_operator(self, other)
+        assert self._block_discard_dofs == other._block_discard_dofs
         output._block_discard_dofs = self._block_discard_dofs
         return output
     setattr(BlockMatrix, operator, custom_operator)
     
-for operator in ("__add__", "__radd__", "__sub__", "__rsub__", "__mul__", "__rmul__", "__neg__"):
+for operator in ("__add__", "__radd__", "__sub__", "__rsub__"):
     preserve_block_discard_dofs_attribute(operator)
+    
+def preserve_block_discard_dofs_attribute_unary(operator):
+    original_operator = getattr(BlockMatrix, operator)
+    def custom_operator(self):
+        assert hasattr(self, "_block_discard_dofs")
+        output = original_operator(self)
+        output._block_discard_dofs = self._block_discard_dofs
+        return output
+    setattr(BlockMatrix, operator, custom_operator)
+    
+for operator in ("__neg__", ):
+    preserve_block_discard_dofs_attribute_unary(operator)
+    
+def preserve_block_discard_dofs_attribute_mul(operator):
+    original_operator = getattr(BlockMatrix, operator)
+    def custom_operator(self, other):
+        assert hasattr(self, "_block_discard_dofs")
+        output = original_operator(self, other)
+        if isinstance(other, block_mat):
+            assert self._block_discard_dofs == other._block_discard_dofs
+            output._block_discard_dofs = self._block_discard_dofs
+        elif isinstance(other, block_vec):
+            assert self._block_discard_dofs[1] == other._block_discard_dofs
+            output._block_discard_dofs = self._block_discard_dofs[0]
+        elif isinstance(other, (float, int)):
+            output._block_discard_dofs = self._block_discard_dofs
+        else:
+            return NotImplemented
+        return output
+    setattr(BlockMatrix, operator, custom_operator)
+    
+for operator in ("__mul__", "__rmul__"):
+    preserve_block_discard_dofs_attribute_mul(operator)
     

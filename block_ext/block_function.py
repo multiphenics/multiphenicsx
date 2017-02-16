@@ -113,6 +113,10 @@ class BlockFunction(tuple):
             self._block_discard_dofs = BlockDiscardDOFs(self._block_function_space.keep, self._block_function_space)
         else:
             self._block_discard_dofs = None
+        if not hasattr(self._block_vector, "_block_discard_dofs"):
+            self._block_vector._block_discard_dofs = self._block_discard_dofs
+        else:
+            assert self._block_vector._block_discard_dofs == self._block_discard_dofs
         
     def block_vector(self):
         return self._block_vector
