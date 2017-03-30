@@ -18,8 +18,8 @@
 #
 
 from block_ext.block_function_space import BlockFunctionSpace
-from RBniCS.backends.fenics import ReducedMesh as FEniCSReducedMesh
-from RBniCS.utils.decorators import BackendFor, Extends, override
+from rbnics.backends.fenics import ReducedMesh as FEniCSReducedMesh
+from rbnics.utils.decorators import BackendFor, Extends, override
 
 @Extends(FEniCSReducedMesh)
 @BackendFor("block_ext", inputs=(BlockFunctionSpace, ))

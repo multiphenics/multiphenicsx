@@ -18,11 +18,11 @@
 #
 
 from block_ext import BlockDirichletBC, block_solve
-from RBniCS.backends.abstract import LinearSolver as AbstractLinearSolver
-from block_ext.RBniCS.matrix import Matrix
-from block_ext.RBniCS.vector import Vector
-from block_ext.RBniCS.function import Function
-from RBniCS.utils.decorators import BackendFor, dict_of, Extends, override
+from rbnics.backends.abstract import LinearSolver as AbstractLinearSolver
+from block_ext.rbnics.matrix import Matrix
+from block_ext.rbnics.vector import Vector
+from block_ext.rbnics.function import Function
+from rbnics.utils.decorators import BackendFor, dict_of, Extends, override
 
 @Extends(AbstractLinearSolver)
 @BackendFor("block_ext", inputs=(Matrix.Type(), Function.Type(), Vector.Type(), (BlockDirichletBC, dict_of(str, BlockDirichletBC), None)))

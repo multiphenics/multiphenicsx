@@ -19,8 +19,8 @@
 
 from dolfin import Mesh, MeshFunctionSizet
 from block_ext.block_function_space import BlockFunctionSpace
-from RBniCS.backends.fenics import MeshMotion as FEniCSMeshMotion
-from RBniCS.utils.decorators import BackendFor, Extends, override, tuple_of
+from rbnics.backends.fenics import MeshMotion as FEniCSMeshMotion
+from rbnics.utils.decorators import BackendFor, Extends, override, tuple_of
 
 @Extends(FEniCSMeshMotion)
 @BackendFor("block_ext", inputs=(BlockFunctionSpace, MeshFunctionSizet, tuple_of(tuple_of(str))))

@@ -19,7 +19,7 @@
 
 from dolfin import *
 from block_ext import *
-from RBniCS import *
+from rbnics import *
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~     EXAMPLE 5: GAUSSIAN EIM CLASS     ~~~~~~~~~~~~~~~~~~~~~~~~~# 
 @EIM()

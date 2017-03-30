@@ -20,13 +20,13 @@
 from numpy import ndarray as array
 from dolfin import Constant, DirichletBC, project
 from block_ext.block_dirichlet_bc import BlockDirichletBC
-from block_ext.RBniCS.affine_expansion_storage import AffineExpansionStorage
-from block_ext.RBniCS.matrix import Matrix
-from block_ext.RBniCS.vector import Vector
-from block_ext.RBniCS.function import Function
-from block_ext.RBniCS.wrapping import function_copy, tensor_copy
-from RBniCS.utils.decorators import backend_for, ThetaType
-from RBniCS.utils.mpi import log, PROGRESS
+from block_ext.rbnics.affine_expansion_storage import AffineExpansionStorage
+from block_ext.rbnics.matrix import Matrix
+from block_ext.rbnics.vector import Vector
+from block_ext.rbnics.function import Function
+from block_ext.rbnics.wrapping import function_copy, tensor_copy
+from rbnics.utils.decorators import backend_for, ThetaType
+from rbnics.utils.mpi import log, PROGRESS
 
 # product function to assemble truth/reduced affine expansions. To be used in combination with sum,
 # even though this one actually carries out both the sum and the product!

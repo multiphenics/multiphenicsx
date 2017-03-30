@@ -18,8 +18,8 @@
 #
 
 from block_ext import BlockFunction, BlockFunctionSpace
-from block_ext.RBniCS.wrapping.block_function_space import _convert_component_to_int_or_list_of_int
-from RBniCS.utils.decorators import backend_for
+from block_ext.rbnics.wrapping.block_function_space import _convert_component_to_int_or_list_of_int
+from rbnics.utils.decorators import backend_for
 
 _Function_Type = BlockFunction
 
@@ -28,7 +28,7 @@ def Function(block_V, component=None):
     if component is None:
         return _Function_Type(block_V)
     else:
-        from block_ext.RBniCS.wrapping.get_function_subspace import get_function_subspace
+        from block_ext.rbnics.wrapping.get_function_subspace import get_function_subspace
         return _Function_Type(get_function_subspace(block_V, component))
         
 # Make BlockFunction hashable

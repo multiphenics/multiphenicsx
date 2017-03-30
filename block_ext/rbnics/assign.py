@@ -18,8 +18,8 @@
 #
 
 from block_ext import block_assign
-from RBniCS.utils.decorators import backend_for
-from block_ext.RBniCS.function import Function
+from rbnics.utils.decorators import backend_for
+from block_ext.rbnics.function import Function
 
 @backend_for("block_ext", inputs=(Function.Type(), Function.Type()))
 def assign(block_function_to, block_function_from):

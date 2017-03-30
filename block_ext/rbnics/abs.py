@@ -19,11 +19,11 @@
 
 from math import fabs
 from dolfin import as_backend_type, Point, vertices
-from block_ext.RBniCS.matrix import Matrix
-from block_ext.RBniCS.vector import Vector
-from block_ext.RBniCS.function import Function
-from RBniCS.utils.decorators import backend_for
-from RBniCS.utils.mpi import parallel_max
+from block_ext.rbnics.matrix import Matrix
+from block_ext.rbnics.vector import Vector
+from block_ext.rbnics.function import Function
+from rbnics.utils.decorators import backend_for
+from rbnics.utils.mpi import parallel_max
 
 # abs function to compute maximum absolute value of an expression, matrix or vector (for EIM). To be used in combination with max
 # even though here we actually carry out both the max and the abs!

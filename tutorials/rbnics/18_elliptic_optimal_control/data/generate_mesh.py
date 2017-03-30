@@ -24,7 +24,7 @@ def generate_mesh1():
     pass # Uses the same mesh as tutorial 04
     
 def generate_mesh2():
-    pass # Copy the one from RBniCS
+    pass # Copy the one from rbnics
     
 def generate_mesh3():
     # Create mesh

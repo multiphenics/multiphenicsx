@@ -17,8 +17,8 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from block_ext.RBniCS.product import ProductOutput
-from RBniCS.utils.decorators import backend_for
+from block_ext.rbnics.product import ProductOutput
+from rbnics.utils.decorators import backend_for
 
 @backend_for("block_ext", inputs=(ProductOutput, ))
 def sum(product_output):

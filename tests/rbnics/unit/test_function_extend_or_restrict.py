@@ -20,8 +20,8 @@
 from numpy import isclose
 from dolfin import *
 from block_ext import *
-from RBniCS import *
-from block_ext.RBniCS.wrapping import function_extend_or_restrict
+from rbnics import *
+from block_ext.rbnics.wrapping import function_extend_or_restrict
 
 mesh = UnitSquareMesh(10, 10)
 

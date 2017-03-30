@@ -18,12 +18,12 @@
 #
 
 from block_ext import BlockFunction, BlockFunctionSpace, BlockSLEPcEigenSolver
-from block_ext.RBniCS.affine_expansion_storage import AffineExpansionStorage
-from block_ext.RBniCS.matrix import Matrix
-from block_ext.RBniCS.product import product
-from block_ext.RBniCS.sum import sum
-from RBniCS.backends.abstract import EigenSolver as AbstractEigenSolver
-from RBniCS.utils.decorators import BackendFor, Extends, override
+from block_ext.rbnics.affine_expansion_storage import AffineExpansionStorage
+from block_ext.rbnics.matrix import Matrix
+from block_ext.rbnics.product import product
+from block_ext.rbnics.sum import sum
+from rbnics.backends.abstract import EigenSolver as AbstractEigenSolver
+from rbnics.utils.decorators import BackendFor, Extends, override
 
 @Extends(AbstractEigenSolver)
 @BackendFor("block_ext", inputs=(BlockFunctionSpace, Matrix.Type(), (Matrix.Type(), None), (AffineExpansionStorage, None)))

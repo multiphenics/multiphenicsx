@@ -17,12 +17,12 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import block_ext.RBniCS # avoid circular imports when importing RBniCS backend
+import block_ext.rbnics # avoid circular imports when importing rbnics backend
 
 def vector_mul_vector(vector1, vector2):
-    if isinstance(vector1, block_ext.RBniCS.Function.Type()):
+    if isinstance(vector1, block_ext.rbnics.Function.Type()):
         vector1 = vector1.block_vector()
-    if isinstance(vector2, block_ext.RBniCS.Function.Type()):
+    if isinstance(vector2, block_ext.rbnics.Function.Type()):
         vector2 = vector2.block_vector()
     return vector1.inner(vector2)
 

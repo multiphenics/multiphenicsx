@@ -18,12 +18,12 @@
 #
 
 from block_ext import BlockFunctionSpace
-from block_ext.RBniCS.matrix import Matrix
-from RBniCS.backends.abstract import ProperOrthogonalDecomposition as AbstractProperOrthogonalDecomposition
-from RBniCS.backends.basic import ProperOrthogonalDecompositionBase as BasicProperOrthogonalDecomposition
-import block_ext.RBniCS
-import block_ext.RBniCS.wrapping
-from RBniCS.utils.decorators import BackendFor, Extends, override
+from block_ext.rbnics.matrix import Matrix
+from rbnics.backends.abstract import ProperOrthogonalDecomposition as AbstractProperOrthogonalDecomposition
+from rbnics.backends.basic import ProperOrthogonalDecompositionBase as BasicProperOrthogonalDecomposition
+import block_ext.rbnics
+import block_ext.rbnics.wrapping
+from rbnics.utils.decorators import BackendFor, Extends, override
 
 ProperOrthogonalDecompositionBase = BasicProperOrthogonalDecomposition(AbstractProperOrthogonalDecomposition)
 
@@ -32,7 +32,7 @@ ProperOrthogonalDecompositionBase = BasicProperOrthogonalDecomposition(AbstractP
 class ProperOrthogonalDecomposition(ProperOrthogonalDecompositionBase):
     @override
     def __init__(self, V, X, component=None):
-        ProperOrthogonalDecompositionBase.__init__(self, V, X, component, block_ext.RBniCS, block_ext.RBniCS.wrapping, block_ext.RBniCS.SnapshotsMatrix, block_ext.RBniCS.FunctionsList)
+        ProperOrthogonalDecompositionBase.__init__(self, V, X, component, block_ext.rbnics, block_ext.rbnics.wrapping, block_ext.rbnics.SnapshotsMatrix, block_ext.rbnics.FunctionsList)
         
     @override
     def store_snapshot(self, snapshot, component=None, weight=None):

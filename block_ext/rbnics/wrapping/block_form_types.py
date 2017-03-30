@@ -18,7 +18,7 @@
 #
 
 from ufl import Form
-from RBniCS.utils.decorators import array_of, list_of, tuple_of
+from rbnics.utils.decorators import array_of, list_of, tuple_of
 
 BlockFormTypes = (
     list_of(Form),

@@ -17,16 +17,16 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from block_ext.RBniCS.matrix import Matrix
-from block_ext.RBniCS.vector import Vector
-from block_ext.RBniCS.function import Function
-from block_ext.RBniCS.functions_list import FunctionsList
-from block_ext.RBniCS.tensors_list import TensorsList
-from block_ext.RBniCS.parametrized_tensor_factory import ParametrizedTensorFactory
-from block_ext.RBniCS.parametrized_expression_factory import ParametrizedExpressionFactory
-from block_ext.RBniCS.reduced_mesh import ReducedMesh
-from block_ext.RBniCS.reduced_vertices import ReducedVertices
-from RBniCS.utils.decorators import backend_for, tuple_of
+from block_ext.rbnics.matrix import Matrix
+from block_ext.rbnics.vector import Vector
+from block_ext.rbnics.function import Function
+from block_ext.rbnics.functions_list import FunctionsList
+from block_ext.rbnics.tensors_list import TensorsList
+from block_ext.rbnics.parametrized_tensor_factory import ParametrizedTensorFactory
+from block_ext.rbnics.parametrized_expression_factory import ParametrizedExpressionFactory
+from block_ext.rbnics.reduced_mesh import ReducedMesh
+from block_ext.rbnics.reduced_vertices import ReducedVertices
+from rbnics.utils.decorators import backend_for, tuple_of
 
 # Evaluate a parametrized expression, possibly at a specific location
 #@backend_for("block_ext", inputs=((Matrix.Type(), Vector.Type(), Function.Type(), TensorsList, FunctionsList, ParametrizedTensorFactory, ParametrizedExpressionFactory), (ReducedMesh, ReducedVertices, None)))

@@ -17,15 +17,15 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from RBniCS.backends.basic import copy as basic_copy
-import block_ext.RBniCS
-from block_ext.RBniCS.function import Function
-from block_ext.RBniCS.matrix import Matrix
-from block_ext.RBniCS.vector import Vector
-import block_ext.RBniCS.wrapping
-from RBniCS.utils.decorators import backend_for
+from rbnics.backends.basic import copy as basic_copy
+import block_ext.rbnics
+from block_ext.rbnics.function import Function
+from block_ext.rbnics.matrix import Matrix
+from block_ext.rbnics.vector import Vector
+import block_ext.rbnics.wrapping
+from rbnics.utils.decorators import backend_for
 
 @backend_for("block_ext", inputs=((Function.Type(), Matrix.Type(), Vector.Type()), ))
 def copy(arg):
-    return basic_copy(arg, block_ext.RBniCS, block_ext.RBniCS.wrapping)
+    return basic_copy(arg, block_ext.rbnics, block_ext.rbnics.wrapping)
     

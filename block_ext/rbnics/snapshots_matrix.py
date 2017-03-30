@@ -18,8 +18,8 @@
 #
 
 from block_ext import BlockFunctionSpace
-from block_ext.RBniCS.functions_list import FunctionsList
-from RBniCS.utils.decorators import BackendFor, Extends
+from block_ext.rbnics.functions_list import FunctionsList
+from rbnics.utils.decorators import BackendFor, Extends
 
 @Extends(FunctionsList)
 @BackendFor("block_ext", online_backend="numpy", inputs=(BlockFunctionSpace, (str, None)))

@@ -18,8 +18,8 @@
 #
 
 from dolfin import Expression
-from RBniCS.backends.fenics import ParametrizedExpressionFactory
-from RBniCS.utils.decorators import SameBackendFor
+from rbnics.backends.fenics import ParametrizedExpressionFactory
+from rbnics.utils.decorators import SameBackendFor
 
 SameBackendFor("block_ext", "fenics", ParametrizedExpressionFactory, inputs=(Expression, ))
                 

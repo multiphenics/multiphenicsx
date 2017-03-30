@@ -19,9 +19,9 @@
 
 import types
 from block_ext import BlockDirichletBC, BlockNonlinearProblem, BlockPETScSNESSolver
-from RBniCS.backends.abstract import NonlinearSolver as AbstractNonlinearSolver
-from block_ext.RBniCS.function import Function
-from RBniCS.utils.decorators import BackendFor, dict_of, Extends, override
+from rbnics.backends.abstract import NonlinearSolver as AbstractNonlinearSolver
+from block_ext.rbnics.function import Function
+from rbnics.utils.decorators import BackendFor, dict_of, Extends, override
 
 @Extends(AbstractNonlinearSolver)
 @BackendFor("block_ext", inputs=(types.FunctionType, Function.Type(), types.FunctionType, (BlockDirichletBC, dict_of(str, BlockDirichletBC), None)))

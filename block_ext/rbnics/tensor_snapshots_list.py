@@ -18,8 +18,8 @@
 #
 
 from block_ext import BlockFunctionSpace
-from block_ext.RBniCS.tensors_list import TensorsList
-from RBniCS.utils.decorators import BackendFor, Extends
+from block_ext.rbnics.tensors_list import TensorsList
+from rbnics.utils.decorators import BackendFor, Extends
 
 @Extends(TensorsList)
 @BackendFor("block_ext", online_backend="numpy", inputs=(BlockFunctionSpace, ))

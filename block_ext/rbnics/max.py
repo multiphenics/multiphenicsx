@@ -17,8 +17,8 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from block_ext.RBniCS.abs import AbsOutput
-from RBniCS.utils.decorators import backend_for
+from block_ext.rbnics.abs import AbsOutput
+from rbnics.utils.decorators import backend_for
 
 # max function to compute the maximum absolute value of entries in EIM. To be used in combination with abs,
 # even though abs actually carries out both the max and the abs!

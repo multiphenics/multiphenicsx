@@ -17,17 +17,17 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from RBniCS.backends.basic import transpose as basic_transpose
-import block_ext.RBniCS
-from block_ext.RBniCS.basis_functions_matrix import BasisFunctionsMatrix
-from block_ext.RBniCS.function import Function
-from block_ext.RBniCS.functions_list import FunctionsList
-from block_ext.RBniCS.vector import Vector
-import block_ext.RBniCS.wrapping
-import RBniCS.backends.numpy
-from RBniCS.utils.decorators import backend_for
+from rbnics.backends.basic import transpose as basic_transpose
+import block_ext.rbnics
+from block_ext.rbnics.basis_functions_matrix import BasisFunctionsMatrix
+from block_ext.rbnics.function import Function
+from block_ext.rbnics.functions_list import FunctionsList
+from block_ext.rbnics.vector import Vector
+import block_ext.rbnics.wrapping
+import rbnics.backends.numpy
+from rbnics.utils.decorators import backend_for
 
 @backend_for("block_ext", online_backend="numpy", inputs=((BasisFunctionsMatrix, Function.Type(), FunctionsList, Vector.Type()), ))
 def transpose(arg):
-    return basic_transpose(arg, block_ext.RBniCS, block_ext.RBniCS.wrapping, RBniCS.backends.numpy)
+    return basic_transpose(arg, block_ext.rbnics, block_ext.rbnics.wrapping, rbnics.backends.numpy)
     

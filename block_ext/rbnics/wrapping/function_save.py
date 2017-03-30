@@ -18,7 +18,7 @@
 #
 
 from dolfin import File
-from RBniCS.backends.fenics.wrapping.function_save import _write_to_pvd_file
+from rbnics.backends.fenics.wrapping.function_save import _write_to_pvd_file
 
 def function_save(fun, directory, filename, suffix=None):
     if len(fun) > 1:

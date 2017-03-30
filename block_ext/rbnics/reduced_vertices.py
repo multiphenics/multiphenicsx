@@ -18,7 +18,7 @@
 #
 
 from dolfin import Mesh
-from RBniCS.backends.fenics import ReducedVertices
-from RBniCS.utils.decorators import SameBackendFor
+from rbnics.backends.fenics import ReducedVertices
+from rbnics.utils.decorators import SameBackendFor
 
 SameBackendFor("block_ext", "fenics", ReducedVertices, inputs=(Mesh, ))

@@ -18,7 +18,7 @@
 #
 
 from block_ext.block_matrix import BlockMatrix
-from block_ext.RBniCS.function import Function
+from block_ext.rbnics.function import Function
 
 def Matrix():
     raise NotImplementedError("This is dummy function (not required by the interface) just store the Type")

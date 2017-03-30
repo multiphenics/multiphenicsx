@@ -20,7 +20,7 @@
 import os # for path
 from dolfin import File
 from block_ext import BlockFunction
-from RBniCS.utils.mpi import is_io_process
+from rbnics.utils.mpi import is_io_process
 
 def function_load(directory, filename, block_V, suffix=None):
     if suffix is not None:

@@ -20,13 +20,13 @@
 from numpy import ndarray as array
 from ufl import Form
 from block_ext import block_adjoint, block_assemble, BlockDirichletBC
-from RBniCS.backends.abstract import AffineExpansionStorage as AbstractAffineExpansionStorage
-from RBniCS.utils.decorators import BackendFor, Extends, override, tuple_of
-from block_ext.RBniCS.matrix import Matrix
-from block_ext.RBniCS.vector import Vector
-from block_ext.RBniCS.function import Function
-from block_ext.RBniCS.parametrized_tensor_factory import ParametrizedTensorFactory
-from block_ext.RBniCS.wrapping import TupleOfBlockFormTypes
+from rbnics.backends.abstract import AffineExpansionStorage as AbstractAffineExpansionStorage
+from rbnics.utils.decorators import BackendFor, Extends, override, tuple_of
+from block_ext.rbnics.matrix import Matrix
+from block_ext.rbnics.vector import Vector
+from block_ext.rbnics.function import Function
+from block_ext.rbnics.parametrized_tensor_factory import ParametrizedTensorFactory
+from block_ext.rbnics.wrapping import TupleOfBlockFormTypes
 
 @Extends(AbstractAffineExpansionStorage)
 @BackendFor("block_ext", inputs=((tuple_of(BlockDirichletBC), tuple_of(Function.Type()), tuple_of(Matrix.Type()), tuple_of(Vector.Type())) + TupleOfBlockFormTypes, ))

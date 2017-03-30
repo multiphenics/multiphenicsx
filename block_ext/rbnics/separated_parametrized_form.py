@@ -21,10 +21,10 @@ import hashlib
 from numpy import array, copy, ndarray as array_type
 from ufl import Form, replace
 from dolfin import dx
-from RBniCS.backends.abstract import SeparatedParametrizedForm as AbstractSeparatedParametrizedForm
-from RBniCS.backends.fenics import SeparatedParametrizedForm as FEniCSSeparatedParametrizedForm
-from RBniCS.utils.decorators import BackendFor, Extends, override
-from block_ext.RBniCS.wrapping import BlockFormTypes
+from rbnics.backends.abstract import SeparatedParametrizedForm as AbstractSeparatedParametrizedForm
+from rbnics.backends.fenics import SeparatedParametrizedForm as FEniCSSeparatedParametrizedForm
+from rbnics.utils.decorators import BackendFor, Extends, override
+from block_ext.rbnics.wrapping import BlockFormTypes
 
 @Extends(AbstractSeparatedParametrizedForm)
 @BackendFor("block_ext", inputs=(BlockFormTypes, ))

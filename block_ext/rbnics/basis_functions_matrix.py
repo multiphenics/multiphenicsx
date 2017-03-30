@@ -18,16 +18,16 @@
 #
 
 from block_ext import BlockFunctionSpace
-from RBniCS.backends.basic import BasisFunctionsMatrix as BasicBasisFunctionsMatrix
-import block_ext.RBniCS
-import block_ext.RBniCS.wrapping
-import RBniCS.backends.numpy
-from RBniCS.utils.decorators import BackendFor, Extends, override
+from rbnics.backends.basic import BasisFunctionsMatrix as BasicBasisFunctionsMatrix
+import block_ext.rbnics
+import block_ext.rbnics.wrapping
+import rbnics.backends.numpy
+from rbnics.utils.decorators import BackendFor, Extends, override
 
 @Extends(BasicBasisFunctionsMatrix)
 @BackendFor("block_ext", online_backend="numpy", inputs=(BlockFunctionSpace, ))
 class BasisFunctionsMatrix(BasicBasisFunctionsMatrix):
     @override
     def __init__(self, V):
-        BasicBasisFunctionsMatrix.__init__(self, V, block_ext.RBniCS, block_ext.RBniCS.wrapping, RBniCS.backends.numpy)
+        BasicBasisFunctionsMatrix.__init__(self, V, block_ext.rbnics, block_ext.rbnics.wrapping, rbnics.backends.numpy)
 

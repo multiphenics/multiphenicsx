@@ -17,9 +17,9 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from RBniCS.backends.abstract import ParametrizedTensorFactory as AbstractParametrizedTensorFactory
-from RBniCS.utils.decorators import BackendFor, Extends, override, list_of
-from block_ext.RBniCS.wrapping import BlockFormTypes
+from rbnics.backends.abstract import ParametrizedTensorFactory as AbstractParametrizedTensorFactory
+from rbnics.utils.decorators import BackendFor, Extends, override, list_of
+from block_ext.rbnics.wrapping import BlockFormTypes
 
 @Extends(AbstractParametrizedTensorFactory)
 @BackendFor("block_ext", inputs=(BlockFormTypes, ))

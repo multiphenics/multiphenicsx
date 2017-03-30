@@ -17,22 +17,22 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from block_ext.RBniCS.wrapping.block_form_types import BlockFormTypes, TupleOfBlockFormTypes
-from block_ext.RBniCS.wrapping.block_function_space import BlockFunctionSpace
-from block_ext.RBniCS.wrapping.function_copy import function_copy
-from block_ext.RBniCS.wrapping.function_extend_or_restrict import function_extend_or_restrict
-from block_ext.RBniCS.wrapping.function_load import function_load
-from block_ext.RBniCS.wrapping.function_save import function_save
-from block_ext.RBniCS.wrapping.functions_list_basis_functions_matrix_mul import functions_list_basis_functions_matrix_mul_online_matrix, functions_list_basis_functions_matrix_mul_online_vector, functions_list_basis_functions_matrix_mul_online_function
-from block_ext.RBniCS.wrapping.get_mpi_comm import get_mpi_comm
-from block_ext.RBniCS.wrapping.get_function_subspace import get_function_subspace
-from block_ext.RBniCS.wrapping.gram_schmidt_projection_step import gram_schmidt_projection_step
-from block_ext.RBniCS.wrapping.matrix_mul import matrix_mul_vector, vectorized_matrix_inner_vectorized_matrix
-from block_ext.RBniCS.wrapping.tensor_copy import tensor_copy
-from block_ext.RBniCS.wrapping.tensor_load import tensor_load
-from block_ext.RBniCS.wrapping.tensor_save import tensor_save
-from block_ext.RBniCS.wrapping.tensors_list_mul import tensors_list_mul_online_function
-from block_ext.RBniCS.wrapping.vector_mul import vector_mul_vector
+from block_ext.rbnics.wrapping.block_form_types import BlockFormTypes, TupleOfBlockFormTypes
+from block_ext.rbnics.wrapping.block_function_space import BlockFunctionSpace
+from block_ext.rbnics.wrapping.function_copy import function_copy
+from block_ext.rbnics.wrapping.function_extend_or_restrict import function_extend_or_restrict
+from block_ext.rbnics.wrapping.function_load import function_load
+from block_ext.rbnics.wrapping.function_save import function_save
+from block_ext.rbnics.wrapping.functions_list_basis_functions_matrix_mul import functions_list_basis_functions_matrix_mul_online_matrix, functions_list_basis_functions_matrix_mul_online_vector, functions_list_basis_functions_matrix_mul_online_function
+from block_ext.rbnics.wrapping.get_mpi_comm import get_mpi_comm
+from block_ext.rbnics.wrapping.get_function_subspace import get_function_subspace
+from block_ext.rbnics.wrapping.gram_schmidt_projection_step import gram_schmidt_projection_step
+from block_ext.rbnics.wrapping.matrix_mul import matrix_mul_vector, vectorized_matrix_inner_vectorized_matrix
+from block_ext.rbnics.wrapping.tensor_copy import tensor_copy
+from block_ext.rbnics.wrapping.tensor_load import tensor_load
+from block_ext.rbnics.wrapping.tensor_save import tensor_save
+from block_ext.rbnics.wrapping.tensors_list_mul import tensors_list_mul_online_function
+from block_ext.rbnics.wrapping.vector_mul import vector_mul_vector
 
 __all__ = [
     'BlockFormTypes',

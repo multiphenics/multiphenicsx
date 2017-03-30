@@ -19,7 +19,7 @@
 
 from dolfin import *
 from block_ext import *
-from RBniCS import *
+from rbnics import *
 from sampling import LinearlyDependentUniformDistribution
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~     EXAMPLE 17: STOKES CLASS     ~~~~~~~~~~~~~~~~~~~~~~~~~# 

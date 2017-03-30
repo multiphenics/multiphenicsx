@@ -17,16 +17,16 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from RBniCS.backends.basic import GramSchmidt as BasicGramSchmidt
-import block_ext.RBniCS
-from block_ext.RBniCS.matrix import Matrix
-import block_ext.RBniCS.wrapping
-from RBniCS.utils.decorators import BackendFor, Extends, override
+from rbnics.backends.basic import GramSchmidt as BasicGramSchmidt
+import block_ext.rbnics
+from block_ext.rbnics.matrix import Matrix
+import block_ext.rbnics.wrapping
+from rbnics.utils.decorators import BackendFor, Extends, override
 
 @Extends(BasicGramSchmidt)
 @BackendFor("block_ext", inputs=(Matrix.Type(), ))
 class GramSchmidt(BasicGramSchmidt):
     @override
     def __init__(self, X):
-        BasicGramSchmidt.__init__(self, X, block_ext.RBniCS, block_ext.RBniCS.wrapping)
+        BasicGramSchmidt.__init__(self, X, block_ext.rbnics, block_ext.rbnics.wrapping)
         
