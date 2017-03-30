@@ -21,12 +21,7 @@ from dolfin import *
 from block_ext import *
 from rbnics import *
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~     EXAMPLE 2: ELASTIC BLOCK CLASS     ~~~~~~~~~~~~~~~~~~~~~~~~~# 
 class ElasticBlock(EllipticCoerciveProblem):
-    
-    ###########################     CONSTRUCTORS     ########################### 
-    ## @defgroup Constructors Methods related to the construction of the reduced order model object
-    #  @{
     
     ## Default initialization of members
     def __init__(self, block_V, **kwargs):
@@ -49,13 +44,6 @@ class ElasticBlock(EllipticCoerciveProblem):
         self.nu = 0.3
         self.lambda_1 = self.E*self.nu / ((1.0 + self.nu)*(1.0 - 2.0*self.nu))
         self.lambda_2 = self.E / (2.0*(1.0 + self.nu))
-        
-    #  @}
-    ########################### end - CONSTRUCTORS - end ########################### 
-    
-    ###########################     PROBLEM SPECIFIC     ########################### 
-    ## @defgroup ProblemSpecific Problem specific methods
-    #  @{
     
     ## Return theta multiplicative terms of the affine expansion of the problem.
     def compute_theta(self, term):
@@ -161,11 +149,6 @@ class ElasticBlock(EllipticCoerciveProblem):
         lambda_1 = self.lambda_1
         lambda_2 = self.lambda_2
         return 2.0*lambda_2*uy.dx(1)*vy.dx(1) + lambda_2*uy.dx(0)*vy.dx(0) + lambda_1*uy.dx(1)*vy.dx(1)
-        
-    #  @}
-    ########################### end - PROBLEM SPECIFIC - end ########################### 
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~     EXAMPLE 2: MAIN PROGRAM     ~~~~~~~~~~~~~~~~~~~~~~~~~# 
 
 # 1. Read the mesh for this problem
 mesh = Mesh("data/elastic.xml")

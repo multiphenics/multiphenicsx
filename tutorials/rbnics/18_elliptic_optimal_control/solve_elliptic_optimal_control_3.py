@@ -21,17 +21,12 @@ from dolfin import *
 from block_ext import *
 from rbnics import *
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~     EXAMPLE 18: OPTIMAL CONTROL CLASS     ~~~~~~~~~~~~~~~~~~~~~~~~~# 
 @ShapeParametrization(
     ("x[0]", "x[1]"), # subdomain 1
     ("mu[1]*(x[0] - 1) + 1", "x[1]"), # subdomain 2
     ("mu[1]*(x[0] - 1) + 1", "x[1]"), # subdomain 3
 )
 class EllipticOptimalControl(EllipticOptimalControlProblem):
-    
-    ###########################     CONSTRUCTORS     ########################### 
-    ## @defgroup Constructors Methods related to the construction of the reduced order model object
-    #  @{
     
     ## Default initialization of members
     def __init__(self, block_V, **kwargs):
@@ -52,13 +47,6 @@ class EllipticOptimalControl(EllipticOptimalControlProblem):
         # Store the velocity expression
         self.vel = Expression("x[1]*(1-x[1])", element=self.V.sub(0).ufl_element())
         
-    #  @}
-    ########################### end - CONSTRUCTORS - end ########################### 
-    
-    ###########################     PROBLEM SPECIFIC     ########################### 
-    ## @defgroup ProblemSpecific Problem specific methods
-    #  @{
-    
     ## Return theta multiplicative terms of the affine expansion of the problem.
     def compute_theta(self, term):
         mu1 = self.mu[0]
@@ -170,11 +158,6 @@ class EllipticOptimalControl(EllipticOptimalControlProblem):
             return (x0,)
         else:
             raise ValueError("Invalid term for assemble_operator().")
-        
-    #  @}
-    ########################### end - PROBLEM SPECIFIC - end ########################### 
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~     EXAMPLE 18: MAIN PROGRAM     ~~~~~~~~~~~~~~~~~~~~~~~~~# 
 
 # 1. Read the mesh for this problem
 mesh = Mesh("data/mesh3.xml")

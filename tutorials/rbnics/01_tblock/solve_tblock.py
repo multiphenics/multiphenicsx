@@ -21,12 +21,7 @@ from dolfin import *
 from block_ext import *
 from rbnics import *
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~     EXAMPLE 1: THERMAL BLOCK CLASS     ~~~~~~~~~~~~~~~~~~~~~~~~~# 
 class ThermalBlock(EllipticCoerciveProblem):
-    
-    ###########################     CONSTRUCTORS     ########################### 
-    ## @defgroup Constructors Methods related to the construction of the reduced order model object
-    #  @{
     
     ## Default initialization of members
     def __init__(self, block_V, **kwargs):
@@ -42,13 +37,6 @@ class ThermalBlock(EllipticCoerciveProblem):
         (self.v, ) = block_split(block_v)
         self.dx = Measure("dx")(subdomain_data=self.subdomains)
         self.ds = Measure("ds")(subdomain_data=self.boundaries)
-    
-    #  @}
-    ########################### end - CONSTRUCTORS - end ########################### 
-    
-    ###########################     PROBLEM SPECIFIC     ########################### 
-    ## @defgroup ProblemSpecific Problem specific methods
-    #  @{
     
     ## Return the alpha_lower bound.
     def get_stability_factor(self):
@@ -90,11 +78,6 @@ class ThermalBlock(EllipticCoerciveProblem):
             return (x0,)
         else:
             raise ValueError("Invalid term for assemble_operator().")
-        
-    #  @}
-    ########################### end - PROBLEM SPECIFIC - end ########################### 
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~     EXAMPLE 1: MAIN PROGRAM     ~~~~~~~~~~~~~~~~~~~~~~~~~# 
 
 # 1. Read the mesh for this problem
 mesh = Mesh("data/tblock.xml")

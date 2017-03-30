@@ -21,17 +21,12 @@ from dolfin import *
 from block_ext import *
 from rbnics import *
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~     EXAMPLE 4: GRAETZ CLASS     ~~~~~~~~~~~~~~~~~~~~~~~~~# 
 @SCM()
 @ShapeParametrization(
     ("x[0]", "x[1]"), # subdomain 1
     ("mu[0]*(x[0] - 1) + 1", "x[1]"), # subdomain 2
 )
 class Graetz(EllipticCoerciveProblem):
-    
-    ###########################     CONSTRUCTORS     ########################### 
-    ## @defgroup Constructors Methods related to the construction of the reduced order model object
-    #  @{
     
     ## Default initialization of members
     def __init__(self, block_V, **kwargs):
@@ -50,13 +45,6 @@ class Graetz(EllipticCoerciveProblem):
         self.lifting = self.solve_lifting()
         # Store the velocity expression
         self.vel = Expression("x[1]*(1-x[1])", element=self.V.sub(0).ufl_element())
-                
-    #  @}
-    ########################### end - CONSTRUCTORS - end ########################### 
-        
-    ###########################     PROBLEM SPECIFIC     ########################### 
-    ## @defgroup ProblemSpecific Problem specific methods
-    #  @{
     
     ## Return theta multiplicative terms of the affine expansion of the problem.
     def compute_theta(self, term):
@@ -141,13 +129,6 @@ class Graetz(EllipticCoerciveProblem):
         lifting = BlockFunction(self.V)
         block_solve(lifting_A, lifting.block_vector(), lifting_F)
         return lifting
-        
-    #  @}
-    ########################### end - PROBLEM SPECIFIC - end ########################### 
-    
-    ###########################     I/O     ########################### 
-    ## @defgroup IO Input/output methods
-    #  @{
     
     ## Preprocess the solution before export to add a lifting
     def export_solution(self, folder, filename, solution=None, component=None):
@@ -157,11 +138,6 @@ class Graetz(EllipticCoerciveProblem):
         solution_with_lifting = Function(self.V)
         solution_with_lifting.vector()[:] = solution.vector()[:] + self.lifting.vector()[:]
         EllipticCoerciveProblem.export_solution(self, folder, filename, solution_with_lifting, component)
-        
-    #  @}
-    ########################### end - I/O - end ########################### 
-    
-#~~~~~~~~~~~~~~~~~~~~~~~~~     EXAMPLE 4: MAIN PROGRAM     ~~~~~~~~~~~~~~~~~~~~~~~~~# 
 
 # 1. Read the mesh for this problem
 mesh = Mesh("data/graetz.xml")

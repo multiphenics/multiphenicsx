@@ -22,7 +22,6 @@ from block_ext import *
 from rbnics import *
 from sampling import LinearlyDependentUniformDistribution
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~     EXAMPLE 17: STOKES CLASS     ~~~~~~~~~~~~~~~~~~~~~~~~~# 
 @ShapeParametrization(
     ("mu[4]*x[0] + mu[1] - mu[4]", "tan(mu[5])*x[0] + mu[0]*x[1] + mu[2] - tan(mu[5]) - mu[0]"), # subdomain 1
     ("mu[1]*x[0]", "mu[3]*x[1] + mu[2] + mu[0] - 2*mu[3]"), # subdomain 2
@@ -30,10 +29,6 @@ from sampling import LinearlyDependentUniformDistribution
     ("mu[1]*x[0]", "mu[2]*x[1]"), # subdomain 4
 )
 class Stokes(StokesProblem):
-    
-    ###########################     CONSTRUCTORS     ########################### 
-    ## @defgroup Constructors Methods related to the construction of the reduced order model object
-    #  @{
     
     ## Default initialization of members
     def __init__(self, block_V, **kwargs):
@@ -54,13 +49,6 @@ class Stokes(StokesProblem):
         #
         self.f = Constant((0.0, -10.0))
         self.g = Constant(0.0)
-        
-    #  @}
-    ########################### end - CONSTRUCTORS - end ########################### 
-    
-    ###########################     PROBLEM SPECIFIC     ########################### 
-    ## @defgroup ProblemSpecific Problem specific methods
-    #  @{
     
     ## Return theta multiplicative terms of the affine expansion of the problem.
     def compute_theta(self, term):
@@ -218,11 +206,6 @@ class Stokes(StokesProblem):
             return (x0,)
         else:
             raise ValueError("Invalid term for assemble_operator().")
-        
-    #  @}
-    ########################### end - PROBLEM SPECIFIC - end ########################### 
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~     EXAMPLE 17: MAIN PROGRAM     ~~~~~~~~~~~~~~~~~~~~~~~~~# 
 
 # 1. Read the mesh for this problem
 mesh = Mesh("data/t_bypass.xml")

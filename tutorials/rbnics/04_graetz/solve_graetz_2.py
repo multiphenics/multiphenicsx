@@ -21,17 +21,12 @@ from dolfin import *
 from block_ext import *
 from rbnics import *
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~     EXAMPLE 4: GRAETZ CLASS     ~~~~~~~~~~~~~~~~~~~~~~~~~#
 @SCM()
 @ShapeParametrization(
     ("x[0]", "x[1]"), # subdomain 1
     ("mu[0]*(x[0] - 1) + 1", "x[1]"), # subdomain 2
 )
 class Graetz(EllipticCoerciveProblem):
-    
-    ###########################     CONSTRUCTORS     ########################### 
-    ## @defgroup Constructors Methods related to the construction of the reduced order model object
-    #  @{
     
     ## Default initialization of members
     def __init__(self, block_V, **kwargs):
@@ -49,13 +44,6 @@ class Graetz(EllipticCoerciveProblem):
         self.ds = Measure("ds")(subdomain_data=boundaries)
         # Store the velocity expression
         self.vel = Expression("x[1]*(1-x[1])", element=self.V.sub(0).ufl_element())
-                
-    #  @}
-    ########################### end - CONSTRUCTORS - end ########################### 
-        
-    ###########################     PROBLEM SPECIFIC     ########################### 
-    ## @defgroup ProblemSpecific Problem specific methods
-    #  @{
     
     ## Return theta multiplicative terms of the affine expansion of the problem.
     def compute_theta(self, term):
@@ -124,11 +112,6 @@ class Graetz(EllipticCoerciveProblem):
         else:
             raise ValueError("Invalid term for assemble_operator().")
         
-    #  @}
-    ########################### end - PROBLEM SPECIFIC - end ########################### 
-    
-#~~~~~~~~~~~~~~~~~~~~~~~~~     EXAMPLE 4: MAIN PROGRAM     ~~~~~~~~~~~~~~~~~~~~~~~~~# 
-
 # 1. Read the mesh for this problem
 mesh = Mesh("data/graetz.xml")
 subdomains = MeshFunction("size_t", mesh, "data/graetz_physical_region.xml")

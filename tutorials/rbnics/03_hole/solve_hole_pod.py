@@ -21,7 +21,6 @@ from dolfin import *
 from block_ext import *
 from rbnics import *
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~     EXAMPLE 3: GEOMETRICAL PARAMETRIZATION CLASS     ~~~~~~~~~~~~~~~~~~~~~~~~~# 
 @ShapeParametrization(
     ("2.0 - 2.0*mu[0] + mu[0]*x[0] +(2.0-2.0*mu[0])*x[1]", "2.0 -2.0*mu[1] + (2.0-mu[1])*x[1]"), # subdomain 1
     ("2.0*mu[0]-2.0 +x[0] +(mu[0]-1.0)*x[1]", "2.0 -2.0*mu[1] + (2.0-mu[1])*x[1]"), # subdomain 2
@@ -33,10 +32,6 @@ from rbnics import *
     ("2.0*mu[0] -2.0 + x[0] + (1.0-mu[0])*x[1]", "2.0*mu[1] -2.0 + (2.0 - mu[1])*x[1]"), # subdomain 8
 )
 class Hole(EllipticCoerciveProblem):
-    
-    ###########################     CONSTRUCTORS     ########################### 
-    ## @defgroup Constructors Methods related to the construction of the reduced order model object
-    #  @{
     
     ## Default initialization of members
     def __init__(self, block_V, **kwargs):
@@ -54,13 +49,6 @@ class Hole(EllipticCoerciveProblem):
         self.ds = Measure("ds")(subdomain_data=boundaries)
         self.subdomains = subdomains
         self.boundaries = boundaries
-        
-    #  @}
-    ########################### end - CONSTRUCTORS - end ########################### 
-    
-    ###########################     PROBLEM SPECIFIC     ########################### 
-    ## @defgroup ProblemSpecific Problem specific methods
-    #  @{
     
     ## Return theta multiplicative terms of the affine expansion of the problem.
     def compute_theta(self, term):
@@ -137,11 +125,6 @@ class Hole(EllipticCoerciveProblem):
             return (x0,)
         else:
             raise ValueError("Invalid term for assemble_operator().")
-                    
-    #  @}
-    ########################### end - PROBLEM SPECIFIC - end ########################### 
-    
-#~~~~~~~~~~~~~~~~~~~~~~~~~     EXAMPLE 3: MAIN PROGRAM     ~~~~~~~~~~~~~~~~~~~~~~~~~# 
 
 # 1. Read the mesh for this problem
 mesh = Mesh("data/hole.xml")
