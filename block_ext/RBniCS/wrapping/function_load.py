@@ -17,8 +17,10 @@
 # along with RBniCS and block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os # for path
 from dolfin import File
 from block_ext import BlockFunction
+from RBniCS.utils.mpi import is_io_process
 
 def function_load(directory, filename, block_V, suffix=None):
     if suffix is not None:
@@ -26,7 +28,14 @@ def function_load(directory, filename, block_V, suffix=None):
     fun = BlockFunction(block_V)
     for (block_index, block_fun) in enumerate(fun):
         full_filename = str(directory) + "/" + filename + "_block_" + str(block_index) + ".xml"
-        file = File(full_filename)
-        file >> block_fun
-    return fun
+        file_exists = False
+        if is_io_process() and os.path.exists(full_filename):
+            file_exists = True
+        file_exists = is_io_process.mpi_comm.bcast(file_exists, root=is_io_process.root)
+        if file_exists:
+            file = File(full_filename)
+            file >> block_fun
+        else:
+            return False
+    return True
 

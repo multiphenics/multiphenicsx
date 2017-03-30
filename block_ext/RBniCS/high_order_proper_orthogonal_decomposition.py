@@ -30,8 +30,8 @@ HighOrderProperOrthogonalDecompositionBase = BasicHighOrderProperOrthogonalDecom
 @BackendFor("block_ext", inputs=(BlockFunctionSpace, ))
 class HighOrderProperOrthogonalDecomposition(HighOrderProperOrthogonalDecompositionBase):
     @override
-    def __init__(self, V):
-        HighOrderProperOrthogonalDecompositionBase.__init__(self, V, None, None, block_ext.RBniCS, block_ext.RBniCS.wrapping, block_ext.RBniCS.TensorSnapshotsList, block_ext.RBniCS.TensorBasisList)
+    def __init__(self, V, empty_tensor):
+        HighOrderProperOrthogonalDecompositionBase.__init__(self, V, None, empty_tensor, block_ext.RBniCS, block_ext.RBniCS.wrapping, block_ext.RBniCS.TensorSnapshotsList, block_ext.RBniCS.TensorBasisList)
         
     @override
     def store_snapshot(self, snapshot):

@@ -16,7 +16,7 @@
 # along with block_ext. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import Function, LagrangeInterpolator
+from dolfin import Function, LagrangeInterpolator, parameters
 import numpy as np
 from mpi4py import MPI
 
@@ -42,7 +42,9 @@ class _BlockDiscardDOFs(object):
                 self.need_to_discard_dofs.append(False)
         
         # Interpolator
-        interpolator = LagrangeInterpolator()
+        interpolator = LagrangeInterpolator()    
+        previous_allow_extrapolation_value = parameters["allow_extrapolation"]
+        parameters["allow_extrapolation"] = True
         
         # Create a map from space dofs to subspace dofs,
         # and precompute and store the number of DOFs to be discarded by row/columns
@@ -50,15 +52,13 @@ class _BlockDiscardDOFs(object):
         self.dofs_to_be_discarded = list()
         for I in range(N):
             if self.need_to_discard_dofs[I]:
-                local_subspace_dofs = np.array(range(*V_subspaces[I].dofmap().ownership_range()), dtype=np.float)
+                ownership_range = V_subspaces[I].dofmap().ownership_range()
+                local_subspace_dofs = np.array(range(*ownership_range), dtype=np.float)
                 subspace_dofs = Function(V_subspaces[I])
                 subspace_dofs.vector().set_local(local_subspace_dofs)
                 subspace_dofs.vector().apply("")
-                subspace_dofs.vector()[:] += 1 # otherwise you cannot distinguish dof 0 from the value=0. which is assigned on space \setminus subspace
                 subspace_dofs_extended = Function(V_spaces[I])
                 interpolator.interpolate(subspace_dofs_extended, subspace_dofs)
-                subspace_dofs.vector()[:] -= 1
-                subspace_dofs_extended.vector()[:] -= 1 # in this way dofs which are not in the subspace are marked by -1
                 subspace_dofs_extended_rounded = np.round(subspace_dofs_extended.vector().array())
                 assert np.max(np.abs( subspace_dofs_extended_rounded - subspace_dofs_extended.vector().array() )) < 1.e-10, \
                     "Extension has produced non-integer DOF IDs. Are you sure that the function space and subspace are conforming?"
@@ -67,6 +67,7 @@ class _BlockDiscardDOFs(object):
                 dofs_to_be_kept_local_indices = np.where(subspace_dofs_extended_integer >= 0)[0]
                 dofs_to_be_kept_global_indices = [V_spaces[I].dofmap().local_to_global_index(local_dof) for local_dof in dofs_to_be_kept_local_indices]
                 assert len(np.unique(subspace_dofs_extended_integer[dofs_to_be_kept_local_indices])) == len(subspace_dofs_extended_integer[dofs_to_be_kept_local_indices])
+                assert len(subspace_dofs_extended_integer[dofs_to_be_kept_local_indices]) == len(local_subspace_dofs)
                 subspace_dofs_extended_dict = dict(zip(dofs_to_be_kept_global_indices, subspace_dofs_extended_integer[dofs_to_be_kept_local_indices]))
                 
                 # Need to (all_)gather the array because row indices operator only local dofs, but
@@ -97,6 +98,9 @@ class _BlockDiscardDOFs(object):
                 self.space_dofs_restricted.append(dict(zip(self.subspace_dofs_extended[I].values(), self.subspace_dofs_extended[I].keys())))
             else:
                 self.space_dofs_restricted.append(None)
+                
+        # Reset
+        parameters["allow_extrapolation"] = previous_allow_extrapolation_value
                 
 def BlockDiscardDOFs(V_subspaces, V_spaces):
     if (V_subspaces, V_spaces) not in _all_block_discard_dofs:

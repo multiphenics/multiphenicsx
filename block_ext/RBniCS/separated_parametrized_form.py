@@ -102,20 +102,6 @@ class SeparatedParametrizedForm(AbstractSeparatedParametrizedForm):
         self._separated_parametrized_block_forms__placeholder_names = list()
         
     @override
-    def is_parametrized(self):
-        for f in self._separated_parametrized_block_forms:
-            if f.is_parametrized():
-                return True
-        return False
-        
-    @override
-    def name(self):
-        all_names = "" 
-        for f in self._separated_parametrized_block_forms:
-            all_names += f.name()
-        return hashlib.sha1(all_names).hexdigest()
-        
-    @override
     def separate(self):
         assert len(self._separated_parametrized_block_forms__coefficients) == 0
         assert len(self._separated_parametrized_block_forms__form_unchanged) == 0

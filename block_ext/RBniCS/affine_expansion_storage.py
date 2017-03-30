@@ -25,6 +25,7 @@ from RBniCS.utils.decorators import BackendFor, Extends, override, tuple_of
 from block_ext.RBniCS.matrix import Matrix
 from block_ext.RBniCS.vector import Vector
 from block_ext.RBniCS.function import Function
+from block_ext.RBniCS.parametrized_tensor_factory import ParametrizedTensorFactory
 from block_ext.RBniCS.wrapping import TupleOfBlockFormTypes
 
 @Extends(AbstractAffineExpansionStorage)
@@ -53,9 +54,14 @@ class AffineExpansionStorage(AbstractAffineExpansionStorage):
                 return TypeError("Invalid input arguments to AffineExpansionStorage")
         # Actual init
         if is_Form:
-            # keep_diagonal is enabled because it is needed to constrain DirichletBC eigenvalues in SCM
-            self._content = [block_assemble(arg, keep_diagonal=True) for arg in args]
-            self._type = "BlockForm"
+            is_parametrized = any([ParametrizedTensorFactory(None, arg).is_parametrized() for arg in args])
+            if not is_parametrized:
+                # keep_diagonal is enabled because it is needed to constrain DirichletBC eigenvalues in SCM
+                self._content = [block_assemble(arg, keep_diagonal=True) for arg in args]
+                self._type = "BlockAssembledForm"
+            else:
+                self._content = args
+                self._type = "BlockForm"
         elif is_DirichletBC:
             self._content = args
             self._type = "BlockDirichletBC"
@@ -64,7 +70,7 @@ class AffineExpansionStorage(AbstractAffineExpansionStorage):
             self._type = "BlockFunction"
         elif is_Tensor:
             self._content = args
-            self._type = "BlockForm"
+            self._type = "BlockAssembledForm"
         else:
             return TypeError("Invalid input arguments to AffineExpansionStorage")
         
