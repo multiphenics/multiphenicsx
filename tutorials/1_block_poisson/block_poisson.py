@@ -1,23 +1,23 @@
-# Copyright (C) 2016-2017 by the block_ext authors
+# Copyright (C) 2016-2017 by the multiphenics authors
 #
-# This file is part of block_ext.
+# This file is part of multiphenics.
 #
-# block_ext is free software: you can redistribute it and/or modify
+# multiphenics is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# block_ext is distributed in the hope that it will be useful,
+# multiphenics is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with block_ext. If not, see <http://www.gnu.org/licenses/>.
+# along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
 from dolfin import *
-from block_ext import *
+from multiphenics import *
 
 """
 In this tutorial we first solve the problem
@@ -27,7 +27,7 @@ In this tutorial we first solve the problem
  
 using standard FEniCS code.
 
-Then we use block_ext to solve the system
+Then we use multiphenics to solve the system
 
 -   w_1'' - 2 w_2'' = 3 f    in Omega
 - 3 w_1'' - 4 w_2'' = 7 f    in Omega
@@ -40,7 +40,7 @@ subject to
 By construction the solution of the system is
     (w_1, w_2) = (u, u)
 
-We then compare the solution provided by block_ext
+We then compare the solution provided by multiphenics
 to the one provided by standard FEniCS.
 """
 
@@ -62,39 +62,76 @@ left.mark(boundaries, 1)
 right = Right()
 right.mark(boundaries, 1)
 
-# Standard assembly
-V = FunctionSpace(mesh, "Lagrange", 2)
-u = TrialFunction(V)
-v = TestFunction(V)
-a = dot(grad(u), grad(v))*dx + u*v*dx
 x0 = SpatialCoordinate(mesh)[0]
-f = 100*sin(20*x0)*v*dx
-bc = DirichletBC(V, Constant(0.), boundaries, 1)
 
-# Standard solve
-A = assemble(a)
-bc.apply(A)
-F = assemble(f)
-bc.apply(F)
-U = Function(V)
-solve(A, U.vector(), F)
+def run_standard():
+    # Define a function space
+    V = FunctionSpace(mesh, "Lagrange", 2)
+    u = TrialFunction(V)
+    v = TestFunction(V)
 
-# Create the block matrix for the LHS
-AA = block_assemble([[1.*a, 2.*a],
-                     [3.*a, 4.*a]])
-# Create the block vector for the RHS
-FF = block_assemble([3.*f, 
-                     7.*f])
-# Add block BCs
-bcs = BlockDirichletBC([bc, 
-                        bc])
-bcs.apply(AA)
-bcs.apply(FF)
+    # Create the matrix for the LHS
+    a = inner(grad(u), grad(v))*dx + u*v*dx
+    A = assemble(a)
 
-# Block solve
-UU = BlockFunction([V, V])
-block_solve(AA, UU.block_vector(), FF)
-UU1, UU2 = UU
+    # Create the vector for the RHS
+    f = 100*sin(20*x0)*v*dx
+    F = assemble(f)
+
+    # Apply boundary conditions
+    bc = DirichletBC(V, Constant(0.), boundaries, 1)
+    bc.apply(A)
+    bc.apply(F)
+
+    # Solve the linear system
+    U = Function(V)
+    solve(A, U.vector(), F)
+    
+    # Return the solution
+    return U
+    
+U = run_standard()
+
+def run_block():
+    # Define a block function space
+    V = FunctionSpace(mesh, "Lagrange", 2)
+    VV = BlockFunctionSpace([V, V])
+    uu = BlockTrialFunction(VV)
+    vv = BlockTestFunction(VV)
+    (u1, u2) = block_split(uu)
+    (v1, v2) = block_split(vv)
+
+    # Create the block matrix for the block LHS
+    aa = [[1*inner(grad(u1), grad(v1))*dx + 1*u1*v1*dx, 2*inner(grad(u2), grad(v1))*dx + 2*u2*v1*dx],
+          [3*inner(grad(u1), grad(v2))*dx + 3*u1*v2*dx, 4*inner(grad(u2), grad(v2))*dx + 4*u2*v2*dx]]
+    AA = block_assemble(aa)
+    
+    # Create the block vector for the block RHS
+    ff = [300*sin(20*x0)*v1*dx,
+          700*sin(20*x0)*v2*dx]
+    FF = block_assemble(ff)
+    
+    # Apply block boundary conditions
+    bc1 = DirichletBC(VV.sub(0), Constant(0.), boundaries, 1)
+    bc2 = DirichletBC(VV.sub(1), Constant(0.), boundaries, 1)
+    bcs = BlockDirichletBC([bc1, 
+                            bc2])
+    bcs.apply(AA)
+    bcs.apply(FF)
+    
+    # Export the matrix/vector to file
+    block_matlab_export(AA, "AA")
+    block_matlab_export(FF, "FF")
+
+    # Solve the block linear system
+    UU = BlockFunction(VV)
+    block_solve(AA, UU.block_vector(), FF)
+    UU1, UU2 = UU
+    
+    # Return the block solution
+    return UU1, UU2
+    
+UU1, UU2 = run_block()
 
 #plot(U, title="0")
 #plot(UU1, title="1")
@@ -102,8 +139,4 @@ UU1, UU2 = UU
 plot(U - UU1, title="e1")
 plot(U - UU2, title="e2")
 interactive()
-
-# Export the matrix/vector to file
-block_matlab_export(AA, "AA", FF, "FF")
-
 
