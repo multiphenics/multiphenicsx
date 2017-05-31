@@ -1,29 +1,29 @@
-# Copyright (C) 2016-2017 by the block_ext authors
+# Copyright (C) 2016-2017 by the multiphenics authors
 #
-# This file is part of block_ext.
+# This file is part of multiphenics.
 #
-# block_ext is free software: you can redistribute it and/or modify
+# multiphenics is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# block_ext is distributed in the hope that it will be useful,
+# multiphenics is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with block_ext. If not, see <http://www.gnu.org/licenses/>.
+# along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
 from dolfin import *
 from mshr import *
-from block_ext import *
+from multiphenics import *
 
 """
 In this tutorial we compare the formulation and solution
 of a Navier-Stokes by standard FEniCS code (using the
-MixedElement class) and block_ext code.
+MixedElement class) and multiphenics code.
 """
 
 # Geometrical parameters
@@ -102,7 +102,8 @@ def run_monolithic():
     (u, p) = split(up)
 
     # Variational forms
-    F = (   nu*inner(grad(u), grad(v))*dx
+    F = (   
+            nu*inner(grad(u), grad(v))*dx
           + inner(grad(u)*u, v)*dx
           - div(v)*p*dx
           + div(u)*q*dx
@@ -131,7 +132,7 @@ def run_monolithic():
 
 ## -------------------------------------------------- ##
 
-##                  block_ext FORMULATION             ##
+##                 multiphenics FORMULATION           ##
 def run_block():
     # Function spaces
     W_element = BlockElement(V_element, Q_element)
@@ -142,17 +143,17 @@ def run_block():
     (v, q) = block_split(vq)
     dup = BlockTrialFunction(W)
     up = BlockFunction(W)
-    u, p = block_split(up)
+    (u, p) = block_split(up)
 
     # Variational forms
     F = [nu*inner(grad(u), grad(v))*dx + inner(grad(u)*u, v)*dx - div(v)*p*dx,
-           div(u)*q*dx]
+         div(u)*q*dx]
     J = block_derivative(F, up, dup)
 
     # Boundary conditions
-    inletc = DirichletBC(W.sub(0), u_in, boundaries, 1)
-    wallc = DirichletBC(W.sub(0), u_wall, boundaries, 2)
-    bc = BlockDirichletBC([[inletc, wallc], []])
+    inlet_bc = DirichletBC(W.sub(0), u_in, boundaries, 1)
+    wall_bc = DirichletBC(W.sub(0), u_wall, boundaries, 2)
+    bc = BlockDirichletBC([[inlet_bc, wall_bc], []])
 
     # Solve
     problem = BlockNonlinearProblem(F, up, bc, J)
@@ -178,3 +179,4 @@ def run_error(u_m, u_b, p_m, p_b):
     interactive()
 
 run_error(u_m, u_b, p_m, p_b)
+
