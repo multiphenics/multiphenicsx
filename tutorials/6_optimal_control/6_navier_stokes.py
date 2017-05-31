@@ -1,29 +1,29 @@
-# Copyright (C) 2016-2017 by the block_ext authors
+# Copyright (C) 2016-2017 by the multiphenics authors
 #
-# This file is part of block_ext.
+# This file is part of multiphenics.
 #
-# block_ext is free software: you can redistribute it and/or modify
+# multiphenics is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# block_ext is distributed in the hope that it will be useful,
+# multiphenics is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with block_ext. If not, see <http://www.gnu.org/licenses/>.
+# along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
 from dolfin import *
-from block_ext import *
+from multiphenics import *
 from sympy import ccode, cos, symbols
 
 """
 In this tutorial we solve the optimal control problem
 
-min J(y, u) = 1/2 \int_{\Omega} (v - v_d)^2 dx + \alpha/2 \int_{\Omega} u^2 dx
+min J(y, u) = 1/2 \int_{\Omega} |v - v_d|^2 dx + \alpha/2 \int_{\Omega} |u|^2 dx
 s.t.
     - \nu \Delta v + v \cdot \nabla v + \nabla p = f + u   in \Omega
                                            div v = 0       in \Omega
@@ -51,8 +51,8 @@ Y_velocity = VectorElement("Lagrange", mesh.ufl_cell(), 2)
 Y_pressure = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 U = VectorElement("Lagrange", mesh.ufl_cell(), 2)
 L = FiniteElement("R", mesh.ufl_cell(), 0)
-Q_velocity = VectorElement("Lagrange", mesh.ufl_cell(), 2)
-Q_pressure = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
+Q_velocity = Y_velocity
+Q_pressure = Y_pressure
 W_el = BlockElement(Y_velocity, Y_pressure, U, L, Q_velocity, Q_pressure)
 W = BlockFunctionSpace(mesh, W_el)
 
@@ -79,12 +79,12 @@ test = BlockTestFunction(W)
 (w, q, r, m, s, d) = block_split(test)
 
 ## OPTIMALITY CONDITIONS  ##
-r =  [nu*inner(grad(z), grad(s))*dx + inner(grad(s)*v, z)*dx + inner(grad(v)*s, z)*dx - b*div(s)*dx + inner(v - v_d, s)*dx,
-      - d*div(z)*dx + l*d*dx                                                                                              ,
+r =  [nu*inner(grad(z), grad(w))*dx + inner(grad(w)*v, z)*dx + inner(grad(v)*w, z)*dx - b*div(w)*dx + inner(v - v_d, w)*dx,
+      - q*div(z)*dx + l*q*dx                                                                                              ,
       alpha*inner(u, r)*dx - inner(z, r)*dx                                                                               ,
       p*m*dx                                                                                                              ,
-      nu*inner(grad(v), grad(w))*dx + inner(grad(v)*v, w)*dx - p*div(w)*dx - inner(u + f, w)*dx                           ,
-      - q*div(v)*dx                                                                                                        ]
+      nu*inner(grad(v), grad(s))*dx + inner(grad(v)*v, s)*dx - p*div(s)*dx - inner(u + f, s)*dx                           ,
+      - d*div(v)*dx                                                                                                        ]
 dr = block_derivative(r, solution, trial)
 bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant((0., 0.)), boundaries, idx) for idx in (1, 2, 3, 4)],
                        [],
@@ -98,13 +98,12 @@ bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant((0., 0.)), boundaries, id
 J = 0.5*inner(v - v_d, v - v_d)*dx + 0.5*alpha*inner(u, u)*dx
 
 ## UNCONTROLLED FUNCTIONAL VALUE ##
-r_state = [r[4],
-           r[5]]
-dr_state = [[dr[4, 0], dr[4, 1]],
-            [dr[5, 0], dr[5, 1]]]
-bc_state = BlockDirichletBC([bc[4],
-                             bc[5]])
-solution_state = BlockFunction([v, p])
+W_state_trial = W.extract_block_sub_space((0, 1))
+W_state_test  = W.extract_block_sub_space((4, 5))
+r_state = block_restrict(r, W_state_test)
+dr_state = block_restrict(dr, [W_state_test, W_state_trial])
+bc_state = block_restrict(bc, W_state_trial)
+solution_state = block_restrict(solution, W_state_trial)
 problem_state = BlockNonlinearProblem(r_state, solution_state, bc_state, dr_state)
 solver_state = BlockPETScSNESSolver(problem_state)
 solver_state.parameters.update(snes_solver_parameters["snes_solver"])
