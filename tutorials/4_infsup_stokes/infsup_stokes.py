@@ -1,28 +1,27 @@
-# Copyright (C) 2016-2017 by the block_ext authors
+# Copyright (C) 2016-2017 by the multiphenics authors
 #
-# This file is part of block_ext.
+# This file is part of multiphenics.
 #
-# block_ext is free software: you can redistribute it and/or modify
+# multiphenics is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# block_ext is distributed in the hope that it will be useful,
+# multiphenics is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with block_ext. If not, see <http://www.gnu.org/licenses/>.
+# along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
 from dolfin import *
-from block_ext import *
+from multiphenics import *
 
 """
 In this tutorial we compare the computation of the inf-sup constant
-of a Stokes by standard FEniCS code (using the
-MixedElement class) and block_ext code.
+of a Stokes by standard FEniCS code and multiphenics code.
 """
 
 ## -------------------------------------------------- ##
@@ -47,8 +46,11 @@ Q_element = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 
 def normalize(u1, u2, p):
     u1.vector()[:] /= assemble(inner(grad(u1), grad(u1))*dx)
+    u1.vector().apply("insert")
     u2.vector()[:] /= assemble(inner(grad(u2), grad(u2))*dx)
+    u2.vector().apply("insert")
     p.vector()[:] /= assemble(p*p*dx)
+    p.vector().apply("insert")
 
 ## -------------------------------------------------- ##
 
@@ -74,20 +76,14 @@ def run_monolithic():
     # Boundary conditions
     bc = DirichletBC(W.sub(0), Constant((0., 0.)), boundaries, 1)
 
-    # Assemble lhs and rhs matrices, "removing" dofs associated to Dirichlet BCs
-    def constrain(matrix, diag_value):
-        constrained_dofs = [bc.function_space().dofmap().local_to_global_index(local_dof_index) for local_dof_index in bc.get_boundary_values().keys()]
-        as_backend_type(matrix).mat().zeroRowsColumns(constrained_dofs, diag_value)
+    # Assemble lhs and rhs matrices
     LHS = assemble(lhs)
     RHS = assemble(rhs)
-    diag_value = 10. # this will insert a spurious eigenvalue equal to 10, which hopefully will not be the smallest one
-    constrain(LHS, diag_value)
-    constrain(RHS, 1.)
 
     # Solve
     LHS = as_backend_type(LHS)
     RHS = as_backend_type(RHS)
-    eigensolver = SLEPcEigenSolver(LHS, RHS)
+    eigensolver = SLEPcEigenSolver(LHS, RHS, bc)
     eigensolver.parameters["problem_type"] = "gen_non_hermitian"
     eigensolver.parameters["spectrum"] = "smallest real"
     eigensolver.parameters["spectral_transform"] = "shift-and-invert"
@@ -99,8 +95,8 @@ def run_monolithic():
     print "Inf-sup constant (monolithic): ", sqrt(r)
 
     # Extract eigenfunctions
-    (_, _, r_vec, _) = eigensolver.get_eigenpair(0)
-    r_fun = Function(W, r_vec)
+    r_fun = Function(W)
+    eigensolver.get_eigenpair(0, r_fun)
     (u_fun, p_fun) = r_fun.split(deepcopy=True)
     (u_fun_1, u_fun_2) = u_fun.split(deepcopy=True)
     normalize(u_fun_1, u_fun_2, p_fun)
@@ -114,7 +110,7 @@ def run_monolithic():
 (u_fun_1_m, u_fun_2_m, p_fun_m) = run_monolithic()
 
 ## -------------------------------------------------- ##
-##                  block_ext FORMULATION             ##
+##                 multiphenics FORMULATION           ##
 def run_block():
     # Function spaces
     W_element = BlockElement(V_element, Q_element)
@@ -151,10 +147,10 @@ def run_block():
     assert abs(c) < 1.e-10
     assert r > 0., "r = " + str(r) + " is not positive"
     print "Inf-sup constant (block): ", sqrt(r)
-
+    
     # Extract eigenfunctions
-    (_, _, r_vec, _) = eigensolver.get_eigenpair(0)
-    r_fun = BlockFunction(W, r_vec)
+    r_fun = BlockFunction(W)
+    eigensolver.get_eigenpair(0, r_fun)
     (u_fun, p_fun) = r_fun.block_split()
     (u_fun_1, u_fun_2) = u_fun.split(deepcopy=True)
     normalize(u_fun_1, u_fun_2, p_fun)
@@ -189,8 +185,8 @@ def run_error(u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m, p_fun_b):
     u_fun_2_norm = assemble(inner(grad(u_fun_2_m), grad(u_fun_2_m))*dx)
     p_fun_norm = assemble(p_fun_m*p_fun_m*dx)
     def select_error(err_plus, err_plus_norm, err_minus, err_minus_norm, vec_norm, component_name):
-        ratio_plus = err_plus_norm/vec_norm
-        ratio_minus = err_minus_norm/vec_norm
+        ratio_plus = sqrt(err_plus_norm/vec_norm)
+        ratio_minus = sqrt(err_minus_norm/vec_norm)
         if ratio_minus < ratio_plus:
             print "Relative error for ", component_name, "component of eigenvector equal to", ratio_minus, "(the one with opposite sign was", ratio_plus, ")"
             return err_minus
