@@ -1,29 +1,29 @@
-# Copyright (C) 2016-2017 by the block_ext authors
+# Copyright (C) 2016-2017 by the multiphenics authors
 #
-# This file is part of block_ext.
+# This file is part of multiphenics.
 #
-# block_ext is free software: you can redistribute it and/or modify
+# multiphenics is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# block_ext is distributed in the hope that it will be useful,
+# multiphenics is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with block_ext. If not, see <http://www.gnu.org/licenses/>.
+# along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
 from dolfin import *
-from block_ext import *
+from multiphenics import *
 from sympy import ccode, cos, symbols
 
 """
 In this tutorial we solve the optimal control problem
 
-min J(y, u) = 1/2 \int_{\Omega} (v - v_d)^2 dx + \alpha/2 \int_{\Omega} u^2 dx
+min J(y, u) = 1/2 \int_{\Omega} |v - v_d|^2 dx + \alpha/2 \int_{\Omega} |u|^2 dx
 s.t.
     - \Delta v + \nabla p = f + u   in \Omega
                     div v = 0       in \Omega
@@ -50,8 +50,8 @@ Y_velocity = VectorElement("Lagrange", mesh.ufl_cell(), 2)
 Y_pressure = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 U = VectorElement("Lagrange", mesh.ufl_cell(), 2)
 L = FiniteElement("R", mesh.ufl_cell(), 0)
-Q_velocity = VectorElement("Lagrange", mesh.ufl_cell(), 2)
-Q_pressure = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
+Q_velocity = Y_velocity
+Q_pressure = Y_pressure
 W_el = BlockElement(Y_velocity, Y_pressure, U, L, Q_velocity, Q_pressure)
 W = BlockFunctionSpace(mesh, W_el)
 
@@ -69,17 +69,17 @@ test = BlockTestFunction(W)
 (w, q, r, m, s, d) = block_split(test)
 
 ## OPTIMALITY CONDITIONS ##
-a = [[inner(v, s)*dx            , 0            , 0                   , 0     , inner(grad(z), grad(s))*dx, - b*div(s)*dx], 
-     [0                         , 0            , 0                   , l*d*dx, - d*div(z)*dx             , 0            ],
+a = [[inner(v, w)*dx            , 0            , 0                   , 0     , inner(grad(z), grad(w))*dx, - b*div(w)*dx], 
+     [0                         , 0            , 0                   , l*q*dx, - q*div(z)*dx             , 0            ],
      [0                         , 0            , alpha*inner(u, r)*dx, 0     , - inner(z, r)*dx          , 0            ],
      [0                         , p*m*dx       , 0                   , 0     , 0                         , 0            ],
-     [inner(grad(v), grad(w))*dx, - p*div(w)*dx, - inner(u, w)*dx    , 0     , 0                         , 0            ],
-     [- q*div(v)*dx             , 0            , 0                   , 0     , 0                         , 0            ]]
-f =  [inner(v_d, s)*dx,
+     [inner(grad(v), grad(s))*dx, - p*div(s)*dx, - inner(u, s)*dx    , 0     , 0                         , 0            ],
+     [- d*div(v)*dx             , 0            , 0                   , 0     , 0                         , 0            ]]
+f =  [inner(v_d, w)*dx,
       0               ,
       0               ,
       0               ,
-      inner(f, w)*dx  ,
+      inner(f, s)*dx  ,
       0                ]
 bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant((0., 0.)), boundaries, idx) for idx in (1, 2, 3, 4)],
                        [],
@@ -96,15 +96,16 @@ solution = BlockFunction(W)
 J = 0.5*inner(v - v_d, v - v_d)*dx + 0.5*alpha*inner(u, u)*dx
 
 ## UNCONTROLLED FUNCTIONAL VALUE ##
-A_state = block_assemble([[a[4][0], a[4][1]],
-                          [a[5][0], a[5][1]]])
-F_state = block_assemble( [f[4],
-                           f[5]])
-bc_state = BlockDirichletBC([bc[4],
-                             bc[5]])
+W_state_trial = W.extract_block_sub_space((0, 1))
+W_state_test  = W.extract_block_sub_space((4, 5))
+a_state = block_restrict(a, [W_state_test, W_state_trial])
+A_state = block_assemble(a_state)
+f_state = block_restrict(f, W_state_test)
+F_state = block_assemble(f_state)
+bc_state = block_restrict(bc, W_state_trial)
 bc_state.apply(A_state)
 bc_state.apply(F_state)
-solution_state = BlockFunction([v, p])
+solution_state = block_restrict(solution, W_state_trial)
 block_solve(A_state, solution_state.block_vector(), F_state)
 print "Uncontrolled J =", assemble(J)
 plot(v, title="uncontrolled state velocity")
