@@ -1,24 +1,24 @@
-# Copyright (C) 2016-2017 by the block_ext authors
+# Copyright (C) 2016-2017 by the multiphenics authors
 #
-# This file is part of block_ext.
+# This file is part of multiphenics.
 #
-# block_ext is free software: you can redistribute it and/or modify
+# multiphenics is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# block_ext is distributed in the hope that it will be useful,
+# multiphenics is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with block_ext. If not, see <http://www.gnu.org/licenses/>.
+# along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
 from dolfin import *
 from mshr import *
-from block_ext import *
+from multiphenics import *
 
 """
 In this tutorial we compute the inf-sup constant
@@ -27,19 +27,20 @@ Dirichlet boundary conditions imposed by Lagrange multipliers.
 """
 
 ## MESHES ##
-# Create interior mesh
+# Create mesh
 domain = Circle(Point(0., 0.), 3.)
 mesh = generate_mesh(domain, 15)
-# Create boundary mesh
-boundary_mesh = BoundaryMesh(mesh, "exterior")
+# SubDomain definition for boundary restriction
+class OnBoundary(SubDomain):
+    def inside(self, x, on_boundary):
+        return on_boundary
+on_boundary = OnBoundary()
 
 ## FUNCTION SPACES ##
-# Interior space
+# Function space
 V = FunctionSpace(mesh, "Lagrange", 2)
-# Boundary space
-boundary_V = FunctionSpace(boundary_mesh, "Lagrange", 2)
-# For block problem definition
-W = BlockFunctionSpace([V, V], keep=[V, boundary_V])
+# Block function space
+W = BlockFunctionSpace([V, V], restrict=[None, on_boundary])
 
 ## TRIAL/TEST FUNCTIONS ##
 ul = BlockTrialFunction(W)
