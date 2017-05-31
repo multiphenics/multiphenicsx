@@ -1,23 +1,23 @@
-# Copyright (C) 2016-2017 by the block_ext authors
+# Copyright (C) 2016-2017 by the multiphenics authors
 #
-# This file is part of block_ext.
+# This file is part of multiphenics.
 #
-# block_ext is free software: you can redistribute it and/or modify
+# multiphenics is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# block_ext is distributed in the hope that it will be useful,
+# multiphenics is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with block_ext. If not, see <http://www.gnu.org/licenses/>.
+# along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
 from dolfin import *
-from block_ext import *
+from multiphenics import *
 
 """
 In this tutorial we solve the optimal control problem
@@ -48,7 +48,7 @@ boundaries = MeshFunction("size_t", mesh, "data/square_facet_region.xml")
 ## FUNCTION SPACES ##
 Y = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 U = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
-Q = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
+Q = Y
 W_el = BlockElement(Y, U, Q)
 W = BlockFunctionSpace(mesh, W_el)
 
@@ -67,14 +67,14 @@ zvq = BlockTestFunction(W)
 (z, v, q) = block_split(zvq)
 
 ## OPTIMALITY CONDITIONS ##
-state_operator = epsilon*inner(grad(y),grad(z))*dx + inner(beta, grad(y))*z*dx + sigma*y*z*dx
-adjoint_operator = epsilon*inner(grad(p),grad(q))*dx - inner(beta, grad(p))*q*dx + sigma*p*q*dx
-a = [[y*q*dx        , 0           , adjoint_operator], 
+state_operator = epsilon*inner(grad(y), grad(q))*dx + inner(beta, grad(y))*q*dx + sigma*y*q*dx
+adjoint_operator = epsilon*inner(grad(p), grad(z))*dx - inner(beta, grad(p))*z*dx + sigma*p*z*dx
+a = [[y*z*dx        , 0           , adjoint_operator], 
      [0             , alpha*u*v*dx, - p*v*dx        ],
-     [state_operator, - u*z*dx    , 0               ]]
-f =  [y_d*q*dx,
+     [state_operator, - u*q*dx    , 0               ]]
+f =  [y_d*z*dx,
       0       ,
-      f*z*dx   ]
+      f*q*dx   ]
 bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant(0.), boundaries, idx) for idx in (1, 2, 3, 4)],
                        [],
                        [DirichletBC(W.sub(2), Constant(0.), boundaries, idx) for idx in (1, 2, 3, 4)]])
