@@ -16,7 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import ndarray as array, asarray as to_numpy
+from numpy import ndarray as array
 from ufl import Form
 from ufl.algorithms import expand_derivatives
 from ufl.algorithms.analysis import has_exact_type
@@ -103,9 +103,6 @@ def _get_block_form_rank(form_or_block_form):
         else:
             return len(form_or_block_form.arguments())
     elif isinstance(form_or_block_form, (array, list)):
-        if isinstance(form_or_block_form, list):
-            form_or_block_form = to_numpy(form_or_block_form, dtype=object)
-        form_or_block_form = form_or_block_form.flatten()
         block_form_rank = None
         for sub_form_or_block_form in form_or_block_form:
             current_block_form_rank = _get_block_form_rank(sub_form_or_block_form)
