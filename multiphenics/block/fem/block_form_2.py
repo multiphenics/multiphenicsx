@@ -27,6 +27,9 @@ class BlockForm2(cpp.BlockForm2):
         # Store block function space
         self._block_function_space = block_function_space
         # Replace UFL form by Dolfin form before passing it to the constructor
+        # (note that we assume that block_form has been already preprocessed,
+        #  so we can assume that nested blocks have been unrolled and zero
+        #  placeholders have been replaced by zero forms)
         N = len(block_form)
         M = len(block_form[0])
         replaced_block_form = empty((N, M), dtype=object)

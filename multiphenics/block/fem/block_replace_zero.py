@@ -74,17 +74,14 @@ def _is_zero(form_or_block_form):
         block_form_rank = _get_block_form_rank(form_or_block_form)
         assert block_form_rank in (None, 1, 2)
         if block_form_rank is 2:
-            N = len(form_or_block_form)
-            M = len(form_or_block_form[0])
-            for I in range(N):
-                for J in range(M):
-                    if not _is_zero(form_or_block_form[I][J]):
+            for block_form_I in form_or_block_form:
+                for block_form_IJ in block_form_I:
+                    if not _is_zero(block_form_IJ):
                         return False
             return True
         elif block_form_rank is 1:
-            N = len(form_or_block_form)
-            for I in range(N):
-                if not _is_zero(form_or_block_form[I]):
+            for block_form_I in form_or_block_form:
+                if not _is_zero(block_form_I):
                     return False
             return True
         elif block_form_rank is None:

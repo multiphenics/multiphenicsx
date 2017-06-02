@@ -18,7 +18,7 @@
 
 from numpy import ndarray as array, empty
 from ufl import Form
-from multiphenics.block.fem.block_flatten_nested import block_flatten_nested
+from multiphenics.block.fem.block_flatten_nested import block_flatten_nested, _assert_flattened_form_2_is_square
 from multiphenics.block.fem.block_form_1 import BlockForm1
 from multiphenics.block.fem.block_form_2 import BlockForm2
 from multiphenics.block.fem.block_replace_zero import block_replace_zero, _get_block_form_rank, _is_zero
@@ -44,14 +44,11 @@ def _block_form_preprocessing(block_form, block_function_space=None, block_form_
             "A block form rank should be provided when assemblying a zero block vector/matrix."
     assert block_form_rank in (1, 2)
     if block_form_rank is 2:
-        N = len(block_form)
-        M = len(block_form[0])
-        
         # Extract BlockFunctionSpace from the current form, if required
         if not block_function_space:
-            assert not all([_is_zero(block_form[n][m]) for n in range(N) for m in range(M)]), \
+            assert not all([_is_zero(block_form_I_J) for block_form_I in block_form for block_form_I_J in block_form_I]), \
                 "A BlockFunctionSpace should be provided when assemblying a zero block matrix."
-            block_function_space = _extract_block_function_space(block_form, (N, M))
+            block_function_space = _extract_block_function_space_2(block_form)
             assert len(block_function_space) == 2
             assert block_function_space[0] is not None
             assert block_function_space[1] is not None
@@ -64,7 +61,8 @@ def _block_form_preprocessing(block_form, block_function_space=None, block_form_
         
         # Flatten nested blocks, if any
         block_form = block_flatten_nested(block_form, block_function_space)
-        # ... and update size accordingly
+        # ... and compute size accordingly
+        _assert_flattened_form_2_is_square(block_form)
         N = len(block_form)
         M = len(block_form[0])
         
@@ -77,13 +75,11 @@ def _block_form_preprocessing(block_form, block_function_space=None, block_form_
         # Return preprocessed data
         return (replaced_block_form, block_function_space, block_form_rank)
     elif block_form_rank is 1:
-        N = len(block_form)
-        
         # Extract BlockFunctionSpace from the current form, if required
         if not block_function_space:
-            assert not all([_is_zero(block_form[n]) for n in range(N)]), \
+            assert not all([_is_zero(block_form_I) for block_form_I in block_form]), \
                 "A BlockFunctionSpace should be provided when assemblying a zero block vector."
-            block_function_space = _extract_block_function_space(block_form, (N,))
+            block_function_space = _extract_block_function_space_1(block_form)
             assert len(block_function_space) == 1
             assert block_function_space[0] is not None
             block_function_space = [block_function_space[0]] # convert from dict to list
@@ -93,7 +89,7 @@ def _block_form_preprocessing(block_form, block_function_space=None, block_form_
         
         # Flatten nested blocks, if any
         block_form = block_flatten_nested(block_form, block_function_space)
-        # ... and update size accordingly
+        # ... and compute size accordingly
         N = len(block_form)
         
         # Replace zero blocks, if any
@@ -104,44 +100,44 @@ def _block_form_preprocessing(block_form, block_function_space=None, block_form_
         # Return preprocessed data
         return (replaced_block_form, block_function_space, block_form_rank)
 
-def _extract_block_function_space(block_form, size):
+def _extract_block_function_space_2(block_form):
     block_function_space = dict()
-
-    assert len(size) in (1, 2)
-    if len(size) == 2:
-        for I in range(size[0]):
-            block_function_space_I = _extract_block_function_space(block_form[I], (size[1], ))
-            for (number, block_function_space_number) in block_function_space_I.iteritems():
+    
+    for block_form_I in block_form:
+        block_function_space_I = _extract_block_function_space_1(block_form_I)
+        for (number, block_function_space_number) in block_function_space_I.iteritems():
+            if number in block_function_space:
+                assert block_function_space[number] == block_function_space_number
+            else:
+                block_function_space[number] = block_function_space_number
+                        
+    return block_function_space
+    
+def _extract_block_function_space_1(block_form):
+    block_function_space = dict()
+    
+    for block_form_I in block_form:
+        if _is_zero(block_form_I):
+            continue
+        elif isinstance(block_form_I, (array, list)):
+            if isinstance(block_form_I[0], list) or isinstance(block_form_I[0], array):
+                block_function_space_recursive = _extract_block_function_space_2(block_form_I)
+            else:
+                block_function_space_recursive = _extract_block_function_space_1(block_form_I)
+            for (number, block_function_space_number) in block_function_space_recursive.iteritems():
                 if number in block_function_space:
                     assert block_function_space[number] == block_function_space_number
                 else:
                     block_function_space[number] = block_function_space_number
-    else:
-        for I in range(size[0]):
-            if _is_zero(block_form[I]):
-                continue
-            elif isinstance(block_form[I], (array, list)):
-                if isinstance(block_form[I][0], list) or isinstance(block_form[I][0], array):
-                    N = len(block_form[I])
-                    M = len(block_form[I][0])
-                    block_function_space_recursive = _extract_block_function_space(block_form[I], (N, M))
+        else:
+            assert isinstance(block_form_I, Form)
+            for (index, arg) in enumerate(block_form_I.arguments()):
+                number = arg.number()
+                block_function_space_arg = arg.block_function_space()
+                if number in block_function_space:
+                    assert block_function_space[number] == block_function_space_arg
                 else:
-                    N = len(block_form[I])
-                    block_function_space_recursive = _extract_block_function_space(block_form[I], (N, ))
-                for (number, block_function_space_number) in block_function_space_recursive.iteritems():
-                    if number in block_function_space:
-                        assert block_function_space[number] == block_function_space_number
-                    else:
-                        block_function_space[number] = block_function_space_number
-            else:
-                assert isinstance(block_form[I], Form)
-                for (index, arg) in enumerate(block_form[I].arguments()):
-                    number = arg.number()
-                    block_function_space_arg = arg.block_function_space()
-                    if number in block_function_space:
-                        assert block_function_space[number] == block_function_space_arg
-                    else:
-                        block_function_space[number] = block_function_space_arg
+                    block_function_space[number] = block_function_space_arg
                         
     return block_function_space
 

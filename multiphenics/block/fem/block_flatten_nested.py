@@ -27,21 +27,18 @@ def block_flatten_nested(block_form, block_function_space):
     assert isinstance(block_function_space, list)
     assert len(block_function_space) in (1, 2)
     if len(block_function_space) is 2:
-        N_nested = len(block_form)
-        M_nested = len(block_form[0])
         N = block_function_space[0].num_sub_spaces()
         M = block_function_space[1].num_sub_spaces()
         flattened_block_form = zeros((N, M), dtype=object)
-        for I_nested in range(N_nested):
-            for J_nested in range(M_nested):
-                _flatten_nested_2(block_form[I_nested][J_nested], flattened_block_form, block_function_space)
+        for block_form_I_nested in block_form:
+            for block_form_IJ_nested in block_form_I_nested:
+                _flatten_nested_2(block_form_IJ_nested, flattened_block_form, block_function_space)
         return flattened_block_form
     elif len(block_function_space) is 1:
-        N_nested = len(block_form)
         N = block_function_space[0].num_sub_spaces()
         flattened_block_form = zeros((N, ), dtype=object)
-        for I_nested in range(N_nested):
-            _flatten_nested_1(block_form[I_nested], flattened_block_form, block_function_space)
+        for block_form_I_nested in block_form:
+            _flatten_nested_1(block_form_I_nested, flattened_block_form, block_function_space)
         return flattened_block_form
         
 def _flatten_nested_2(form_or_block_form, flattened_block_form, block_function_space):
@@ -90,11 +87,9 @@ def _flatten_nested_2(form_or_block_form, flattened_block_form, block_function_s
         flattened_block_form[test_block_index, trial_block_index] += form_or_block_form
     elif isinstance(form_or_block_form, (array, list)):
         assert _get_block_form_rank(form_or_block_form) is 2
-        N_nested = len(form_or_block_form)
-        M_nested = len(form_or_block_form[0])
-        for I_nested in range(N_nested):
-            for J_nested in range(M_nested):
-                _flatten_nested_2(form_or_block_form[I_nested][J_nested], flattened_block_form, block_function_space)
+        for block_form_I_nested in form_or_block_form:
+            for block_form_IJ_nested in block_form_I_nested:
+                _flatten_nested_2(block_form_IJ_nested, flattened_block_form, block_function_space)
     else:
         raise AssertionError("Invalid case in _flatten_nested_2")
         
@@ -126,9 +121,8 @@ def _flatten_nested_1(form_or_block_form, flattened_block_form, block_function_s
         flattened_block_form[test_block_index] += form_or_block_form
     elif isinstance(form_or_block_form, (array, list)):
         assert _get_block_form_rank(form_or_block_form) is 1
-        N_nested = len(form_or_block_form)
-        for I_nested in range(N_nested):
-            _flatten_nested_1(form_or_block_form[I_nested], flattened_block_form, block_function_space)
+        for block_form_I_nested in form_or_block_form:
+            _flatten_nested_1(block_form_I_nested, flattened_block_form, block_function_space)
     else:
         raise AssertionError("Invalid case in _flatten_nested_1")
     
@@ -137,3 +131,9 @@ def _extract_arguments(form):
     # without wrapping the result in a set
     return [o for e in iter_expressions(form) for o in traverse_unique_terminals(e) if isinstance(o, Argument)]
     
+def _assert_flattened_form_2_is_square(block_form):
+    N = len(block_form)
+    M = len(block_form[0])
+    assert N == M
+    for n in range(N):
+        assert len(block_form[n]) == M
