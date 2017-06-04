@@ -93,7 +93,7 @@ namespace dolfin
       create_linear_operator(MPI_Comm comm) const;
 
     /// Create LU solver
-    virtual std::shared_ptr<dolfin::GenericLUSolver>
+    virtual std::shared_ptr<dolfin::GenericLinearSolver>
     create_lu_solver(MPI_Comm comm, std::string method) const;
 
     /// Create Krylov solver

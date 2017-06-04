@@ -135,7 +135,7 @@ BlockPETScFactory::create_linear_operator(MPI_Comm comm) const
   return PETScFactory::instance().create_linear_operator(comm);
 }
 //-----------------------------------------------------------------------------
-std::shared_ptr<GenericLUSolver>
+std::shared_ptr<GenericLinearSolver>
 BlockPETScFactory::create_lu_solver(MPI_Comm comm, std::string method) const
 {
   return PETScFactory::instance().create_lu_solver(comm, method);
