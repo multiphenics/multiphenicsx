@@ -115,6 +115,8 @@ additional_declarations["la"] = {
         %feature("director") dolfin::BlockPETScVector;
         // Ignore non pythonic assignment operator
         %ignore dolfin::BlockPETScVector::operator=;
+        // Ignore Parent's init operator which is causing problems with recent swig
+        %ignore dolfin::PETScVector::init;
         #endif
         
         #ifdef HAS_PETSC
