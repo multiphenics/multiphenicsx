@@ -16,10 +16,13 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from multiphenics.block.io.file import File
-from multiphenics.block.io.plot import plot
+import dolfin
+from multiphenics.block.mesh import MeshRestriction
 
-__all__ = [
-    'File',
-    'plot'
-]
+def plot(obj, *args, **kwargs):
+    if isinstance(obj, MeshRestriction):
+        for (d, mesh_function_d) in enumerate(obj):
+            dolfin.plot(mesh_function_d, title="MeshFunction of dimension " + str(d), *args, **kwargs)
+    else:
+        dolfin.plot(obj, *args, **kwargs)
+            

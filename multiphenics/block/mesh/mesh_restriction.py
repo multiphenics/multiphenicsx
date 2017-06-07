@@ -17,14 +17,14 @@
 #
 
 import os
-from dolfin import File, Mesh, MeshFunction, plot
+from dolfin import File, Mesh, MeshFunction
 from multiphenics.block.mesh.sub_domain import SubDomain
 
 class MeshRestriction(list):
     """
     This type converts a SubDomain into a list of [VertexFunction, EdgeFunction, FacetFunction, CellFunction]
     """
-    def __init__(self, mesh, arg, with_plot=False):
+    def __init__(self, mesh, arg):
         # Initialize empty list
         list.__init__(self)
         # Process depending on the second argument
@@ -38,8 +38,6 @@ class MeshRestriction(list):
                 mesh_function_d = MeshFunction("bool", mesh, d)
                 mesh_function_d.set_all(False)
                 arg.mark(mesh_function_d, True)
-                if with_plot:
-                    plot(mesh_function_d, title="MeshFunction of dimension " + str(d), interactive=True)
                 self.append(mesh_function_d)
         elif isinstance(arg, str):
             self._read(mesh, arg)
