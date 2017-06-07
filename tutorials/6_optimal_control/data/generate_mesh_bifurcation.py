@@ -39,12 +39,12 @@ Y = 1.0
 X = -Y
 L = 3.0
 B = Y - mu1
-H_1 = B + (tan(mu2))*(L+mu5-L)
-H_2 = B - (tan(mu3))*(L+mu6-L)
+H_1 = B + tan(mu2)*mu5
+H_2 = B - tan(mu3)*mu6
 L_1 = mu1*cos(mu2)*sin(mu2)
-L_2 = mu1*cos(mu3)*sin(mu3)
+L_2 = (B-X)*cos(mu3)*sin(mu3)
 N = mu1*cos(mu2)*cos(mu2)
-M = - mu1*cos(mu3)*cos(mu3)
+M = - (B-X)*cos(mu3)*cos(mu3)
 
 
 # Create mesh
