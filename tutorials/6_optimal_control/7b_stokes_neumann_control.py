@@ -18,7 +18,6 @@
 
 from dolfin import *
 from multiphenics import *
-from sympy import ccode, cos, symbols
 
 """
 In this tutorial we solve the optimal control problem
@@ -94,11 +93,11 @@ a = [[tracking(v, w)*dS(4)         , 0            , 0                  , nu*inne
      [0                            , 0            , penalty(u, r)*ds(3), - inner(z, r)*ds(3)          , 0            ],
      [nu*inner(grad(v), grad(s))*dx, - p*div(s)*dx, - inner(u, s)*ds(3), 0                            , 0            ],
      [- d*div(v)*dx                , 0            , 0                  , 0                            , 0            ]]
-f =  [0,
-      0               ,
-      0               ,
-      inner(f, s)*dx  ,
-      0                ]
+f =  [tracking(v_d, w)*dS(4),
+      0                     ,
+      0                     ,
+      inner(f, s)*dx        ,
+      0                      ]
 bc = BlockDirichletBC([[DirichletBC(W.sub(0), g, boundaries, 1), DirichletBC(W.sub(0), Constant((0.0, 0.0)), boundaries, 2)],
                        [],
                        [],

@@ -112,7 +112,7 @@ bc = BlockDirichletBC([[
                        [
                             DirichletBC(W.sub(4), Constant((0.0, 0.0)), boundaries, 1),
                             DirichletBC(W.sub(4).sub(1), Constant(0.0), boundaries, 2),
-                            DirichletBC(W.sub(4).sub(0), Constant(0.0), boundaries, 4),
+                            DirichletBC(W.sub(4), Constant((0.0, 0.0)), boundaries, 4),
                             DirichletBC(W.sub(4), Constant((0.0, 0.0)), boundaries, 5), 
                         ],
                        []])
@@ -132,7 +132,7 @@ A_state = block_assemble(a_state)
 f_state = block_restrict(f, W_state_test)
 F_state = block_assemble(f_state)
 bc_state = BlockDirichletBC([[
-                                  DirichletBC(W_state_trial.sub(0), Constant((5.0, 0.0)), boundaries, 1),
+                                  DirichletBC(W_state_trial.sub(0), Constant((2.5, 0.0)), boundaries, 1),
                                   DirichletBC(W_state_trial.sub(0).sub(1), Constant(0.0), boundaries, 2),
                                   DirichletBC(W_state_trial.sub(0), Constant((0.0, 0.0)), boundaries, 4),
                                   DirichletBC(W_state_trial.sub(0), Constant((0.0, 0.0)), boundaries, 5), 
