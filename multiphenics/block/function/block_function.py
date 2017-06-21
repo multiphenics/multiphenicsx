@@ -124,7 +124,14 @@ class BlockFunction(cpp.BlockFunction):
                 The number of the sub function
 
         """
-        return self.sub(i)
+        assert isinstance(i, (int, slice))
+        if isinstance(i, int):
+            return self.sub(i)
+        elif isinstance(i, slice):
+            output = list()
+            for j in range(i.start or 0, i.stop or len(self), i.step or 1):
+                output.append(self.sub(j))
+            return output
         
     def block_function_space(self):
         """
