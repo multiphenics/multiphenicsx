@@ -229,6 +229,23 @@ additional_declarations["la"] = {
         // --- Extend .copy() for BlockPETScMatrix --- //
         COPY_RETURNS_BACKEND_TYPE(BlockPETScMatrix)
         #endif
+        
+        // --- Correctly handle matrix-vector product for BlockPETScMatrix, --- //
+        // --- working around the fact that get_tensor_type does not get    --- //
+        // --- extended to the parent class because it is a free function   --- //
+        // --- rather than a method of the matrix class                     --- //
+        %extend dolfin::BlockPETScMatrix {
+        %pythoncode
+        %{
+        def __mul__(self, other):
+            if isinstance(other, BlockPETScVector):
+                ret = BlockPETScVector()
+                self.mult(other, ret)
+                return ret
+            else:
+                return super(BlockPETScMatrix, self).__mul__(other)
+        %}
+        }
         """
 }
 for (EigenSolver, Vector) in (
