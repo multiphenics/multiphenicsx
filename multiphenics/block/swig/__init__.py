@@ -117,6 +117,8 @@ additional_declarations["la"] = {
         %ignore dolfin::BlockPETScVector::operator=;
         // Ignore Parent's init operator which is causing problems with recent swig
         %ignore dolfin::PETScVector::init;
+        // Rename copy to _copy
+        %rename(_copy) dolfin::BlockPETScVector::copy;
         #endif
         
         #ifdef HAS_PETSC
@@ -125,6 +127,8 @@ additional_declarations["la"] = {
         %feature("director") dolfin::BlockPETScMatrix;
         // Ignore non pythonic assignment operator
         %ignore dolfin::BlockPETScMatrix::operator=;
+        // Rename copy to _copy
+        %rename(_copy) dolfin::BlockPETScMatrix::copy;
         #endif
         """,
                 
@@ -199,6 +203,31 @@ additional_declarations["la"] = {
         #ifdef HAS_PETSC
         // --- Backend type for BlockPETScMatrix --- //
         AS_BACKEND_BLOCK_TYPE_MACRO(BlockPETScMatrix)
+        #endif
+        
+        // Extend the .copy() method such that it returns the backend type
+        // =================== begin macros =================== //
+        %define COPY_RETURNS_BACKEND_TYPE(BLOCK_TENSOR_TYPE)
+        %extend dolfin::BLOCK_TENSOR_TYPE {
+        %pythoncode
+        %{
+        def copy(self):
+            self_copy = self._copy()
+            self_copy = as_backend_type(self_copy)
+            return self_copy
+        %}
+        }
+        %enddef
+        // =================== end macros =================== //
+
+        #ifdef HAS_PETSC
+        // --- Extend .copy() for BlockPETScVector --- //
+        COPY_RETURNS_BACKEND_TYPE(BlockPETScVector)
+        #endif
+
+        #ifdef HAS_PETSC
+        // --- Extend .copy() for BlockPETScMatrix --- //
+        COPY_RETURNS_BACKEND_TYPE(BlockPETScMatrix)
         #endif
         """
 }

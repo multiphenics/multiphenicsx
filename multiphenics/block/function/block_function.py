@@ -213,9 +213,7 @@ class BlockFunction(cpp.BlockFunction):
                  The BlockFunction
         """
         assert deepcopy is True # no usage envisioned for the other case
-        block_vector_copy = self.block_vector().copy()
-        block_vector_copy = as_backend_type(block_vector_copy)
-        return BlockFunction(self.block_function_space(), block_vector_copy)
+        return BlockFunction(self.block_function_space(), self.block_vector().copy())
 
     def __add__(self, other):
         if isinstance(other, BlockFunction):
