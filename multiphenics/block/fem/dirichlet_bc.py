@@ -16,9 +16,26 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import dolfin
+import types
+from dolfin import Constant, DirichletBC as dolfin_DirichletBC
 
-def DirichletBC(*args):
-    output = dolfin.DirichletBC(*args)
-    output.function_space = args[0] # this is already available as a method, replace it with an attribute to access block_function_space()
+def DirichletBC(*args, **kwargs):
+    # Call the constructor
+    output = dolfin_DirichletBC(*args, **kwargs)
+    # Deduce private variable values from arguments
+    if len(args) == 1 and isinstance(args[0], dolfin_DirichletBC):
+        assert len(kwargs) == 0
+        _function_space = args[0]._function_space
+    else:
+        _function_space = args[0]
+    # Override the function_space() method. This is already available in the public interface,
+    # but it casts the function space to a C++ FunctionSpace and then wraps it into a python FunctionSpace,
+    # losing all the customization that we have done in the function_space.py file (most notably, the
+    # block_function_space() method)
+    output._function_space = _function_space
+    def function_space(self_):
+        return self_._function_space
+    output.function_space = types.MethodType(function_space, output)
+    # Return
     return output
+    
