@@ -140,6 +140,9 @@ BlockPETScSubMatrix::~BlockPETScSubMatrix()
   // --- end --- restore the global matrix --- end --- //
   
   // --- application of zero_local and ident_local on the (restored) global matrix --- //
+  // Keep nonzero structure after calling MatZeroRows
+  ierr = MatSetOption(_global_matrix.mat(), MAT_KEEP_NONZERO_PATTERN, PETSC_TRUE);
+  if (ierr != 0) petsc_error(ierr, __FILE__, "MatSetOption");
   // Use flags to detect if any call to MatZeroRows and MatSetValue has been done, because 
   // MatZeroRows needs to be called collectively, while MatSetValue requires a 
   // BeginAssembly/EndAssembly that we do not want to enforce to no avail if 
