@@ -39,8 +39,8 @@ def DecorateGetEigenPair(BlockSLEPcEigenSolver):
                 r_vec.apply("to subfunctions")
                 r_vec_out = r_vec
             if isinstance(c_vec, BlockFunction):
-                c_vec.vector().set_local(c_vec_out.array())
-                c_vec.vector().apply("insert")
+                c_vec.block_vector().set_local(c_vec_out.array())
+                c_vec.block_vector().apply("insert")
                 c_vec.apply("to subfunctions")
                 c_vec_out = c_vec
             return (lr, lc, r_vec_out, c_vec_out)
