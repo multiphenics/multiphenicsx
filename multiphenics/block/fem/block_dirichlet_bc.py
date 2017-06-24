@@ -29,7 +29,7 @@ class BlockDirichletBC(cpp.BlockDirichletBC):
                 if block_function_space is None:
                     block_function_space = bc.function_space().block_function_space()
                 else:
-                    block_function_space == bc.function_space().block_function_space()
+                    assert block_function_space is bc.function_space().block_function_space()
         assert block_function_space is not None, "It is not possible to build an empty BlockDirichletBC without providing a block_function_space"
         self._block_function_space = block_function_space
         # Split again bcs according to block_index
