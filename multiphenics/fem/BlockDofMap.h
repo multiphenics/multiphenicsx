@@ -51,7 +51,7 @@ namespace dolfin
     /// *Returns*
     ///     vector of _GenericDofMap_
     ///         The vector of dofmaps *neglecting* restrictions
-    const std::vector<std::shared_ptr<const GenericDofMap>> & dofmaps() const;
+    std::vector<std::shared_ptr<const GenericDofMap>> dofmaps() const;
     
     /// True if dof map is a view into another map (is a sub-dofmap).
     /// BlockDofMap does not allow views, so the value will always be False.

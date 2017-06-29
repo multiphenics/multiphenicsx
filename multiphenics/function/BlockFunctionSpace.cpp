@@ -162,12 +162,12 @@ std::shared_ptr<const Mesh> BlockFunctionSpace::mesh() const
   return _mesh;
 }
 //-----------------------------------------------------------------------------
-const std::vector<std::shared_ptr<const FiniteElement>> & BlockFunctionSpace::elements() const
+std::vector<std::shared_ptr<const FiniteElement>> BlockFunctionSpace::elements() const
 {
   return _elements;
 }
 //-----------------------------------------------------------------------------
-const std::vector<std::shared_ptr<const GenericDofMap>> & BlockFunctionSpace::dofmaps() const
+std::vector<std::shared_ptr<const GenericDofMap>> BlockFunctionSpace::dofmaps() const
 {
   return _dofmaps;
 }
@@ -177,7 +177,7 @@ std::shared_ptr<const BlockDofMap> BlockFunctionSpace::block_dofmap() const
   return _block_dofmap;
 }
 //-----------------------------------------------------------------------------
-const std::vector<std::shared_ptr<const FunctionSpace>> & BlockFunctionSpace::function_spaces() const
+std::vector<std::shared_ptr<const FunctionSpace>> BlockFunctionSpace::function_spaces() const
 {
   return _function_spaces;
 }

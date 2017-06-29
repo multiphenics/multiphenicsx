@@ -453,7 +453,7 @@ BlockDofMap::~BlockDofMap()
   // Do nothing
 }
 //-----------------------------------------------------------------------------
-const std::vector<std::shared_ptr<const GenericDofMap>> & BlockDofMap::dofmaps() const
+std::vector<std::shared_ptr<const GenericDofMap>> BlockDofMap::dofmaps() const
 {
   return _constructor_dofmaps;
 }

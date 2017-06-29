@@ -139,14 +139,14 @@ namespace dolfin
     /// *Returns*
     ///     vector of _FiniteElement_
     ///         The vector of finite elements.
-    const std::vector<std::shared_ptr<const FiniteElement>> & elements() const;
+    std::vector<std::shared_ptr<const FiniteElement>> elements() const;
     
     /// Return dofmaps
     ///
     /// *Returns*
     ///     vector of _GenericDofMap_
     ///         The vector of dofmaps.
-    const std::vector<std::shared_ptr<const GenericDofMap>> & dofmaps() const;
+    std::vector<std::shared_ptr<const GenericDofMap>> dofmaps() const;
 
     /// Return block dofmap
     ///
@@ -160,7 +160,7 @@ namespace dolfin
     /// *Returns*
     ///     vector of _FunctionSpace_
     ///         The vector of function spaces.
-    const std::vector<std::shared_ptr<const FunctionSpace>> & function_spaces() const;
+    std::vector<std::shared_ptr<const FunctionSpace>> function_spaces() const;
 
     /// Return dimension of function space
     ///
