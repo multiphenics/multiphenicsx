@@ -175,12 +175,19 @@ class BlockFunctionSpace(cpp.BlockFunctionSpace):
             
             # Append
             self._sub_spaces.append(sub_function_space)
+        
+        # Finally, fill in ufl_element
+        ufl_sub_elements = [subspace.ufl_element() for subspace in self]
+        self._ufl_element = BlockElement(*ufl_sub_elements)
     
     def __str__(self):
         "Pretty-print."
         elements = [str(subspace.ufl_element()) for subspace in self]
         return "<Block function space of dimension %d (%s)>" % \
                (self.block_dofmap().global_dimension(), str(elements))
+               
+    def ufl_element(self):
+        return self._ufl_element
 
     def num_sub_spaces(self):
         "Return the number of sub spaces"
