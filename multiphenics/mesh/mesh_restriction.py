@@ -29,15 +29,21 @@ class MeshRestriction(list):
         list.__init__(self)
         # Process depending on the second argument
         assert isinstance(mesh, Mesh)
-        assert isinstance(arg, (SubDomain, str)) or arg is None
+        assert isinstance(arg, (list, str, SubDomain)) or arg is None
+        if isinstance(arg, list):
+            assert all([isinstance(arg_i, SubDomain) for arg_i in arg])
         if arg is None:
             pass # leave the list empty
-        elif isinstance(arg, SubDomain):
+        elif isinstance(arg, (list, SubDomain)):
             D = mesh.topology().dim()
             for d in range(D + 1):
                 mesh_function_d = MeshFunction("bool", mesh, d)
                 mesh_function_d.set_all(False)
-                arg.mark(mesh_function_d, True)
+                if isinstance(arg, SubDomain):
+                    arg.mark(mesh_function_d, True)
+                else:
+                    for arg_i in arg:
+                        arg_i.mark(mesh_function_d, True)
                 self.append(mesh_function_d)
         elif isinstance(arg, str):
             self._read(mesh, arg)
