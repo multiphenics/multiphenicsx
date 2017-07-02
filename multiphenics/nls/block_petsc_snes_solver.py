@@ -16,12 +16,22 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+import types
 from dolfin import PETScSNESSolver
+from multiphenics.la import as_backend_type, GenericBlockMatrix
 
 class BlockPETScSNESSolver(PETScSNESSolver):
     def __init__(self, problem):
         PETScSNESSolver.__init__(self)
         self.problem = problem
+        # =========== PETScSNESSolver::init() workaround for assembled matrices =========== #
+        # Make sure to use a matrix with proper sparsity pattern if matrix_eval returns a matrix (rather than a Form)
+        if isinstance(self.problem.jacobian_form_or_eval, (types.FunctionType, types.MethodType)):
+            jacobian_form_or_matrix = self.problem.jacobian_form_or_eval(self.problem.block_solution)
+            if isinstance(jacobian_form_or_matrix, GenericBlockMatrix):
+                jacobian_matrix = as_backend_type(jacobian_form_or_matrix).mat().duplicate()
+                self.snes().setJacobian(None, jacobian_matrix)
+        # === end === PETScSNESSolver::init() workaround for assembled matrices === end === #
     
     def solve(self):
         PETScSNESSolver.solve(self, self.problem, self.problem.block_solution.block_vector())
