@@ -18,7 +18,7 @@
 
 from dolfin import *
 from multiphenics import *
-from test_utils import assert_global_dofs, assert_owned_local_dofs, array_sorted_equal, assert_unowned_local_dofs, concatenate, get_elements_1, get_elements_2, get_function_spaces_1, get_function_spaces_2, get_restrictions_1, get_restrictions_2, unique
+from test_utils import assert_global_dofs, assert_owned_local_dofs, assert_tabulated_dof_coordinates, array_sorted_equal, assert_unowned_local_dofs, concatenate, get_elements_1, get_elements_2, get_function_spaces_1, get_function_spaces_2, get_restrictions_1, get_restrictions_2, unique
 
 # 0) Mesh definition
 mesh = UnitSquareMesh(4, 4)
@@ -47,6 +47,9 @@ def assert_dof_map(V, block_V):
         assert_owned_local_dofs(V_cell_owned_local_dofs, block_V_cell_owned_local_dofs)
         assert_unowned_local_dofs(V_cell_unowned_local_dofs, block_V_cell_unowned_local_dofs)
         assert_global_dofs(V_cell_global_dofs, block_V_cell_global_dofs)
+    V_dof_coordinates = V.tabulate_dof_coordinates()
+    block_V_dof_coordinates = block_V.tabulate_dof_coordinates()
+    assert_tabulated_dof_coordinates(V_dof_coordinates, block_V_dof_coordinates)
         
 # 1a) From list
 log(PROGRESS, "Case 1a")
@@ -86,6 +89,9 @@ def assert_dof_map(V1, V2, block_V):
         block_V_cell_unowned_local_dofs = [b for b in block_V_cell_dofs if b >= block_local_dimension]
         assert_owned_local_dofs(V_cell_owned_local_dofs, block_V_cell_owned_local_dofs)
         assert_unowned_local_dofs(V_cell_unowned_local_dofs, block_V_cell_unowned_local_dofs)
+    V_dof_coordinates = concatenate((V1.tabulate_dof_coordinates(), V2.tabulate_dof_coordinates()))
+    block_V_dof_coordinates = block_V.tabulate_dof_coordinates()
+    assert_tabulated_dof_coordinates(V_dof_coordinates, block_V_dof_coordinates)
         
 # 2a) From list
 log(PROGRESS, "Case 2a")

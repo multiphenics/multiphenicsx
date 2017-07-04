@@ -53,6 +53,9 @@ def assert_unowned_local_dofs(unowned_local_dofs, block_unowned_local_dofs):
 def assert_global_dofs(global_dofs, block_global_dofs):
     assert array_sorted_equal(global_dofs, block_global_dofs)
     
+def assert_tabulated_dof_coordinates(dof_coordinates, block_dof_coordinates):
+    assert array_equal(dof_coordinates, block_dof_coordinates)
+    
 ### ================ EQUALITY BETWEEN BLOCK VECTORS ================ ###
 def assert_block_vectors_equal(rhs, block_rhs, block_V):
     if isinstance(rhs, tuple):

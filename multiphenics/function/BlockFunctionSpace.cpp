@@ -295,3 +295,43 @@ bool BlockFunctionSpace::contains(const BlockFunctionSpace& V) const
   return true;
 }
 //-----------------------------------------------------------------------------
+std::vector<double> BlockFunctionSpace::tabulate_dof_coordinates() const
+{
+  // Geometric dimension
+  dolfin_assert(_mesh);
+  const std::size_t gdim = _mesh->geometry().dim();
+  
+  // Get local size
+  dolfin_assert(_block_dofmap);
+  std::size_t local_size = _block_dofmap->index_map()->size(IndexMap::MapSize::OWNED);
+  
+  // Vector to hold coordinates and return
+  std::vector<double> dof_coordinates(gdim*local_size);
+  
+  // Loop over subspaces
+  for (unsigned int i(0); i < _function_spaces.size(); ++i)
+  {
+    auto function_space = _function_spaces[i];
+    
+    // Get dof coordinates of function space
+    auto sub_dof_coordinates = function_space->tabulate_dof_coordinates();
+    
+    // Get original to block numbering
+    auto original_to_block = _block_dofmap->original_to_block(i);
+    
+    // Loop over all original dofs
+    for (unsigned int d(0); d < sub_dof_coordinates.size()/gdim; ++d)
+    {
+      if (original_to_block.count(d) > 0) // skip all dofs which have been removed by restriction
+      {
+        for (std::size_t c(0); c < gdim; ++c)
+        {
+          dof_coordinates[gdim*original_to_block.at(d) + c] = sub_dof_coordinates[gdim*d + c];
+        }
+      }
+    }
+  }
+  
+  return dof_coordinates;
+}
+//-----------------------------------------------------------------------------

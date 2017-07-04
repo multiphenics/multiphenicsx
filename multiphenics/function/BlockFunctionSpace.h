@@ -230,6 +230,16 @@ namespace dolfin
     ///     std::string
     ///         An informal representation of the function space.
     std::string str(bool verbose) const;
+    
+    /// Tabulate the coordinates of all dofs on this process. This
+    /// function is typically used by preconditioners that require the
+    /// spatial coordinates of dofs, for example for re-partitioning or
+    /// nullspace computations.
+    ///
+    /// *Returns*
+    ///     std::vector<double>
+    ///         The dof coordinates (x0, y0, x1, y1, . . .)
+    std::vector<double> tabulate_dof_coordinates() const;
 
   private:
     // The mesh
