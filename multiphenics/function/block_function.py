@@ -214,6 +214,9 @@ class BlockFunction(cpp.BlockFunction):
         """
         assert deepcopy is True # no usage envisioned for the other case
         return BlockFunction(self.block_function_space(), self.block_vector().copy())
+        
+    def __str__(self):
+        return str([str(subf) for subf in self._sub_functions])
 
     def __add__(self, other):
         if isinstance(other, BlockFunction):

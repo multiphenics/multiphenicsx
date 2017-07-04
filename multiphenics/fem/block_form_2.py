@@ -32,6 +32,7 @@ class BlockForm2(cpp.BlockForm2):
         #  placeholders have been replaced by zero forms)
         N = len(block_form)
         M = len(block_form[0])
+        assert all([len(block_form_I) is M for block_form_I in block_form])
         replaced_block_form = empty((N, M), dtype=object)
         for I in range(N):
             for J in range(M):
@@ -40,6 +41,13 @@ class BlockForm2(cpp.BlockForm2):
                     form_compiler_parameters=form_compiler_parameters
                 )
         cpp.BlockForm2.__init__(self, replaced_block_form.tolist(), block_function_space)
+        # Store sizes for shape method
+        self.N = N
+        self.M = M
+    
+    @property
+    def shape(self):
+        return (self.N, self.M)
         
     def __getitem__(self, ij):
         assert isinstance(ij, tuple)
@@ -48,4 +56,11 @@ class BlockForm2(cpp.BlockForm2):
         
     def block_function_spaces(self):
         return self._block_function_space
+        
+    def __str__(self):
+        matrix_of_str = empty((self.N, self.M), dtype=object)
+        for I in range(self.N):
+            for J in range(self.M):
+                matrix_of_str[I, J] = str(self._block_form[I, J])
+        return str(matrix_of_str)
         

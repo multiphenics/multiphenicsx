@@ -38,9 +38,15 @@ class BlockForm1(cpp.BlockForm1):
                 form_compiler_parameters=form_compiler_parameters
             )
         cpp.BlockForm1.__init__(self, replaced_block_form.tolist(), block_function_space)
+        # Store size for len and shape method
+        self.N = N
         
     def __len__(self):
-        return len(self._block_form)
+        return self.N
+        
+    @property
+    def shape(self):
+        return (self.N, )
         
     def __getitem__(self, i):
         assert isinstance(i, int)
@@ -48,4 +54,10 @@ class BlockForm1(cpp.BlockForm1):
         
     def block_function_spaces(self):
         return self._block_function_space
+        
+    def __str__(self):
+        vector_of_str = empty((self.N, ), dtype=object)
+        for I in range(self.N):
+            vector_of_str[I] = str(self._block_form[I])
+        return str(vector_of_str)
         
