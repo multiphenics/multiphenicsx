@@ -130,19 +130,19 @@ def _get_zero_form(block_function_space, index):
         if len_test_shape == 0 and len_trial_shape == 0:
             return zero*test*trial*dx
         elif len_test_shape == 0 and len_trial_shape == 1:
-            return zero*test*div(trial)*dx
+            return zero*test*_vec_sum(trial)*dx
         elif len_test_shape == 0 and len_trial_shape == 2:
             return zero*test*tr(trial)*dx
         elif len_test_shape == 1 and len_trial_shape == 0:
-            return zero*div(test)*trial*dx
+            return zero*_vec_sum(test)*trial*dx
         elif len_test_shape == 1 and len_trial_shape == 1:
             return zero*inner(test, trial)*dx
         elif len_test_shape == 1 and len_trial_shape == 2:
-            return zero*div(test)*tr(trial)*dx
+            return zero*_vec_sum(test)*tr(trial)*dx
         elif len_test_shape == 2 and len_trial_shape == 0:
             return zero*tr(test)*trial*dx
         elif len_test_shape == 2 and len_trial_shape == 1:
-            return zero*tr(test)*div(trial)*dx
+            return zero*tr(test)*_vec_sum(trial)*dx
         elif len_test_shape == 2 and len_trial_shape == 2:
             return zero*inner(test, trial)*dx
         else:
@@ -154,9 +154,17 @@ def _get_zero_form(block_function_space, index):
         if len_test_shape == 0:
             return zero*test*dx
         elif len_test_shape == 1:
-            return zero*div(test)*dx
+            return zero*_vec_sum(test)*dx
         elif len_test_shape == 2:
             return zero*tr(test)*dx
         else:
             raise AssertionError("Invalid case in _get_zero_form.")
+    
+def _vec_sum(test_or_trial):
+    sum_ = 0
+    shape = test_or_trial.ufl_shape
+    assert len(shape) is 1
+    for i in range(shape[0]):
+        sum_ += test_or_trial[i]
+    return sum_
     
