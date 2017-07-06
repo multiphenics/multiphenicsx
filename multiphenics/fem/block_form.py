@@ -62,7 +62,8 @@ def _block_form_preprocessing(block_form, block_function_space=None, block_form_
         # Flatten nested blocks, if any
         block_form = block_flatten_nested(block_form, block_function_space)
         # ... and compute size accordingly
-        _assert_flattened_form_2_is_square(block_form)
+        if block_function_space[0] == block_function_space[1]:
+            _assert_flattened_form_2_is_square(block_form)
         N = len(block_form)
         M = len(block_form[0])
         
