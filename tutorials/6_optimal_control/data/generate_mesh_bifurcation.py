@@ -58,13 +58,9 @@ domain.set_subdomain(2, rectangle_2)
 domain.set_subdomain(3, bifurcation_1)
 domain.set_subdomain(4, bifurcation_2)
 mesh = generate_mesh(domain, 80)
-plot(mesh)
-interactive()
 
 # Create subdomains
 subdomains = MeshFunction("size_t", mesh, mesh.topology().dim(), mesh.domains())
-plot(subdomains)
-interactive()
 
 # Create boundaries
 class Inlet(SubDomain):
@@ -116,16 +112,16 @@ boundary_c = Boundary_C()
 boundary_c.mark(boundaries, 3)
 boundary_obs = Boundary_Obs()
 boundary_obs.mark(boundaries, 4)
-plot(boundaries)
-interactive()
 
 # Create restrictions
 control_restriction = MeshRestriction(mesh, boundary_c)
 
 # Save
 File("bifurcation.xml") << mesh
-File("bifurcation.pvd") << mesh
 File("bifurcation_physical_region.xml") << subdomains
 File("bifurcation_facet_region.xml") << boundaries
-File("bifurcation_restriction_control.rtc") << control_restriction
-
+File("bifurcation_restriction_control.rtc.xml") << control_restriction
+XDMFFile("bifurcation.xdmf").write(mesh)
+XDMFFile("bifurcation_physical_region.xdmf").write(subdomains)
+XDMFFile("bifurcation_facet_region.xdmf").write(boundaries)
+XDMFFile("bifurcation_restriction_control.rtc.xdmf").write(control_restriction)

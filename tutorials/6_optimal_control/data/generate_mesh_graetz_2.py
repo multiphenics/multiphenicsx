@@ -37,13 +37,9 @@ domain.set_subdomain(1, square)
 domain.set_subdomain(2, rectangle_i)
 domain.set_subdomain(3, obs_subdomain)
 mesh = generate_mesh(domain, 48)
-plot(mesh)
-interactive()
 
 # Create subdomains
 subdomains = MeshFunction("size_t", mesh, mesh.topology().dim(), mesh.domains())
-plot(subdomains)
-interactive()
 
 # Create boundaries
 class Boundary_D(SubDomain):
@@ -87,16 +83,16 @@ boundary_C = Boundary_C()
 boundary_C.mark(boundaries, 2)
 boundary_N = Boundary_N()
 boundary_N.mark(boundaries, 3)
-plot(boundaries)
-interactive()
 
 # Create restrictions
 control_restriction = MeshRestriction(mesh, boundary_C)
 
 # Save
 File("graetz_2.xml") << mesh
-File("graetz_2.pvd") << mesh
 File("graetz_2_physical_region.xml") << subdomains
 File("graetz_2_facet_region.xml") << boundaries
-File("graetz_2_restriction_control.rtc") << control_restriction
-
+File("graetz_2_restriction_control.rtc.xml") << control_restriction
+XDMFFile("graetz_2.xdmf").write(mesh)
+XDMFFile("graetz_2_physical_region.xdmf").write(subdomains)
+XDMFFile("graetz_2_facet_region.xdmf").write(boundaries)
+XDMFFile("graetz_2_restriction_control.rtc.xdmf").write(control_restriction)
