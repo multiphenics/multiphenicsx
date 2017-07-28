@@ -17,7 +17,7 @@
 #
 
 import os
-from dolfin import File, Mesh, MeshFunction
+from dolfin import File, Mesh, MeshFunction, XDMFFile
 from multiphenics.mesh.sub_domain import SubDomain
 
 class MeshRestriction(list):
@@ -48,16 +48,24 @@ class MeshRestriction(list):
         elif isinstance(arg, str):
             self._read(mesh, arg)
             
-    def _read(self, mesh, filename):
-        assert filename.endswith(".rtc")
+    def _read(self, mesh, filename, encoding=None):
+        assert filename.endswith(".rtc.xml") or filename.endswith(".rtc.xdmf")
         # Read in MeshFunctions
         D = mesh.topology().dim()
         for d in range(D + 1):
-            mesh_function_d = MeshFunction("bool", mesh, filename + "/mesh_function_" + str(d) + ".xml")
+            if filename.endswith(".rtc.xml"):
+                mesh_function_d = MeshFunction("bool", mesh, filename + "/mesh_function_" + str(d) + ".xml")
+            else:
+                mesh_function_d = MeshFunction("bool", mesh, d)
+                xdmf_file = XDMFFile(filename + "/mesh_function_" + str(d) + ".xdmf")
+                if encoding is not None:
+                    xdmf_file.read(mesh_function_d, encoding)
+                else:
+                    xdmf_file.read(mesh_function_d)
             self.append(mesh_function_d)
             
-    def _write(self, filename):
-        assert filename.endswith(".rtc")
+    def _write(self, filename, encoding=None):
+        assert filename.endswith(".rtc.xml") or filename.endswith(".rtc.xdmf")
         # Create output folder
         try: 
             os.makedirs(filename)
@@ -65,6 +73,13 @@ class MeshRestriction(list):
             if not os.path.isdir(filename):
                 raise
         # Write out MeshFunctions
-        for (d, mesh_function) in enumerate(self):
-            File(filename + "/mesh_function_" + str(d) + ".xml") << mesh_function
+        for (d, mesh_function_d) in enumerate(self):
+            if filename.endswith(".rtc.xml"):
+                File(filename + "/mesh_function_" + str(d) + ".xml") << mesh_function_d
+            else:
+                xdmf_file = XDMFFile(filename + "/mesh_function_" + str(d) + ".xdmf")
+                if encoding is not None:
+                    xdmf_file.write(mesh_function_d, encoding)
+                else:
+                    xdmf_file.write(mesh_function_d)
             

@@ -21,7 +21,8 @@ from multiphenics.mesh import MeshRestriction
 
 class File(object):
     def __init__(self, filename, encoding=None):
-        if filename.endswith(".rtc"):
+        if filename.endswith(".rtc.xml"):
+            assert encoding is None
             self.filename = filename
         else:
             if encoding is not None:

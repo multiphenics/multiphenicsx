@@ -16,12 +16,21 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from multiphenics.io.file import File
-from multiphenics.io.plot import plot
-from multiphenics.io.xdmf_file import XDMFFile
+import dolfin
+from multiphenics.mesh import MeshRestriction
 
-__all__ = [
-    'File',
-    'plot',
-    'XDMFFile'
-]
+class XDMFFile(object):
+    def __init__(self, filename):
+        if filename.endswith(".rtc.xdmf"):
+            self.filename = filename
+        else:
+            self.backend = dolfin.XDMFFile(filename)
+        
+    def write(self, content, encoding=None):
+        if isinstance(content, MeshRestriction):
+            content._write(self.filename, encoding)
+        else:
+            if encoding is not None:
+                self.backend.write(content, encoding)
+            else:
+                self.backend.write(content)
