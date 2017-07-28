@@ -49,7 +49,7 @@ mesh = Mesh("data/graetz_2.xml")
 subdomains = MeshFunction("size_t", mesh, "data/graetz_2_physical_region.xml")
 boundaries = MeshFunction("size_t", mesh, "data/graetz_2_facet_region.xml")
 # Neumann boundary
-control_boundary = MeshRestriction(mesh, "data/graetz_2_restriction_control.rtc")
+control_boundary = MeshRestriction(mesh, "data/graetz_2_restriction_control.rtc.xml")
 
 ## FUNCTION SPACES ##
 Y = FunctionSpace(mesh, "Lagrange", 2)

@@ -50,7 +50,7 @@ mesh = Mesh("data/bifurcation.xml")
 subdomains = MeshFunction("size_t", mesh, "data/bifurcation_physical_region.xml")
 boundaries = MeshFunction("size_t", mesh, "data/bifurcation_facet_region.xml")
 # Neumann control boundary
-control_boundary = MeshRestriction(mesh, "data/bifurcation_restriction_control.rtc")
+control_boundary = MeshRestriction(mesh, "data/bifurcation_restriction_control.rtc.xml")
 # Normal and tangent
 n = FacetNormal(mesh)
 t = as_vector([n[1], -n[0]])

@@ -46,7 +46,7 @@ using an adjoint formulation solved by a one shot approach
 mesh = Mesh("data/square.xml")
 boundaries = MeshFunction("size_t", mesh, "data/square_facet_region.xml")
 # Dirichlet boundary
-left = MeshRestriction(mesh, "data/square_restriction_boundary_2.rtc")
+left = MeshRestriction(mesh, "data/square_restriction_boundary_2.rtc.xml")
 
 ## FUNCTION SPACES ##
 Y = FunctionSpace(mesh, "Lagrange", 2)

@@ -53,7 +53,7 @@ mesh = Mesh("data/vorticity_reduction.xml")
 subdomains = MeshFunction("size_t", mesh, "data/vorticity_reduction_physical_region.xml")
 boundaries = MeshFunction("size_t", mesh, "data/vorticity_reduction_facet_region.xml")
 # Dirichlet control boundary
-control_boundary = MeshRestriction(mesh, "data/vorticity_reduction_restriction_control.rtc")
+control_boundary = MeshRestriction(mesh, "data/vorticity_reduction_restriction_control.rtc.xml")
 # Normal and tangent
 n = FacetNormal(mesh)
 t = as_vector([n[1], -n[0]])
