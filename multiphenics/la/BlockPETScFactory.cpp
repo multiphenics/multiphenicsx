@@ -124,9 +124,9 @@ std::shared_ptr<GenericVector> BlockPETScFactory::create_sub_vector(
 }
 //-----------------------------------------------------------------------------
 std::shared_ptr<TensorLayout>
-BlockPETScFactory::create_layout(std::size_t rank) const
+BlockPETScFactory::create_layout(MPI_Comm comm, std::size_t rank) const
 {
-  return PETScFactory::instance().create_layout(rank);
+  return PETScFactory::instance().create_layout(comm, rank);
 }
 //-----------------------------------------------------------------------------
 std::shared_ptr<GenericLinearOperator>

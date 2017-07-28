@@ -45,14 +45,18 @@ void BlockAssemblerBase::init_global_tensor(GenericTensor& A, const BlockFormBas
   std::vector<const GenericDofMap*> dofmaps;
   for (std::size_t i = 0; i < a.rank(); ++i)
     dofmaps.push_back(a.block_function_spaces()[i]->block_dofmap().get());
-    
+  
+  // Get mesh
+  dolfin_assert(a.mesh());
+  const Mesh& mesh = *(a.mesh());
+  
   if (A.empty())
   {
     Timer t0("Build sparsity");
 
     // Create layout for initialising tensor
     std::shared_ptr<TensorLayout> tensor_layout;
-    tensor_layout = A.factory().create_layout(a.rank());
+    tensor_layout = A.factory().create_layout(mesh.mpi_comm(), a.rank());
     dolfin_assert(tensor_layout);
 
     // Get dimensions and mapping across processes for each dimension
@@ -63,13 +67,8 @@ void BlockAssemblerBase::init_global_tensor(GenericTensor& A, const BlockFormBas
       index_maps.push_back(dofmaps[i]->index_map());
     }
 
-    // Get mesh
-    dolfin_assert(a.mesh());
-    const Mesh& mesh = *(a.mesh());
-
     // Initialise tensor layout
-    tensor_layout->init(mesh.mpi_comm(), index_maps,
-                        TensorLayout::Ghosts::UNGHOSTED);
+    tensor_layout->init(index_maps, TensorLayout::Ghosts::UNGHOSTED);
 
     // Build sparsity pattern if required
     if (tensor_layout->sparsity_pattern())
@@ -122,7 +121,7 @@ void BlockAssemblerBase::init_global_tensor(GenericTensor& A, const BlockFormBas
     {
       if (A.size(i) != dofmaps[i]->global_dimension())
       {
-        multiphenics_error("AssemblerBase.cpp",
+        multiphenics_error("BlockAssemblerBase.cpp",
                            "assemble form",
                            "Dim " + std::to_string(i) + " of tensor does not match form");
       }

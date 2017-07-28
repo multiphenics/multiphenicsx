@@ -86,7 +86,8 @@ namespace dolfin
     ) const;
 
     /// Create empty tensor layout
-    virtual std::shared_ptr<TensorLayout> create_layout(std::size_t rank) const;
+    virtual std::shared_ptr<TensorLayout> create_layout(MPI_Comm comm ,
+                                                        std::size_t rank) const;
 
     /// Create empty linear operator
     virtual std::shared_ptr<GenericLinearOperator>
