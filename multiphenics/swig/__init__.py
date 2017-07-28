@@ -130,6 +130,10 @@ additional_declarations["la"] = {
         // Rename copy to _copy
         %rename(_copy) dolfin::BlockPETScMatrix::copy;
         #endif
+        
+        // dolfin::ArrayView is not automatically imported because it is used only by 
+        // virtual methods of Parent classes. Import it manually.
+        %import(package="", module="dolfin.cpp.common") "dolfin/common/ArrayView.h"
         """,
                 
     "post":
