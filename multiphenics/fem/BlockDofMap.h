@@ -149,7 +149,8 @@ namespace dolfin
     ///
     /// @return     ArrayView<const dolfin::la_index>
     ///         Local-to-global mapping of dofs.
-    ArrayView<const dolfin::la_index> cell_dofs(std::size_t cell_index) const;
+    Eigen::Map<const Eigen::Array<dolfin::la_index, Eigen::Dynamic, 1>>
+     cell_dofs(std::size_t cell_index) const;
     
     /// Return the dof indices associated with entities of given dimension and entity indices
     ///

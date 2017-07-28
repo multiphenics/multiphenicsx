@@ -524,12 +524,18 @@ void BlockDofMap::clear_sub_map_data()
   // Nothing to be done, there are no submaps.
 }
 //-----------------------------------------------------------------------------
-ArrayView<const dolfin::la_index> BlockDofMap::cell_dofs(std::size_t cell_index) const
+Eigen::Map<const Eigen::Array<dolfin::la_index, Eigen::Dynamic, 1>>
+BlockDofMap::cell_dofs(std::size_t cell_index) const
 {
   if (_dofmap.count(cell_index) > 0)
-    return ArrayView<const dolfin::la_index>(_dofmap.at(cell_index));
+  {
+    const auto & dofmap_cell(_dofmap.at(cell_index)); 
+    return Eigen::Map<const Eigen::Array<dolfin::la_index, Eigen::Dynamic, 1>>(dofmap_cell.data(), dofmap_cell.size());
+  }
   else
-    return ArrayView<const dolfin::la_index>(_empty_vector);
+  {
+    return Eigen::Map<const Eigen::Array<dolfin::la_index, Eigen::Dynamic, 1>>(_empty_vector.data(), 0);
+  }
 }
 //-----------------------------------------------------------------------------
 std::vector<dolfin::la_index> BlockDofMap::entity_dofs(
