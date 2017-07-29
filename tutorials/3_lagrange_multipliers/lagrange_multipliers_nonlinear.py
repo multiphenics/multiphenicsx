@@ -17,6 +17,7 @@
 #
 
 from dolfin import *
+import matplotlib.pyplot as plt
 from mshr import *
 from multiphenics import *
 
@@ -76,9 +77,9 @@ solver.parameters.update(snes_solver_parameters["snes_solver"])
 solver.solve()
 
 (u, l) = ul.block_split()
-plot(u)
-plot(l)
-interactive()
+plt.figure(); plot(u)
+plt.figure(); plot(l)
+plt.show()
 
 ## ERROR ##
 u_ex = Function(V)
@@ -91,10 +92,10 @@ problem_ex = NonlinearVariationalProblem(F_ex, u_ex, bc_ex, J_ex)
 solver_ex = NonlinearVariationalSolver(problem_ex)
 solver_ex.parameters.update(snes_solver_parameters)
 solver_ex.solve()
-plot(u_ex)
+plt.figure(); plot(u_ex)
 err = Function(V)
 err.vector().add_local(+ u_ex.vector().array())
 err.vector().add_local(- u.vector().array())
 err.vector().apply("")
-plot(err)
-interactive()
+plt.figure(); plot(err)
+plt.show()

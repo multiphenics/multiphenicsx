@@ -17,6 +17,7 @@
 #
 
 from dolfin import *
+import matplotlib.pyplot as plt
 from mshr import *
 from multiphenics import *
 
@@ -123,8 +124,9 @@ def run_monolithic():
 
     # Extract solutions
     (u, p) = up.split()
-    #plot(u, title="Velocity monolithic", mode="color")
-    #plot(p, title="Pressure monolithic", mode="color")
+    #plt.figure(); plot(u, title="Velocity monolithic", mode="color")
+    #plt.figure(); plot(p, title="Pressure monolithic", mode="color")
+    #plt.show()
     
     return (u, p)
     
@@ -163,8 +165,9 @@ def run_block():
 
     # Extract solutions
     (u, p) = up.block_split()
-    #plot(u, title="Velocity block", mode="color")
-    #plot(p, title="Pressure block", mode="color")
+    #plt.figure(); plot(u, title="Velocity block", mode="color")
+    #plt.figure(); plot(p, title="Pressure block", mode="color")
+    #plt.show()
     
     return (u, p)
     
@@ -174,9 +177,9 @@ def run_block():
 
 ##                  ERROR COMPUTATION                 ##
 def run_error(u_m, u_b, p_m, p_b):
-    plot(u_b - u_m, title="Velocity error", mode="color")
-    plot(p_b - p_m, title="Pressure error", mode="color")
-    interactive()
+    plt.figure(); plot(u_b - u_m, title="Velocity error", mode="color")
+    plt.figure(); plot(p_b - p_m, title="Pressure error", mode="color")
+    plt.show()
 
 run_error(u_m, u_b, p_m, p_b)
 

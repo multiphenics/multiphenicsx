@@ -17,6 +17,7 @@
 #
 
 from dolfin import *
+import matplotlib.pyplot as plt
 from multiphenics import *
 
 """
@@ -124,9 +125,9 @@ bc_state.apply(F_state)
 solution_state = block_restrict(solution, W_state_trial)
 block_solve(A_state, solution_state.block_vector(), F_state)
 print "Uncontrolled J =", assemble(J)
-plot(v, title="uncontrolled state velocity")
-plot(p, title="uncontrolled state pressure")
-interactive()
+plt.figure(); plot(v, title="uncontrolled state velocity")
+plt.figure(); plot(p, title="uncontrolled state pressure")
+plt.show()
 
 ## OPTIMAL CONTROL ##
 A = block_assemble(a, keep_diagonal=True)
@@ -135,10 +136,10 @@ bc.apply(A)
 bc.apply(F)
 block_solve(A, solution.block_vector(), F)
 print "Optimal J =", assemble(J)
-plot(v, title="state velocity")
-plot(p, title="state pressure")
-plot(u, title="control")
-plot(z, title="adjoint velocity")
-plot(b, title="adjoint pressure")
-interactive()
+plt.figure(); plot(v, title="state velocity")
+plt.figure(); plot(p, title="state pressure")
+plt.figure(); plot(u, title="control")
+plt.figure(); plot(z, title="adjoint velocity")
+plt.figure(); plot(b, title="adjoint pressure")
+plt.show()
 

@@ -17,6 +17,7 @@
 #
 
 from dolfin import *
+import matplotlib.pyplot as plt
 from multiphenics import *
 
 """
@@ -98,8 +99,8 @@ bc_state = [DirichletBC(W.sub(0), Constant(0.), boundaries, idx) for idx in (2, 
 [bc_state_.apply(F_state)  for bc_state_ in bc_state]
 solve(A_state, y.vector(), F_state)
 print "Uncontrolled J =", assemble(J)
-plot(y, title="uncontrolled state")
-interactive()
+plt.figure(); plot(y, title="uncontrolled state")
+plt.show()
 
 ## OPTIMAL CONTROL ##
 A = block_assemble(a)
@@ -108,9 +109,9 @@ bc.apply(A)
 bc.apply(F)
 block_solve(A, yulp.block_vector(), F)
 print "Optimal J =", assemble(J)
-plot(y, title="state")
-plot(u, title="control")
-plot(l, title="lambda")
-plot(p, title="adjoint")
-interactive()
+plt.figure(); plot(y, title="state")
+plt.figure(); plot(u, title="control")
+plt.figure(); plot(l, title="lambda")
+plt.figure(); plot(p, title="adjoint")
+plt.show()
 

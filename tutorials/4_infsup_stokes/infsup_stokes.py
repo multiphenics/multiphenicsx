@@ -17,6 +17,7 @@
 #
 
 from dolfin import *
+import matplotlib.pyplot as plt
 from multiphenics import *
 
 """
@@ -100,10 +101,10 @@ def run_monolithic():
     (u_fun, p_fun) = r_fun.split(deepcopy=True)
     (u_fun_1, u_fun_2) = u_fun.split(deepcopy=True)
     normalize(u_fun_1, u_fun_2, p_fun)
-    plot(u_fun_1, title="Velocity 1 monolithic", mode="color")
-    plot(u_fun_2, title="Velocity 2 monolithic", mode="color")
-    plot(p_fun, title="Pressure monolithic", mode="color")
-    interactive()
+    plt.figure(); plot(u_fun_1, title="Velocity 1 monolithic", mode="color")
+    plt.figure(); plot(u_fun_2, title="Velocity 2 monolithic", mode="color")
+    plt.figure(); plot(p_fun, title="Pressure monolithic", mode="color")
+    plt.show()
     
     return (u_fun_1, u_fun_2, p_fun)
     
@@ -154,10 +155,10 @@ def run_block():
     (u_fun, p_fun) = r_fun.block_split()
     (u_fun_1, u_fun_2) = u_fun.split(deepcopy=True)
     normalize(u_fun_1, u_fun_2, p_fun)
-    plot(u_fun_1, title="Velocity 1 block", mode="color")
-    plot(u_fun_2, title="Velocity 2 block", mode="color")
-    plot(p_fun, title="Pressure block", mode="color")
-    interactive()
+    plt.figure(); plot(u_fun_1, title="Velocity 1 block", mode="color")
+    plt.figure(); plot(u_fun_2, title="Velocity 2 block", mode="color")
+    plt.figure(); plot(p_fun, title="Pressure block", mode="color")
+    plt.show()
     
     return (u_fun_1, u_fun_2, p_fun)
     
@@ -196,9 +197,9 @@ def run_error(u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m, p_fun_b):
     err_1 = select_error(err_1_plus, err_1_plus_norm, err_1_minus, err_1_minus_norm, u_fun_1_norm, "velocity 1")
     err_2 = select_error(err_2_plus, err_2_plus_norm, err_2_minus, err_2_minus_norm, u_fun_2_norm, "velocity 2")
     err_p = select_error(err_p_plus, err_p_plus_norm, err_p_minus, err_p_minus_norm, p_fun_norm, "pressure")
-    plot(err_1, title="Velocity 1 error", mode="color")
-    plot(err_2, title="Velocity 2 error", mode="color")
-    plot(err_p, title="Pressure error", mode="color")
-    interactive()
+    plt.figure(); plot(err_1, title="Velocity 1 error", mode="color")
+    plt.figure(); plot(err_2, title="Velocity 2 error", mode="color")
+    plt.figure(); plot(err_p, title="Pressure error", mode="color")
+    plt.show()
     
 run_error(u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m, p_fun_b)

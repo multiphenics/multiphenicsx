@@ -17,6 +17,7 @@
 #
 
 from dolfin import *
+import matplotlib.pyplot as plt
 from multiphenics import *
 
 """
@@ -133,10 +134,10 @@ def run_block():
     
 UU1, UU2 = run_block()
 
-#plot(U, title="0")
-#plot(UU1, title="1")
-#plot(UU2, title="2")
-plot(U - UU1, title="e1")
-plot(U - UU2, title="e2")
-interactive()
+#plt.figure(); plot(U, title="0")
+#plt.figure(); plot(UU1, title="1")
+#plt.figure(); plot(UU2, title="2")
+plt.figure(); plot(U - UU1, title="e1")
+plt.figure(); plot(U - UU2, title="e2")
+plt.show()
 

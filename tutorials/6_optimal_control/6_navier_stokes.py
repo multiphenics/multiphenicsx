@@ -17,6 +17,7 @@
 #
 
 from dolfin import *
+import matplotlib.pyplot as plt
 from multiphenics import *
 from sympy import ccode, cos, symbols
 
@@ -109,9 +110,9 @@ solver_state = BlockPETScSNESSolver(problem_state)
 solver_state.parameters.update(snes_solver_parameters["snes_solver"])
 solver_state.solve()
 print "Uncontrolled J =", assemble(J)
-plot(v, title="uncontrolled state velocity")
-plot(p, title="uncontrolled state pressure")
-interactive()
+plt.figure(); plot(v, title="uncontrolled state velocity")
+plt.figure(); plot(p, title="uncontrolled state pressure")
+plt.show()
 
 ## OPTIMAL CONTROL ##
 problem = BlockNonlinearProblem(r, solution, bc, dr)
@@ -119,11 +120,11 @@ solver = BlockPETScSNESSolver(problem)
 solver.parameters.update(snes_solver_parameters["snes_solver"])
 solver.solve()
 print "Optimal J =", assemble(J)
-plot(v, title="state velocity")
-plot(p, title="state pressure")
-plot(u, title="control")
-plot(l, title="lambda")
-plot(z, title="adjoint velocity")
-plot(b, title="adjoint pressure")
-interactive()
+plt.figure(); plot(v, title="state velocity")
+plt.figure(); plot(p, title="state pressure")
+plt.figure(); plot(u, title="control")
+plt.figure(); plot(l, title="lambda")
+plt.figure(); plot(z, title="adjoint velocity")
+plt.figure(); plot(b, title="adjoint pressure")
+plt.show()
 

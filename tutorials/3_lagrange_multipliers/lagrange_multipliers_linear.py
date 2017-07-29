@@ -17,6 +17,7 @@
 #
 
 from dolfin import *
+import matplotlib.pyplot as plt
 from mshr import *
 from multiphenics import *
 
@@ -75,9 +76,9 @@ block_matlab_export(F, "F")
 U = BlockFunction(W)
 block_solve(A, U.block_vector(), F)
 
-#plot(U[0])
-#plot(U[1])
-#interactive()
+#plt.figure(); plot(U[0])
+#plt.figure(); plot(U[1])
+#plt.show()
 
 ## ERROR ##
 A_ex = assemble(a[0][0])
@@ -87,10 +88,10 @@ bc_ex.apply(A_ex)
 bc_ex.apply(F_ex)
 U_ex = Function(V)
 solve(A_ex, U_ex.vector(), F_ex)
-plot(U_ex)
+plt.figure(); plot(U_ex)
 err = Function(V)
 err.vector().add_local(+ U_ex.vector().array())
 err.vector().add_local(- U[0].vector().array())
 err.vector().apply("")
-plot(err)
-interactive()
+plt.figure(); plot(err)
+plt.show()
