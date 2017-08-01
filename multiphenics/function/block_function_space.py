@@ -21,12 +21,12 @@ from six import string_types
 import numpy
 from ufl.finiteelement import FiniteElementBase
 import dolfin.cpp
-from dolfin import FunctionSpace, Mesh, MeshFunction, MeshFunctionBool
+from dolfin import FunctionSpace, Mesh, MeshFunction, MeshFunctionBool, SubDomain
 from dolfin.compilemodules.jit import jit
 from dolfin.functions.functionspace import _compile_dolfin_element
 from multiphenics.function.block_element import BlockElement
 from multiphenics.swig import cpp
-from multiphenics.mesh import MeshRestriction, SubDomain
+from multiphenics.mesh import MeshRestriction
 
 class BlockFunctionSpace(cpp.BlockFunctionSpace):
     "Base class for all block function spaces."

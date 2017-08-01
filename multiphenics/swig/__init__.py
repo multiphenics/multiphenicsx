@@ -307,30 +307,10 @@ for (EigenSolver, Vector) in (
 additional_declarations["mesh"] = {
     "pre":
         """
-        // --- Director and renames for CustomizedSubDomain --- //
-        %feature("director") dolfin::CustomizedSubDomain;
-        // Rename mark method to provide additional checks
-        %rename (_mark) dolfin::CustomizedSubDomain::mark;
         """,
         
     "post":
         """
-        // --- mark method for CustomizedSubDomain --- //
-        %extend dolfin::CustomizedSubDomain {
-        %pythoncode
-        %{
-        import dolfin
-        
-        def mark(self, *args, **kwargs):
-            if len(args) == 2:
-                assert isinstance(args[0], \
-                            (dolfin.MeshFunctionSizet, dolfin.MeshFunctionInt,
-                             dolfin.MeshFunctionDouble, dolfin.MeshFunctionBool))
-            if ("check_midpoint" in kwargs):
-                args = args + (kwargs["check_midpoint"],)
-            self._mark(*args)
-        %}
-        }
         """
 }
 
@@ -387,7 +367,6 @@ cpp = multiphenics_compile_extension_module(
     "fem/BlockAssemblerBase.cpp",
     "fem/BlockAssembler.cpp",
     "fem/BlockDirichletBC.cpp",
-    "mesh/SubDomain.cpp",
     "la/CondensedSLEPcEigenSolver.cpp",
     "la/CondensedBlockSLEPcEigenSolver.cpp",
     # Additional keyword arguments

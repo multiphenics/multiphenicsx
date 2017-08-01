@@ -20,8 +20,8 @@ import types
 import numbers
 from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, concatenate, hstack as bvec, sort, unique, vstack
 from numpy.linalg import norm
-from dolfin import assemble, Constant, DOLFIN_EPS, dx, ERROR, Expression, FiniteElement, Function, FunctionSpace, GenericMatrix, GenericVector, inner, MixedElement, PROGRESS, project as dolfin_project, set_log_level, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
-from multiphenics import assign, block_assemble, block_assign, BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC, SubDomain
+from dolfin import assemble, Constant, DOLFIN_EPS, dx, ERROR, Expression, FiniteElement, Function, FunctionSpace, GenericMatrix, GenericVector, inner, MixedElement, PROGRESS, project as dolfin_project, set_log_level, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
+from multiphenics import assign, block_assemble, block_assign, BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
 set_log_level(PROGRESS)
 
 ### ================ EQUALITY BETWEEN ARRAYS ================ ###

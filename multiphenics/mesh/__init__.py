@@ -17,9 +17,7 @@
 #
 
 from multiphenics.mesh.mesh_restriction import MeshRestriction
-from multiphenics.mesh.sub_domain import SubDomain
 
 __all__ = [
-    'MeshRestriction',
-    'SubDomain'
+    'MeshRestriction'
 ]

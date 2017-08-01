@@ -17,8 +17,7 @@
 #
 
 import os
-from dolfin import File, Mesh, MeshFunction, XDMFFile
-from multiphenics.mesh.sub_domain import SubDomain
+from dolfin import File, Mesh, MeshFunction, SubDomain, XDMFFile
 
 class MeshRestriction(list):
     """
