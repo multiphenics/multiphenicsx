@@ -44,9 +44,9 @@ def block_restrict(block_input, block_function_sub_space):
             M_sub_space = block_function_sub_space[1].num_sub_spaces()
             sub_block_form = zeros((N_sub_space, M_sub_space), dtype=object)
             for I_sub_space in range(N_sub_space):
-                I_space = block_function_sub_space[0].sub_components_to_components[I_sub_space]
+                I_space = _sub_component_to_component(block_function_sub_space[0], I_sub_space)
                 for J_sub_space in range(M_sub_space):
-                    J_space = block_function_sub_space[1].sub_components_to_components[J_sub_space]
+                    J_space = _sub_component_to_component(block_function_sub_space[1], J_sub_space)
                     sub_block_form[I_sub_space, J_sub_space] = block_form[I_space, J_space]
             return BlockForm2(sub_block_form, block_function_sub_space)
         elif block_form_rank is 1:
@@ -58,7 +58,7 @@ def block_restrict(block_input, block_function_sub_space):
             N_sub_space = block_function_sub_space[0].num_sub_spaces()
             sub_block_form = zeros((N_sub_space, ), dtype=object)
             for I_sub_space in range(N_sub_space):
-                I_space = block_function_sub_space[0].sub_components_to_components[I_sub_space]
+                I_space = _sub_component_to_component(block_function_sub_space[0], I_sub_space)
                 sub_block_form[I_sub_space] = block_form[I_space]
             return BlockForm1(sub_block_form, block_function_sub_space)
     elif isinstance(block_input, BlockFunction):
@@ -70,7 +70,7 @@ def block_restrict(block_input, block_function_sub_space):
         N_sub_space = block_function_sub_space.num_sub_spaces()
         sub_functions = list()
         for I_sub_space in range(N_sub_space):
-            I_space = block_function_sub_space.sub_components_to_components[I_sub_space]
+            I_space = _sub_component_to_component(block_function_sub_space, I_sub_space)
             sub_functions.append(block_input[I_space])
         return BlockFunction(block_function_sub_space, sub_functions)
     elif isinstance(block_input, BlockDirichletBC):
@@ -82,9 +82,14 @@ def block_restrict(block_input, block_function_sub_space):
         N_sub_space = block_function_sub_space.num_sub_spaces()
         sub_bcs = list()
         for I_sub_space in range(N_sub_space):
-            I_space = block_function_sub_space.sub_components_to_components[I_sub_space]
+            I_space = _sub_component_to_component(block_function_sub_space, I_sub_space)
             sub_bcs.append(block_input[I_space])
         return BlockDirichletBC(sub_bcs, block_function_sub_space)
     else:
         raise AssertionError("Invalid arguments to block_restrict")
         
+def _sub_component_to_component(block_function_sub_space, sub_component):
+    if hasattr(block_function_sub_space, "sub_components_to_components"):
+        return block_function_sub_space.sub_components_to_components[sub_component]
+    else:
+        return sub_component
