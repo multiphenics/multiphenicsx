@@ -101,18 +101,6 @@ void CondensedBlockSLEPcEigenSolver::set_boundary_conditions(std::shared_ptr<con
 }
 //-----------------------------------------------------------------------------
 void CondensedBlockSLEPcEigenSolver::get_eigenpair(double& lr, double& lc,
-                                                   GenericVector& r, GenericVector& c) const
-{
-  CondensedSLEPcEigenSolver::get_eigenpair(lr, lc, r, c);
-}
-//-----------------------------------------------------------------------------
-void CondensedBlockSLEPcEigenSolver::get_eigenpair(double& lr, double& lc,
-                                                   PETScVector& r, PETScVector& c) const
-{
-  CondensedSLEPcEigenSolver::get_eigenpair(lr, lc, r, c);
-}
-//-----------------------------------------------------------------------------
-void CondensedBlockSLEPcEigenSolver::get_eigenpair(double& lr, double& lc,
                                                    GenericVector& r, GenericVector& c,
                                                    std::size_t i) const
 {

@@ -23,7 +23,7 @@ from multiphenics.swig import cpp
 
 def DecorateGetEigenPair(SLEPcEigenSolver):
     class DecoratedSLEPcEigenSolver(SLEPcEigenSolver):
-        def get_eigenpair(self, i=0, r_vec=None, c_vec=None):
+        def get_eigenpair(self, i, r_vec=None, c_vec=None):
             if isinstance(r_vec, Function):
                 r_vec_in = None # cannot use r_vec due to different ghosting
             else:

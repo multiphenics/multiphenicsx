@@ -151,20 +151,6 @@ std::shared_ptr<const PETScMatrix> CondensedSLEPcEigenSolver::_condense_matrix(s
 }
 //-----------------------------------------------------------------------------
 void CondensedSLEPcEigenSolver::get_eigenpair(double& lr, double& lc,
-                                              GenericVector& r, GenericVector& c) const
-{
-  PETScVector& _r = as_type<PETScVector>(r);
-  PETScVector& _c = as_type<PETScVector>(c);
-  get_eigenpair(lr, lc, _r, _c, 0);
-}
-//-----------------------------------------------------------------------------
-void CondensedSLEPcEigenSolver::get_eigenpair(double& lr, double& lc,
-                                              PETScVector& r, PETScVector& c) const
-{
-  get_eigenpair(lr, lc, r, c, 0);
-}
-//-----------------------------------------------------------------------------
-void CondensedSLEPcEigenSolver::get_eigenpair(double& lr, double& lc,
                                               GenericVector& r, GenericVector& c,
                                               std::size_t i) const
 {

@@ -70,19 +70,11 @@ namespace dolfin
     /// Set boundary conditions
     void set_boundary_conditions(std::vector<std::shared_ptr<const DirichletBC>> bcs);
 
-    /// Get the first eigenpair
-    void get_eigenpair(double& lr, double& lc,
-                       GenericVector& r, GenericVector& c) const;
-
-    /// Get the first eigenpair
-    void get_eigenpair(double& lr, double& lc,
-                       PETScVector& r, PETScVector& c) const;
-
-    /// Get eigenpair i
+    /// Get ith eigenpair
     void get_eigenpair(double& lr, double& lc,
                        GenericVector& r, GenericVector& c, std::size_t i) const;
 
-    /// Get eigenpair i
+    /// Get ith eigenpair
     void get_eigenpair(double& lr, double& lc,
                        PETScVector& r, PETScVector& c, std::size_t i) const;
     
