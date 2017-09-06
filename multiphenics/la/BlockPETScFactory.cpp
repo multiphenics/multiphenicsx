@@ -59,7 +59,7 @@ std::shared_ptr<GenericMatrix> BlockPETScFactory::wrap_matrix(
   std::shared_ptr<const GenericMatrix> matrix
 ) const
 {
-  const PETScMatrix& petsc_matrix = matrix->down_cast<PETScMatrix>();
+  const PETScMatrix& petsc_matrix = as_type<const PETScMatrix>(*matrix);
   auto block_matrix = std::make_shared<BlockPETScMatrix>(petsc_matrix.mat());
   return block_matrix;
 }
@@ -68,7 +68,7 @@ std::shared_ptr<GenericMatrix> BlockPETScFactory::wrap_matrix_and_attach_block_d
   std::shared_ptr<const GenericMatrix> matrix, std::shared_ptr<const BlockDofMap> block_dof_map_0, std::shared_ptr<const BlockDofMap> block_dof_map_1
 ) const
 {
-  const PETScMatrix& petsc_matrix = matrix->down_cast<PETScMatrix>();
+  const PETScMatrix& petsc_matrix = as_type<const PETScMatrix>(*matrix);
   auto block_matrix = std::make_shared<BlockPETScMatrix>(petsc_matrix.mat());
   block_matrix->attach_block_dof_map(block_dof_map_0, block_dof_map_1);
   return block_matrix;
@@ -100,7 +100,7 @@ std::shared_ptr<GenericVector> BlockPETScFactory::wrap_vector(
   std::shared_ptr<const GenericVector> vector
 ) const
 {
-  const PETScVector& petsc_vector = vector->down_cast<PETScVector>();
+  const PETScVector& petsc_vector = as_type<const PETScVector>(*vector);
   auto block_vector = std::make_shared<BlockPETScVector>(petsc_vector.vec());
   return block_vector;
 }
@@ -109,7 +109,7 @@ std::shared_ptr<GenericVector> BlockPETScFactory::wrap_vector_and_attach_block_d
   std::shared_ptr<const GenericVector> vector, std::shared_ptr<const BlockDofMap> block_dof_map
 ) const
 {
-  const PETScVector& petsc_vector = vector->down_cast<PETScVector>();
+  const PETScVector& petsc_vector = as_type<const PETScVector>(*vector);
   auto block_vector = std::make_shared<BlockPETScVector>(petsc_vector.vec());
   block_vector->attach_block_dof_map(block_dof_map);
   return block_vector;

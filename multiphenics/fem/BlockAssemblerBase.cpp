@@ -96,7 +96,7 @@ void BlockAssemblerBase::init_global_tensor(GenericTensor& A, const BlockFormBas
     if (A.rank() == 2 && keep_diagonal)
     {
       // Down cast to GenericMatrix
-      GenericMatrix& _matA = A.down_cast<GenericMatrix>();
+      GenericMatrix& _matA = as_type<GenericMatrix>(A);
 
       // Loop over rows and insert 0.0 on the diagonal
       const double block = 0.0;
