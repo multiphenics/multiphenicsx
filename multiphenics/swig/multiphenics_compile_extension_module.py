@@ -137,7 +137,7 @@ def extended_copy_files(source, dest, files):
         file_ = os.path.basename(f)
         files_in_subfolders[subfolder].append(file_)
     # Recursively copy them
-    for (subfolder, files_in_subfolder) in files_in_subfolders.iteritems():
+    for (subfolder, files_in_subfolder) in files_in_subfolders.items():
         source_subfolder = os.path.join(source, subfolder)
         dest_subfolder = os.path.join(dest, subfolder)
         if not os.path.exists(dest_subfolder):

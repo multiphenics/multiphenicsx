@@ -152,9 +152,9 @@ def assert_dof_map(V1, V2, block_V):
     kept_dofs1 = map_block_to_original1.values()
     kept_dofs2 = map_block_to_original2.values()
     map_block_to_original = dict()
-    for (b1, a1) in map_block_to_original1.iteritems():
+    for (b1, a1) in map_block_to_original1.items():
         map_block_to_original[b1] = a1
-    for (b2, a2) in map_block_to_original2.iteritems():
+    for (b2, a2) in map_block_to_original2.items():
         map_block_to_original[b2] = a2 + local_dimension1
     # Assert equality
     for c in cells(mesh):

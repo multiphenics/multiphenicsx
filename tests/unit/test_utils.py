@@ -81,7 +81,7 @@ def assert_block_vectors_equal(rhs, block_rhs, block_V):
     if comm.Get_rank() == 0:
         assert block_rhsg.shape[0] == len(map_block_to_original)
         rhsg_for_assert = block_rhsg*0.
-        for (block, original) in map_block_to_original.iteritems():
+        for (block, original) in map_block_to_original.items():
             rhsg_for_assert[block] = rhsg[original]
         assert array_equal(rhsg_for_assert, block_rhsg)
     comm.barrier()
@@ -118,8 +118,8 @@ def assert_block_matrices_equal(lhs, block_lhs, block_V):
         assert block_lhsg.shape[0] == len(map_block_to_original)
         assert block_lhsg.shape[1] == len(map_block_to_original)
         lhsg_for_assert = block_lhsg*0.
-        for (block_i, original_i) in map_block_to_original.iteritems():
-            for (block_j, original_j) in map_block_to_original.iteritems():
+        for (block_i, original_i) in map_block_to_original.items():
+            for (block_j, original_j) in map_block_to_original.items():
                 lhsg_for_assert[block_i, block_j] = lhsg[original_i, original_j]
         assert array_equal(lhsg_for_assert, block_lhsg)
     comm.barrier()
@@ -636,10 +636,10 @@ def gather_on_zero(obj, comm, **kwargs):
                             block_base_index1[r] = block_base_index2[r-1] + (all_block_ownership_ranges2[r-1][1] - all_block_ownership_ranges2[r-1][0])
                 output = dict()
                 for r in range(comm.Get_size()):
-                    for (block1, original1) in all_block_to_original1[r].iteritems():
+                    for (block1, original1) in all_block_to_original1[r].items():
                         if original1 < all_ownership_ranges1[r][1] - all_ownership_ranges1[r][0]:
                             output[block1 + block_base_index1[r]] = original1 + base_index1[r]
-                    for (block2, original2) in all_block_to_original2[r].iteritems():
+                    for (block2, original2) in all_block_to_original2[r].items():
                         if original2 < all_ownership_ranges2[r][1] - all_ownership_ranges2[r][0]:
                             # Note that we use block_base_index1 instead of block_base_index2 due to internal storage of block2
                             output[block2 + block_base_index1[r]] = original2 + base_index2[r]
@@ -656,7 +656,7 @@ def gather_on_zero(obj, comm, **kwargs):
                 block_base_index1 = [ownr[0] for ownr in all_block_ownership_ranges1]
                 output = dict()
                 for r in range(comm.Get_size()):
-                    for (block1, original1) in all_block_to_original1[r].iteritems():
+                    for (block1, original1) in all_block_to_original1[r].items():
                         if original1 < all_ownership_ranges1[r][1] - all_ownership_ranges1[r][0]:
                             output[block1 + block_base_index1[r]] = original1 + base_index1[r]
                 return output

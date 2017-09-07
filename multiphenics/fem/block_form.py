@@ -106,7 +106,7 @@ def _extract_block_function_space_2(block_form):
     
     for block_form_I in block_form:
         block_function_space_I = _extract_block_function_space_1(block_form_I)
-        for (number, block_function_space_number) in block_function_space_I.iteritems():
+        for (number, block_function_space_number) in block_function_space_I.items():
             if number in block_function_space:
                 assert block_function_space[number] == block_function_space_number
             else:
@@ -125,7 +125,7 @@ def _extract_block_function_space_1(block_form):
                 block_function_space_recursive = _extract_block_function_space_2(block_form_I)
             else:
                 block_function_space_recursive = _extract_block_function_space_1(block_form_I)
-            for (number, block_function_space_number) in block_function_space_recursive.iteritems():
+            for (number, block_function_space_number) in block_function_space_recursive.items():
                 if number in block_function_space:
                     assert block_function_space[number] == block_function_space_number
                 else:
