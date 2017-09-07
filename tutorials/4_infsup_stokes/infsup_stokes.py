@@ -93,7 +93,7 @@ def run_monolithic():
     r, c = eigensolver.get_eigenvalue(0)
     assert abs(c) < 1.e-10
     assert r > 0., "r = " + str(r) + " is not positive"
-    print "Inf-sup constant (monolithic): ", sqrt(r)
+    print("Inf-sup constant (monolithic): ", sqrt(r))
 
     # Extract eigenfunctions
     r_fun = Function(W)
@@ -147,7 +147,7 @@ def run_block():
     r, c = eigensolver.get_eigenvalue(0)
     assert abs(c) < 1.e-10
     assert r > 0., "r = " + str(r) + " is not positive"
-    print "Inf-sup constant (block): ", sqrt(r)
+    print("Inf-sup constant (block): ", sqrt(r))
     
     # Extract eigenfunctions
     r_fun = BlockFunction(W)
@@ -189,10 +189,10 @@ def run_error(u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m, p_fun_b):
         ratio_plus = sqrt(err_plus_norm/vec_norm)
         ratio_minus = sqrt(err_minus_norm/vec_norm)
         if ratio_minus < ratio_plus:
-            print "Relative error for ", component_name, "component of eigenvector equal to", ratio_minus, "(the one with opposite sign was", ratio_plus, ")"
+            print("Relative error for ", component_name, "component of eigenvector equal to", ratio_minus, "(the one with opposite sign was", ratio_plus, ")")
             return err_minus
         else:
-            print "Relative error for", component_name, "component of eigenvector equal to", ratio_plus, "(the one with opposite sign was", ratio_minus, ")"
+            print("Relative error for", component_name, "component of eigenvector equal to", ratio_plus, "(the one with opposite sign was", ratio_minus, ")")
             return err_plus
     err_1 = select_error(err_1_plus, err_1_plus_norm, err_1_minus, err_1_minus_norm, u_fun_1_norm, "velocity 1")
     err_2 = select_error(err_2_plus, err_2_plus_norm, err_2_minus, err_2_minus_norm, u_fun_2_norm, "velocity 2")

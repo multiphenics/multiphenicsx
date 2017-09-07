@@ -95,7 +95,7 @@ F_state = assemble(f[2])
 [bc_state.apply(A_state) for bc_state in bc[0]]
 [bc_state.apply(F_state)  for bc_state in bc[0]]
 solve(A_state, y.vector(), F_state)
-print "Uncontrolled J =", assemble(J)
+print("Uncontrolled J =", assemble(J))
 plt.figure(); plot(y, title="uncontrolled state")
 plt.show()
 
@@ -105,7 +105,7 @@ F = block_assemble(f)
 bc.apply(A)
 bc.apply(F)
 block_solve(A, yup.block_vector(), F)
-print "Optimal J =", assemble(J)
+print("Optimal J =", assemble(J))
 plt.figure(); plot(y, title="state")
 plt.figure(); plot(u, title="control")
 plt.figure(); plot(p, title="adjoint")

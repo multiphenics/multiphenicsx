@@ -98,7 +98,7 @@ bc_state = [DirichletBC(W.sub(0), Constant(0.), boundaries, idx) for idx in (2, 
 [bc_state_.apply(A_state) for bc_state_ in bc_state]
 [bc_state_.apply(F_state)  for bc_state_ in bc_state]
 solve(A_state, y.vector(), F_state)
-print "Uncontrolled J =", assemble(J)
+print("Uncontrolled J =", assemble(J))
 plt.figure(); plot(y, title="uncontrolled state")
 plt.show()
 
@@ -108,7 +108,7 @@ F = block_assemble(f)
 bc.apply(A)
 bc.apply(F)
 block_solve(A, yulp.block_vector(), F)
-print "Optimal J =", assemble(J)
+print("Optimal J =", assemble(J))
 plt.figure(); plot(y, title="state")
 plt.figure(); plot(u, title="control")
 plt.figure(); plot(l, title="lambda")

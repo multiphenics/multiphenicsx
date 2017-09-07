@@ -70,7 +70,7 @@ eigensolver.solve(1)
 r, c = eigensolver.get_eigenvalue(0)
 assert abs(c) < 1.e-10
 assert r > 0., "r = " + str(r) + " is not positive"
-print "Inf-sup constant: ", sqrt(r)
+print("Inf-sup constant: ", sqrt(r))
 
 # Export matrices to MATLAB format to double check the result.
 # You will need to convert the matrix to dense storage and use eig()
