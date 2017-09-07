@@ -163,7 +163,7 @@ def extended_write_interfacefile(filename, modulename, code, init_code,
     # Enable directors, replacing the first four lines of the file which contain
     # module definition without directors
     content_new = list()
-    content_new.append(u'%module(package="multiphenics.swig.cpp", directors="1") ' + modulename)
+    content_new.append('%module(package="multiphenics.swig.cpp", directors="1") ' + modulename)
     content_new.extend(content[4:])
     
     # Write back to file, also appending post declarations
