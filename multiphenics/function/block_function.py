@@ -250,7 +250,7 @@ class BlockFunction(cpp.BlockFunction):
         else:
             return NotImplemented
 
-    def __div__(self, other):
+    def __truediv__(self, other):
         if isinstance(other, float):
             output = self.copy(deepcopy=True)
             for block_fun_output in output:
@@ -259,9 +259,6 @@ class BlockFunction(cpp.BlockFunction):
             return output
         else:
             return NotImplemented
-
-    def __truediv__(self, other):
-        return self.__div__(other)
 
     def __radd__(self, other):
         return self.__add__(other)
@@ -274,7 +271,7 @@ class BlockFunction(cpp.BlockFunction):
     def __rmul__(self, other):
         return self.__mul__(other)
 
-    def __rdiv__(self, other):
+    def __rtruediv__(self, other):
         return NotImplemented
 
     def __iadd__(self, other):
@@ -306,7 +303,7 @@ class BlockFunction(cpp.BlockFunction):
         else:
             return NotImplemented
 
-    def __idiv__(self, other):
+    def __itruediv__(self, other):
         if isinstance(other, float):
             for block_fun_output in self:
                 block_fun_output.vector()._scale(1./other)
@@ -314,7 +311,3 @@ class BlockFunction(cpp.BlockFunction):
             return self
         else:
             return NotImplemented
-
-    def __itruediv__(self, other):
-        return self.__idiv__(other)
-
