@@ -17,6 +17,7 @@
 #
 
 from dolfin import *
+parameters["ghost_mode"] = "shared_facet" # required by dS
 import matplotlib.pyplot as plt
 from multiphenics import *
 
