@@ -85,7 +85,13 @@ void BlockAssembler::assemble(GenericTensor& A, const BlockFormBase& a)
   if (finalize_tensor)
     A.apply("add");
 }
-
+//-----------------------------------------------------------------------------
+class AssemblerWithCheck : public Assembler
+{
+public:
+  using Assembler::check;
+};
+//-----------------------------------------------------------------------------
 void BlockAssembler::sub_assemble(GenericTensor& A, const Form& a, Assembler& assembler)
 {
   // This method is adapted from
@@ -109,7 +115,7 @@ void BlockAssembler::sub_assemble(GenericTensor& A, const Form& a, Assembler& as
     = a.vertex_domains();
 
   // Check form
-  //AssemblerBase::check(a); // commented out because "check" is protected
+  AssemblerWithCheck::check(a);
 
   // Create data structure for local assembly data
   UFC ufc(a);
