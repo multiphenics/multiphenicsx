@@ -16,6 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from numpy import isclose
 from dolfin import *
 from mshr import *
 from multiphenics import *
@@ -76,3 +77,4 @@ print("Inf-sup constant: ", sqrt(r))
 # You will need to convert the matrix to dense storage and use eig()
 block_matlab_export(A, "A")
 block_matlab_export(B, "B")
+assert isclose(sqrt(r), 0.088385)

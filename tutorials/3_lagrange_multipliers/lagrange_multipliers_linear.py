@@ -16,6 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from numpy import isclose
 from dolfin import *
 import matplotlib.pyplot as plt
 from mshr import *
@@ -95,3 +96,7 @@ err.vector().add_local(- U[0].vector().array())
 err.vector().apply("")
 plt.figure(); plot(err)
 plt.show()
+U_ex_norm = sqrt(assemble(inner(grad(U_ex), grad(U_ex))*dx))
+err_norm = sqrt(assemble(inner(grad(err), grad(err))*dx))
+print("Relative error is equal to", err_norm/U_ex_norm)
+assert isclose(err_norm/U_ex_norm, 0., atol=1.e-10)

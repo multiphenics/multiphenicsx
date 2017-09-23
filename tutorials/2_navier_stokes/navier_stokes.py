@@ -16,6 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from numpy import isclose
 from dolfin import *
 import matplotlib.pyplot as plt
 from mshr import *
@@ -180,6 +181,13 @@ def run_error(u_m, u_b, p_m, p_b):
     plt.figure(); plot(u_b - u_m, title="Velocity error", mode="color")
     plt.figure(); plot(p_b - p_m, title="Pressure error", mode="color")
     plt.show()
+    u_m_norm = sqrt(assemble(inner(grad(u_m), grad(u_m))*dx))
+    err_u_norm = sqrt(assemble(inner(grad(u_b - u_m), grad(u_b - u_m))*dx))
+    p_m_norm = sqrt(assemble(inner(p_m, p_m)*dx))
+    err_p_norm = sqrt(assemble(inner(p_b - p_m, p_b - p_m)*dx))
+    print("Relative error for velocity component is equal to", err_u_norm/u_m_norm)
+    print("Relative error for pressure component is equal to", err_p_norm/p_m_norm)
+    assert isclose(err_u_norm/u_m_norm, 0., atol=1.e-10)
+    assert isclose(err_p_norm/p_m_norm, 0., atol=1.e-10)
 
 run_error(u_m, u_b, p_m, p_b)
-

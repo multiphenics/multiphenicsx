@@ -16,6 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from numpy import isclose
 from dolfin import *
 import matplotlib.pyplot as plt
 from multiphenics import *
@@ -100,6 +101,7 @@ F_state = assemble(f[2])
 [bc_state.apply(F_state)  for bc_state in bc[0]]
 solve(A_state, y.vector(), F_state)
 print("Uncontrolled J =", assemble(J))
+assert isclose(assemble(J), 0.028050136)
 plt.figure(); plot(y, title="uncontrolled state")
 plt.show()
 
@@ -110,8 +112,8 @@ bc.apply(A)
 bc.apply(F)
 block_solve(A, yup.block_vector(), F)
 print("Optimal J =", assemble(J))
+assert isclose(assemble(J), 0.001777849)
 plt.figure(); plot(y, title="state")
 plt.figure(); plot(u, title="control")
 plt.figure(); plot(p, title="adjoint")
 plt.show()
-

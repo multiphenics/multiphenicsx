@@ -16,6 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from numpy import isclose
 from dolfin import *
 import matplotlib.pyplot as plt
 from multiphenics import *
@@ -141,3 +142,10 @@ plt.figure(); plot(U - UU1, title="e1")
 plt.figure(); plot(U - UU2, title="e2")
 plt.show()
 
+U_norm = sqrt(assemble(inner(grad(U), grad(U))*dx))
+err_1_norm = sqrt(assemble(inner(grad(U - UU1), grad(U - UU1))*dx))
+err_2_norm = sqrt(assemble(inner(grad(U - UU2), grad(U - UU2))*dx))
+print("Relative error for first component is equal to", err_1_norm/U_norm)
+print("Relative error for second component is equal to", err_2_norm/U_norm)
+assert isclose(err_1_norm/U_norm, 0., atol=1.e-10)
+assert isclose(err_2_norm/U_norm, 0., atol=1.e-10)

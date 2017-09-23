@@ -16,6 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from numpy import isclose
 from dolfin import *
 import matplotlib.pyplot as plt
 from multiphenics import *
@@ -144,6 +145,7 @@ bc_state.apply(F_state)
 solution_state = block_restrict(solution, W_state_trial)
 block_solve(A_state, solution_state.block_vector(), F_state)
 print("Uncontrolled J =", assemble(J))
+assert isclose(assemble(J), 2.9143168)
 plt.figure(); plot(v, title="uncontrolled state velocity")
 plt.figure(); plot(p, title="uncontrolled state pressure")
 plt.show()
@@ -155,6 +157,7 @@ bc.apply(A)
 bc.apply(F)
 block_solve(A, solution.block_vector(), F)
 print("Optimal J =", assemble(J))
+assert isclose(assemble(J), 1.70451173)
 plt.figure(); plot(v, title="state velocity")
 plt.figure(); plot(p, title="state pressure")
 plt.figure(); plot(u, title="control")
@@ -162,4 +165,3 @@ plt.figure(); plot(l, title="lambda")
 plt.figure(); plot(z, title="adjoint velocity")
 plt.figure(); plot(b, title="adjoint pressure")
 plt.show()
-

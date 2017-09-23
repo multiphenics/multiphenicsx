@@ -16,6 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from numpy import isclose
 from dolfin import *
 parameters["ghost_mode"] = "shared_facet" # required by dS
 import matplotlib.pyplot as plt
@@ -118,5 +119,9 @@ err2 = Function(V)
 err2.vector().add_local(+ U_ex.vector().array())
 err2.vector().add_local(- U[1].vector().array())
 err2.vector().apply("")
-print("Error on subdomain 1", sqrt(assemble(err1*err1*dx(1))))
-print("Error on subdomain 2", sqrt(assemble(err2*err2*dx(2))))
+err1_norm = sqrt(assemble(err1*err1*dx(1))/assemble(U_ex*U_ex*dx(1)))
+err2_norm = sqrt(assemble(err2*err2*dx(2))/assemble(U_ex*U_ex*dx(2)))
+print("Relative error on subdomain 1", err1_norm)
+print("Relative error on subdomain 2", err2_norm)
+assert isclose(err1_norm, 0., atol=1.e-10)
+assert isclose(err2_norm, 0., atol=1.e-10)

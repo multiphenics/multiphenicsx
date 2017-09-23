@@ -16,6 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from numpy import isclose
 from dolfin import *
 import matplotlib.pyplot as plt
 from multiphenics import *
@@ -115,6 +116,7 @@ solver_state = BlockPETScSNESSolver(problem_state)
 solver_state.parameters.update(snes_solver_parameters["snes_solver"])
 solver_state.solve()
 print("Uncontrolled J =", assemble(J))
+assert isclose(assemble(J), 0.1784540)
 plt.figure(); plot(v, title="uncontrolled state velocity")
 plt.figure(); plot(p, title="uncontrolled state pressure")
 plt.show()
@@ -125,10 +127,10 @@ solver = BlockPETScSNESSolver(problem)
 solver.parameters.update(snes_solver_parameters["snes_solver"])
 solver.solve()
 print("Optimal J =", assemble(J))
+assert isclose(assemble(J), 0.1249371)
 plt.figure(); plot(v, title="state velocity")
 plt.figure(); plot(p, title="state pressure")
 plt.figure(); plot(u, title="control")
 plt.figure(); plot(z, title="adjoint velocity")
 plt.figure(); plot(b, title="adjoint pressure")
 plt.show()
-

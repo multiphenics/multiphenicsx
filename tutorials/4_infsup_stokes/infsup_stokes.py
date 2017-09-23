@@ -16,6 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from numpy import isclose
 from dolfin import *
 import matplotlib.pyplot as plt
 from multiphenics import *
@@ -106,9 +107,9 @@ def run_monolithic():
     plt.figure(); plot(p_fun, title="Pressure monolithic", mode="color")
     plt.show()
     
-    return (u_fun_1, u_fun_2, p_fun)
+    return (r, u_fun_1, u_fun_2, p_fun)
     
-(u_fun_1_m, u_fun_2_m, p_fun_m) = run_monolithic()
+(eig_m, u_fun_1_m, u_fun_2_m, p_fun_m) = run_monolithic()
 
 ## -------------------------------------------------- ##
 ##                 multiphenics FORMULATION           ##
@@ -160,14 +161,17 @@ def run_block():
     plt.figure(); plot(p_fun, title="Pressure block", mode="color")
     plt.show()
     
-    return (u_fun_1, u_fun_2, p_fun)
+    return (r, u_fun_1, u_fun_2, p_fun)
     
-(u_fun_1_b, u_fun_2_b, p_fun_b) = run_block()
+(eig_b, u_fun_1_b, u_fun_2_b, p_fun_b) = run_block()
 
 ## -------------------------------------------------- ##
 
 ##                  ERROR COMPUTATION                 ##
-def run_error(u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m, p_fun_b):
+def run_error(eig_m, eig_b, u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m, p_fun_b):
+    err_inf_sup = abs(sqrt(eig_b) - sqrt(eig_m))/sqrt(eig_m)
+    print("Relative error for inf-sup constant equal to", err_inf_sup)
+    assert isclose(err_inf_sup, 0., atol=1.e-8)
     # Even after normalization, eigenfunctions may have different signs. Try both and assume that the correct
     # error computation is the one for which the error is minimum
     err_1_plus = u_fun_1_b + u_fun_1_m
@@ -190,9 +194,11 @@ def run_error(u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m, p_fun_b):
         ratio_minus = sqrt(err_minus_norm/vec_norm)
         if ratio_minus < ratio_plus:
             print("Relative error for ", component_name, "component of eigenvector equal to", ratio_minus, "(the one with opposite sign was", ratio_plus, ")")
+            assert isclose(ratio_minus, 0., atol=1.e-6)
             return err_minus
         else:
             print("Relative error for", component_name, "component of eigenvector equal to", ratio_plus, "(the one with opposite sign was", ratio_minus, ")")
+            assert isclose(ratio_plus, 0., atol=1.e-6)
             return err_plus
     err_1 = select_error(err_1_plus, err_1_plus_norm, err_1_minus, err_1_minus_norm, u_fun_1_norm, "velocity 1")
     err_2 = select_error(err_2_plus, err_2_plus_norm, err_2_minus, err_2_minus_norm, u_fun_2_norm, "velocity 2")
@@ -202,4 +208,4 @@ def run_error(u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m, p_fun_b):
     plt.figure(); plot(err_p, title="Pressure error", mode="color")
     plt.show()
     
-run_error(u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m, p_fun_b)
+run_error(eig_m, eig_b, u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m, p_fun_b)
