@@ -108,12 +108,19 @@ def multiphenics_compile_extension_module(*args, **kwargs):
     # Patch Instant
     patch_instant()
     
+    # Set include dirs
+    multiphenics_include_dirs = [multiphenics_root]
+    if "PETSC_DIR" in os.environ:
+        multiphenics_include_dirs.append(os.environ["PETSC_DIR"] + "/include")
+    if "SLEPC_DIR" in os.environ:
+        multiphenics_include_dirs.append(os.environ["SLEPC_DIR"] + "/include")
+    
     # Call DOLFIN's compile_extension_module
     cpp = compile_extension_module(
         code=multiphenics_code, 
         source_directory=multiphenics_folder,
         sources=multiphenics_sources,
-        include_dirs=[multiphenics_root],
+        include_dirs=multiphenics_include_dirs,
         module_name = multiphenics_module_name,
         **kwargs
     )
