@@ -16,15 +16,35 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import types
 import numbers
-from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, concatenate, hstack as bvec, sort, unique, vstack
-from numpy.linalg import norm
+import types
+import pytest
+from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, hstack as bvec, sort, unique, vstack
 from dolfin import assemble, Constant, DOLFIN_EPS, dx, ERROR, Expression, FiniteElement, Function, FunctionSpace, GenericMatrix, GenericVector, inner, MixedElement, PROGRESS, project as dolfin_project, set_log_level, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
 from multiphenics import assign, block_assemble, block_assign, BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
 set_log_level(PROGRESS)
 
-### ================ EQUALITY BETWEEN ARRAYS ================ ###
+# ================ PYTEST HELPER ================ #
+def pytest_mark_slow_for_cartesian_product(generator_1, generator_2):
+    for i in generator_1():
+        for j in generator_2():
+            slow = False
+            if hasattr(i, "mark"):
+                assert i.name == "slow"
+                assert len(i.args) is 1
+                i = i.args[0]
+                slow = True
+            if hasattr(j, "mark"):
+                assert j.name == "slow"
+                assert len(j.args) is 1
+                j = j.args[0]
+                slow = True
+            if slow:
+                yield pytest.mark.slow((i, j))
+            else:
+                yield (i, j)
+
+# ================ EQUALITY BETWEEN ARRAYS ================ #
 # Floating point equality check
 def array_equal(array1, array2):
     if isinstance(array1.dtype, numbers.Integral) and isinstance(array2.dtype, numbers.Integral):
@@ -41,7 +61,7 @@ def array_sorted_equal(array1, array2):
 def array_unique_equal(array1, array2):
     return array_equal(unique(array1), unique(array2))
     
-### ================ EQUALITY BETWEEN DOFS ================ ###
+# ================ EQUALITY BETWEEN DOFS ================ #
 def assert_owned_local_dofs(owned_local_dofs, block_owned_local_dofs):
     assert array_sorted_equal(owned_local_dofs, block_owned_local_dofs)
     
@@ -56,7 +76,7 @@ def assert_global_dofs(global_dofs, block_global_dofs):
 def assert_tabulated_dof_coordinates(dof_coordinates, block_dof_coordinates):
     assert array_equal(dof_coordinates, block_dof_coordinates)
     
-### ================ EQUALITY BETWEEN BLOCK VECTORS ================ ###
+# ================ EQUALITY BETWEEN BLOCK VECTORS ================ #
 def assert_block_vectors_equal(rhs, block_rhs, block_V):
     if isinstance(rhs, tuple):
         rhs1 = rhs[0]
@@ -86,7 +106,7 @@ def assert_block_vectors_equal(rhs, block_rhs, block_V):
         assert array_equal(rhsg_for_assert, block_rhsg)
     comm.barrier()
     
-### ================ EQUALITY BETWEEN BLOCK MATRICES ================ ###
+# ================ EQUALITY BETWEEN BLOCK MATRICES ================ #
 def assert_block_matrices_equal(lhs, block_lhs, block_V):
     if isinstance(lhs, tuple):
         lhs11 = lhs[0][0]
@@ -124,9 +144,11 @@ def assert_block_matrices_equal(lhs, block_lhs, block_V):
         assert array_equal(lhsg_for_assert, block_lhsg)
     comm.barrier()
     
-### ================ EQUALITY BETWEEN BLOCK FUNCTIONS ================ ###
+# ================ EQUALITY BETWEEN BLOCK FUNCTIONS ================ #
 def assert_block_functions_equal(functions, block_function, block_V):
-    if isinstance(functions, tuple):
+    if functions is None and block_function is None:
+        pass
+    elif isinstance(functions, tuple):
         assert_block_vectors_equal((functions[0].vector(), functions[1].vector()), block_function.block_vector(), block_V)
     else:
         assert_block_vectors_equal(functions.vector(), block_function.block_vector(), block_V)
@@ -152,7 +174,7 @@ def assert_functions_manipulations(functions, block_V):
     # The two block vectors should store the same data
     assert array_equal(block_function_b.block_vector().array(), block_function_a.block_vector().array())
     
-### ================ FUNCTION SPACES GENERATOR ================ ###
+# ================ FUNCTION SPACES GENERATOR ================ #
 def StokesFunctionSpace(mesh, family, degree):
     stokes_element = StokesElement(family, mesh.ufl_cell(), degree)
     return FunctionSpace(mesh, stokes_element)
@@ -171,45 +193,45 @@ def FunctionAndRealElement(family, cell, degree):
     R_element = FiniteElement("Real", cell, 0)
     return MixedElement(V_element, R_element)
     
-def get_function_spaces_1(mesh):
+def get_function_spaces_1():
     return (
-        FunctionSpace(mesh, "Lagrange", 1),
-        FunctionSpace(mesh, "Lagrange", 2),
-        VectorFunctionSpace(mesh, "Lagrange", 1),
-        VectorFunctionSpace(mesh, "Lagrange", 2),
-        TensorFunctionSpace(mesh, "Lagrange", 1),
-        TensorFunctionSpace(mesh, "Lagrange", 2),
-        StokesFunctionSpace(mesh, "Lagrange", 1),
-        StokesFunctionSpace(mesh, "Lagrange", 2),
-        FunctionSpace(mesh, "Real", 0),
-        VectorFunctionSpace(mesh, "Real", 0),
-        FunctionAndRealSpace(mesh, "Lagrange", 1),
-        FunctionAndRealSpace(mesh, "Lagrange", 2)
+        lambda mesh: FunctionSpace(mesh, "Lagrange", 1),
+        lambda mesh: FunctionSpace(mesh, "Lagrange", 2),
+        lambda mesh: VectorFunctionSpace(mesh, "Lagrange", 1),
+        pytest.mark.slow(lambda mesh: VectorFunctionSpace(mesh, "Lagrange", 2)),
+        pytest.mark.slow(lambda mesh: TensorFunctionSpace(mesh, "Lagrange", 1)),
+        pytest.mark.slow(lambda mesh: TensorFunctionSpace(mesh, "Lagrange", 2)),
+        lambda mesh: StokesFunctionSpace(mesh, "Lagrange", 1),
+        pytest.mark.slow(lambda mesh: StokesFunctionSpace(mesh, "Lagrange", 2)),
+        lambda mesh: FunctionSpace(mesh, "Real", 0),
+        pytest.mark.slow(lambda mesh: VectorFunctionSpace(mesh, "Real", 0)),
+        lambda mesh: FunctionAndRealSpace(mesh, "Lagrange", 1),
+        pytest.mark.slow(lambda mesh: FunctionAndRealSpace(mesh, "Lagrange", 2))
     )
     
-def get_function_spaces_2(mesh):
-    return [(V1, V2) for V1 in get_function_spaces_1(mesh) for V2 in get_function_spaces_1(mesh)]
+def get_function_spaces_2():
+    return pytest_mark_slow_for_cartesian_product(get_function_spaces_1, get_function_spaces_1)
     
-def get_elements_1(mesh):
+def get_elements_1():
     return (
-        FiniteElement("Lagrange", mesh.ufl_cell(), 1),
-        FiniteElement("Lagrange", mesh.ufl_cell(), 2),
-        VectorElement("Lagrange", mesh.ufl_cell(), 1),
-        VectorElement("Lagrange", mesh.ufl_cell(), 2),
-        TensorElement("Lagrange", mesh.ufl_cell(), 1),
-        TensorElement("Lagrange", mesh.ufl_cell(), 2),
-        StokesElement("Lagrange", mesh.ufl_cell(), 1),
-        StokesElement("Lagrange", mesh.ufl_cell(), 2),
-        FiniteElement("Real", mesh.ufl_cell(), 0),
-        VectorElement("Real", mesh.ufl_cell(), 0),
-        FunctionAndRealElement("Lagrange", mesh.ufl_cell(), 1),
-        FunctionAndRealElement("Lagrange", mesh.ufl_cell(), 2)
+        lambda mesh: FiniteElement("Lagrange", mesh.ufl_cell(), 1),
+        lambda mesh: FiniteElement("Lagrange", mesh.ufl_cell(), 2),
+        lambda mesh: VectorElement("Lagrange", mesh.ufl_cell(), 1),
+        pytest.mark.slow(lambda mesh: VectorElement("Lagrange", mesh.ufl_cell(), 2)),
+        pytest.mark.slow(lambda mesh: TensorElement("Lagrange", mesh.ufl_cell(), 1)),
+        pytest.mark.slow(lambda mesh: TensorElement("Lagrange", mesh.ufl_cell(), 2)),
+        lambda mesh: StokesElement("Lagrange", mesh.ufl_cell(), 1),
+        pytest.mark.slow(lambda mesh: StokesElement("Lagrange", mesh.ufl_cell(), 2)),
+        lambda mesh: FiniteElement("Real", mesh.ufl_cell(), 0),
+        pytest.mark.slow(lambda mesh: VectorElement("Real", mesh.ufl_cell(), 0)),
+        lambda mesh: FunctionAndRealElement("Lagrange", mesh.ufl_cell(), 1),
+        pytest.mark.slow(lambda mesh: FunctionAndRealElement("Lagrange", mesh.ufl_cell(), 2))
     )
     
-def get_elements_2(mesh):
-    return [(V1_element, V2_element) for V1_element in get_elements_1(mesh) for V2_element in get_elements_1(mesh)]
+def get_elements_2():
+    return pytest_mark_slow_for_cartesian_product(get_elements_1, get_elements_1)
     
-### ================ SUBDOMAIN GENERATOR ================ ###
+# ================ SUBDOMAIN GENERATOR ================ #
 def UnitSquareSubDomain(X, Y):
     class CustomSubDomain(SubDomain):
         def inside(self, x, on_boundary):
@@ -245,88 +267,101 @@ def get_restrictions_1():
     return (
         None,
         UnitSquareSubDomain(0.5, 0.5),
-        UnitSquareInterface(on_boundary=True), 
-        UnitSquareInterface(X=1.0), 
-        UnitSquareInterface(Y=0.0), 
-        UnitSquareInterface(X=0.75), 
-        UnitSquareInterface(Y=0.25)
+        UnitSquareInterface(on_boundary=True),
+        pytest.mark.slow(UnitSquareInterface(X=1.0)),
+        pytest.mark.slow(UnitSquareInterface(Y=0.0)),
+        UnitSquareInterface(X=0.75),
+        pytest.mark.slow(UnitSquareInterface(Y=0.25))
     )
 
 def get_restrictions_2():
     return (
         (None, None),
         (None, UnitSquareSubDomain(0.75, 0.75)),
-        (None, UnitSquareInterface(on_boundary=True)),
+        pytest.mark.slow((None, UnitSquareInterface(on_boundary=True))),
         (None, UnitSquareInterface(Y=0.0)),
-        (UnitSquareSubDomain(0.5, 0.75), None),
-        (UnitSquareInterface(on_boundary=True), None),
-        (UnitSquareInterface(X=1.0), None),
+        pytest.mark.slow((UnitSquareSubDomain(0.5, 0.75), None)),
+        pytest.mark.slow((UnitSquareInterface(on_boundary=True), None)),
+        pytest.mark.slow((UnitSquareInterface(X=1.0), None)),
         (UnitSquareSubDomain(0.75, 0.75), UnitSquareSubDomain(0.75, 0.75)),
-        (UnitSquareSubDomain(0.5, 0.75), UnitSquareSubDomain(0.75, 0.75)),
-        (UnitSquareInterface(on_boundary=True), UnitSquareInterface(on_boundary=True)),
+        pytest.mark.slow((UnitSquareSubDomain(0.5, 0.75), UnitSquareSubDomain(0.75, 0.75))),
+        pytest.mark.slow((UnitSquareInterface(on_boundary=True), UnitSquareInterface(on_boundary=True))),
         (UnitSquareInterface(on_boundary=True), UnitSquareInterface(X=1.0)),
-        (UnitSquareInterface(X=1.0), UnitSquareInterface(on_boundary=True)),
+        pytest.mark.slow((UnitSquareInterface(X=1.0), UnitSquareInterface(on_boundary=True))),
         (UnitSquareInterface(X=1.0), UnitSquareInterface(Y=0.0)),
-        (UnitSquareInterface(X=0.75), UnitSquareInterface(Y=0.0)),
-        (UnitSquareInterface(X=0.75), UnitSquareInterface(Y=0.25)),
+        pytest.mark.slow((UnitSquareInterface(X=0.75), UnitSquareInterface(Y=0.0))),
+        pytest.mark.slow((UnitSquareInterface(X=0.75), UnitSquareInterface(Y=0.25))),
         (UnitSquareSubDomain(0.5, 0.75), UnitSquareInterface(on_boundary=True)),
-        (UnitSquareSubDomain(0.5, 0.75), UnitSquareInterface(Y=0.25)),
-        (UnitSquareInterface(on_boundary=True), UnitSquareSubDomain(0.5, 0.75)),
-        (UnitSquareInterface(Y=0.25), UnitSquareSubDomain(0.5, 0.75))
+        pytest.mark.slow((UnitSquareSubDomain(0.5, 0.75), UnitSquareInterface(Y=0.25))),
+        pytest.mark.slow((UnitSquareInterface(on_boundary=True), UnitSquareSubDomain(0.5, 0.75))),
+        pytest.mark.slow((UnitSquareInterface(Y=0.25), UnitSquareSubDomain(0.5, 0.75)))
     )
     
-### ================ BLOCK BOUNDARY CONDITIONS GENERATOR ================ ###
+# ================ BLOCK BOUNDARY CONDITIONS GENERATOR ================ #
 # Computation of block bcs for single block
-def get_block_bcs_1(block_V):
-    on_boundary = OnBoundary()
-    shape_1 = block_V[0].ufl_element().value_shape()
-    if len(shape_1) is 0:
-        bc1_fun = Constant(1.)
-    elif len(shape_1) is 1 and shape_1[0] is 2:
-        bc1_fun = Constant((1., 2.))
-    elif len(shape_1) is 1 and shape_1[0] is 3:
-        bc1_fun = Constant((1., 2., 3.))
-    elif len(shape_1) is 2:
-        bc1_fun = Constant(((1., 2.),
-                            (3., 4.)))
-    bc1 = DirichletBC(block_V.sub(0), bc1_fun, on_boundary)
-    unclutter_bc_apply(bc1)
-    all_block_bcs = [BlockDirichletBC([None], block_function_space=block_V), BlockDirichletBC([bc1])]
-    [unclutter_bc_apply(block_bcs) for block_bcs in all_block_bcs]
-    return all_block_bcs
+def get_block_bcs_1():
+    def _get_bc_1(block_V):
+        on_boundary = OnBoundary()
+        shape_1 = block_V[0].ufl_element().value_shape()
+        if len(shape_1) is 0:
+            bc1_fun = Constant(1.)
+        elif len(shape_1) is 1 and shape_1[0] is 2:
+            bc1_fun = Constant((1., 2.))
+        elif len(shape_1) is 1 and shape_1[0] is 3:
+            bc1_fun = Constant((1., 2., 3.))
+        elif len(shape_1) is 2:
+            bc1_fun = Constant(((1., 2.),
+                                (3., 4.)))
+        bc1 = DirichletBC(block_V.sub(0), bc1_fun, on_boundary)
+        unclutter_bc_apply(bc1)
+        return bc1
+    return (
+        lambda block_V: None,
+        lambda block_V: BlockDirichletBC([None], block_function_space=block_V),
+        lambda block_V: BlockDirichletBC([_get_bc_1(block_V)])
+    )
     
 # Computation of block bcs for two blocks
-def get_block_bcs_2(block_V):
-    on_boundary = OnBoundary()
-    shape_1 = block_V[0].ufl_element().value_shape()
-    if len(shape_1) is 0:
-        bc1_fun = Constant(1.)
-    elif len(shape_1) is 1 and shape_1[0] is 2:
-        bc1_fun = Constant((1., 2.))
-    elif len(shape_1) is 1 and shape_1[0] is 3:
-        bc1_fun = Constant((1., 2., 3.))
-    elif len(shape_1) is 2:
-        bc1_fun = Constant(((1., 2.),
-                            (3., 4.)))
-    shape_2 = block_V[1].ufl_element().value_shape()
-    if len(shape_2) is 0:
-        bc2_fun = Constant(11.)
-    elif len(shape_2) is 1 and shape_2[0] is 2:
-        bc2_fun = Constant((11., 12.))
-    elif len(shape_2) is 1 and shape_2[0] is 3:
-        bc2_fun = Constant((11., 12., 13.))
-    elif len(shape_2) is 2:
-        bc2_fun = Constant(((11., 12.),
-                            (13., 14.)))
-    bc1 = DirichletBC(block_V.sub(0), bc1_fun, on_boundary)
-    unclutter_bc_apply(bc1)
-    bc2 = DirichletBC(block_V.sub(1), bc2_fun, on_boundary)
-    unclutter_bc_apply(bc2)
-    all_block_bcs = [BlockDirichletBC([None, None], block_function_space=block_V), BlockDirichletBC([bc1, None]), BlockDirichletBC([None, bc2]), BlockDirichletBC([bc1, bc2])]
-    [unclutter_bc_apply(block_bcs) for block_bcs in all_block_bcs]
-    return all_block_bcs
+def get_block_bcs_2():
+    def _get_bc_1(block_V):
+        on_boundary = OnBoundary()
+        shape_1 = block_V[0].ufl_element().value_shape()
+        if len(shape_1) is 0:
+            bc1_fun = Constant(1.)
+        elif len(shape_1) is 1 and shape_1[0] is 2:
+            bc1_fun = Constant((1., 2.))
+        elif len(shape_1) is 1 and shape_1[0] is 3:
+            bc1_fun = Constant((1., 2., 3.))
+        elif len(shape_1) is 2:
+            bc1_fun = Constant(((1., 2.),
+                                (3., 4.)))
+        bc1 = DirichletBC(block_V.sub(0), bc1_fun, on_boundary)
+        unclutter_bc_apply(bc1)
+        return bc1
+    def _get_bc_2(block_V):
+        on_boundary = OnBoundary()
+        shape_2 = block_V[1].ufl_element().value_shape()
+        if len(shape_2) is 0:
+            bc2_fun = Constant(11.)
+        elif len(shape_2) is 1 and shape_2[0] is 2:
+            bc2_fun = Constant((11., 12.))
+        elif len(shape_2) is 1 and shape_2[0] is 3:
+            bc2_fun = Constant((11., 12., 13.))
+        elif len(shape_2) is 2:
+            bc2_fun = Constant(((11., 12.),
+                                (13., 14.)))
+        bc2 = DirichletBC(block_V.sub(1), bc2_fun, on_boundary)
+        unclutter_bc_apply(bc2)
+        return bc2
+    return (
+        lambda block_V: None,
+        lambda block_V: BlockDirichletBC([None, None], block_function_space=block_V),
+        lambda block_V: BlockDirichletBC([_get_bc_1(block_V), None]),
+        pytest.mark.slow(lambda block_V: BlockDirichletBC([None, _get_bc_2(block_V)])),
+        lambda block_V: BlockDirichletBC([_get_bc_1(block_V), _get_bc_2(block_V)])
+    )
     
-### ================ RIGHT-HAND SIDE BLOCK FORM GENERATOR ================ ###
+# ================ RIGHT-HAND SIDE BLOCK FORM GENERATOR ================ #
 # Computation of rhs block form for single block
 def get_rhs_block_form_1(block_V):
     block_v = BlockTestFunction(block_V)
@@ -382,7 +417,7 @@ def get_rhs_block_form_2(block_V):
         block_form[1] = inner(f2, v2)*dx
     return block_form
     
-### ================ LEFT-HAND SIDE BLOCK FORM GENERATOR ================ ###
+# ================ LEFT-HAND SIDE BLOCK FORM GENERATOR ================ #
 # Computation of lhs block form for single block
 def get_lhs_block_form_1(block_V):
     block_u = BlockTrialFunction(block_V)
@@ -497,7 +532,7 @@ def get_lhs_block_form_2(block_V):
             block_form[1][0] = (f2[0, 0]*u1[0, 0]*v2[0, 0].dx(0) + f2[0, 1]*u1[0, 1].dx(1)*v2[0, 1] + f2[1, 0]*u1[1, 0].dx(0)*v2[1, 0].dx(1) + f2[1, 1]*u1[1, 1].dx(0)*v2[1, 1])*dx
     return block_form
     
-### ================ RIGHT-HAND SIDE BLOCK FORM ASSEMBLER ================ ###
+# ================ RIGHT-HAND SIDE BLOCK FORM ASSEMBLER ================ #
 def assemble_and_block_assemble_vector(block_form):
     N = len(block_form)
     assert N in (1, 2)
@@ -507,6 +542,8 @@ def assemble_and_block_assemble_vector(block_form):
         return (assemble(block_form[0]), assemble(block_form[1])), block_assemble(block_form)
         
 def apply_bc_and_block_bc_vector(rhs, block_rhs, block_bcs):
+    if block_bcs is None:
+        return
     N = len(block_bcs)
     assert N in (1, 2)
     if N == 1:
@@ -518,6 +555,8 @@ def apply_bc_and_block_bc_vector(rhs, block_rhs, block_bcs):
         block_bcs.apply(block_rhs)
     
 def apply_bc_and_block_bc_vector_non_linear(rhs, block_rhs, block_bcs, block_V):
+    if block_bcs is None:
+        return (None, None)
     N = len(block_bcs)
     assert N in (1, 2)
     if N == 1:
@@ -535,7 +574,7 @@ def apply_bc_and_block_bc_vector_non_linear(rhs, block_rhs, block_bcs, block_V):
         block_bcs.apply(block_rhs, block_function.block_vector())
         return ((function1, function2), block_function)
         
-### ================ LEFT-HAND SIDE BLOCK FORM ASSEMBLER ================ ###
+# ================ LEFT-HAND SIDE BLOCK FORM ASSEMBLER ================ #
 def assemble_and_block_assemble_matrix(block_form):
     N = len(block_form)
     assert N in (1, 2)
@@ -547,6 +586,8 @@ def assemble_and_block_assemble_matrix(block_form):
         return ((assemble(block_form[0][0]), assemble(block_form[0][1])), (assemble(block_form[1][0]), assemble(block_form[1][1]))), block_assemble(block_form)
     
 def apply_bc_and_block_bc_matrix(lhs, block_lhs, block_bcs):
+    if block_bcs is None:
+        return
     N = len(block_bcs)
     assert N in (1, 2)
     if N == 1:
@@ -554,12 +595,12 @@ def apply_bc_and_block_bc_matrix(lhs, block_lhs, block_bcs):
         block_bcs.apply(block_lhs)
     else:
         [bc0.apply(lhs[0][0]) for bc0 in block_bcs[0]]
-        [bc0.zero (lhs[0][1]) for bc0 in block_bcs[0]]
-        [bc1.zero (lhs[1][0]) for bc1 in block_bcs[1]]
+        [bc0.zero(lhs[0][1]) for bc0 in block_bcs[0]]
+        [bc1.zero(lhs[1][0]) for bc1 in block_bcs[1]]
         [bc1.apply(lhs[1][1]) for bc1 in block_bcs[1]]
         block_bcs.apply(block_lhs)
         
-### ================ BLOCK FUNCTIONS GENERATOR ================ ###
+# ================ BLOCK FUNCTIONS GENERATOR ================ #
 # Computation of block function for single block
 def get_list_of_functions_1(block_V):
     block_v = BlockTestFunction(block_V)
@@ -580,7 +621,6 @@ def get_list_of_functions_1(block_V):
 def get_list_of_functions_2(block_V):
     block_v = BlockTestFunction(block_V)
     (v1, v2) = block_split(block_v)
-    block_function = [None, None]
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) is 0:
         f1 = Expression("2*x[0] + 4*x[1]*x[1]", degree=2)
@@ -603,7 +643,7 @@ def get_list_of_functions_2(block_V):
                          ("7*x[1] + 11*x[0]*x[0]", "13*x[1] + 17*x[0]*x[0]")), degree=2)
     return [project(f1, block_V[0]), project(f2, block_V[1])]
     
-### ================ PARALLEL SUPPORT ================ ###
+# ================ PARALLEL SUPPORT ================ #
 # Gather matrices, vector and dicts on zero-th process
 def gather_on_zero(obj, comm, **kwargs):
     assert isinstance(obj, (dict, tuple, GenericMatrix, GenericVector))
