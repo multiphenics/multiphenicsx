@@ -1,0 +1,2 @@
+recursive-include multiphenics *.cpp *.h *.py
+global-exclude __pycache__ *.pyc

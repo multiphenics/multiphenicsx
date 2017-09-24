@@ -16,12 +16,6 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-__author__ = "Francesco Ballarin"
-__copyright__ = "Copyright 2016-2017 by the multiphenics authors"
-__license__ = "LGPL"
-__version__ = "0.0.0dev"
-__email__ = "francesco.ballarin@sissa.it"
-
 from multiphenics.fem import block_adjoint, block_assemble, block_derivative, BlockDirichletBC, BlockForm, block_restrict, DirichletBC
 from multiphenics.function import assign, block_assign, BlockElement, BlockFunction, BlockFunctionSpace, block_split, BlockTestFunction, BlockTrialFunction, split, TestFunction, TrialFunction
 from multiphenics.io import File, plot, XDMFFile

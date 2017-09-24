@@ -1,9 +1,14 @@
 *~
 *.bak
-*.pyc
+*.cache
+*.egg
+*.egg-info
+*.h5
 *.m
 *.pvd
-*.vtu
 *.pvtu
+*.py[cod]
+*.vtu
 *.xdmf
-*.h5
+build
+dist
