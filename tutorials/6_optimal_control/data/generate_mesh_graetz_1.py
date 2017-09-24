@@ -46,13 +46,13 @@ subdomains = MeshFunction("size_t", mesh, mesh.topology().dim(), mesh.domains())
 class Boundary_D_1(SubDomain):
     def inside(self, x, on_boundary):
         return (
-            on_boundary 
-                and 
+            on_boundary
+                and
             (
-                (x[0] >= 0 and x[0] <= 1 and x[1] > -DOLFIN_EPS and x[1] < DOLFIN_EPS) 
-                    or 
-                (x[0] < DOLFIN_EPS and x[0] > -DOLFIN_EPS and x[1] >= 0 and x[1] <= 1) 
-                    or 
+                (x[0] >= 0 and x[0] <= 1 and x[1] > -DOLFIN_EPS and x[1] < DOLFIN_EPS)
+                    or
+                (x[0] < DOLFIN_EPS and x[0] > -DOLFIN_EPS and x[1] >= 0 and x[1] <= 1)
+                    or
                 (x[0] >= 0 and x[0] <= 1 and x[1] > 1-DOLFIN_EPS and x[1] < 1+DOLFIN_EPS)
             )
         )
@@ -60,11 +60,11 @@ class Boundary_D_1(SubDomain):
 class Boundary_D_2(SubDomain):
     def inside(self, x, on_boundary):
         return (
-            on_boundary 
-                and 
+            on_boundary
+                and
             (
-                (x[0] >= 1 and x[0] <= 2.5 and x[1] < DOLFIN_EPS and x[1] > -DOLFIN_EPS) 
-                    or 
+                (x[0] >= 1 and x[0] <= 2.5 and x[1] < DOLFIN_EPS and x[1] > -DOLFIN_EPS)
+                    or
                 (x[0] >= 1 and x[0] <= 2.5 and x[1] > 1-DOLFIN_EPS and x[1] < 1+DOLFIN_EPS)
             )
         )
@@ -72,8 +72,8 @@ class Boundary_D_2(SubDomain):
 class Boundary_N(SubDomain):
     def inside(self, x, on_boundary):
         return (
-            on_boundary 
-                and 
+            on_boundary
+                and
             (x[0] > 2.5 - DOLFIN_EPS and x[0] < 2.5 + DOLFIN_EPS and x[1] >= 0 and x[1] <= 1)
         )
         

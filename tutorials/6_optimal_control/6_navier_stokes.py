@@ -44,11 +44,11 @@ where
 using an adjoint formulation solved by a one shot approach
 """
 
-## MESH ##
+# MESH #
 mesh = Mesh("data/square.xml")
 boundaries = MeshFunction("size_t", mesh, "data/square_facet_region.xml")
 
-## FUNCTION SPACES ##
+# FUNCTION SPACES #
 Y_velocity = VectorElement("Lagrange", mesh.ufl_cell(), 2)
 Y_pressure = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 U = VectorElement("Lagrange", mesh.ufl_cell(), 2)
@@ -58,7 +58,7 @@ Q_pressure = Y_pressure
 W_el = BlockElement(Y_velocity, Y_pressure, U, L, Q_velocity, Q_pressure)
 W = BlockFunctionSpace(mesh, W_el)
 
-## PROBLEM DATA ##
+# PROBLEM DATA #
 alpha = Constant(1.e-5)
 x, y = symbols("x[0], x[1]")
 psi_d = 10*(1-cos(0.8*pi*x))*(1-cos(0.8*pi*y))*(1-x)**2*(1-y)**2
@@ -66,21 +66,21 @@ v_d = Expression((ccode(psi_d.diff(y, 1)), ccode(-psi_d.diff(x, 1))), element=W.
 nu = Constant(0.01)
 f = Constant((0., 0.))
 
-## NONLINEAR SOLVER PARAMETERS ##
+# NONLINEAR SOLVER PARAMETERS #
 snes_solver_parameters = {"nonlinear_solver": "snes",
                           "snes_solver": {"linear_solver": "mumps",
                                           "maximum_iterations": 20,
                                           "report": True,
                                           "error_on_nonconvergence": True}}
 
-## TRIAL/TEST FUNCTIONS AND SOLUTION ##
+# TRIAL/TEST FUNCTIONS AND SOLUTION #
 trial = BlockTrialFunction(W)
 solution = BlockFunction(W)
 (v, p, u, l, z, b) = block_split(solution)
 test = BlockTestFunction(W)
 (w, q, r, m, s, d) = block_split(test)
 
-## OPTIMALITY CONDITIONS  ##
+# OPTIMALITY CONDITIONS  #
 r =  [nu*inner(grad(z), grad(w))*dx + inner(grad(w)*v, z)*dx + inner(grad(v)*w, z)*dx - b*div(w)*dx + inner(v - v_d, w)*dx,
       - q*div(z)*dx + l*q*dx                                                                                              ,
       alpha*inner(u, r)*dx - inner(z, r)*dx                                                                               ,
@@ -96,12 +96,12 @@ bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant((0., 0.)), boundaries, id
                        []])
 
 
-## FUNCTIONAL ##
+# FUNCTIONAL #
 J = 0.5*inner(v - v_d, v - v_d)*dx + 0.5*alpha*inner(u, u)*dx
 
-## UNCONTROLLED FUNCTIONAL VALUE ##
+# UNCONTROLLED FUNCTIONAL VALUE #
 W_state_trial = W.extract_block_sub_space((0, 1))
-W_state_test  = W.extract_block_sub_space((4, 5))
+W_state_test = W.extract_block_sub_space((4, 5))
 r_state = block_restrict(r, W_state_test)
 dr_state = block_restrict(dr, [W_state_test, W_state_trial])
 bc_state = block_restrict(bc, W_state_trial)
@@ -112,21 +112,29 @@ solver_state.parameters.update(snes_solver_parameters["snes_solver"])
 solver_state.solve()
 print("Uncontrolled J =", assemble(J))
 assert isclose(assemble(J), 0.1784540)
-plt.figure(); plot(v, title="uncontrolled state velocity")
-plt.figure(); plot(p, title="uncontrolled state pressure")
+plt.figure()
+plot(v, title="uncontrolled state velocity")
+plt.figure()
+plot(p, title="uncontrolled state pressure")
 plt.show()
 
-## OPTIMAL CONTROL ##
+# OPTIMAL CONTROL #
 problem = BlockNonlinearProblem(r, solution, bc, dr)
 solver = BlockPETScSNESSolver(problem)
 solver.parameters.update(snes_solver_parameters["snes_solver"])
 solver.solve()
 print("Optimal J =", assemble(J))
 assert isclose(assemble(J), 9.971933e-7)
-plt.figure(); plot(v, title="state velocity")
-plt.figure(); plot(p, title="state pressure")
-plt.figure(); plot(u, title="control")
-plt.figure(); plot(l, title="lambda")
-plt.figure(); plot(z, title="adjoint velocity")
-plt.figure(); plot(b, title="adjoint pressure")
+plt.figure()
+plot(v, title="state velocity")
+plt.figure()
+plot(p, title="state pressure")
+plt.figure()
+plot(u, title="control")
+plt.figure()
+plot(l, title="lambda")
+plt.figure()
+plot(z, title="adjoint velocity")
+plt.figure()
+plot(b, title="adjoint pressure")
 plt.show()

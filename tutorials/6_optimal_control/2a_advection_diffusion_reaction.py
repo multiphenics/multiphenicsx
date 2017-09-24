@@ -43,18 +43,18 @@ where
 using an adjoint formulation solved by a one shot approach
 """
 
-## MESH ##
+# MESH #
 mesh = Mesh("data/square.xml")
 boundaries = MeshFunction("size_t", mesh, "data/square_facet_region.xml")
 
-## FUNCTION SPACES ##
+# FUNCTION SPACES #
 Y = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 U = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 Q = Y
 W_el = BlockElement(Y, U, Q)
 W = BlockFunctionSpace(mesh, W_el)
 
-## PROBLEM DATA ##
+# PROBLEM DATA #
 alpha = Constant(1.e-5)
 y_d = Constant(1.)
 epsilon = Constant(1.e-1)
@@ -62,16 +62,16 @@ beta = Constant((-1., -2.))
 sigma = Constant(1.)
 f = Constant(1.)
 
-## TRIAL/TEST FUNCTIONS ##
+# TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)
 (y, u, p) = block_split(yup)
 zvq = BlockTestFunction(W)
 (z, v, q) = block_split(zvq)
 
-## OPTIMALITY CONDITIONS ##
+# OPTIMALITY CONDITIONS #
 state_operator = epsilon*inner(grad(y), grad(q))*dx + inner(beta, grad(y))*q*dx + sigma*y*q*dx
 adjoint_operator = epsilon*inner(grad(p), grad(z))*dx - inner(beta, grad(p))*z*dx + sigma*p*z*dx
-a = [[y*z*dx        , 0           , adjoint_operator], 
+a = [[y*z*dx        , 0           , adjoint_operator],
      [0             , alpha*u*v*dx, - p*v*dx        ],
      [state_operator, - u*q*dx    , 0               ]]
 f =  [y_d*z*dx,
@@ -81,25 +81,26 @@ bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant(0.), boundaries, idx) for
                        [],
                        [DirichletBC(W.sub(2), Constant(0.), boundaries, idx) for idx in (1, 2, 3, 4)]])
 
-## SOLUTION ##
+# SOLUTION #
 yup = BlockFunction(W)
 (y, u, p) = block_split(yup)
 
-## FUNCTIONAL ##
+# FUNCTIONAL #
 J = 0.5*inner(y - y_d, y - y_d)*dx + 0.5*alpha*inner(u, u)*dx
 
-## UNCONTROLLED FUNCTIONAL VALUE ##
+# UNCONTROLLED FUNCTIONAL VALUE #
 A_state = assemble(a[2][0])
 F_state = assemble(f[2])
 [bc_state.apply(A_state) for bc_state in bc[0]]
-[bc_state.apply(F_state)  for bc_state in bc[0]]
+[bc_state.apply(F_state) for bc_state in bc[0]]
 solve(A_state, y.vector(), F_state)
 print("Uncontrolled J =", assemble(J))
 assert isclose(assemble(J), 0.37985512)
-plt.figure(); plot(y, title="uncontrolled state")
+plt.figure()
+plot(y, title="uncontrolled state")
 plt.show()
 
-## OPTIMAL CONTROL ##
+# OPTIMAL CONTROL #
 A = block_assemble(a)
 F = block_assemble(f)
 bc.apply(A)
@@ -107,7 +108,10 @@ bc.apply(F)
 block_solve(A, yup.block_vector(), F)
 print("Optimal J =", assemble(J))
 assert isclose(assemble(J), 0.02816257)
-plt.figure(); plot(y, title="state")
-plt.figure(); plot(u, title="control")
-plt.figure(); plot(p, title="adjoint")
+plt.figure()
+plot(y, title="state")
+plt.figure()
+plot(u, title="control")
+plt.figure()
+plot(p, title="adjoint")
 plt.show()

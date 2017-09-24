@@ -18,9 +18,9 @@
 
 from numpy import isclose
 from dolfin import *
-parameters["ghost_mode"] = "shared_facet" # required by dS
 import matplotlib.pyplot as plt
 from multiphenics import *
+parameters["ghost_mode"] = "shared_facet" # required by dS
 
 """
 In this tutorial we solve the optimal control problem
@@ -47,7 +47,7 @@ where
 using an adjoint formulation solved by a one shot approach
 """
 
-## MESH ##
+# MESH #
 # Mesh
 mesh = Mesh("data/bifurcation.xml")
 subdomains = MeshFunction("size_t", mesh, "data/bifurcation_physical_region.xml")
@@ -58,7 +58,7 @@ control_boundary = MeshRestriction(mesh, "data/bifurcation_restriction_control.r
 n = FacetNormal(mesh)
 t = as_vector([n[1], -n[0]])
 
-## FUNCTION SPACES ##
+# FUNCTION SPACES #
 Y_velocity = VectorElement("Lagrange", mesh.ufl_cell(), 2)
 Y_pressure = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 U = VectorElement("Lagrange", mesh.ufl_cell(), 2)
@@ -67,7 +67,7 @@ Q_pressure = Y_pressure
 W_el = BlockElement(Y_velocity, Y_pressure, U, Q_velocity, Q_pressure)
 W = BlockFunctionSpace(mesh, W_el, restrict=[None, None, control_boundary, None, None])
 
-## PROBLEM DATA ##
+# PROBLEM DATA #
 nu = Constant(0.04)
 alpha_1 = Constant(0.001)
 alpha_2 = 0.1*alpha_1
@@ -75,23 +75,23 @@ g = Expression(("10.0*a*(x[1] + 1.0)*(1.0 - x[1])", "0.0"), a=1.0, element=W.sub
 v_d = Expression(("a*(b*10.0*(pow(x[1], 3) - pow(x[1], 2) - x[1] + 1.0)) + ((1.0-b)*10.0*(-pow(x[1], 3) - pow(x[1], 2) + x[1] + 1.0))", "0.0"), a=1.0, b=0.8, element=W.sub(0).ufl_element())
 f = Constant((0., 0.))
 
-## TRIAL/TEST FUNCTIONS ##
+# TRIAL/TEST FUNCTIONS #
 trial = BlockTrialFunction(W)
 (v, p, u, z, b) = block_split(trial)
 test = BlockTestFunction(W)
 (w, q, r, s, d) = block_split(test)
 
-## MEASURES ##
+# MEASURES #
 dx = Measure("dx")(subdomain_data=subdomains)
 ds = Measure("ds")(subdomain_data=boundaries)
 dS = Measure("dS")(subdomain_data=boundaries)
 
-## OPTIMALITY CONDITIONS ##
+# OPTIMALITY CONDITIONS #
 def tracking(v, w):
     return inner(v, w)('-')
 def penalty(u, r):
     return alpha_1*inner(grad(u)*t, grad(r)*t) + alpha_2*inner(u, r)
-a = [[tracking(v, w)*dS(4)         , 0            , 0                  , nu*inner(grad(z), grad(w))*dx, - b*div(w)*dx], 
+a = [[tracking(v, w)*dS(4)         , 0            , 0                  , nu*inner(grad(z), grad(w))*dx, - b*div(w)*dx],
      [0                            , 0            , 0                  , - q*div(z)*dx                , 0            ],
      [0                            , 0            , penalty(u, r)*ds(3), - inner(z, r)*ds(3)          , 0            ],
      [nu*inner(grad(v), grad(s))*dx, - p*div(s)*dx, - inner(u, s)*ds(3), 0                            , 0            ],
@@ -107,16 +107,16 @@ bc = BlockDirichletBC([[DirichletBC(W.sub(0), g, boundaries, 1), DirichletBC(W.s
                        [DirichletBC(W.sub(3), Constant((0.0, 0.0)), boundaries, idx) for idx in (1, 2)],
                        []])
 
-## SOLUTION ##
+# SOLUTION #
 solution = BlockFunction(W)
 (v, p, u, z, b) = block_split(solution)
 
-## FUNCTIONAL ##
+# FUNCTIONAL #
 J = 0.5*tracking(v - v_d, v - v_d)*dS(4) + 0.5*penalty(u, u)*ds(3)
 
-## UNCONTROLLED FUNCTIONAL VALUE ##
+# UNCONTROLLED FUNCTIONAL VALUE #
 W_state_trial = W.extract_block_sub_space((0, 1))
-W_state_test  = W.extract_block_sub_space((3, 4))
+W_state_test = W.extract_block_sub_space((3, 4))
 a_state = block_restrict(a, [W_state_test, W_state_trial])
 A_state = block_assemble(a_state)
 f_state = block_restrict(f, W_state_test)
@@ -128,11 +128,13 @@ solution_state = block_restrict(solution, W_state_trial)
 block_solve(A_state, solution_state.block_vector(), F_state)
 print("Uncontrolled J =", assemble(J))
 assert isclose(assemble(J), 2.8509883)
-plt.figure(); plot(v, title="uncontrolled state velocity")
-plt.figure(); plot(p, title="uncontrolled state pressure")
+plt.figure()
+plot(v, title="uncontrolled state velocity")
+plt.figure()
+plot(p, title="uncontrolled state pressure")
 plt.show()
 
-## OPTIMAL CONTROL ##
+# OPTIMAL CONTROL #
 A = block_assemble(a, keep_diagonal=True)
 F = block_assemble(f)
 bc.apply(A)
@@ -140,9 +142,14 @@ bc.apply(F)
 block_solve(A, solution.block_vector(), F)
 print("Optimal J =", assemble(J))
 assert isclose(assemble(J), 1.7641147)
-plt.figure(); plot(v, title="state velocity")
-plt.figure(); plot(p, title="state pressure")
-plt.figure(); plot(u, title="control")
-plt.figure(); plot(z, title="adjoint velocity")
-plt.figure(); plot(b, title="adjoint pressure")
+plt.figure()
+plot(v, title="state velocity")
+plt.figure()
+plot(p, title="state pressure")
+plt.figure()
+plot(u, title="control")
+plt.figure()
+plot(z, title="adjoint velocity")
+plt.figure()
+plot(b, title="adjoint pressure")
 plt.show()

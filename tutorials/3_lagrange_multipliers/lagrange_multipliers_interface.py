@@ -18,9 +18,9 @@
 
 from numpy import isclose
 from dolfin import *
-parameters["ghost_mode"] = "shared_facet" # required by dS
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from multiphenics import *
+parameters["ghost_mode"] = "shared_facet" # required by dS
 
 """
 In this example we solve
@@ -35,7 +35,7 @@ The resulting weak formulation is:
 s.t.
     \int_{\Omega_1} grad(u_1) \cdot grad(v_1) \dx_1 +
     \int_{\Omega_2} grad(u_2) \cdot grad(v_2) \dx_2 +
-    \int_{\Gamma} \lambda (v_1 - v_2) \ds = 0, 
+    \int_{\Gamma} \lambda (v_1 - v_2) \ds = 0,
         \forall v_1 \in V(\Omega_1), v_2 \in V(\Omega_2)
 and
     \int_{\Gamma} \eta  (u_1 - u_2) \ds = 0,
@@ -43,7 +43,7 @@ and
 where boundary conditions on \partial\Omega are embedded in V(.)
 """
 
-## MESHES ##
+# MESHES #
 # Mesh
 mesh = Mesh("data/circle.xml")
 subdomains = MeshFunction("size_t", mesh, "data/circle_physical_region.xml")
@@ -53,25 +53,25 @@ left = MeshRestriction(mesh, "data/circle_restriction_left.rtc.xml")
 right = MeshRestriction(mesh, "data/circle_restriction_right.rtc.xml")
 interface = MeshRestriction(mesh, "data/circle_restriction_interface.rtc.xml")
 
-## FUNCTION SPACES ##
+# FUNCTION SPACES #
 # Function space
 V = FunctionSpace(mesh, "Lagrange", 2)
 # Block function space
 W = BlockFunctionSpace([V, V, V], restrict=[left, right, interface])
 
-## TRIAL/TEST FUNCTIONS ##
+# TRIAL/TEST FUNCTIONS #
 u1u2l = BlockTrialFunction(W)
 (u1, u2, l) = block_split(u1u2l)
 v1v2m = BlockTestFunction(W)
 (v1, v2, m) = block_split(v1v2m)
 
-## MEASURES ##
+# MEASURES #
 dx = Measure("dx")(subdomain_data=subdomains)
 ds = Measure("ds")(subdomain_data=boundaries)
 dS = Measure("dS")(subdomain_data=boundaries)
 dS = dS(2) # restrict to the interface, which has facet ID equal to 2
 
-## ASSEMBLE ##
+# ASSEMBLE #
 a = [[inner(grad(u1), grad(v1))*dx(1), 0                              ,   l("-")*v1("-")*dS ],
      [0                              , inner(grad(u2), grad(v2))*dx(2), - l("+")*v2("+")*dS ],
      [m("-")*u1("-")*dS              , - m("+")*u2("+")*dS            , 0                   ]]
@@ -79,11 +79,11 @@ f =  [v1*dx(1)                       , v2*dx(2)                       , 0       
 
 bc1 = DirichletBC(W.sub(0), Constant(0.), boundaries, 1)
 bc2 = DirichletBC(W.sub(1), Constant(0.), boundaries, 1)
-bcs = BlockDirichletBC([bc1, 
+bcs = BlockDirichletBC([bc1,
                         bc2,
                         None])
 
-## SOLVE ##
+# SOLVE #
 A = block_assemble(a)
 F = block_assemble(f)
 bcs.apply(A)
@@ -94,12 +94,15 @@ block_matlab_export(F, "F")
 U = BlockFunction(W)
 block_solve(A, U.block_vector(), F)
 
-#plt.figure(); plot(U[0])
-#plt.figure(); plot(U[1])
-#plt.figure(); plot(U[2])
-#plt.show()
+# plt.figure()
+# plot(U[0])
+# plt.figure()
+# plot(U[1])
+# plt.figure()
+# plot(U[2])
+# plt.show()
 
-## ERROR ##
+# ERROR #
 u = TrialFunction(V)
 v = TestFunction(V)
 A_ex = assemble(inner(grad(u), grad(v))*dx)
@@ -109,8 +112,9 @@ bc_ex.apply(A_ex)
 bc_ex.apply(F_ex)
 U_ex = Function(V)
 solve(A_ex, U_ex.vector(), F_ex)
-#plt.figure(); plot(U_ex)
-#plt.show()
+# plt.figure()
+# plot(U_ex)
+# plt.show()
 err1 = Function(V)
 err1.vector().add_local(+ U_ex.vector().array())
 err1.vector().add_local(- U[0].vector().array())

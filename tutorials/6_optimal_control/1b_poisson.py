@@ -42,35 +42,35 @@ The test case is from section 5.1 of
 F. Negri, G. Rozza, A. Manzoni and A. Quarteroni. Reduced Basis Method for Parametrized Elliptic Optimal Control Problems. SIAM Journal on Scientific Computing, 35(5): A2316-A2340, 2013.
 """
 
-## MESH ##
+# MESH #
 mesh = Mesh("data/rectangle.xml")
 subdomains = MeshFunction("size_t", mesh, "data/rectangle_physical_region.xml")
 boundaries = MeshFunction("size_t", mesh, "data/rectangle_facet_region.xml")
 
-## FUNCTION SPACES ##
+# FUNCTION SPACES #
 Y = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 U = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 Q = Y
 W_el = BlockElement(Y, U, Q)
 W = BlockFunctionSpace(mesh, W_el)
 
-## PROBLEM DATA ##
+# PROBLEM DATA #
 alpha = Constant(0.01)
 y_d_1 = Constant(1.0)
 y_d_2 = Constant(0.6)
 f = Constant(0.)
 
-## TRIAL/TEST FUNCTIONS ##
+# TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)
 (y, u, p) = block_split(yup)
 zvq = BlockTestFunction(W)
 (z, v, q) = block_split(zvq)
 
-## MEASURES ##
+# MEASURES #
 dx = Measure("dx")(subdomain_data=subdomains)
 
-## OPTIMALITY CONDITIONS ##
-a = [[y*z*dx                    , 0           , inner(grad(p), grad(z))*dx], 
+# OPTIMALITY CONDITIONS #
+a = [[y*z*dx                    , 0           , inner(grad(p), grad(z))*dx],
      [0                         , alpha*u*v*dx, - p*v*dx                  ],
      [inner(grad(y), grad(q))*dx, - u*q*dx    , 0                         ]]
 f =  [y_d_1*z*dx(1) + y_d_2*z*dx(2),
@@ -80,25 +80,26 @@ bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant(1.), boundaries, 1)],
                        [],
                        [DirichletBC(W.sub(2), Constant(0.), boundaries, 1)]])
 
-## SOLUTION ##
+# SOLUTION #
 yup = BlockFunction(W)
 (y, u, p) = block_split(yup)
 
-## FUNCTIONAL ##
+# FUNCTIONAL #
 J = 0.5*inner(y - y_d_1, y - y_d_1)*dx(1) + 0.5*inner(y - y_d_2, y - y_d_2)*dx(2) + 0.5*alpha*inner(u, u)*dx
 
-## UNCONTROLLED FUNCTIONAL VALUE ##
+# UNCONTROLLED FUNCTIONAL VALUE #
 A_state = assemble(a[2][0])
 F_state = assemble(f[2])
 [bc_state.apply(A_state) for bc_state in bc[0]]
-[bc_state.apply(F_state)  for bc_state in bc[0]]
+[bc_state.apply(F_state) for bc_state in bc[0]]
 solve(A_state, y.vector(), F_state)
 print("Uncontrolled J =", assemble(J))
 assert isclose(assemble(J), 0.24)
-plt.figure(); plot(y, title="uncontrolled state")
+plt.figure()
+plot(y, title="uncontrolled state")
 plt.show()
 
-## OPTIMAL CONTROL ##
+# OPTIMAL CONTROL #
 A = block_assemble(a)
 F = block_assemble(f)
 bc.apply(A)
@@ -106,7 +107,10 @@ bc.apply(F)
 block_solve(A, yup.block_vector(), F)
 print("Optimal J =", assemble(J))
 assert isclose(assemble(J), 0.158474070)
-plt.figure(); plot(y, title="state")
-plt.figure(); plot(u, title="control")
-plt.figure(); plot(p, title="adjoint")
+plt.figure()
+plot(y, title="state")
+plt.figure()
+plot(u, title="control")
+plt.figure()
+plot(p, title="adjoint")
 plt.show()

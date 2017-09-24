@@ -44,21 +44,21 @@ where
 using an adjoint formulation solved by a one shot approach
 """
 
-## MESH ##
+# MESH #
 # Mesh
 mesh = Mesh("data/square.xml")
 boundaries = MeshFunction("size_t", mesh, "data/square_facet_region.xml")
 # Dirichlet boundary
 left = MeshRestriction(mesh, "data/square_restriction_boundary_2.rtc.xml")
 
-## FUNCTION SPACES ##
+# FUNCTION SPACES #
 Y = FunctionSpace(mesh, "Lagrange", 2)
 U = FunctionSpace(mesh, "R", 0)
 L = FunctionSpace(mesh, "Lagrange", 2)
 Q = Y
 W = BlockFunctionSpace([Y, U, U, U, L, Q], restrict=[None, None, None, None, left, None])
 
-## PROBLEM DATA ##
+# PROBLEM DATA #
 alpha = Constant(1.e-5)
 y_d = Constant(1.)
 f = Expression("10*sin(2*pi*x[0])*sin(2*pi*x[1])", element=W.sub(0).ufl_element())
@@ -66,16 +66,16 @@ l1 = Constant(1.)
 l2 = Expression("sin(2*pi*x[1])", element=W.sub(0).ufl_element())
 l3 = Expression("cos(2*pi*x[1])", element=W.sub(0).ufl_element())
 
-## TRIAL/TEST FUNCTIONS ##
+# TRIAL/TEST FUNCTIONS #
 yulp = BlockTrialFunction(W)
 (y, u1, u2, u3, l, p) = block_split(yulp)
 zvmq = BlockTestFunction(W)
 (z, v1, v2, v3, m, q) = block_split(zvmq)
 
-## MEASURES ##
+# MEASURES #
 ds = Measure("ds")(subdomain_data=boundaries)
 
-## OPTIMALITY CONDITIONS ##
+# OPTIMALITY CONDITIONS #
 alpha_u_v_ds = [[alpha*u1*v1*ds(2), 0                , 0                ],
                 [0                , alpha*u2*v2*ds(2), 0                ],
                 [0                , 0                , alpha*u3*v3*ds(2)]]
@@ -83,7 +83,7 @@ minus_l_v_ds = [[- l1*l*v1*ds(2)],
                 [- l2*l*v2*ds(2)],
                 [- l3*l*v3*ds(2)]]
 minus_u_m_ds = [[- l1*u1*m*ds(2)  , - l2*u2*m*ds(2)  , - l3*u3*m*ds(2)]]
-a = [[y*z*dx                    , 0           , l*z*ds(2)   , inner(grad(p), grad(z))*dx], 
+a = [[y*z*dx                    , 0           , l*z*ds(2)   , inner(grad(p), grad(z))*dx],
      [0                         , alpha_u_v_ds, minus_l_v_ds, 0                         ],
      [y*m*ds(2)                 , minus_u_m_ds, 0           , 0                         ],
      [inner(grad(y), grad(q))*dx, 0           , 0           , 0                         ]]
@@ -98,26 +98,27 @@ bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant(0.), boundaries, 4)],
                        [],
                        [DirichletBC(W.sub(5), Constant(0.), boundaries, idx) for idx in (2, 4)]])
 
-## SOLUTION ##
+# SOLUTION #
 yulp = BlockFunction(W)
 (y, u1, u2, u3, l, p) = block_split(yulp)
 
-## FUNCTIONAL ##
+# FUNCTIONAL #
 J = 0.5*inner(y - y_d, y - y_d)*dx + 0.5*alpha*inner(u1, u1)*ds(2) + 0.5*alpha*inner(u2, u2)*ds(2) + 0.5*alpha*inner(u3, u3)*ds(2)
 
-## UNCONTROLLED FUNCTIONAL VALUE ##
+# UNCONTROLLED FUNCTIONAL VALUE #
 A_state = assemble(a[3][0])
 F_state = assemble(f[3])
 bc_state = [DirichletBC(W.sub(0), Constant(0.), boundaries, idx) for idx in (2, 4)]
 [bc_state_.apply(A_state) for bc_state_ in bc_state]
-[bc_state_.apply(F_state)  for bc_state_ in bc_state]
+[bc_state_.apply(F_state) for bc_state_ in bc_state]
 solve(A_state, y.vector(), F_state)
 print("Uncontrolled J =", assemble(J))
 assert isclose(assemble(J), 0.5038976)
-plt.figure(); plot(y, title="uncontrolled state")
+plt.figure()
+plot(y, title="uncontrolled state")
 plt.show()
 
-## OPTIMAL CONTROL ##
+# OPTIMAL CONTROL #
 A = block_assemble(a)
 F = block_assemble(f)
 bc.apply(A)
@@ -125,9 +126,12 @@ bc.apply(F)
 block_solve(A, yulp.block_vector(), F)
 print("Optimal J =", assemble(J))
 assert isclose(assemble(J), 0.1281518)
-plt.figure(); plot(y, title="state")
-plt.figure(); plot(l, title="lambda")
-plt.figure(); plot(p, title="adjoint")
+plt.figure()
+plot(y, title="state")
+plt.figure()
+plot(l, title="lambda")
+plt.figure()
+plot(p, title="adjoint")
 print("u1", u1.vector().array())
 print("u2", u2.vector().array())
 print("u3", u3.vector().array())

@@ -20,7 +20,6 @@ from numpy import isclose
 from dolfin import *
 import matplotlib.pyplot as plt
 from multiphenics import *
-from sympy import ccode, cos, symbols
 
 """
 In this tutorial we solve the optimal control problem
@@ -49,7 +48,7 @@ where
 using an adjoint formulation solved by a one shot approach
 """
 
-## MESH ##
+# MESH #
 # Mesh
 mesh = Mesh("data/vorticity_reduction.xml")
 subdomains = MeshFunction("size_t", mesh, "data/vorticity_reduction_physical_region.xml")
@@ -60,7 +59,7 @@ control_boundary = MeshRestriction(mesh, "data/vorticity_reduction_restriction_c
 n = FacetNormal(mesh)
 t = as_vector([n[1], -n[0]])
 
-## FUNCTION SPACES ##
+# FUNCTION SPACES #
 Y_velocity = VectorElement("Lagrange", mesh.ufl_cell(), 2)
 Y_pressure = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 U = FiniteElement("Lagrange", mesh.ufl_cell(), 2)
@@ -70,27 +69,27 @@ Q_pressure = Y_pressure
 W_el = BlockElement(Y_velocity, Y_pressure, U, L, Q_velocity, Q_pressure)
 W = BlockFunctionSpace(mesh, W_el, restrict=[None, None, control_boundary, control_boundary, None, None])
 
-## PROBLEM DATA ##
+# PROBLEM DATA #
 nu = Constant(1.)
 alpha = Constant(1.e-2)
 f = Constant((0., 0.))
 
-## TRIAL/TEST FUNCTIONS ##
+# TRIAL/TEST FUNCTIONS #
 trial = BlockTrialFunction(W)
 (v, p, u, l, z, b) = block_split(trial)
 test = BlockTestFunction(W)
 (w, q, r, m, s, d) = block_split(test)
 
-## MEASURES ##
+# MEASURES #
 dx = Measure("dx")(subdomain_data=subdomains)
 ds = Measure("ds")(subdomain_data=boundaries)
 
-## OPTIMALITY CONDITIONS ##
+# OPTIMALITY CONDITIONS #
 def vorticity(v, w):
     return inner(curl(v), curl(w))
 def penalty(u, r):
     return alpha*inner(grad(u), t)*inner(grad(r), t)
-a = [[vorticity(v, w)*dx(4)        , 0            , 0                  , l*inner(w, n)*ds(4), nu*inner(grad(z), grad(w))*dx, - b*div(w)*dx], 
+a = [[vorticity(v, w)*dx(4)        , 0            , 0                  , l*inner(w, n)*ds(4), nu*inner(grad(z), grad(w))*dx, - b*div(w)*dx],
      [0                            , 0            , 0                  , 0                  , - q*div(z)*dx                , 0            ],
      [0                            , 0            , penalty(u, r)*ds(4), -l*r*ds(4)         , 0                            , 0            ],
      [m*inner(v, n)*ds(4)          , 0            , -m*u*ds(4)         , 0                  , 0                            , 0            ],
@@ -106,7 +105,7 @@ bc = BlockDirichletBC([[
                             DirichletBC(W.sub(0), Constant((2.5, 0.0)), boundaries, 1),
                             DirichletBC(W.sub(0).sub(1), Constant(0.0), boundaries, 2),
                             DirichletBC(W.sub(0).sub(0), Constant(0.0), boundaries, 4),
-                            DirichletBC(W.sub(0), Constant((0.0, 0.0)), boundaries, 5), 
+                            DirichletBC(W.sub(0), Constant((0.0, 0.0)), boundaries, 5),
                         ],
                        [],
                        [],
@@ -115,20 +114,20 @@ bc = BlockDirichletBC([[
                             DirichletBC(W.sub(4), Constant((0.0, 0.0)), boundaries, 1),
                             DirichletBC(W.sub(4).sub(1), Constant(0.0), boundaries, 2),
                             DirichletBC(W.sub(4), Constant((0.0, 0.0)), boundaries, 4),
-                            DirichletBC(W.sub(4), Constant((0.0, 0.0)), boundaries, 5), 
+                            DirichletBC(W.sub(4), Constant((0.0, 0.0)), boundaries, 5),
                         ],
                        []])
 
-## SOLUTION ##
+# SOLUTION #
 solution = BlockFunction(W)
 (v, p, u, l, z, b) = block_split(solution)
 
-## FUNCTIONAL ##
+# FUNCTIONAL #
 J = 0.5*vorticity(v, v)*dx(4) + 0.5*penalty(u, u)*ds(4)
 
-## UNCONTROLLED FUNCTIONAL VALUE ##
+# UNCONTROLLED FUNCTIONAL VALUE #
 W_state_trial = W.extract_block_sub_space((0, 1))
-W_state_test  = W.extract_block_sub_space((4, 5))
+W_state_test = W.extract_block_sub_space((4, 5))
 a_state = block_restrict(a, [W_state_test, W_state_trial])
 A_state = block_assemble(a_state)
 f_state = block_restrict(f, W_state_test)
@@ -137,7 +136,7 @@ bc_state = BlockDirichletBC([[
                                   DirichletBC(W_state_trial.sub(0), Constant((2.5, 0.0)), boundaries, 1),
                                   DirichletBC(W_state_trial.sub(0).sub(1), Constant(0.0), boundaries, 2),
                                   DirichletBC(W_state_trial.sub(0), Constant((0.0, 0.0)), boundaries, 4),
-                                  DirichletBC(W_state_trial.sub(0), Constant((0.0, 0.0)), boundaries, 5), 
+                                  DirichletBC(W_state_trial.sub(0), Constant((0.0, 0.0)), boundaries, 5),
                               ],
                              []])
 bc_state.apply(A_state)
@@ -146,11 +145,13 @@ solution_state = block_restrict(solution, W_state_trial)
 block_solve(A_state, solution_state.block_vector(), F_state)
 print("Uncontrolled J =", assemble(J))
 assert isclose(assemble(J), 2.9143168)
-plt.figure(); plot(v, title="uncontrolled state velocity")
-plt.figure(); plot(p, title="uncontrolled state pressure")
+plt.figure()
+plot(v, title="uncontrolled state velocity")
+plt.figure()
+plot(p, title="uncontrolled state pressure")
 plt.show()
 
-## OPTIMAL CONTROL ##
+# OPTIMAL CONTROL #
 A = block_assemble(a, keep_diagonal=True)
 F = block_assemble(f)
 bc.apply(A)
@@ -158,10 +159,16 @@ bc.apply(F)
 block_solve(A, solution.block_vector(), F)
 print("Optimal J =", assemble(J))
 assert isclose(assemble(J), 1.70451173)
-plt.figure(); plot(v, title="state velocity")
-plt.figure(); plot(p, title="state pressure")
-plt.figure(); plot(u, title="control")
-plt.figure(); plot(l, title="lambda")
-plt.figure(); plot(z, title="adjoint velocity")
-plt.figure(); plot(b, title="adjoint pressure")
+plt.figure()
+plot(v, title="state velocity")
+plt.figure()
+plot(p, title="state pressure")
+plt.figure()
+plot(u, title="control")
+plt.figure()
+plot(l, title="lambda")
+plt.figure()
+plot(z, title="adjoint velocity")
+plt.figure()
+plot(b, title="adjoint pressure")
 plt.show()

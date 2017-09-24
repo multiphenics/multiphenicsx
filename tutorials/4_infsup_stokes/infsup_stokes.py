@@ -26,9 +26,9 @@ In this tutorial we compare the computation of the inf-sup constant
 of a Stokes by standard FEniCS code and multiphenics code.
 """
 
-## -------------------------------------------------- ##
+# -------------------------------------------------- #
 
-##                  MESH GENERATION                   ##
+#                  MESH GENERATION                   #
 # Create mesh
 mesh = UnitSquareMesh(32, 32)
 
@@ -54,26 +54,23 @@ def normalize(u1, u2, p):
     p.vector()[:] /= assemble(p*p*dx)
     p.vector().apply("insert")
 
-## -------------------------------------------------- ##
+# -------------------------------------------------- #
 
-## STANDARD FEniCS FORMULATION BY FEniCS MixedElement ##
+# STANDARD FEniCS FORMULATION BY FEniCS MixedElement #
 def run_monolithic():
     # Function spaces
     W_element = MixedElement(V_element, Q_element)
     W = FunctionSpace(mesh, W_element)
 
     # Test and trial functions: monolithic
-    vq  = TestFunction(W)
+    vq = TestFunction(W)
     (v, q) = split(vq)
     up = TrialFunction(W)
     (u, p) = split(up)
 
     # Variational forms
-    lhs = (   inner(grad(u), grad(v))*dx
-              - div(v)*p*dx
-              - div(u)*q*dx
-            )
-    rhs =   - inner(p, q)*dx
+    lhs = inner(grad(u), grad(v))*dx - div(v)*p*dx - div(u)*q*dx
+    rhs = - inner(p, q)*dx
 
     # Boundary conditions
     bc = DirichletBC(W.sub(0), Constant((0., 0.)), boundaries, 1)
@@ -102,24 +99,27 @@ def run_monolithic():
     (u_fun, p_fun) = r_fun.split(deepcopy=True)
     (u_fun_1, u_fun_2) = u_fun.split(deepcopy=True)
     normalize(u_fun_1, u_fun_2, p_fun)
-    plt.figure(); plot(u_fun_1, title="Velocity 1 monolithic", mode="color")
-    plt.figure(); plot(u_fun_2, title="Velocity 2 monolithic", mode="color")
-    plt.figure(); plot(p_fun, title="Pressure monolithic", mode="color")
+    plt.figure()
+    plot(u_fun_1, title="Velocity 1 monolithic", mode="color")
+    plt.figure()
+    plot(u_fun_2, title="Velocity 2 monolithic", mode="color")
+    plt.figure()
+    plot(p_fun, title="Pressure monolithic", mode="color")
     plt.show()
     
     return (r, u_fun_1, u_fun_2, p_fun)
     
 (eig_m, u_fun_1_m, u_fun_2_m, p_fun_m) = run_monolithic()
 
-## -------------------------------------------------- ##
-##                 multiphenics FORMULATION           ##
+# -------------------------------------------------- #
+#                 multiphenics FORMULATION           #
 def run_block():
     # Function spaces
     W_element = BlockElement(V_element, Q_element)
     W = BlockFunctionSpace(mesh, W_element)
 
     # Test and trial functions
-    vq  = BlockTestFunction(W)
+    vq = BlockTestFunction(W)
     (v, q) = block_split(vq)
     up = BlockTrialFunction(W)
     u, p = block_split(up)
@@ -156,18 +156,21 @@ def run_block():
     (u_fun, p_fun) = r_fun.block_split()
     (u_fun_1, u_fun_2) = u_fun.split(deepcopy=True)
     normalize(u_fun_1, u_fun_2, p_fun)
-    plt.figure(); plot(u_fun_1, title="Velocity 1 block", mode="color")
-    plt.figure(); plot(u_fun_2, title="Velocity 2 block", mode="color")
-    plt.figure(); plot(p_fun, title="Pressure block", mode="color")
+    plt.figure()
+    plot(u_fun_1, title="Velocity 1 block", mode="color")
+    plt.figure()
+    plot(u_fun_2, title="Velocity 2 block", mode="color")
+    plt.figure()
+    plot(p_fun, title="Pressure block", mode="color")
     plt.show()
     
     return (r, u_fun_1, u_fun_2, p_fun)
     
 (eig_b, u_fun_1_b, u_fun_2_b, p_fun_b) = run_block()
 
-## -------------------------------------------------- ##
+# -------------------------------------------------- #
 
-##                  ERROR COMPUTATION                 ##
+#                  ERROR COMPUTATION                 #
 def run_error(eig_m, eig_b, u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m, p_fun_b):
     err_inf_sup = abs(sqrt(eig_b) - sqrt(eig_m))/sqrt(eig_m)
     print("Relative error for inf-sup constant equal to", err_inf_sup)
@@ -203,9 +206,12 @@ def run_error(eig_m, eig_b, u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m,
     err_1 = select_error(err_1_plus, err_1_plus_norm, err_1_minus, err_1_minus_norm, u_fun_1_norm, "velocity 1")
     err_2 = select_error(err_2_plus, err_2_plus_norm, err_2_minus, err_2_minus_norm, u_fun_2_norm, "velocity 2")
     err_p = select_error(err_p_plus, err_p_plus_norm, err_p_minus, err_p_minus_norm, p_fun_norm, "pressure")
-    plt.figure(); plot(err_1, title="Velocity 1 error", mode="color")
-    plt.figure(); plot(err_2, title="Velocity 2 error", mode="color")
-    plt.figure(); plot(err_p, title="Pressure error", mode="color")
+    plt.figure()
+    plot(err_1, title="Velocity 1 error", mode="color")
+    plt.figure()
+    plot(err_2, title="Velocity 2 error", mode="color")
+    plt.figure()
+    plot(err_p, title="Pressure error", mode="color")
     plt.show()
     
 run_error(eig_m, eig_b, u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m, p_fun_b)

@@ -27,7 +27,7 @@ of the saddle point problem resulting from a Laplace problem with non-homogeneou
 Dirichlet boundary conditions imposed by Lagrange multipliers.
 """
 
-## MESHES ##
+# MESHES #
 # Create mesh
 domain = Circle(Point(0., 0.), 3.)
 mesh = generate_mesh(domain, 15)
@@ -37,29 +37,29 @@ class OnBoundary(SubDomain):
         return on_boundary
 on_boundary = OnBoundary()
 
-## FUNCTION SPACES ##
+# FUNCTION SPACES #
 # Function space
 V = FunctionSpace(mesh, "Lagrange", 2)
 # Block function space
 W = BlockFunctionSpace([V, V], restrict=[None, on_boundary])
 
-## TRIAL/TEST FUNCTIONS ##
+# TRIAL/TEST FUNCTIONS #
 ul = BlockTrialFunction(W)
 (u, l) = block_split(ul)
 vm = BlockTestFunction(W)
 (v, m) = block_split(vm)
 
-## MEASURES ##
+# MEASURES #
 dx = Measure("dx")(domain=mesh)
 ds = Measure("ds")(domain=mesh)
 
-## ASSEMBLE ##
-a = [[inner(grad(u),grad(v))*dx , - l*v*ds], 
+# ASSEMBLE #
+a = [[inner(grad(u), grad(v))*dx, - l*v*ds],
      [- u*m*ds                  , 0       ]]
-b = [[0                         , 0       ], 
+b = [[0                         , 0       ],
      [0                         , - l*m*ds]]
 
-## SOLVE ##
+# SOLVE #
 A = block_assemble(a)
 B = block_assemble(b)
 eigensolver = BlockSLEPcEigenSolver(A, B)

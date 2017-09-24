@@ -46,13 +46,14 @@ snes_solver_parameters = {"nonlinear_solver": "snes",
                                           "report": True,
                                           "error_on_nonconvergence": True}}
                                           
-## -------------------------------------------------- ##
+# -------------------------------------------------- #
 
-##                  MESH GENERATION                   ##
+#                  MESH GENERATION                   #
 # Create mesh
-domain = \
-    Rectangle(Point(0., 0.), Point(pre_step_length + after_step_length, after_step_height)) - \
+domain = (
+    Rectangle(Point(0., 0.), Point(pre_step_length + after_step_length, after_step_height)) -
     Rectangle(Point(0., 0.), Point(pre_step_length, after_step_height - pre_step_height))
+)
 mesh = generate_mesh(domain, 62)
 
 # Create boundaries
@@ -62,10 +63,10 @@ class Inlet(SubDomain):
 
 class Bottom(SubDomain):
     def inside(self, x, on_boundary):
-        return on_boundary and ( \
-            (x[0] <= pre_step_length and abs(x[1] - after_step_height + pre_step_height) < DOLFIN_EPS) or \
-            (x[1] <= after_step_height - pre_step_height and abs(x[0] - pre_step_length) < DOLFIN_EPS) or \
-            (x[0] >= pre_step_length and abs(x[1]) < DOLFIN_EPS) \
+        return on_boundary and (
+            (x[0] <= pre_step_length and abs(x[1] - after_step_height + pre_step_height) < DOLFIN_EPS) or
+            (x[1] <= after_step_height - pre_step_height and abs(x[0] - pre_step_length) < DOLFIN_EPS) or
+            (x[0] >= pre_step_length and abs(x[1]) < DOLFIN_EPS)
         )
         
 class Top(SubDomain):
@@ -88,23 +89,23 @@ top.mark(boundaries, top_ID)
 V_element = VectorElement("Lagrange", mesh.ufl_cell(), 2)
 Q_element = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 
-## -------------------------------------------------- ##
+# -------------------------------------------------- #
 
-## STANDARD FEniCS FORMULATION BY FEniCS MixedElement ##
+# STANDARD FEniCS FORMULATION BY FEniCS MixedElement #
 def run_monolithic():
     # Function spaces
     W_element = MixedElement(V_element, Q_element)
     W = FunctionSpace(mesh, W_element)
 
     # Test and trial functions: monolithic
-    vq  = TestFunction(W)
+    vq = TestFunction(W)
     (v, q) = split(vq)
     dup = TrialFunction(W)
     up = Function(W)
     (u, p) = split(up)
 
     # Variational forms
-    F = (   
+    F = (
             nu*inner(grad(u), grad(v))*dx
           + inner(grad(u)*u, v)*dx
           - div(v)*p*dx
@@ -119,30 +120,32 @@ def run_monolithic():
 
     # Solve
     problem = NonlinearVariationalProblem(F, up, bc, J)
-    solver  = NonlinearVariationalSolver(problem)
+    solver = NonlinearVariationalSolver(problem)
     solver.parameters.update(snes_solver_parameters)
     solver.solve()
 
     # Extract solutions
     (u, p) = up.split()
-    #plt.figure(); plot(u, title="Velocity monolithic", mode="color")
-    #plt.figure(); plot(p, title="Pressure monolithic", mode="color")
-    #plt.show()
+    # plt.figure()
+    # plot(u, title="Velocity monolithic", mode="color")
+    # plt.figure()
+    # plot(p, title="Pressure monolithic", mode="color")
+    # plt.show()
     
     return (u, p)
     
 (u_m, p_m) = run_monolithic()
 
-## -------------------------------------------------- ##
+# -------------------------------------------------- #
 
-##                 multiphenics FORMULATION           ##
+#                 multiphenics FORMULATION           #
 def run_block():
     # Function spaces
     W_element = BlockElement(V_element, Q_element)
     W = BlockFunctionSpace(mesh, W_element)
 
     # Test and trial functions
-    vq  = BlockTestFunction(W)
+    vq = BlockTestFunction(W)
     (v, q) = block_split(vq)
     dup = BlockTrialFunction(W)
     up = BlockFunction(W)
@@ -160,26 +163,30 @@ def run_block():
 
     # Solve
     problem = BlockNonlinearProblem(F, up, bc, J)
-    solver  = BlockPETScSNESSolver(problem)
+    solver = BlockPETScSNESSolver(problem)
     solver.parameters.update(snes_solver_parameters["snes_solver"])
     solver.solve()
 
     # Extract solutions
     (u, p) = up.block_split()
-    #plt.figure(); plot(u, title="Velocity block", mode="color")
-    #plt.figure(); plot(p, title="Pressure block", mode="color")
-    #plt.show()
+    # plt.figure()
+    # plot(u, title="Velocity block", mode="color")
+    # plt.figure()
+    # plot(p, title="Pressure block", mode="color")
+    # plt.show()
     
     return (u, p)
     
 (u_b, p_b) = run_block()
 
-## -------------------------------------------------- ##
+# -------------------------------------------------- #
 
-##                  ERROR COMPUTATION                 ##
+#                  ERROR COMPUTATION                 #
 def run_error(u_m, u_b, p_m, p_b):
-    plt.figure(); plot(u_b - u_m, title="Velocity error", mode="color")
-    plt.figure(); plot(p_b - p_m, title="Pressure error", mode="color")
+    plt.figure()
+    plot(u_b - u_m, title="Velocity error", mode="color")
+    plt.figure()
+    plot(p_b - p_m, title="Pressure error", mode="color")
     plt.show()
     u_m_norm = sqrt(assemble(inner(grad(u_m), grad(u_m))*dx))
     err_u_norm = sqrt(assemble(inner(grad(u_b - u_m), grad(u_b - u_m))*dx))

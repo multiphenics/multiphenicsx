@@ -116,7 +116,7 @@ def run_block():
     # Apply block boundary conditions
     bc1 = DirichletBC(VV.sub(0), Constant(0.), boundaries, 1)
     bc2 = DirichletBC(VV.sub(1), Constant(0.), boundaries, 1)
-    bcs = BlockDirichletBC([bc1, 
+    bcs = BlockDirichletBC([bc1,
                             bc2])
     bcs.apply(AA)
     bcs.apply(FF)
@@ -135,11 +135,16 @@ def run_block():
     
 UU1, UU2 = run_block()
 
-#plt.figure(); plot(U, title="0")
-#plt.figure(); plot(UU1, title="1")
-#plt.figure(); plot(UU2, title="2")
-plt.figure(); plot(U - UU1, title="e1")
-plt.figure(); plot(U - UU2, title="e2")
+# plt.figure()
+# plot(U, title="0")
+# plt.figure()
+# plot(UU1, title="1")
+# plt.figure()
+# plot(UU2, title="2")
+plt.figure()
+plot(U - UU1, title="e1")
+plt.figure()
+plot(U - UU2, title="e2")
 plt.show()
 
 U_norm = sqrt(assemble(inner(grad(U), grad(U))*dx))

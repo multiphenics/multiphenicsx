@@ -43,11 +43,11 @@ where
 using an adjoint formulation solved by a one shot approach
 """
 
-## MESH ##
+# MESH #
 mesh = Mesh("data/square.xml")
 boundaries = MeshFunction("size_t", mesh, "data/square_facet_region.xml")
 
-## FUNCTION SPACES ##
+# FUNCTION SPACES #
 Y_velocity = VectorElement("Lagrange", mesh.ufl_cell(), 2)
 Y_pressure = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 U = VectorElement("Lagrange", mesh.ufl_cell(), 2)
@@ -57,21 +57,21 @@ Q_pressure = Y_pressure
 W_el = BlockElement(Y_velocity, Y_pressure, U, L, Q_velocity, Q_pressure)
 W = BlockFunctionSpace(mesh, W_el)
 
-## PROBLEM DATA ##
+# PROBLEM DATA #
 alpha = Constant(1.e-5)
 x, y = symbols("x[0], x[1]")
 psi_d = 10*(1-cos(0.8*pi*x))*(1-cos(0.8*pi*y))*(1-x)**2*(1-y)**2
 v_d = Expression((ccode(psi_d.diff(y, 1)), ccode(-psi_d.diff(x, 1))), element=W.sub(0).ufl_element())
 f = Constant((0., 0.))
 
-## TRIAL/TEST FUNCTIONS ##
+# TRIAL/TEST FUNCTIONS #
 trial = BlockTrialFunction(W)
 (v, p, u, l, z, b) = block_split(trial)
 test = BlockTestFunction(W)
 (w, q, r, m, s, d) = block_split(test)
 
-## OPTIMALITY CONDITIONS ##
-a = [[inner(v, w)*dx            , 0            , 0                   , 0     , inner(grad(z), grad(w))*dx, - b*div(w)*dx], 
+# OPTIMALITY CONDITIONS #
+a = [[inner(v, w)*dx            , 0            , 0                   , 0     , inner(grad(z), grad(w))*dx, - b*div(w)*dx],
      [0                         , 0            , 0                   , l*q*dx, - q*div(z)*dx             , 0            ],
      [0                         , 0            , alpha*inner(u, r)*dx, 0     , - inner(z, r)*dx          , 0            ],
      [0                         , p*m*dx       , 0                   , 0     , 0                         , 0            ],
@@ -90,16 +90,16 @@ bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant((0., 0.)), boundaries, id
                        [DirichletBC(W.sub(4), Constant((0., 0.)), boundaries, idx) for idx in (1, 2, 3, 4)],
                        []])
 
-## SOLUTION ##
+# SOLUTION #
 solution = BlockFunction(W)
 (v, p, u, l, z, b) = block_split(solution)
 
-## FUNCTIONAL ##
+# FUNCTIONAL #
 J = 0.5*inner(v - v_d, v - v_d)*dx + 0.5*alpha*inner(u, u)*dx
 
-## UNCONTROLLED FUNCTIONAL VALUE ##
+# UNCONTROLLED FUNCTIONAL VALUE #
 W_state_trial = W.extract_block_sub_space((0, 1))
-W_state_test  = W.extract_block_sub_space((4, 5))
+W_state_test = W.extract_block_sub_space((4, 5))
 a_state = block_restrict(a, [W_state_test, W_state_trial])
 A_state = block_assemble(a_state)
 f_state = block_restrict(f, W_state_test)
@@ -111,11 +111,13 @@ solution_state = block_restrict(solution, W_state_trial)
 block_solve(A_state, solution_state.block_vector(), F_state)
 print("Uncontrolled J =", assemble(J))
 assert isclose(assemble(J), 0.1784540)
-plt.figure(); plot(v, title="uncontrolled state velocity")
-plt.figure(); plot(p, title="uncontrolled state pressure")
+plt.figure()
+plot(v, title="uncontrolled state velocity")
+plt.figure()
+plot(p, title="uncontrolled state pressure")
 plt.show()
 
-## OPTIMAL CONTROL ##
+# OPTIMAL CONTROL #
 A = block_assemble(a)
 F = block_assemble(f)
 bc.apply(A)
@@ -123,10 +125,16 @@ bc.apply(F)
 block_solve(A, solution.block_vector(), F)
 print("Optimal J =", assemble(J))
 assert isclose(assemble(J), 0.0052940)
-plt.figure(); plot(v, title="state velocity")
-plt.figure(); plot(p, title="state pressure")
-plt.figure(); plot(u, title="control")
-plt.figure(); plot(l, title="lambda")
-plt.figure(); plot(z, title="adjoint velocity")
-plt.figure(); plot(b, title="adjoint pressure")
+plt.figure()
+plot(v, title="state velocity")
+plt.figure()
+plot(p, title="state pressure")
+plt.figure()
+plot(u, title="control")
+plt.figure()
+plot(l, title="lambda")
+plt.figure()
+plot(z, title="adjoint velocity")
+plt.figure()
+plot(b, title="adjoint pressure")
 plt.show()

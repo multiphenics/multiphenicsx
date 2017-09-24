@@ -66,11 +66,11 @@ class Boundary_N(SubDomain):
 class Boundary_c(SubDomain):
     def inside(self, x, on_boundary):
         return (
-            on_boundary 
-                and 
+            on_boundary
+                and
             (
-                (x[0] >= H and x[0] <= H + h and x[1] < 0.4 + DOLFIN_EPS and x[1] > 0.4 - DOLFIN_EPS) 
-                    or 
+                (x[0] >= H and x[0] <= H + h and x[1] < 0.4 + DOLFIN_EPS and x[1] > 0.4 - DOLFIN_EPS)
+                    or
                 (x[0] >= H and x[0] <= H + h and x[1] < 0.6 + DOLFIN_EPS and x[1] > 0.6 - DOLFIN_EPS)
             )
         )
@@ -79,11 +79,11 @@ class Boundary_w(SubDomain):
     def inside(self, x, on_boundary):
         r_x = sqrt((x[0] - H)**2 + (x[1] - 0.5)**2)
         return (
-            on_boundary 
+            on_boundary
                 and
             (
-                (x[0] < H + h + DOLFIN_EPS and x[0] > H + h - DOLFIN_EPS and x[1] >= 0.4 and x[1] <= 0.6) 
-                    or 
+                (x[0] < H + h + DOLFIN_EPS and x[0] > H + h - DOLFIN_EPS and x[1] >= 0.4 and x[1] <= 0.6)
+                    or
                 r_x < r + DOLFIN_EPS
             )
         )

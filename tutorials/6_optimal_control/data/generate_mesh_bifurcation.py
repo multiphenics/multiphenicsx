@@ -70,19 +70,19 @@ class Inlet(SubDomain):
 class Boundary_D(SubDomain):
     def inside(self, x, on_boundary):
         return (
-            on_boundary 
-                and 
+            on_boundary
+                and
             (
-                (x[1] > X - DOLFIN_EPS and x[1] < X+DOLFIN_EPS and x[0] >= 0.0 and x[0] <= L) 
-                    or 
-                (x[0] >= 0.0 and x[0] <= L and x[1] > Y - DOLFIN_EPS and x[1] < Y + DOLFIN_EPS) 
-                    or 
-                (x[0] >= L and x[0] <= L+mu5 and x[1] >= B and x[1] <= H_1) 
-                    or 
-                (x[0] > L and x[0] <= L+mu5-L_1  and x[1] >= Y and x[1] <= H_1+N) 
-                    or 
-                (x[0] > L and x[0] <= L+mu6 and x[1] >= H_2 and x[1] <= B) 
-                    or 
+                (x[1] > X - DOLFIN_EPS and x[1] < X+DOLFIN_EPS and x[0] >= 0.0 and x[0] <= L)
+                    or
+                (x[0] >= 0.0 and x[0] <= L and x[1] > Y - DOLFIN_EPS and x[1] < Y + DOLFIN_EPS)
+                    or
+                (x[0] >= L and x[0] <= L+mu5 and x[1] >= B and x[1] <= H_1)
+                    or
+                (x[0] > L and x[0] <= L+mu5-L_1 and x[1] >= Y and x[1] <= H_1+N)
+                    or
+                (x[0] > L and x[0] <= L+mu6 and x[1] >= H_2 and x[1] <= B)
+                    or
                 (x[0] > L and x[0] <= L+mu6-L_2 and x[1] >= H_2 + M and x[1] <= B)
             )
         )
@@ -90,18 +90,18 @@ class Boundary_D(SubDomain):
 class Boundary_C(SubDomain):
     def inside(self, x, on_boundary):
         return (
-            on_boundary 
-                and 
+            on_boundary
+                and
             (
-                (x[0] <= L+mu5 and x [0] >= L+mu5-L_1 and x[1] >= H_1 and x[1] <= H_1+N) 
-                    or 
+                (x[0] <= L+mu5 and x[0] >= L+mu5-L_1 and x[1] >= H_1 and x[1] <= H_1+N)
+                    or
                 (x[0] >= L+mu6-L_2 and x[0] <= L+mu6 and x[1] >= H_2+M and x[1] <= H_2)
             )
         )
         
 class Boundary_Obs(SubDomain):
     def inside(self, x, on_boundary):
-        return x[0] < (L-mu4 +DOLFIN_EPS) and x[0] > (L-mu4 - DOLFIN_EPS) and x[1] >= X and x[1] <= Y
+        return x[0] < (L-mu4 + DOLFIN_EPS) and x[0] > (L-mu4 - DOLFIN_EPS) and x[1] >= X and x[1] <= Y
         
 boundaries = FacetFunction("size_t", mesh)
 inlet = Inlet()

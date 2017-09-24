@@ -28,7 +28,7 @@ In this example we solve a nonlinear Laplace problem associated to
     s.t. u = g on \partial \Omega
 where
     E(u) = \int_\Omega { (1 + u^2) |grad u|^2 - u } dx
-using a Lagrange multiplier to handle non-homogeneous Dirichlet boundary conditions. 
+using a Lagrange multiplier to handle non-homogeneous Dirichlet boundary conditions.
 """
 
 snes_solver_parameters = {"nonlinear_solver": "snes",
@@ -37,7 +37,7 @@ snes_solver_parameters = {"nonlinear_solver": "snes",
                                           "report": True,
                                           "error_on_nonconvergence": False}}
 
-## MESHES ##
+# MESHES #
 # Create mesh
 domain = Circle(Point(0., 0.), 3.)
 mesh = generate_mesh(domain, 15)
@@ -47,13 +47,13 @@ class OnBoundary(SubDomain):
         return on_boundary
 on_boundary = OnBoundary()
 
-## FUNCTION SPACES ##
+# FUNCTION SPACES #
 # Function space
 V = FunctionSpace(mesh, "Lagrange", 2)
 # Block function space
 W = BlockFunctionSpace([V, V], restrict=[None, on_boundary])
 
-## TRIAL/TEST FUNCTIONS ##
+# TRIAL/TEST FUNCTIONS #
 dul = BlockTrialFunction(W)
 (du, dl) = block_split(dul)
 ul = BlockFunction(W)
@@ -61,28 +61,30 @@ ul = BlockFunction(W)
 vm = BlockTestFunction(W)
 (v, m) = block_split(vm)
 
-## MEASURES ##
+# MEASURES #
 dx = Measure("dx")(domain=mesh)
 ds = Measure("ds")(domain=mesh)
 
-## ASSEMBLE ##
+# ASSEMBLE #
 g = Expression("sin(3*x[0] + 1)*sin(3*x[1] + 1)", element=V.ufl_element())
-F = [inner((1+u**2)*grad(u),grad(v))*dx + u*v*inner(grad(u),grad(u))*dx + l*v*ds - v*dx, 
+F = [inner((1+u**2)*grad(u), grad(v))*dx + u*v*inner(grad(u), grad(u))*dx + l*v*ds - v*dx,
      u*m*ds - g*m*ds]
 J = block_derivative(F, ul, dul)
 
-## SOLVE ##
+# SOLVE #
 problem = BlockNonlinearProblem(F, ul, None, J)
 solver = BlockPETScSNESSolver(problem)
 solver.parameters.update(snes_solver_parameters["snes_solver"])
 solver.solve()
 
 (u, l) = ul.block_split()
-plt.figure(); plot(u)
-plt.figure(); plot(l)
+plt.figure()
+plot(u)
+plt.figure()
+plot(l)
 plt.show()
 
-## ERROR ##
+# ERROR #
 u_ex = Function(V)
 F_ex = replace(F[0], {u: u_ex})
 J_ex = derivative(F_ex, u_ex, du)
@@ -93,12 +95,14 @@ problem_ex = NonlinearVariationalProblem(F_ex, u_ex, bc_ex, J_ex)
 solver_ex = NonlinearVariationalSolver(problem_ex)
 solver_ex.parameters.update(snes_solver_parameters)
 solver_ex.solve()
-plt.figure(); plot(u_ex)
+plt.figure()
+plot(u_ex)
 err = Function(V)
 err.vector().add_local(+ u_ex.vector().array())
 err.vector().add_local(- u.vector().array())
 err.vector().apply("")
-plt.figure(); plot(err)
+plt.figure()
+plot(err)
 plt.show()
 u_ex_norm = sqrt(assemble(inner(grad(u_ex), grad(u_ex))*dx))
 err_norm = sqrt(assemble(inner(grad(err), grad(err))*dx))

@@ -45,7 +45,7 @@ where
 using an adjoint formulation solved by a one shot approach
 """
 
-## MESH ##
+# MESH #
 # Mesh
 mesh = Mesh("data/graetz_2.xml")
 subdomains = MeshFunction("size_t", mesh, "data/graetz_2_physical_region.xml")
@@ -53,13 +53,13 @@ boundaries = MeshFunction("size_t", mesh, "data/graetz_2_facet_region.xml")
 # Neumann boundary
 control_boundary = MeshRestriction(mesh, "data/graetz_2_restriction_control.rtc.xml")
 
-## FUNCTION SPACES ##
+# FUNCTION SPACES #
 Y = FunctionSpace(mesh, "Lagrange", 2)
 U = FunctionSpace(mesh, "Lagrange", 2)
 Q = Y
 W = BlockFunctionSpace([Y, U, Q], restrict=[None, control_boundary, None])
 
-## PROBLEM DATA ##
+# PROBLEM DATA #
 alpha = Constant(0.07)
 y_d = Constant(2.5)
 epsilon = Constant(1./12.)
@@ -67,20 +67,20 @@ beta = Expression(("x[1]*(1-x[1])", "0"), element=VectorElement(Y.ufl_element())
 sigma = Constant(0.)
 f = Constant(0.)
 
-## TRIAL/TEST FUNCTIONS ##
+# TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)
 (y, u, p) = block_split(yup)
 zvq = BlockTestFunction(W)
 (z, v, q) = block_split(zvq)
 
-## MEASURES ##
+# MEASURES #
 dx = Measure("dx")(subdomain_data=subdomains)
 ds = Measure("ds")(subdomain_data=boundaries)
 
-## OPTIMALITY CONDITIONS ##
+# OPTIMALITY CONDITIONS #
 state_operator = epsilon*inner(grad(y), grad(q))*dx + inner(beta, grad(y))*q*dx + sigma*y*q*dx
 adjoint_operator = epsilon*inner(grad(p), grad(z))*dx - inner(beta, grad(p))*z*dx + sigma*p*z*dx
-a = [[y*z*dx(3)     , 0              , adjoint_operator], 
+a = [[y*z*dx(3)     , 0              , adjoint_operator],
      [0             , alpha*u*v*ds(2), - p*v*ds(2)     ],
      [state_operator, - u*q*ds(2)    , 0               ]]
 f =  [y_d*z*dx(3),
@@ -90,25 +90,26 @@ bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant(1.), boundaries, 1)],
                        [],
                        [DirichletBC(W.sub(2), Constant(0.), boundaries, 1)]])
 
-## SOLUTION ##
+# SOLUTION #
 yup = BlockFunction(W)
 (y, u, p) = block_split(yup)
 
-## FUNCTIONAL ##
+# FUNCTIONAL #
 J = 0.5*inner(y - y_d, y - y_d)*dx(3) + 0.5*alpha*inner(u, u)*ds(2)
 
-## UNCONTROLLED FUNCTIONAL VALUE ##
+# UNCONTROLLED FUNCTIONAL VALUE #
 A_state = assemble(a[2][0])
 F_state = assemble(f[2])
 [bc_state.apply(A_state) for bc_state in bc[0]]
-[bc_state.apply(F_state)  for bc_state in bc[0]]
+[bc_state.apply(F_state) for bc_state in bc[0]]
 solve(A_state, y.vector(), F_state)
 print("Uncontrolled J =", assemble(J))
 assert isclose(assemble(J), 1.35)
-plt.figure(); plot(y, title="uncontrolled state")
+plt.figure()
+plot(y, title="uncontrolled state")
 plt.show()
 
-## OPTIMAL CONTROL ##
+# OPTIMAL CONTROL #
 A = block_assemble(a, keep_diagonal=True)
 F = block_assemble(f)
 bc.apply(A)
@@ -116,7 +117,10 @@ bc.apply(F)
 block_solve(A, yup.block_vector(), F)
 print("Optimal J =", assemble(J))
 assert isclose(assemble(J), 0.035782767)
-plt.figure(); plot(y, title="state")
-plt.figure(); plot(u, title="control")
-plt.figure(); plot(p, title="adjoint")
+plt.figure()
+plot(y, title="state")
+plt.figure()
+plot(u, title="control")
+plt.figure()
+plot(p, title="adjoint")
 plt.show()
