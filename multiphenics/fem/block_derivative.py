@@ -44,4 +44,3 @@ def block_derivative(F, u, du):
         return J
     elif input_type is BlockForm1:
         return BlockForm2(J, block_function_space=[du.block_function_space(), block_V])
-    

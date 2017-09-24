@@ -25,4 +25,3 @@ class BlockTrialFunction(BlockTestTrialFunction_Base):
         
     def __init__(self, arg1):
         BlockTestTrialFunction_Base.__init__(self, arg1, TrialFunction)
-        

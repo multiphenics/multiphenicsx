@@ -27,4 +27,3 @@ def block_split(f):
         return f
     elif isinstance(f, BlockFunction):
         return tuple(subf for subf in f)
-        

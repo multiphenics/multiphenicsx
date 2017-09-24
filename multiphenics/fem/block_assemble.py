@@ -76,4 +76,3 @@ def _create_block_tensor(comm, block_form, rank, block_tensor):
             assert block_dofmap == block_tensor.get_block_dof_map()
     
     return block_tensor
-    

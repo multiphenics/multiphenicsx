@@ -46,4 +46,3 @@ def block_adjoint(block_form):
         return block_adjoint_form
     elif input_type is BlockForm2:
         return BlockForm2(block_adjoint_form, block_function_space=block_adjoint_function_space)
-    

@@ -58,11 +58,11 @@ additional_declarations["fem"] = {
 
         // --- Ignores for BlockForm2 --- //
         // Ignore operator(), we will provide it in python to avoid conversions
-        %ignore dolfin::BlockForm2::operator();      
+        %ignore dolfin::BlockForm2::operator();
         
         // --- Templates for BlockDirichletBC --- //
         // Instantiate Hierarchical template class
-        %template (HierarchicalBlockDirichletBC) dolfin::Hierarchical<dolfin::BlockDirichletBC>;  
+        %template (HierarchicalBlockDirichletBC) dolfin::Hierarchical<dolfin::BlockDirichletBC>;
         """,
         
     "post":
@@ -131,7 +131,7 @@ additional_declarations["la"] = {
         %rename(_copy) dolfin::BlockPETScMatrix::copy;
         #endif
         
-        // dolfin::ArrayView is not automatically imported because it is used only by 
+        // dolfin::ArrayView is not automatically imported because it is used only by
         // virtual methods of Parent classes. Import it manually.
         %import(package="", module="dolfin.cpp.common") "dolfin/common/ArrayView.h"
         """,
@@ -254,7 +254,7 @@ additional_declarations["la"] = {
 }
 for (EigenSolver, Vector) in (
     ("CondensedSLEPcEigenSolver", "dolfin.PETScVector"),
-    ("CondensedBlockSLEPcEigenSolver", "BlockPETScVector"), 
+    ("CondensedBlockSLEPcEigenSolver", "BlockPETScVector"),
 ):
     additional_declarations["la"]["pre"] += \
         """
@@ -348,7 +348,7 @@ all_additional_declarations = {
 cpp = multiphenics_compile_extension_module(
     # Files are manually sorted to handle dependencies
     "log/log.cpp",
-    "fem/BlockDofMap.cpp", 
+    "fem/BlockDofMap.cpp",
     "function/BlockFunctionSpace.cpp",
     "fem/BlockFormBase.cpp",
     "fem/BlockForm1.cpp",

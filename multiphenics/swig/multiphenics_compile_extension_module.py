@@ -27,7 +27,6 @@ from ufl.utils.sorting import canonicalize_metadata
 import dolfin
 from dolfin import compile_extension_module
 from dolfin.compilemodules.compilemodule import _interface_version
-from dolfin_utils.cppparser import parse_and_extract_type_info
 
 def multiphenics_compile_extension_module(*args, **kwargs):
     # Remove extension from files
@@ -117,11 +116,11 @@ def multiphenics_compile_extension_module(*args, **kwargs):
     
     # Call DOLFIN's compile_extension_module
     cpp = compile_extension_module(
-        code=multiphenics_code, 
+        code=multiphenics_code,
         source_directory=multiphenics_folder,
         sources=multiphenics_sources,
         include_dirs=multiphenics_include_dirs,
-        module_name = multiphenics_module_name,
+        module_name=multiphenics_module_name,
         **kwargs
     )
     
@@ -157,7 +156,7 @@ def extended_write_interfacefile(filename, modulename, code, init_code,
                                  additional_definitions, additional_declarations__pre,
                                  system_headers, local_headers, wrap_headers, arrays):
     
-    # Generate standard interface file                         
+    # Generate standard interface file
     assert isinstance(additional_declarations__pre, str)
     original_write_interfacefile(filename, modulename, code, init_code,
                                  additional_definitions, additional_declarations__pre,
@@ -187,4 +186,3 @@ def patch_instant():
 def undo_patch_instant():
     instant.build.copy_files = original_copy_files
     instant.build.write_interfacefile = original_write_interfacefile
-    

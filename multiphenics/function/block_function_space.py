@@ -17,12 +17,9 @@
 #
 
 import types
-from six import string_types
 import numpy
 from ufl.finiteelement import FiniteElementBase
-import dolfin.cpp
 from dolfin import FunctionSpace, Mesh, MeshFunction, MeshFunctionBool, SubDomain
-from dolfin.compilemodules.jit import jit
 from dolfin.functions.functionspace import _compile_dolfin_element
 from multiphenics.function.block_element import BlockElement
 from multiphenics.swig import cpp
@@ -32,13 +29,13 @@ class BlockFunctionSpace(cpp.BlockFunctionSpace):
     "Base class for all block function spaces."
 
     def __init__(self, *args, **kwargs):
-        assert len(args) in (1, 2)        
+        assert len(args) in (1, 2)
         if len(args) == 1:
             assert isinstance(args[0], (list, tuple, cpp.BlockFunctionSpace))
             if isinstance(args[0], (list, tuple)):
                 assert (
-                    len(kwargs) is 0 
-                        or 
+                    len(kwargs) is 0
+                        or
                     (len(kwargs) is 1 and "restrict" in kwargs)
                 )
                 self._init_from_function_spaces(*args, **kwargs)
@@ -52,14 +49,14 @@ class BlockFunctionSpace(cpp.BlockFunctionSpace):
             assert isinstance(args[0], Mesh)
             assert isinstance(args[1], (list, tuple, BlockElement))
             assert (
-                len(kwargs) is 0 
-                    or 
+                len(kwargs) is 0
+                    or
                 (len(kwargs) is 1 and "restrict" in kwargs)
             )
             self._init_from_ufl(*args, **kwargs)
             
     def _init_from_function_spaces(self, function_spaces, restrict=None):
-        # Get the common mesh                
+        # Get the common mesh
         assert isinstance(function_spaces[0], FunctionSpace)
         mesh = function_spaces[0].mesh()
         for function_space in function_spaces:
@@ -112,8 +109,8 @@ class BlockFunctionSpace(cpp.BlockFunctionSpace):
         all_none = all([subdomain is None for subdomain in subdomains])
         at_least_one_subdomain = any([isinstance(subdomain, SubDomain) for subdomain in subdomains])
         at_least_one_mesh_function = any([(
-                isinstance(subdomain, (list, tuple)) 
-                    and 
+                isinstance(subdomain, (list, tuple))
+                    and
                 all([isinstance(mesh_function, MeshFunctionBool) for mesh_function in subdomain])
             ) for subdomain in subdomains])
         assert all_none or at_least_one_subdomain or at_least_one_mesh_function
@@ -210,8 +207,8 @@ class BlockFunctionSpace(cpp.BlockFunctionSpace):
         if not isinstance(i, int):
             raise TypeError("expected an int for 'i'")
         if i >= self.num_sub_spaces():
-            raise ValueError("Can only extract SubSpaces with i = 0 ... %d" % \
-                  (self.num_sub_spaces() - 1))
+            raise ValueError("Can only extract SubSpaces with i = 0 ... %d"
+                             % (self.num_sub_spaces() - 1))
 
         return self._sub_spaces[i]
 
@@ -250,4 +247,3 @@ class BlockFunctionSpace(cpp.BlockFunctionSpace):
         
     def __iter__(self):
         return self._sub_spaces.__iter__()
-        

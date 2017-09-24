@@ -35,4 +35,3 @@ class File(object):
             content._write(self.filename)
         else:
             self.backend.__lshift__(content)
-            

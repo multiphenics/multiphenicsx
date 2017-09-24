@@ -141,4 +141,3 @@ def _extract_block_function_space_1(block_form):
                     block_function_space[number] = block_function_space_arg
                         
     return block_function_space
-

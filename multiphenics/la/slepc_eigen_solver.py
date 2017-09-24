@@ -16,9 +16,8 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import types
 import dolfin
-from dolfin import as_backend_type, DirichletBC, Function
+from dolfin import DirichletBC, Function
 from multiphenics.swig import cpp
 
 def DecorateGetEigenPair(SLEPcEigenSolver):
@@ -48,7 +47,7 @@ def DecorateGetEigenPair(SLEPcEigenSolver):
 def SLEPcEigenSolver(A, B=None, bcs=None):
     if bcs is None:
         EigenSolver = DecorateGetEigenPair(dolfin.SLEPcEigenSolver)
-        return EigenSolver(A, B) 
+        return EigenSolver(A, B)
     else:
         assert isinstance(bcs, (DirichletBC, list))
         EigenSolver = DecorateGetEigenPair(cpp.CondensedSLEPcEigenSolver)
@@ -57,4 +56,3 @@ def SLEPcEigenSolver(A, B=None, bcs=None):
         else:
             assert all([isinstance(bc, DirichletBC) for bc in bcs])
             return EigenSolver(A, B, bcs)
-    

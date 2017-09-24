@@ -66,7 +66,7 @@ class MeshRestriction(list):
     def _write(self, filename, encoding=None):
         assert filename.endswith(".rtc.xml") or filename.endswith(".rtc.xdmf")
         # Create output folder
-        try: 
+        try:
             os.makedirs(filename)
         except OSError:
             if not os.path.isdir(filename):
@@ -81,4 +81,3 @@ class MeshRestriction(list):
                     xdmf_file.write(mesh_function_d, encoding)
                 else:
                     xdmf_file.write(mesh_function_d)
-            

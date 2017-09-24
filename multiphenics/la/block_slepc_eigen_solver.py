@@ -52,9 +52,8 @@ def BlockSLEPcEigenSolver(A, B=None, bcs=None):
     
     if bcs is None:
         EigenSolver = DecorateGetEigenPair(dolfin.SLEPcEigenSolver) # applicable also to block matrices, because block la inherits from standard la
-        return EigenSolver(A, B) 
+        return EigenSolver(A, B)
     else:
         assert isinstance(bcs, BlockDirichletBC)
         EigenSolver = DecorateGetEigenPair(cpp.CondensedBlockSLEPcEigenSolver)
         return EigenSolver(A, B, bcs)
-        

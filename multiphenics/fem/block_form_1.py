@@ -60,4 +60,3 @@ class BlockForm1(cpp.BlockForm1):
         for I in range(self.N):
             vector_of_str[I] = str(self._block_form[I])
         return str(vector_of_str)
-        

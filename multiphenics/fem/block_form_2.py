@@ -63,4 +63,3 @@ class BlockForm2(cpp.BlockForm2):
             for J in range(self.M):
                 matrix_of_str[I, J] = str(self._block_form[I, J])
         return str(matrix_of_str)
-        

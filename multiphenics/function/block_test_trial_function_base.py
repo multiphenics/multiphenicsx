@@ -16,8 +16,6 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ufl import Argument
-from dolfin import FunctionSpace
 from multiphenics.function.block_function_space import BlockFunctionSpace
 
 class BlockTestTrialFunction_Base(tuple):
@@ -31,4 +29,3 @@ class BlockTestTrialFunction_Base(tuple):
         
     def block_function_space(self):
         return self._block_function_space
-        

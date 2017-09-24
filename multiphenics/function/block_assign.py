@@ -20,9 +20,8 @@ from dolfin import as_backend_type, assign
 from multiphenics.function.block_function import BlockFunction
 
 def block_assign(object_to, object_from):
-    assert isinstance(object_to, BlockFunction) and  isinstance(object_from, BlockFunction)
+    assert isinstance(object_to, BlockFunction) and isinstance(object_from, BlockFunction)
     as_backend_type(object_from.block_vector()).vec().copy(as_backend_type(object_to.block_vector()).vec())
     object_to.block_vector().apply("insert")
     for (function_to, function_from) in zip(object_to, object_from):
         assign(function_to, function_from)
-        

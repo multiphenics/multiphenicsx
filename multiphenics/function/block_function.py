@@ -19,7 +19,6 @@
 import types
 import dolfin
 from dolfin import Function
-from dolfin.compilemodules.jit import jit
 from multiphenics.swig import cpp
 from multiphenics.function.block_function_space import BlockFunctionSpace
 from multiphenics.la.as_backend_type import as_backend_type
@@ -117,7 +116,7 @@ class BlockFunction(cpp.BlockFunction):
         Return a sub function, *neglecting* restrictions.
 
         The sub functions are numbered from i = 0..N-1, where N is the
-        total number of sub spaces. 
+        total number of sub spaces.
 
         *Arguments*
             i : int
@@ -166,7 +165,7 @@ class BlockFunction(cpp.BlockFunction):
         Return a sub function, *neglecting* restrictions.
 
         The sub functions are numbered from i = 0..N-1, where N is the
-        total number of sub spaces. 
+        total number of sub spaces.
 
         *Arguments*
             i : int
@@ -176,7 +175,7 @@ class BlockFunction(cpp.BlockFunction):
         if not isinstance(i, int):
             raise TypeError("expects an 'int' as first argument")
         if i >= self._num_sub_spaces:
-            raise RuntimeError("Can only extract subfunctions with i = 0..%d" \
+            raise RuntimeError("Can only extract subfunctions with i = 0..%d"
                                % (self._num_sub_spaces - 1))
 
         assert deepcopy is False # no usage envisioned for the other case

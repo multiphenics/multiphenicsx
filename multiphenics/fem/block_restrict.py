@@ -21,7 +21,6 @@ from multiphenics.fem.block_dirichlet_bc import BlockDirichletBC
 from multiphenics.fem.block_form import _block_form_preprocessing
 from multiphenics.fem.block_form_1 import BlockForm1
 from multiphenics.fem.block_form_2 import BlockForm2
-from multiphenics.fem.block_replace_zero import _get_block_form_rank
 from multiphenics.function import BlockFunctionSpace, BlockFunction
 
 def block_restrict(block_input, block_function_sub_space):

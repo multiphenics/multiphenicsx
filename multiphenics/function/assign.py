@@ -19,10 +19,8 @@
 from dolfin import assign as dolfin_assign, Function
 
 def assign(object_to, object_from):
-    assert isinstance(object_to, Function) 
+    assert isinstance(object_to, Function)
     assert isinstance(object_from, Function)
     dolfin_assign(object_to, object_from)
     if hasattr(object_to, "block_function"):
         object_to.block_function().apply("from subfunctions", object_to.block_index())
-        
-        

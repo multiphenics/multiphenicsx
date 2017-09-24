@@ -37,4 +37,3 @@ class BlockPETScSNESSolver(PETScSNESSolver):
         PETScSNESSolver.solve(self, self.problem, self.problem.block_solution.block_vector())
         # Keep subfunctions up to date
         self.problem.block_solution.apply("to subfunctions")
-        

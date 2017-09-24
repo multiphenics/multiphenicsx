@@ -17,7 +17,7 @@
 #
 
 import types
-from dolfin import Constant, DirichletBC as dolfin_DirichletBC
+from dolfin import DirichletBC as dolfin_DirichletBC
 
 def DirichletBC(*args, **kwargs):
     # Call the constructor
@@ -33,9 +33,8 @@ def DirichletBC(*args, **kwargs):
     # losing all the customization that we have done in the function_space.py file (most notably, the
     # block_function_space() method)
     output._function_space = _function_space
-    def function_space(self_):
+    def function_space(self_):  # nopep8
         return self_._function_space
     output.function_space = types.MethodType(function_space, output)
     # Return
     return output
-    

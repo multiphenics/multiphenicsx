@@ -25,15 +25,14 @@ def block_matlab_export(block_tensor, name_tensor):
     block_tensor = as_backend_type(block_tensor)
     assert isinstance(block_tensor, (GenericBlockMatrix, GenericBlockVector))
     if isinstance(block_tensor, GenericBlockMatrix):
-        viewer = PETSc.Viewer().createASCII(name_tensor + ".m", comm= PETSc.COMM_WORLD)
+        viewer = PETSc.Viewer().createASCII(name_tensor + ".m", comm=PETSc.COMM_WORLD)
         viewer.pushFormat(PETSc.Viewer.Format.ASCII_MATLAB)
         viewer.view(block_tensor.mat())
         viewer.popFormat()
     elif isinstance(block_tensor, GenericBlockVector):
-        viewer = PETSc.Viewer().createASCII(name_tensor + ".m", comm= PETSc.COMM_WORLD)
+        viewer = PETSc.Viewer().createASCII(name_tensor + ".m", comm=PETSc.COMM_WORLD)
         viewer.pushFormat(PETSc.Viewer.Format.ASCII_MATLAB)
         viewer.view(block_tensor.vec())
         viewer.popFormat()
     else:
         raise AssertionError("Invalid arguments provided to MATLAB export")
-

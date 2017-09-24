@@ -17,7 +17,6 @@
 #
 
 import types
-from ufl import Argument
 from dolfin import FunctionSpace
 from multiphenics.function.block_function_space import BlockFunctionSpace
 
@@ -53,4 +52,3 @@ def TestTrialFunction_Base(function_space, Generator, part=None, block_function_
             
     # Return
     return v
-        

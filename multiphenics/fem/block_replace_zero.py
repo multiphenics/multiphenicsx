@@ -21,7 +21,7 @@ from ufl import Form
 from ufl.algorithms import expand_derivatives
 from ufl.algorithms.analysis import has_exact_type
 from ufl.classes import CoefficientDerivative
-from dolfin import Constant, div, dx, inner, tr
+from dolfin import Constant, dx, inner, tr
 from multiphenics.function.test_function import TestFunction
 from multiphenics.function.trial_function import TrialFunction
 
@@ -34,7 +34,7 @@ def block_replace_zero(block_form, index, block_function_space):
         J = index[1]
         assert (
             isinstance(block_form[I][J], Form) # this function is always called after flattening, so it cannot be an array or list
-                or 
+                or
             (isinstance(block_form[I][J], (float, int)) and block_form[I][J] in zeros)
         )
         if block_form[I][J] in zeros:
@@ -52,7 +52,7 @@ def block_replace_zero(block_form, index, block_function_space):
         I = index[0]
         assert (
             isinstance(block_form[I], Form) # this function is always called after flattening, so it cannot be an array or list
-                or 
+                or
             (isinstance(block_form[I], (float, int)) and block_form[I] in zeros)
         )
         block_form_I = block_form[I]
@@ -64,8 +64,8 @@ def block_replace_zero(block_form, index, block_function_space):
         
 def _is_zero(form_or_block_form):
     assert (
-        isinstance(form_or_block_form, (array, Form, list)) 
-            or 
+        isinstance(form_or_block_form, (array, Form, list))
+            or
         (isinstance(form_or_block_form, (float, int)) and form_or_block_form in zeros)
     )
     if isinstance(form_or_block_form, Form):
@@ -93,8 +93,8 @@ def _is_zero(form_or_block_form):
     
 def _get_block_form_rank(form_or_block_form):
     assert (
-        isinstance(form_or_block_form, (array, Form, list)) 
-            or 
+        isinstance(form_or_block_form, (array, Form, list))
+            or
         (isinstance(form_or_block_form, (float, int)) and form_or_block_form in zeros)
     )
     if isinstance(form_or_block_form, Form):
@@ -167,4 +167,3 @@ def _vec_sum(test_or_trial):
     for i in range(shape[0]):
         sum_ += test_or_trial[i]
     return sum_
-    
