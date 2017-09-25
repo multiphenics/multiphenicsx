@@ -48,7 +48,7 @@ where boundary conditions on \partial\Omega are embedded in V(.)
 mesh = Mesh("data/circle.xml")
 subdomains = MeshFunction("size_t", mesh, "data/circle_physical_region.xml")
 boundaries = MeshFunction("size_t", mesh, "data/circle_facet_region.xml")
-# Dirichlet boundary
+# Restrictions
 left = MeshRestriction(mesh, "data/circle_restriction_left.rtc.xml")
 right = MeshRestriction(mesh, "data/circle_restriction_right.rtc.xml")
 interface = MeshRestriction(mesh, "data/circle_restriction_interface.rtc.xml")
@@ -88,8 +88,6 @@ A = block_assemble(a)
 F = block_assemble(f)
 bcs.apply(A)
 bcs.apply(F)
-block_matlab_export(A, "A")
-block_matlab_export(F, "F")
 
 U = BlockFunction(W)
 block_solve(A, U.block_vector(), F)

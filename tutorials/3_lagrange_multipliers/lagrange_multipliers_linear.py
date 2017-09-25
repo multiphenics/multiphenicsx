@@ -18,8 +18,7 @@
 
 from numpy import isclose
 from dolfin import *
-import matplotlib.pyplot as plt
-from mshr import *
+# import matplotlib.pyplot as plt
 from multiphenics import *
 
 """
@@ -37,20 +36,18 @@ automatically the discard of unnecessary DOFs, also reducing the linear system.
 """
 
 # MESHES #
-# Create mesh
-domain = Circle(Point(0., 0.), 3.)
-mesh = generate_mesh(domain, 15)
-# SubDomain definition for boundary restriction
-class OnBoundary(SubDomain):
-    def inside(self, x, on_boundary):
-        return on_boundary
-on_boundary = OnBoundary()
+# Mesh
+mesh = Mesh("data/circle.xml")
+subdomains = MeshFunction("size_t", mesh, "data/circle_physical_region.xml")
+boundaries = MeshFunction("size_t", mesh, "data/circle_facet_region.xml")
+# Dirichlet boundary
+boundary_restriction = MeshRestriction(mesh, "data/circle_restriction_boundary.rtc.xml")
 
 # FUNCTION SPACES #
 # Function space
 V = FunctionSpace(mesh, "Lagrange", 2)
 # Block function space
-W = BlockFunctionSpace([V, V], restrict=[None, on_boundary])
+W = BlockFunctionSpace([V, V], restrict=[None, boundary_restriction])
 
 # TRIAL/TEST FUNCTIONS #
 ul = BlockTrialFunction(W)
@@ -59,8 +56,8 @@ vm = BlockTestFunction(W)
 (v, m) = block_split(vm)
 
 # MEASURES #
-dx = Measure("dx")(domain=mesh)
-ds = Measure("ds")(domain=mesh)
+dx = Measure("dx")(subdomain_data=subdomains)
+ds = Measure("ds")(subdomain_data=boundaries)
 
 # ASSEMBLE #
 g = Expression("sin(3*x[0] + 1)*sin(3*x[1] + 1)", element=V.ufl_element())
@@ -71,8 +68,6 @@ f =  [v*dx                      , g*m*ds]
 # SOLVE #
 A = block_assemble(a)
 F = block_assemble(f)
-block_matlab_export(A, "A")
-block_matlab_export(F, "F")
 
 U = BlockFunction(W)
 block_solve(A, U.block_vector(), F)
@@ -86,20 +81,21 @@ block_solve(A, U.block_vector(), F)
 # ERROR #
 A_ex = assemble(a[0][0])
 F_ex = assemble(f[0])
-bc_ex = DirichletBC(V, g, on_boundary)
+bc_ex = DirichletBC(V, g, boundaries, 1)
 bc_ex.apply(A_ex)
 bc_ex.apply(F_ex)
 U_ex = Function(V)
 solve(A_ex, U_ex.vector(), F_ex)
-plt.figure()
-plot(U_ex)
+# plt.figure()
+# plot(U_ex)
+# plt.show()
 err = Function(V)
 err.vector().add_local(+ U_ex.vector().array())
 err.vector().add_local(- U[0].vector().array())
 err.vector().apply("")
-plt.figure()
-plot(err)
-plt.show()
+# plt.figure()
+# plot(err)
+# plt.show()
 U_ex_norm = sqrt(assemble(inner(grad(U_ex), grad(U_ex))*dx))
 err_norm = sqrt(assemble(inner(grad(err), grad(err))*dx))
 print("Relative error is equal to", err_norm/U_ex_norm)

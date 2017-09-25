@@ -121,10 +121,6 @@ def run_block():
     bcs.apply(AA)
     bcs.apply(FF)
     
-    # Export the matrix/vector to file
-    block_matlab_export(AA, "AA")
-    block_matlab_export(FF, "FF")
-
     # Solve the block linear system
     UU = BlockFunction(VV)
     block_solve(AA, UU.block_vector(), FF)

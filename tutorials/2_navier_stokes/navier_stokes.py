@@ -18,8 +18,7 @@
 
 from numpy import isclose
 from dolfin import *
-import matplotlib.pyplot as plt
-from mshr import *
+# import matplotlib.pyplot as plt
 from multiphenics import *
 
 """
@@ -27,12 +26,6 @@ In this tutorial we compare the formulation and solution
 of a Navier-Stokes by standard FEniCS code (using the
 MixedElement class) and multiphenics code.
 """
-
-# Geometrical parameters
-pre_step_length = 4.
-after_step_length = 14.
-pre_step_height = 3.
-after_step_height = 5.
 
 # Constitutive parameters
 nu = Constant(0.01)
@@ -46,44 +39,10 @@ snes_solver_parameters = {"nonlinear_solver": "snes",
                                           "report": True,
                                           "error_on_nonconvergence": True}}
                                           
-# -------------------------------------------------- #
-
-#                  MESH GENERATION                   #
-# Create mesh
-domain = (
-    Rectangle(Point(0., 0.), Point(pre_step_length + after_step_length, after_step_height)) -
-    Rectangle(Point(0., 0.), Point(pre_step_length, after_step_height - pre_step_height))
-)
-mesh = generate_mesh(domain, 62)
-
-# Create boundaries
-class Inlet(SubDomain):
-    def inside(self, x, on_boundary):
-        return on_boundary and abs(x[0]) < DOLFIN_EPS
-
-class Bottom(SubDomain):
-    def inside(self, x, on_boundary):
-        return on_boundary and (
-            (x[0] <= pre_step_length and abs(x[1] - after_step_height + pre_step_height) < DOLFIN_EPS) or
-            (x[1] <= after_step_height - pre_step_height and abs(x[0] - pre_step_length) < DOLFIN_EPS) or
-            (x[0] >= pre_step_length and abs(x[1]) < DOLFIN_EPS)
-        )
-        
-class Top(SubDomain):
-    def inside(self, x, on_boundary):
-        return on_boundary and abs(x[1] - after_step_height) < DOLFIN_EPS
-    
-boundaries = FacetFunction("size_t", mesh)
-boundaries.set_all(0)
-inlet = Inlet()
-inlet_ID = 1
-inlet.mark(boundaries, inlet_ID)
-bottom = Bottom()
-bottom_ID = 2
-bottom.mark(boundaries, bottom_ID)
-top = Top()
-top_ID = 2
-top.mark(boundaries, top_ID)
+# Mesh
+mesh = Mesh("data/backward_facing_step.xml")
+subdomains = MeshFunction("size_t", mesh, "data/backward_facing_step_physical_region.xml")
+boundaries = MeshFunction("size_t", mesh, "data/backward_facing_step_facet_region.xml")
 
 # Function spaces
 V_element = VectorElement("Lagrange", mesh.ufl_cell(), 2)
@@ -183,11 +142,11 @@ def run_block():
 
 #                  ERROR COMPUTATION                 #
 def run_error(u_m, u_b, p_m, p_b):
-    plt.figure()
-    plot(u_b - u_m, title="Velocity error", mode="color")
-    plt.figure()
-    plot(p_b - p_m, title="Pressure error", mode="color")
-    plt.show()
+    # plt.figure()
+    # plot(u_b - u_m, title="Velocity error", mode="color")
+    # plt.figure()
+    # plot(p_b - p_m, title="Pressure error", mode="color")
+    # plt.show()
     u_m_norm = sqrt(assemble(inner(grad(u_m), grad(u_m))*dx))
     err_u_norm = sqrt(assemble(inner(grad(u_b - u_m), grad(u_b - u_m))*dx))
     p_m_norm = sqrt(assemble(inner(p_m, p_m)*dx))

@@ -18,8 +18,7 @@
 
 from numpy import isclose
 from dolfin import *
-import matplotlib.pyplot as plt
-from mshr import *
+# import matplotlib.pyplot as plt
 from multiphenics import *
 
 """
@@ -38,20 +37,18 @@ snes_solver_parameters = {"nonlinear_solver": "snes",
                                           "error_on_nonconvergence": False}}
 
 # MESHES #
-# Create mesh
-domain = Circle(Point(0., 0.), 3.)
-mesh = generate_mesh(domain, 15)
-# SubDomain definition for boundary restriction
-class OnBoundary(SubDomain):
-    def inside(self, x, on_boundary):
-        return on_boundary
-on_boundary = OnBoundary()
+# Mesh
+mesh = Mesh("data/circle.xml")
+subdomains = MeshFunction("size_t", mesh, "data/circle_physical_region.xml")
+boundaries = MeshFunction("size_t", mesh, "data/circle_facet_region.xml")
+# Dirichlet boundary
+boundary_restriction = MeshRestriction(mesh, "data/circle_restriction_boundary.rtc.xml")
 
 # FUNCTION SPACES #
 # Function space
 V = FunctionSpace(mesh, "Lagrange", 2)
 # Block function space
-W = BlockFunctionSpace([V, V], restrict=[None, on_boundary])
+W = BlockFunctionSpace([V, V], restrict=[None, boundary_restriction])
 
 # TRIAL/TEST FUNCTIONS #
 dul = BlockTrialFunction(W)
@@ -62,8 +59,8 @@ vm = BlockTestFunction(W)
 (v, m) = block_split(vm)
 
 # MEASURES #
-dx = Measure("dx")(domain=mesh)
-ds = Measure("ds")(domain=mesh)
+dx = Measure("dx")(subdomain_data=subdomains)
+ds = Measure("ds")(subdomain_data=boundaries)
 
 # ASSEMBLE #
 g = Expression("sin(3*x[0] + 1)*sin(3*x[1] + 1)", element=V.ufl_element())
@@ -77,33 +74,32 @@ solver = BlockPETScSNESSolver(problem)
 solver.parameters.update(snes_solver_parameters["snes_solver"])
 solver.solve()
 
-(u, l) = ul.block_split()
-plt.figure()
-plot(u)
-plt.figure()
-plot(l)
-plt.show()
+# (u, l) = ul.block_split()
+# plt.figure()
+# plot(u)
+# plt.figure()
+# plot(l)
+# plt.show()
 
 # ERROR #
 u_ex = Function(V)
 F_ex = replace(F[0], {u: u_ex})
 J_ex = derivative(F_ex, u_ex, du)
-def boundary(x, on_boundary):
-    return on_boundary
-bc_ex = DirichletBC(V, g, boundary)
+bc_ex = DirichletBC(V, g, boundaries, 1)
 problem_ex = NonlinearVariationalProblem(F_ex, u_ex, bc_ex, J_ex)
 solver_ex = NonlinearVariationalSolver(problem_ex)
 solver_ex.parameters.update(snes_solver_parameters)
 solver_ex.solve()
-plt.figure()
-plot(u_ex)
+# plt.figure()
+# plot(u_ex)
+# plt.show()
 err = Function(V)
 err.vector().add_local(+ u_ex.vector().array())
 err.vector().add_local(- u.vector().array())
 err.vector().apply("")
-plt.figure()
-plot(err)
-plt.show()
+# plt.figure()
+# plot(err)
+# plt.show()
 u_ex_norm = sqrt(assemble(inner(grad(u_ex), grad(u_ex))*dx))
 err_norm = sqrt(assemble(inner(grad(err), grad(err))*dx))
 print("Relative error is equal to", err_norm/u_ex_norm)

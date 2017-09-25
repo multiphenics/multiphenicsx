@@ -18,7 +18,7 @@
 
 from numpy import isclose
 from dolfin import *
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from multiphenics import *
 
 """
@@ -99,13 +99,13 @@ def run_monolithic():
     (u_fun, p_fun) = r_fun.split(deepcopy=True)
     (u_fun_1, u_fun_2) = u_fun.split(deepcopy=True)
     normalize(u_fun_1, u_fun_2, p_fun)
-    plt.figure()
-    plot(u_fun_1, title="Velocity 1 monolithic", mode="color")
-    plt.figure()
-    plot(u_fun_2, title="Velocity 2 monolithic", mode="color")
-    plt.figure()
-    plot(p_fun, title="Pressure monolithic", mode="color")
-    plt.show()
+    # plt.figure()
+    # plot(u_fun_1, title="Velocity 1 monolithic", mode="color")
+    # plt.figure()
+    # plot(u_fun_2, title="Velocity 2 monolithic", mode="color")
+    # plt.figure()
+    # plot(p_fun, title="Pressure monolithic", mode="color")
+    # plt.show()
     
     return (r, u_fun_1, u_fun_2, p_fun)
     
@@ -156,13 +156,13 @@ def run_block():
     (u_fun, p_fun) = r_fun.block_split()
     (u_fun_1, u_fun_2) = u_fun.split(deepcopy=True)
     normalize(u_fun_1, u_fun_2, p_fun)
-    plt.figure()
-    plot(u_fun_1, title="Velocity 1 block", mode="color")
-    plt.figure()
-    plot(u_fun_2, title="Velocity 2 block", mode="color")
-    plt.figure()
-    plot(p_fun, title="Pressure block", mode="color")
-    plt.show()
+    # plt.figure()
+    # plot(u_fun_1, title="Velocity 1 block", mode="color")
+    # plt.figure()
+    # plot(u_fun_2, title="Velocity 2 block", mode="color")
+    # plt.figure()
+    # plot(p_fun, title="Pressure block", mode="color")
+    # plt.show()
     
     return (r, u_fun_1, u_fun_2, p_fun)
     
@@ -198,20 +198,17 @@ def run_error(eig_m, eig_b, u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m,
         if ratio_minus < ratio_plus:
             print("Relative error for ", component_name, "component of eigenvector equal to", ratio_minus, "(the one with opposite sign was", ratio_plus, ")")
             assert isclose(ratio_minus, 0., atol=1.e-6)
-            return err_minus
+            # plt.figure()
+            # plot(err_minus, title="Error " + component_name, mode="color")
+            # plt.show()
         else:
             print("Relative error for", component_name, "component of eigenvector equal to", ratio_plus, "(the one with opposite sign was", ratio_minus, ")")
             assert isclose(ratio_plus, 0., atol=1.e-6)
-            return err_plus
-    err_1 = select_error(err_1_plus, err_1_plus_norm, err_1_minus, err_1_minus_norm, u_fun_1_norm, "velocity 1")
-    err_2 = select_error(err_2_plus, err_2_plus_norm, err_2_minus, err_2_minus_norm, u_fun_2_norm, "velocity 2")
-    err_p = select_error(err_p_plus, err_p_plus_norm, err_p_minus, err_p_minus_norm, p_fun_norm, "pressure")
-    plt.figure()
-    plot(err_1, title="Velocity 1 error", mode="color")
-    plt.figure()
-    plot(err_2, title="Velocity 2 error", mode="color")
-    plt.figure()
-    plot(err_p, title="Pressure error", mode="color")
-    plt.show()
+            # plt.figure()
+            # plot(err_plus, title="Error " + component_name, mode="color")
+            # plt.show()
+    select_error(err_1_plus, err_1_plus_norm, err_1_minus, err_1_minus_norm, u_fun_1_norm, "velocity 1")
+    select_error(err_2_plus, err_2_plus_norm, err_2_minus, err_2_minus_norm, u_fun_2_norm, "velocity 2")
+    select_error(err_p_plus, err_p_plus_norm, err_p_minus, err_p_minus_norm, p_fun_norm, "pressure")
     
 run_error(eig_m, eig_b, u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m, p_fun_b)

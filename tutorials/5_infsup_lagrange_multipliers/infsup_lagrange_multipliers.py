@@ -18,7 +18,6 @@
 
 from numpy import isclose
 from dolfin import *
-from mshr import *
 from multiphenics import *
 
 """
@@ -28,20 +27,18 @@ Dirichlet boundary conditions imposed by Lagrange multipliers.
 """
 
 # MESHES #
-# Create mesh
-domain = Circle(Point(0., 0.), 3.)
-mesh = generate_mesh(domain, 15)
-# SubDomain definition for boundary restriction
-class OnBoundary(SubDomain):
-    def inside(self, x, on_boundary):
-        return on_boundary
-on_boundary = OnBoundary()
+# Mesh
+mesh = Mesh("data/circle.xml")
+subdomains = MeshFunction("size_t", mesh, "data/circle_physical_region.xml")
+boundaries = MeshFunction("size_t", mesh, "data/circle_facet_region.xml")
+# Dirichlet boundary
+boundary_restriction = MeshRestriction(mesh, "data/circle_restriction_boundary.rtc.xml")
 
 # FUNCTION SPACES #
 # Function space
 V = FunctionSpace(mesh, "Lagrange", 2)
 # Block function space
-W = BlockFunctionSpace([V, V], restrict=[None, on_boundary])
+W = BlockFunctionSpace([V, V], restrict=[None, boundary_restriction])
 
 # TRIAL/TEST FUNCTIONS #
 ul = BlockTrialFunction(W)
@@ -50,8 +47,8 @@ vm = BlockTestFunction(W)
 (v, m) = block_split(vm)
 
 # MEASURES #
-dx = Measure("dx")(domain=mesh)
-ds = Measure("ds")(domain=mesh)
+dx = Measure("dx")(subdomain_data=subdomains)
+ds = Measure("ds")(subdomain_data=boundaries)
 
 # ASSEMBLE #
 a = [[inner(grad(u), grad(v))*dx, - l*v*ds],
@@ -72,9 +69,9 @@ r, c = eigensolver.get_eigenvalue(0)
 assert abs(c) < 1.e-10
 assert r > 0., "r = " + str(r) + " is not positive"
 print("Inf-sup constant: ", sqrt(r))
+assert isclose(sqrt(r), 0.088385)
 
 # Export matrices to MATLAB format to double check the result.
 # You will need to convert the matrix to dense storage and use eig()
 block_matlab_export(A, "A")
 block_matlab_export(B, "B")
-assert isclose(sqrt(r), 0.088385)
