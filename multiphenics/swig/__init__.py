@@ -353,6 +353,7 @@ cpp = multiphenics_compile_extension_module(
     "fem/BlockFormBase.cpp",
     "fem/BlockForm1.cpp",
     "fem/BlockForm2.cpp",
+    "la/BlockMATLABExport.cpp",
     "la/BlockInsertMode.cpp",
     "la/GenericBlockVector.cpp",
     "la/GenericBlockMatrix.cpp",
