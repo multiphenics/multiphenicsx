@@ -71,6 +71,7 @@ snes_solver_parameters = {"nonlinear_solver": "snes",
                           "snes_solver": {"linear_solver": "mumps",
                                           "maximum_iterations": 20,
                                           "report": True,
+                                          "line_search": "bt",
                                           "error_on_nonconvergence": True}}
 
 # TRIAL/TEST FUNCTIONS AND SOLUTION #
