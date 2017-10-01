@@ -84,7 +84,7 @@ def run_monolithic():
     RHS = as_backend_type(RHS)
     eigensolver = SLEPcEigenSolver(LHS, RHS, bc)
     eigensolver.parameters["problem_type"] = "gen_non_hermitian"
-    eigensolver.parameters["spectrum"] = "smallest real"
+    eigensolver.parameters["spectrum"] = "target real"
     eigensolver.parameters["spectral_transform"] = "shift-and-invert"
     eigensolver.parameters["spectral_shift"] = 1.e-5
     eigensolver.solve(1)
@@ -141,7 +141,7 @@ def run_block():
     # Solve
     eigensolver = BlockSLEPcEigenSolver(LHS, RHS, bc)
     eigensolver.parameters["problem_type"] = "gen_non_hermitian"
-    eigensolver.parameters["spectrum"] = "smallest real"
+    eigensolver.parameters["spectrum"] = "target real"
     eigensolver.parameters["spectral_transform"] = "shift-and-invert"
     eigensolver.parameters["spectral_shift"] = 1.e-5
     eigensolver.solve(1)

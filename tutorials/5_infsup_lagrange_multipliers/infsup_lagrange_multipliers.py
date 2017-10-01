@@ -61,7 +61,7 @@ A = block_assemble(a)
 B = block_assemble(b)
 eigensolver = BlockSLEPcEigenSolver(A, B)
 eigensolver.parameters["problem_type"] = "gen_non_hermitian"
-eigensolver.parameters["spectrum"] = "smallest real"
+eigensolver.parameters["spectrum"] = "target real"
 eigensolver.parameters["spectral_transform"] = "shift-and-invert"
 eigensolver.parameters["spectral_shift"] = 1.e-5
 eigensolver.solve(1)
