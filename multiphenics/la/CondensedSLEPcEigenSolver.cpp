@@ -139,7 +139,7 @@ std::shared_ptr<const PETScMatrix> CondensedSLEPcEigenSolver::_condense_matrix(s
   PetscErrorCode ierr;
   
   Mat condensed_mat;
-  #if PETSC_VERSION_MAJOR == 3 && PETSC_VERSION_MINOR <= 7 && PETSC_VERSION_RELEASE == 1
+  #if PETSC_VERSION_MAJOR == 3 && PETSC_VERSION_MINOR <= 7
   ierr = MatGetSubMatrix(mat->mat(), _is, _is, MAT_INITIAL_MATRIX, &condensed_mat);
   if (ierr != 0) petsc_error(ierr, __FILE__, "MatGetSubMatrix");
   #else
