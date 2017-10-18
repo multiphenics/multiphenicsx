@@ -196,7 +196,7 @@ def FunctionAndRealElement(family, cell, degree):
 def get_function_spaces_1():
     return (
         lambda mesh: FunctionSpace(mesh, "Lagrange", 1),
-        lambda mesh: FunctionSpace(mesh, "Lagrange", 2),
+        pytest.mark.slow(lambda mesh: FunctionSpace(mesh, "Lagrange", 2)),
         lambda mesh: VectorFunctionSpace(mesh, "Lagrange", 1),
         pytest.mark.slow(lambda mesh: VectorFunctionSpace(mesh, "Lagrange", 2)),
         pytest.mark.slow(lambda mesh: TensorFunctionSpace(mesh, "Lagrange", 1)),
@@ -205,7 +205,7 @@ def get_function_spaces_1():
         pytest.mark.slow(lambda mesh: StokesFunctionSpace(mesh, "Lagrange", 2)),
         lambda mesh: FunctionSpace(mesh, "Real", 0),
         pytest.mark.slow(lambda mesh: VectorFunctionSpace(mesh, "Real", 0)),
-        lambda mesh: FunctionAndRealSpace(mesh, "Lagrange", 1),
+        pytest.mark.slow(lambda mesh: FunctionAndRealSpace(mesh, "Lagrange", 1)),
         pytest.mark.slow(lambda mesh: FunctionAndRealSpace(mesh, "Lagrange", 2))
     )
     
@@ -215,7 +215,7 @@ def get_function_spaces_2():
 def get_elements_1():
     return (
         lambda mesh: FiniteElement("Lagrange", mesh.ufl_cell(), 1),
-        lambda mesh: FiniteElement("Lagrange", mesh.ufl_cell(), 2),
+        pytest.mark.slow(lambda mesh: FiniteElement("Lagrange", mesh.ufl_cell(), 2)),
         lambda mesh: VectorElement("Lagrange", mesh.ufl_cell(), 1),
         pytest.mark.slow(lambda mesh: VectorElement("Lagrange", mesh.ufl_cell(), 2)),
         pytest.mark.slow(lambda mesh: TensorElement("Lagrange", mesh.ufl_cell(), 1)),
@@ -224,7 +224,7 @@ def get_elements_1():
         pytest.mark.slow(lambda mesh: StokesElement("Lagrange", mesh.ufl_cell(), 2)),
         lambda mesh: FiniteElement("Real", mesh.ufl_cell(), 0),
         pytest.mark.slow(lambda mesh: VectorElement("Real", mesh.ufl_cell(), 0)),
-        lambda mesh: FunctionAndRealElement("Lagrange", mesh.ufl_cell(), 1),
+        pytest.mark.slow(lambda mesh: FunctionAndRealElement("Lagrange", mesh.ufl_cell(), 1)),
         pytest.mark.slow(lambda mesh: FunctionAndRealElement("Lagrange", mesh.ufl_cell(), 2))
     )
     
@@ -317,7 +317,7 @@ def get_block_bcs_1():
         return bc1
     return (
         lambda block_V: None,
-        lambda block_V: BlockDirichletBC([None], block_function_space=block_V),
+        pytest.mark.slow(lambda block_V: BlockDirichletBC([None], block_function_space=block_V)),
         lambda block_V: BlockDirichletBC([_get_bc_1(block_V)])
     )
     
@@ -355,7 +355,7 @@ def get_block_bcs_2():
         return bc2
     return (
         lambda block_V: None,
-        lambda block_V: BlockDirichletBC([None, None], block_function_space=block_V),
+        pytest.mark.slow(lambda block_V: BlockDirichletBC([None, None], block_function_space=block_V)),
         lambda block_V: BlockDirichletBC([_get_bc_1(block_V), None]),
         pytest.mark.slow(lambda block_V: BlockDirichletBC([None, _get_bc_2(block_V)])),
         lambda block_V: BlockDirichletBC([_get_bc_1(block_V), _get_bc_2(block_V)])
