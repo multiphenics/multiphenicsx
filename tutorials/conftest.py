@@ -34,6 +34,15 @@ def pytest_collect_file(path, parent):
     ):
         return TutorialFile(path, parent)
         
+def pytest_pycollect_makemodule(path, parent):
+    """
+    Hook into py.test to avoid collecting twice tutorial files explicitly provided on the command lines
+    """
+    assert path.ext == ".py"
+    assert path.basename not in "conftest.py"
+    assert "data" not in path.dirname
+    return DoNothingFile(path, parent)
+    
 class TutorialFile(pytest.File):
     """
     Custom file handler for tutorial files
@@ -59,3 +68,11 @@ class TutorialItem(pytest.Item):
         
     def reportinfo(self):
         return self.fspath, 0, self.name
+        
+class DoNothingFile(pytest.File):
+    """
+    Custom file handler to avoid running twice tutorial files explicitly provided on the command lines
+    """
+    
+    def collect(self):
+        return []
