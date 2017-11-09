@@ -19,7 +19,7 @@
 import types
 import dolfin
 from dolfin import Function
-from multiphenics.swig import cpp
+from multiphenics.python import cpp
 from multiphenics.function.block_function_space import BlockFunctionSpace
 from multiphenics.la.as_backend_type import as_backend_type
 from multiphenics.la.generic_block_vector import GenericBlockVector

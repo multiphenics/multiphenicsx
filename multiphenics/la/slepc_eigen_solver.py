@@ -18,7 +18,7 @@
 
 import dolfin
 from dolfin import DirichletBC, Function
-from multiphenics.swig import cpp
+from multiphenics.python import cpp
 
 def DecorateGetEigenPair(SLEPcEigenSolver):
     class DecoratedSLEPcEigenSolver(SLEPcEigenSolver):

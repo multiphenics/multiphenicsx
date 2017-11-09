@@ -17,7 +17,7 @@
 #
 
 import collections
-from multiphenics.swig import cpp
+from multiphenics.python import cpp
 
 class BlockDirichletBC(cpp.BlockDirichletBC):
     def __init__(self, bcs, block_function_space=None):

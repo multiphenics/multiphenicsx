@@ -17,7 +17,7 @@
 #
 
 import dolfin
-from multiphenics.swig import cpp
+from multiphenics.python import cpp
 
 def DecorateGetEigenPair(BlockSLEPcEigenSolver):
     from multiphenics.function import BlockFunction # avoid recursive imports

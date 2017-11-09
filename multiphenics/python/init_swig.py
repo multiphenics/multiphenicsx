@@ -16,7 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from multiphenics.swig.multiphenics_compile_extension_module import multiphenics_compile_extension_module
+from multiphenics.python.multiphenics_compile_extension_module import multiphenics_compile_extension_module
 
 # Storage for additional declarations
 additional_declarations = dict()
@@ -373,8 +373,3 @@ cpp = multiphenics_compile_extension_module(
     # Additional keyword arguments
     additional_declarations=all_additional_declarations
 )
-
-__all__ = [
-    'cpp',
-    'multiphenics_compile_extension_module'
-]

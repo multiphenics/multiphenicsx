@@ -59,7 +59,7 @@ def multiphenics_compile_extension_module(*args, **kwargs):
     
     # Make sure that there are no files missing
     for (extension, typename, multiphenics_list_to_check) in zip(["h", "cpp"], ["headers", "sources"], [multiphenics_headers, multiphenics_sources]):
-        all_multiphenics_files = set(glob.glob(os.path.join(multiphenics_folder, "*", "*." + extension)))
+        all_multiphenics_files = set(glob.glob(os.path.join(multiphenics_folder, "[!python]*", "*." + extension)))
         sorted_multiphenics_files = set(multiphenics_list_to_check)
         if len(sorted_multiphenics_files) > len(all_multiphenics_files):
             raise AssertionError("Input " + typename + " list contains more files than ones present in the library. The files " + str(sorted_multiphenics_files - all_multiphenics_files) + " seem not to exist.")
@@ -169,7 +169,7 @@ def extended_write_interfacefile(filename, modulename, code, init_code,
     # Enable directors, replacing the first four lines of the file which contain
     # module definition without directors
     content_new = list()
-    content_new.append('%module(package="multiphenics.swig.cpp", directors="1") ' + modulename)
+    content_new.append('%module(package="multiphenics.python.cpp", directors="1") ' + modulename)
     content_new.extend(content[4:])
     
     # Write back to file, also appending post declarations

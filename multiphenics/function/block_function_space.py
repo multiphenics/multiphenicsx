@@ -22,7 +22,7 @@ from ufl.finiteelement import FiniteElementBase
 from dolfin import FunctionSpace, Mesh, MeshFunction, MeshFunctionBool, SubDomain
 from dolfin.functions.functionspace import _compile_dolfin_element
 from multiphenics.function.block_element import BlockElement
-from multiphenics.swig import cpp
+from multiphenics.python import cpp
 from multiphenics.mesh import MeshRestriction
 
 class BlockFunctionSpace(cpp.BlockFunctionSpace):

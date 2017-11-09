@@ -16,6 +16,6 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from multiphenics.swig import cpp
+from multiphenics.python import cpp
 
 get_tensor_type = cpp.get_tensor_type

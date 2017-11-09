@@ -18,7 +18,7 @@
 
 from numpy import empty
 from dolfin.fem.assembling import _create_dolfin_form
-from multiphenics.swig import cpp
+from multiphenics.python import cpp
 
 class BlockForm1(cpp.BlockForm1):
     def __init__(self, block_form, block_function_space, form_compiler_parameters=None):
