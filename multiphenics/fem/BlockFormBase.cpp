@@ -39,7 +39,9 @@ std::vector<std::shared_ptr<const BlockFunctionSpace>> BlockFormBase::block_func
 std::shared_ptr<const Mesh> BlockFormBase::mesh() const
 {
   std::shared_ptr<const Mesh> mesh = _block_function_spaces[0]->mesh();
+  #ifdef DEBUG
   for (auto & block_function_space : _block_function_spaces)
     dolfin_assert(block_function_space->mesh() == mesh);
+  #endif
   return mesh;
 }

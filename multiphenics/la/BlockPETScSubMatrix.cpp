@@ -39,8 +39,8 @@ BlockPETScSubMatrix::BlockPETScSubMatrix(
   BlockInsertMode insert_mode
 ) : PETScMatrix(A.mpi_comm()), _global_matrix(as_type<const BlockPETScMatrix>(A)),
     _original_to_sub_block_0(original_to_sub_block_0),
-    _unrestricted_size_0(unrestricted_size_0),
     _original_to_sub_block_1(original_to_sub_block_1),
+    _unrestricted_size_0(unrestricted_size_0),
     _unrestricted_size_1(unrestricted_size_1)
 {
   PetscErrorCode ierr;

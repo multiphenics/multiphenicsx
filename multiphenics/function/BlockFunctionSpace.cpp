@@ -23,7 +23,7 @@ using namespace dolfin;
 //-----------------------------------------------------------------------------
 BlockFunctionSpace::BlockFunctionSpace(std::vector<std::shared_ptr<const FunctionSpace>> function_spaces)
   : Hierarchical<BlockFunctionSpace>(*this),
-    _function_spaces(function_spaces), _restrictions(function_spaces.size()), _root_space_id(id())
+    _restrictions(function_spaces.size()), _function_spaces(function_spaces), _root_space_id(id())
 {
   _init_mesh_and_elements_and_dofmaps_from_function_spaces();
   _init_block_dofmap_from_dofmaps_and_restrictions();
@@ -32,7 +32,7 @@ BlockFunctionSpace::BlockFunctionSpace(std::vector<std::shared_ptr<const Functio
 BlockFunctionSpace::BlockFunctionSpace(std::vector<std::shared_ptr<const FunctionSpace>> function_spaces,
                                        std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions)
   : Hierarchical<BlockFunctionSpace>(*this),
-    _function_spaces(function_spaces), _restrictions(restrictions), _root_space_id(id())
+    _restrictions(restrictions), _function_spaces(function_spaces), _root_space_id(id())
 {
   _init_mesh_and_elements_and_dofmaps_from_function_spaces();
   _init_block_dofmap_from_dofmaps_and_restrictions();
