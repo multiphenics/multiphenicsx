@@ -19,6 +19,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <multiphenics/python/mpi_casters.h> // TODO remove local copy of DOLFIN's pybind11 files
+
 namespace py = pybind11;
 
 namespace multiphenics_wrappers

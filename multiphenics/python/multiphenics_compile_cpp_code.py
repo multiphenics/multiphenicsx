@@ -21,6 +21,7 @@ import os
 import io
 import glob
 import hashlib
+import mpi4py
 import dijitso
 import ffc
 from ufl.utils.sorting import canonicalize_metadata
@@ -63,6 +64,7 @@ def multiphenics_compile_cpp_code(*args):
     multiphenics_pybind11_sources = list()
     for multiphenics_submodule in multiphenics_submodules:
         multiphenics_pybind11_sources.append(os.path.join(multiphenics_folder, "python", multiphenics_submodule + ".cpp"))
+    multiphenics_pybind11_sources.append(os.path.join(multiphenics_folder, "python", "MPICommWrapper.cpp")) # TODO remove local copy of DOLFIN's pybind11 files
     multiphenics_pybind11_sources.append(os.path.join(multiphenics_folder, "python", "multiphenics.cpp"))
     
     # Read in the code
@@ -98,6 +100,7 @@ def patch_dijitso(multiphenics_root):
     def dijitso_jit(jitable, name, params, generate=None, send=None, receive=None, wait=None):
         name = name.replace("dolfin", "multiphenics")
         params['build']['include_dirs'].append(multiphenics_root)
+        params['build']['include_dirs'].append(mpi4py.get_include())
         return original_dijitso_jit(jitable, name, params, generate, send, receive, wait)
     dolfin.jit.pybind11jit.dijitso_jit = dijitso_jit
     
