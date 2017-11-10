@@ -29,8 +29,6 @@ from multiphenics.la.block_solve import block_solve
 from multiphenics.la.generic_block_linear_algebra_factory import GenericBlockLinearAlgebraFactory
 from multiphenics.la.generic_block_matrix import GenericBlockMatrix
 from multiphenics.la.generic_block_vector import GenericBlockVector
-from multiphenics.la.get_tensor_type import get_tensor_type
-from multiphenics.la.has_type import has_type
 from multiphenics.la.slepc_eigen_solver import SLEPcEigenSolver
 
 __all__ = [
@@ -47,7 +45,5 @@ __all__ = [
     'GenericBlockLinearAlgebraFactory',
     'GenericBlockMatrix',
     'GenericBlockVector',
-    'get_tensor_type',
-    'has_type',
     'SLEPcEigenSolver'
 ]
