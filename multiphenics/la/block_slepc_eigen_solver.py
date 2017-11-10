@@ -17,6 +17,7 @@
 #
 
 import dolfin
+from dolfin import has_pybind11
 from multiphenics.python import cpp
 
 def DecorateGetEigenPair(BlockSLEPcEigenSolver):
@@ -55,5 +56,8 @@ def BlockSLEPcEigenSolver(A, B=None, bcs=None):
         return EigenSolver(A, B)
     else:
         assert isinstance(bcs, BlockDirichletBC)
-        EigenSolver = DecorateGetEigenPair(cpp.CondensedBlockSLEPcEigenSolver)
+        if has_pybind11():
+            EigenSolver = DecorateGetEigenPair(cpp.la.CondensedBlockSLEPcEigenSolver)
+        else:
+            EigenSolver = DecorateGetEigenPair(cpp.CondensedBlockSLEPcEigenSolver)
         return EigenSolver(A, B, bcs)

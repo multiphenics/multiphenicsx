@@ -17,10 +17,16 @@
 #
 
 from numpy import empty
+from dolfin import has_pybind11
 from dolfin.fem.assembling import _create_dolfin_form
 from multiphenics.python import cpp
 
-class BlockForm1(cpp.BlockForm1):
+if has_pybind11():
+    BlockForm1_Base = cpp.fem.BlockForm1
+else:
+    BlockForm1_Base = cpp.BlockForm1
+
+class BlockForm1(BlockForm1_Base):
     def __init__(self, block_form, block_function_space, form_compiler_parameters=None):
         # Store UFL form
         self._block_form = block_form
@@ -37,7 +43,7 @@ class BlockForm1(cpp.BlockForm1):
                 form=block_form[I],
                 form_compiler_parameters=form_compiler_parameters
             )
-        cpp.BlockForm1.__init__(self, replaced_block_form.tolist(), block_function_space)
+        BlockForm1_Base.__init__(self, replaced_block_form.tolist(), block_function_space)
         # Store size for len and shape method
         self.N = N
         

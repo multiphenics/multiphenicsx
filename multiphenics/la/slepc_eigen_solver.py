@@ -17,7 +17,7 @@
 #
 
 import dolfin
-from dolfin import DirichletBC, Function
+from dolfin import DirichletBC, Function, has_pybind11
 from multiphenics.python import cpp
 
 def DecorateGetEigenPair(SLEPcEigenSolver):
@@ -50,7 +50,10 @@ def SLEPcEigenSolver(A, B=None, bcs=None):
         return EigenSolver(A, B)
     else:
         assert isinstance(bcs, (DirichletBC, list))
-        EigenSolver = DecorateGetEigenPair(cpp.CondensedSLEPcEigenSolver)
+        if has_pybind11():
+            EigenSolver = DecorateGetEigenPair(cpp.la.CondensedSLEPcEigenSolver)
+        else:
+            EigenSolver = DecorateGetEigenPair(cpp.CondensedSLEPcEigenSolver)
         if isinstance(bcs, DirichletBC):
             return EigenSolver(A, B, [bcs])
         else:

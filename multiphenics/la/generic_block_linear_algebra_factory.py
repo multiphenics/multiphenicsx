@@ -16,6 +16,10 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from dolfin import has_pybind11
 from multiphenics.python import cpp
 
-GenericBlockLinearAlgebraFactory = cpp.GenericBlockLinearAlgebraFactory
+if has_pybind11():
+    GenericBlockLinearAlgebraFactory = cpp.la.GenericBlockLinearAlgebraFactory
+else:
+    GenericBlockLinearAlgebraFactory = cpp.GenericBlockLinearAlgebraFactory

@@ -16,6 +16,10 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from dolfin import has_pybind11
 from multiphenics.python import cpp
 
-BlockAssemblerBase = cpp.BlockAssemblerBase
+if has_pybind11():
+    BlockAssemblerBase = cpp.fem.BlockAssemblerBase
+else:
+    BlockAssemblerBase = cpp.BlockAssemblerBase

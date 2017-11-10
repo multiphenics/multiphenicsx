@@ -16,6 +16,10 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from dolfin import has_pybind11
 from multiphenics.python import cpp
 
-BlockPETScSubMatrix = cpp.BlockPETScSubMatrix
+if has_pybind11():
+    BlockPETScSubMatrix = cpp.la.BlockPETScSubMatrix
+else:
+    BlockPETScSubMatrix = cpp.BlockPETScSubMatrix

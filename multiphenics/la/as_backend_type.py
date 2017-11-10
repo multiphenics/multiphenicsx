@@ -16,6 +16,10 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from dolfin import has_pybind11
 from multiphenics.python import cpp
 
-as_backend_type = cpp.as_backend_type
+if has_pybind11():
+    as_backend_type = None # TODO
+else:
+    as_backend_type = cpp.as_backend_type

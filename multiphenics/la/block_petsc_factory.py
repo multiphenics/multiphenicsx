@@ -16,6 +16,10 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from dolfin import has_pybind11
 from multiphenics.python import cpp
 
-BlockPETScFactory = cpp.BlockPETScFactory
+if has_pybind11():
+    BlockPETScFactory = cpp.la.BlockPETScFactory
+else:
+    BlockPETScFactory = cpp.BlockPETScFactory
