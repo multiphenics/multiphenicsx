@@ -43,7 +43,7 @@ class BlockForm1(BlockForm1_Base):
                 form=block_form[I],
                 form_compiler_parameters=form_compiler_parameters
             )
-        BlockForm1_Base.__init__(self, replaced_block_form.tolist(), block_function_space)
+        BlockForm1_Base.__init__(self, replaced_block_form.tolist(), [block_function_space_.cpp_object() for block_function_space_ in block_function_space])
         # Store size for len and shape method
         self.N = N
         

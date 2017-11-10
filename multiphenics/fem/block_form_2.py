@@ -46,7 +46,7 @@ class BlockForm2(BlockForm2_Base):
                     form=block_form[I, J],
                     form_compiler_parameters=form_compiler_parameters
                 )
-        BlockForm2_Base.__init__(self, replaced_block_form.tolist(), block_function_space)
+        BlockForm2_Base.__init__(self, replaced_block_form.tolist(), [block_function_space_.cpp_object() for block_function_space_ in block_function_space])
         # Store sizes for shape method
         self.N = N
         self.M = M

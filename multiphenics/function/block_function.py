@@ -29,7 +29,7 @@ if has_pybind11():
 else:
     BlockFunction_Base = cpp.BlockFunction
 
-class BlockFunction(BlockFunction_Base):
+class BlockFunction(object):
     def __init__(self, *args, **kwargs):
         """Initialize BlockFunction."""
         assert len(args) in (1, 2, 3)
@@ -57,24 +57,24 @@ class BlockFunction(BlockFunction_Base):
             raise TypeError("Too many arguments")
 
     def _init_from_block_function_space(self, block_V):
-        BlockFunction_Base.__init__(self, block_V)
+        self._cpp_object = BlockFunction_Base(block_V.cpp_object())
         self._block_function_space = block_V
         self._init_sub_functions()
 
     def _init_from_block_function_space_and_block_vector(self, block_V, block_vec):
-        BlockFunction_Base.__init__(self, block_V, block_vec)
+        self._cpp_object = BlockFunction_Base(block_V.cpp_object(), block_vec)
         self._block_function_space = block_V
         self._init_sub_functions()
         
     def _init_from_block_function_space_and_sub_functions(self, block_V, sub_functions):
-        BlockFunction_Base.__init__(self, block_V, sub_functions)
+        self._cpp_object = BlockFunction_Base(block_V.cpp_object(), sub_functions)
         self._block_function_space = block_V
         self._num_sub_spaces = block_V.num_sub_spaces()
         assert len(sub_functions) == self._num_sub_spaces
         self._sub_functions = sub_functions
         
     def _init_from_block_function_space_and_block_vector_and_sub_functions(self, block_V, block_vec, sub_functions):
-        BlockFunction_Base.__init__(self, block_V, block_vec, sub_functions)
+        self._cpp_object = BlockFunction_Base(block_V.cpp_object(), block_vec, sub_functions)
         self._block_function_space = block_V
         self._num_sub_spaces = block_V.num_sub_spaces()
         assert len(sub_functions) == self._num_sub_spaces
@@ -104,7 +104,7 @@ class BlockFunction(BlockFunction_Base):
         self._sub_functions = list()
         for i in range(self._num_sub_spaces):
             # Extend with the python layer of dolfin's Function
-            sub_function = dolfin.Function(BlockFunction_Base.sub(self, i))
+            sub_function = dolfin.Function(self._cpp_object.sub(i))
             
             # Extend with block function and block index methods
             extend_sub_function(sub_function, i)
@@ -159,7 +159,7 @@ class BlockFunction(BlockFunction_Base):
                 return self
             block_vector.block_function = types.MethodType(block_function, block_vector)
             
-        block_vector = BlockFunction_Base.block_vector(self)
+        block_vector = self._cpp_object.block_vector()
         block_vector = as_backend_type(block_vector)
         extend_block_vector(block_vector)
         
@@ -221,6 +221,11 @@ class BlockFunction(BlockFunction_Base):
         
     def __str__(self):
         return str([str(subf) for subf in self._sub_functions])
+        
+    def apply(self, mode, only=None):
+        if only is None:
+            only = -1
+        self._cpp_object.apply(mode, only)
 
     def __add__(self, other):
         if isinstance(other, BlockFunction):

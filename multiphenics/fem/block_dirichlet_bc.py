@@ -55,7 +55,7 @@ class BlockDirichletBC(BlockDirichletBC_Base):
             for bc_I in bc:
                 bc_I.parameters["check_dofmap_range"] = False
         # Call Parent
-        BlockDirichletBC_Base.__init__(self, self.bcs, self._block_function_space)
+        BlockDirichletBC_Base.__init__(self, self.bcs, self._block_function_space.cpp_object())
         
     def __getitem__(self, key):
         return self.bcs[key]

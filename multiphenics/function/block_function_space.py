@@ -19,18 +19,35 @@
 import types
 import numpy
 from ufl.finiteelement import FiniteElementBase
-from dolfin import FunctionSpace, has_pybind11, Mesh, MeshFunction, MeshFunctionBool, SubDomain
-from dolfin.functions.functionspace import _compile_dolfin_element
+from dolfin import FunctionSpace, has_pybind11, Mesh, MeshFunction, SubDomain
 from multiphenics.function.block_element import BlockElement
 from multiphenics.python import cpp
 from multiphenics.mesh import MeshRestriction
 
 if has_pybind11():
     BlockFunctionSpace_Base = cpp.function.BlockFunctionSpace
+    from dolfin.cpp.mesh import MeshFunctionBool
+    import dolfin.cpp as dolfin_cpp
+    from dolfin.jit.jit import ffc_jit
+    
+    def _compile_dolfin_element(element, mesh):
+        # Compile dofmap and element
+        ufc_element, ufc_dofmap = ffc_jit(element, form_compiler_parameters=None,
+                                          mpi_comm=mesh.mpi_comm())
+        ufc_element = dolfin_cpp.fem.make_ufc_finite_element(ufc_element)
+
+        # Create DOLFIN element and dofmap
+        dolfin_element = dolfin_cpp.fem.FiniteElement(ufc_element)
+        ufc_dofmap = dolfin_cpp.fem.make_ufc_dofmap(ufc_dofmap)
+        dolfin_dofmap = dolfin_cpp.fem.DofMap(ufc_dofmap, mesh)
+        
+        return dolfin_element, dolfin_dofmap
 else:
     BlockFunctionSpace_Base = cpp.BlockFunctionSpace
+    from dolfin import MeshFunctionBool
+    from dolfin.functions.functionspace import _compile_dolfin_element
 
-class BlockFunctionSpace(BlockFunctionSpace_Base):
+class BlockFunctionSpace(object):
     "Base class for all block function spaces."
 
     def __init__(self, *args, **kwargs):
@@ -69,19 +86,18 @@ class BlockFunctionSpace(BlockFunctionSpace_Base):
             assert function_space.mesh().ufl_domain() == mesh.ufl_domain()
         # Initialize the BlockFunctionSpace_Base
         if restrict is None:
-            BlockFunctionSpace_Base.__init__(self, function_spaces)
+            self._cpp_object = BlockFunctionSpace_Base(function_spaces)
         else:
             restrict = self._init_restriction(mesh, restrict)
             assert len(restrict) == len(function_spaces)
-            BlockFunctionSpace_Base.__init__(self, function_spaces, restrict)
+            self._cpp_object = BlockFunctionSpace_Base(function_spaces, restrict)
             
         # Fill in subspaces
         self._init_sub_spaces(len(function_spaces))
     
     def _init_from_cpp(self, cppV, **kwargs):
-        # Assign all the members (including 'this' pointer to SWIG wraper)
-        # NOTE: This in fact performs assignment of C++ context
-        self.__dict__ = cppV.__dict__
+        # Store the BlockFunctionSpace_Base
+        self._cpp_object = cppV
         
         # Fill in subspaces
         assert "num_sub_spaces" in kwargs
@@ -99,11 +115,11 @@ class BlockFunctionSpace(BlockFunctionSpace_Base):
             
         # Initialize the BlockFunctionSpace_Base
         if restrict is None:
-            BlockFunctionSpace_Base.__init__(self, mesh, dolfin_elements, dolfin_dofmaps)
+            self._cpp_object = BlockFunctionSpace_Base(mesh, dolfin_elements, dolfin_dofmaps)
         else:
             restrict = self._init_restriction(mesh, restrict)
             assert len(restrict) == len(elements)
-            BlockFunctionSpace_Base.__init__(self, mesh, dolfin_elements, dolfin_dofmaps, restrict)
+            self._cpp_object = BlockFunctionSpace_Base(mesh, dolfin_elements, dolfin_dofmaps, restrict)
         
         # Fill in subspaces
         self._init_sub_spaces(len(elements))
@@ -170,7 +186,7 @@ class BlockFunctionSpace(BlockFunctionSpace_Base):
         self._sub_spaces = list()
         for i in range(num_sub_spaces):
             # Extend .sub() call with the python layer of FunctionSpace
-            sub_function_space = FunctionSpace(BlockFunctionSpace_Base.sub(self, i))
+            sub_function_space = FunctionSpace(self._cpp_object.sub(i))
             
             # Extend with block function space and block index methods
             extend_sub_function_space(sub_function_space, i)
@@ -188,8 +204,20 @@ class BlockFunctionSpace(BlockFunctionSpace_Base):
         return "<Block function space of dimension %d (%s)>" % \
                (self.block_dofmap().global_dimension(), str(elements))
                
+    def cpp_object(self):
+        return self._cpp_object
+        
     def ufl_element(self):
         return self._ufl_element
+        
+    def mesh(self):
+        return self._cpp_object.mesh()
+        
+    def block_dofmap(self):
+        return self._cpp_object.block_dofmap()
+        
+    def tabulate_dof_coordinates(self):
+        return self._cpp_object.tabulate_dof_coordinates()
 
     def num_sub_spaces(self):
         "Return the number of sub spaces"
@@ -236,7 +264,7 @@ class BlockFunctionSpace(BlockFunctionSpace_Base):
         component = numpy.asarray(component, dtype=numpy.uintp)
 
         # Get the cpp version of the BlockFunctionSpace
-        cpp_space = BlockFunctionSpace_Base.extract_block_sub_space(self, component, restrict)
+        cpp_space = self._cpp_object.extract_block_sub_space(component, restrict)
 
         # Extend with the python layer
         python_space = BlockFunctionSpace(cpp_space, num_sub_spaces=len(component))
