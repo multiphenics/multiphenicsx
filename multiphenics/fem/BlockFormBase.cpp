@@ -19,6 +19,7 @@
 #include <multiphenics/fem/BlockFormBase.h>
 
 using namespace dolfin;
+using namespace multiphenics;
 
 //-----------------------------------------------------------------------------
 BlockFormBase::BlockFormBase(std::vector<std::shared_ptr<const BlockFunctionSpace>> block_function_spaces):

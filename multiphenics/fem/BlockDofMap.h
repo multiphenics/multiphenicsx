@@ -22,21 +22,21 @@
 #include <dolfin/fem/GenericDofMap.h>
 #include <dolfin/mesh/MeshFunction.h>
 
-namespace dolfin
+namespace multiphenics
 {
 
   /// This class handles the mapping of degrees of freedom for block
   /// function spaces, also considering possible restrictions to 
   /// subdomains
 
-  class BlockDofMap : public GenericDofMap
+  class BlockDofMap : public dolfin::GenericDofMap
   {
   public:
 
     /// Constructor
-    BlockDofMap(std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,
-                std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions,
-                const Mesh& mesh);
+    BlockDofMap(std::vector<std::shared_ptr<const dolfin::GenericDofMap>> dofmaps,
+                std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>> restrictions,
+                const dolfin::Mesh& mesh);
 
   private:
     // Copy constructor
@@ -51,7 +51,7 @@ namespace dolfin
     /// *Returns*
     ///     vector of _GenericDofMap_
     ///         The vector of dofmaps *neglecting* restrictions
-    std::vector<std::shared_ptr<const GenericDofMap>> dofmaps() const;
+    std::vector<std::shared_ptr<const dolfin::GenericDofMap>> dofmaps() const;
     
     /// True if dof map is a view into another map (is a sub-dofmap).
     /// BlockDofMap does not allow views, so the value will always be False.
@@ -163,7 +163,7 @@ namespace dolfin
     ///     std::vector<dolfin::la_index>
     ///         Dof indices associated with selected entities.
     std::vector<dolfin::la_index>
-      entity_dofs(const Mesh& mesh, std::size_t entity_dim,
+      entity_dofs(const dolfin::Mesh& mesh, std::size_t entity_dim,
                   const std::vector<std::size_t> & entity_indices) const;
 
     /// Return the dof indices associated with all entities of given dimension
@@ -175,7 +175,7 @@ namespace dolfin
     ///     std::vector<dolfin::la_index>
     ///         Dof indices associated with selected entities.
     std::vector<dolfin::la_index>
-      entity_dofs(const Mesh& mesh, std::size_t entity_dim) const;
+      entity_dofs(const dolfin::Mesh& mesh, std::size_t entity_dim) const;
 
     /// Return the dof indices associated with the closure of entities of
     /// given dimension and entity indices
@@ -189,7 +189,7 @@ namespace dolfin
     ///     std::vector<dolfin::la_index>
     ///         Dof indices associated with selected entities and their closure.
     std::vector<dolfin::la_index>
-      entity_closure_dofs(const Mesh& mesh, std::size_t entity_dim,
+      entity_closure_dofs(const dolfin::Mesh& mesh, std::size_t entity_dim,
                           const std::vector<std::size_t> & entity_indices) const;
 
     /// Return the dof indices associated with the closure of all entities of
@@ -202,7 +202,7 @@ namespace dolfin
     /// @return  std::vector<dolfin::la_index>
     ///         Dof indices associated with selected entities and their closure.
     std::vector<dolfin::la_index>
-      entity_closure_dofs(const Mesh& mesh, std::size_t entity_dim) const;
+      entity_closure_dofs(const dolfin::Mesh& mesh, std::size_t entity_dim) const;
       
     /// Tabulate local-local facet dofs
     ///
@@ -245,7 +245,7 @@ namespace dolfin
     ///
     /// @return     DofMap
     ///         The Dofmap copy.
-    std::shared_ptr<GenericDofMap> copy() const;
+    std::shared_ptr<dolfin::GenericDofMap> copy() const;
 
     /// Create a copy of the dof map on a new mesh
     ///
@@ -254,7 +254,7 @@ namespace dolfin
     ///
     ///  @return    DofMap
     ///         The new Dofmap copy.
-    std::shared_ptr<GenericDofMap> create(const Mesh& new_mesh) const;
+    std::shared_ptr<dolfin::GenericDofMap> create(const dolfin::Mesh& new_mesh) const;
 
     /// Extract subdofmap component
     ///
@@ -265,9 +265,9 @@ namespace dolfin
     ///
     /// @return     DofMap
     ///         The subdofmap component.
-    std::shared_ptr<GenericDofMap>
+    std::shared_ptr<dolfin::GenericDofMap>
       extract_sub_dofmap(const std::vector<std::size_t>& component,
-                         const Mesh& mesh) const;
+                         const dolfin::Mesh& mesh) const;
 
     /// Create a "collapsed" dofmap (collapses a sub-dofmap)
     ///
@@ -278,13 +278,13 @@ namespace dolfin
     ///
     /// @return    DofMap
     ///         The collapsed dofmap.
-    std::shared_ptr<GenericDofMap>
+    std::shared_ptr<dolfin::GenericDofMap>
       collapse(std::unordered_map<std::size_t, std::size_t>&
-               collapsed_map, const Mesh& mesh) const;
+               collapsed_map, const dolfin::Mesh& mesh) const;
 
     /// Return list of dof indices on this process that belong to mesh
     /// entities of dimension dim
-    std::vector<dolfin::la_index> dofs(const Mesh& mesh,
+    std::vector<dolfin::la_index> dofs(const dolfin::Mesh& mesh,
                                        std::size_t dim) const;
 
     std::vector<dolfin::la_index> dofs() const;
@@ -298,13 +298,13 @@ namespace dolfin
     ///         The vector to set.
     /// @param  value (double)
     ///         The value to set.
-    void set(GenericVector& x, double value) const;
+    void set(dolfin::GenericVector& x, double value) const;
 
     /// Return the map from local to global (const access)
-    std::shared_ptr<const IndexMap> index_map() const;
+    std::shared_ptr<const dolfin::IndexMap> index_map() const;
     
     /// Return the map from sub local to sub global (const access)
-    std::shared_ptr<const IndexMap> sub_index_map(std::size_t b) const;
+    std::shared_ptr<const dolfin::IndexMap> sub_index_map(std::size_t b) const;
     
     /// Return the block size for dof maps with components, typically
     /// used for vector valued functions.
@@ -345,8 +345,8 @@ namespace dolfin
   private:
     
     // Constructor arguments
-    std::vector<std::shared_ptr<const GenericDofMap>> _constructor_dofmaps;
-    std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> _constructor_restrictions;
+    std::vector<std::shared_ptr<const dolfin::GenericDofMap>> _constructor_dofmaps;
+    std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>> _constructor_restrictions;
 
     // Cell-local-to-dof map
     std::map<dolfin::la_index, std::vector<dolfin::la_index>> _dofmap;
@@ -368,10 +368,10 @@ namespace dolfin
     std::vector<std::size_t> _real_dofs__local;
     
     // Index Map from local to global
-    std::shared_ptr<IndexMap> _index_map;
+    std::shared_ptr<dolfin::IndexMap> _index_map;
     
     // Index Map from sub local to sub global
-    std::vector<std::shared_ptr<IndexMap>> _sub_index_map;
+    std::vector<std::shared_ptr<dolfin::IndexMap>> _sub_index_map;
     
     // List of block dofs, for each component, with local numbering
     std::vector<std::vector<dolfin::la_index>> _block_owned_dofs__local;

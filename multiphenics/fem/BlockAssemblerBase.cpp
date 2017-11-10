@@ -27,6 +27,7 @@
 #include <multiphenics/log/log.h>
 
 using namespace dolfin;
+using namespace multiphenics;
 
 //-----------------------------------------------------------------------------
 BlockAssemblerBase::BlockAssemblerBase() : 

@@ -25,14 +25,14 @@
 #include <multiphenics/la/BlockPETScMatrix.h>
 #include <multiphenics/la/CondensedSLEPcEigenSolver.h>
 
-namespace dolfin
+namespace multiphenics
 {
 
   /// This class provides an eigenvalue solver for PETSc block matrices. It
   /// is a wrapper for the SLEPc eigenvalue solver. It also allows to
   /// constrain degrees of freedom associate to Dirichlet BCs.
 
-  class CondensedBlockSLEPcEigenSolver : public CondensedSLEPcEigenSolver
+  class CondensedBlockSLEPcEigenSolver : public dolfin::CondensedSLEPcEigenSolver
   {
   public:
 
@@ -68,11 +68,11 @@ namespace dolfin
     
     /// Get ith eigenpair
     void get_eigenpair(double& lr, double& lc,
-                       GenericVector& r, GenericVector& c, std::size_t i) const;
+                       dolfin::GenericVector& r, dolfin::GenericVector& c, std::size_t i) const;
 
     /// Get ith eigenpair
     void get_eigenpair(double& lr, double& lc,
-                       PETScVector& r, PETScVector& c, std::size_t i) const;
+                       dolfin::PETScVector& r, dolfin::PETScVector& c, std::size_t i) const;
   
   private:
     /// Hide Parent's version of boundary conditions setter

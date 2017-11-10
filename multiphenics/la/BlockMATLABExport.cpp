@@ -20,6 +20,7 @@
 #include <multiphenics/la/BlockMATLABExport.h>
 
 using namespace dolfin;
+using namespace multiphenics;
 
 //-----------------------------------------------------------------------------
 void BlockMATLABExport::export_(const PETScMatrix & A, std::string A_filename)

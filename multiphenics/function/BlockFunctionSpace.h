@@ -22,14 +22,14 @@
 #include <dolfin/function/FunctionSpace.h>
 #include <multiphenics/fem/BlockDofMap.h>
 
-namespace dolfin
+namespace multiphenics
 {
 
   /// This class represents a finite element function space defined by
   /// a mesh, a vector of finite elements, and a vector of local-to-global mapping of the
   /// degrees of freedom (dofmap).
 
-  class BlockFunctionSpace : public Variable, public Hierarchical<BlockFunctionSpace>
+  class BlockFunctionSpace : public dolfin::Variable, public dolfin::Hierarchical<BlockFunctionSpace>
   {
   public:
   
@@ -38,7 +38,7 @@ namespace dolfin
     /// *Arguments*
     ///     function_spaces (_FunctionSpace_)
     ///         List of existing function spaces.
-    explicit BlockFunctionSpace(std::vector<std::shared_ptr<const FunctionSpace>> function_spaces);
+    explicit BlockFunctionSpace(std::vector<std::shared_ptr<const dolfin::FunctionSpace>> function_spaces);
     
     /// Create a block function space from a list of existing function spaces (on the same mesh),
     /// but keeping only a part
@@ -48,8 +48,8 @@ namespace dolfin
     ///         List of existing function spaces.
     ///     restrictions (vector (over blocks) of vector (over space dimensions) of _MeshFunction<bool>_)
     ///         The restrictions.
-    BlockFunctionSpace(std::vector<std::shared_ptr<const FunctionSpace>> function_spaces,
-                       std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions);
+    BlockFunctionSpace(std::vector<std::shared_ptr<const dolfin::FunctionSpace>> function_spaces,
+                       std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>> restrictions);
 
     /// Create a block function space for given mesh, vector of elements and vector of dofmaps
     /// (shared data)
@@ -61,9 +61,9 @@ namespace dolfin
     ///         The elements.
     ///     dofmaps (vector of _GenericDofMap_)
     ///         The dofmaps.
-    BlockFunctionSpace(std::shared_ptr<const Mesh> mesh,
-                       std::vector<std::shared_ptr<const FiniteElement>> elements,
-                       std::vector<std::shared_ptr<const GenericDofMap>> dofmaps);
+    BlockFunctionSpace(std::shared_ptr<const dolfin::Mesh> mesh,
+                       std::vector<std::shared_ptr<const dolfin::FiniteElement>> elements,
+                       std::vector<std::shared_ptr<const dolfin::GenericDofMap>> dofmaps);
                   
     /// Create a block function space for given mesh, vector of elements and vector of dofmaps
     /// but keeping only a part 
@@ -78,10 +78,10 @@ namespace dolfin
     ///         The dofmaps.
     ///     restrictions (vector (over blocks) of vector (over space dimensions) of _MeshFunction<bool>_)
     ///         The restrictions.
-    BlockFunctionSpace(std::shared_ptr<const Mesh> mesh,
-                       std::vector<std::shared_ptr<const FiniteElement>> elements,
-                       std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,
-                       std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions);
+    BlockFunctionSpace(std::shared_ptr<const dolfin::Mesh> mesh,
+                       std::vector<std::shared_ptr<const dolfin::FiniteElement>> elements,
+                       std::vector<std::shared_ptr<const dolfin::GenericDofMap>> dofmaps,
+                       std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>> restrictions);
 
     /// Copy constructor
     ///
@@ -132,21 +132,21 @@ namespace dolfin
     /// *Returns*
     ///     _Mesh_
     ///         The mesh.
-    std::shared_ptr<const Mesh> mesh() const;
+    std::shared_ptr<const dolfin::Mesh> mesh() const;
 
     /// Return finite elements
     ///
     /// *Returns*
     ///     vector of _FiniteElement_
     ///         The vector of finite elements.
-    std::vector<std::shared_ptr<const FiniteElement>> elements() const;
+    std::vector<std::shared_ptr<const dolfin::FiniteElement>> elements() const;
     
     /// Return dofmaps
     ///
     /// *Returns*
     ///     vector of _GenericDofMap_
     ///         The vector of dofmaps.
-    std::vector<std::shared_ptr<const GenericDofMap>> dofmaps() const;
+    std::vector<std::shared_ptr<const dolfin::GenericDofMap>> dofmaps() const;
 
     /// Return block dofmap
     ///
@@ -160,7 +160,7 @@ namespace dolfin
     /// *Returns*
     ///     vector of _FunctionSpace_
     ///         The vector of function spaces.
-    std::vector<std::shared_ptr<const FunctionSpace>> function_spaces() const;
+    std::vector<std::shared_ptr<const dolfin::FunctionSpace>> function_spaces() const;
 
     /// Return dimension of function space
     ///
@@ -177,7 +177,7 @@ namespace dolfin
     /// *Returns*
     ///     _FunctionSpace_
     ///         The subspace.
-    std::shared_ptr<const FunctionSpace> operator[] (std::size_t i) const;
+    std::shared_ptr<const dolfin::FunctionSpace> operator[] (std::size_t i) const;
 
     /// Extract subspace for component, *neglecting* restrictions
     ///
@@ -187,7 +187,7 @@ namespace dolfin
     /// *Returns*
     ///     _FunctionSpace_
     ///         The subspace.
-    std::shared_ptr<const FunctionSpace> sub(std::size_t component) const;
+    std::shared_ptr<const dolfin::FunctionSpace> sub(std::size_t component) const;
 
     /// Extract block subspace for component, possibly considering restrictions
     ///
@@ -243,19 +243,19 @@ namespace dolfin
 
   private:
     // The mesh
-    std::shared_ptr<const Mesh> _mesh;
+    std::shared_ptr<const dolfin::Mesh> _mesh;
 
     // The finite elements
-    std::vector<std::shared_ptr<const FiniteElement>> _elements;
+    std::vector<std::shared_ptr<const dolfin::FiniteElement>> _elements;
 
     // The dofmaps
-    std::vector<std::shared_ptr<const GenericDofMap>> _dofmaps;
+    std::vector<std::shared_ptr<const dolfin::GenericDofMap>> _dofmaps;
 
     // The restrictions
-    std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> _restrictions;
+    std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>> _restrictions;
     
     // The subspaces
-    std::vector<std::shared_ptr<const FunctionSpace>> _function_spaces;
+    std::vector<std::shared_ptr<const dolfin::FunctionSpace>> _function_spaces;
     
     // The block dofmap
     std::shared_ptr<BlockDofMap> _block_dofmap;

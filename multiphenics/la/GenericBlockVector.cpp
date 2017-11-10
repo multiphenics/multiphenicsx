@@ -19,6 +19,7 @@
 #include <multiphenics/la/GenericBlockVector.h>
 
 using namespace dolfin;
+using namespace multiphenics;
 
 //-----------------------------------------------------------------------------
 GenericBlockVector::~GenericBlockVector()

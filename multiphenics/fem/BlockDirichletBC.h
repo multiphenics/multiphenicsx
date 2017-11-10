@@ -24,19 +24,19 @@
 #include <dolfin/fem/DirichletBC.h>
 #include <multiphenics/function/BlockFunctionSpace.h>
 
-namespace dolfin
+namespace multiphenics
 {
 
-  class BlockDirichletBC : public Hierarchical<BlockDirichletBC>, public Variable
+  class BlockDirichletBC : public dolfin::Hierarchical<BlockDirichletBC>, public dolfin::Variable
   {
   public:
-    typedef DirichletBC::Map Map;
+    typedef dolfin::DirichletBC::Map Map;
     
     /// Create boundary condition for subdomain
     ///
     /// @param    bcs (list of list _DirichletBC_)
     ///         List (over blocks) of list (due to possible multiple BCs for each block) of DirichletBC objects
-    BlockDirichletBC(std::vector<std::vector<std::shared_ptr<const DirichletBC>>> bcs,
+    BlockDirichletBC(std::vector<std::vector<std::shared_ptr<const dolfin::DirichletBC>>> bcs,
                      std::shared_ptr<const BlockFunctionSpace> block_function_space);
 
     /// Destructor
@@ -46,13 +46,13 @@ namespace dolfin
     ///
     /// @param     A (_GenericMatrix_)
     ///         The matrix to apply boundary condition to.
-    void apply(GenericMatrix& A) const;
+    void apply(dolfin::GenericMatrix& A) const;
 
     /// Apply boundary condition to a vector
     ///
     /// @param     b (_GenericVector_)
     ///         The vector to apply boundary condition to.
-    void apply(GenericVector& b) const;
+    void apply(dolfin::GenericVector& b) const;
 
     /// Apply boundary condition to a linear system
     ///
@@ -60,8 +60,8 @@ namespace dolfin
     ///         The matrix to apply boundary condition to.
     /// @param     b (_GenericVector_)
     ///         The vector to apply boundary condition to.
-    void apply(GenericMatrix& A,
-               GenericVector& b) const;
+    void apply(dolfin::GenericMatrix& A,
+               dolfin::GenericVector& b) const;
 
     /// Apply boundary condition to vectors for a nonlinear problem
     ///
@@ -69,8 +69,8 @@ namespace dolfin
     ///         The vector to apply boundary conditions to.
     /// @param     x (_GenericVector_)
     ///         Another vector (nonlinear problem).
-    void apply(GenericVector& b,
-               const GenericVector& x) const;
+    void apply(dolfin::GenericVector& b,
+               const dolfin::GenericVector& x) const;
 
     /// Apply boundary condition to a linear system for a nonlinear problem
     ///
@@ -80,9 +80,9 @@ namespace dolfin
     ///         The vector to apply boundary conditions to.
     /// @param     x (_GenericVector_)
     ///         Another vector (nonlinear problem).
-    void apply(GenericMatrix& A,
-               GenericVector& b,
-               const GenericVector& x) const;
+    void apply(dolfin::GenericMatrix& A,
+               dolfin::GenericVector& b,
+               const dolfin::GenericVector& x) const;
                
     /// Get Dirichlet dofs and values. If a method other than 'pointwise' is
     /// used in parallel, the map may not be complete for local vertices since
@@ -107,7 +107,7 @@ namespace dolfin
     ///
     /// @param[in,out] A (GenericMatrix&)
     ///         The matrix
-    void zero(GenericMatrix& A) const;
+    void zero(dolfin::GenericMatrix& A) const;
     
     /// Return the block function space
     ///
@@ -118,7 +118,7 @@ namespace dolfin
   private:
     void _original_to_block_boundary_values(Map& boundary_values, const Map& boundary_values_I, std::size_t I) const;
 
-    std::vector<std::vector<std::shared_ptr<const DirichletBC>>> _bcs;
+    std::vector<std::vector<std::shared_ptr<const dolfin::DirichletBC>>> _bcs;
     std::shared_ptr<const BlockFunctionSpace> _block_function_space;
 
   };

@@ -23,7 +23,7 @@
 #include <dolfin/fem/Form.h>
 #include <multiphenics/fem/BlockFormBase.h>
 
-namespace dolfin
+namespace multiphenics
 {
 
   class BlockForm2 : public BlockFormBase
@@ -35,7 +35,7 @@ namespace dolfin
     ///         Matrix of forms.
     /// @param[in] function_spaces (std::vector<_BlockFunctionSpace_>)
     ///         Vector of function spaces, of size 2.
-    BlockForm2(std::vector<std::vector<std::shared_ptr<const Form>>> forms,
+    BlockForm2(std::vector<std::vector<std::shared_ptr<const dolfin::Form>>> forms,
                std::vector<std::shared_ptr<const BlockFunctionSpace>> block_function_spaces);
          
     /// Destructor
@@ -49,7 +49,7 @@ namespace dolfin
     
     virtual unsigned int block_size(unsigned int d) const;
     
-    const Form & operator()(std::size_t i, std::size_t j) const;
+    const dolfin::Form & operator()(std::size_t i, std::size_t j) const;
     
   protected:
   
@@ -59,7 +59,7 @@ namespace dolfin
     virtual bool has_vertex_integrals() const;
 
     // Block forms
-    std::vector<std::vector<std::shared_ptr<const Form>>> _forms;
+    std::vector<std::vector<std::shared_ptr<const dolfin::Form>>> _forms;
     
     std::vector<unsigned int> _block_size;
   };

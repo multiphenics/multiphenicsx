@@ -21,12 +21,8 @@
 
 #include <multiphenics/fem/BlockAssemblerBase.h>
 
-namespace dolfin
+namespace multiphenics
 {
-
-  // Forward declarations
-  class GenericTensor;
-
   /// Class for block assembly
   class BlockAssembler : public BlockAssemblerBase
   {
@@ -41,7 +37,7 @@ namespace dolfin
     ///         The block tensor to assemble.
     /// @param[in]  a (BlockFormBase&)
     ///         The block form to assemble the tensor from.
-    void assemble(GenericTensor& A, const BlockFormBase& a);
+    void assemble(dolfin::GenericTensor& A, const BlockFormBase& a);
     
   private:
     /// Assemble subtensor from given form
@@ -50,7 +46,7 @@ namespace dolfin
     ///         The tensor to assemble.
     /// @param[in]  a (Form&)
     ///         The form to assemble the tensor from.
-    void sub_assemble(GenericTensor& A, const Form& a, Assembler& assembler);
+    void sub_assemble(dolfin::GenericTensor& A, const dolfin::Form& a, dolfin::Assembler& assembler);
 
   };
 

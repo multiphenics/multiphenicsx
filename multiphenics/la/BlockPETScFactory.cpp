@@ -26,6 +26,7 @@
 #include <multiphenics/la/BlockPETScFactory.h>
 
 using namespace dolfin;
+using namespace multiphenics;
 
 // Singleton instance
 BlockPETScFactory BlockPETScFactory::factory;

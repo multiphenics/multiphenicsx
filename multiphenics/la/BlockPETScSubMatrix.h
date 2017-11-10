@@ -25,18 +25,18 @@
 #include <multiphenics/la/BlockInsertMode.h>
 #include <multiphenics/la/BlockPETScMatrix.h>
 
-namespace dolfin
+namespace multiphenics
 {
   class BlockPETScMatrix;
   
   /// This is an extension of PETScMatrix to be used while assemblying block forms, that
   /// a) carries out the extraction of a sub matrix
   /// b) in case of restrictions, overrides get/set/add methods to convert original index without restriction to index with restriction
-  class BlockPETScSubMatrix : public PETScMatrix
+  class BlockPETScSubMatrix : public dolfin::PETScMatrix
   {
   public:
     /// Constructor
-    BlockPETScSubMatrix(const GenericMatrix & A,
+    BlockPETScSubMatrix(const dolfin::GenericMatrix & A,
                         const std::vector<dolfin::la_index> & block_owned_dofs_0__local_numbering, 
                         const std::map<dolfin::la_index, dolfin::la_index> & original_to_sub_block_0, 
                         const std::vector<dolfin::la_index> & block_owned_dofs_0__global_numbering,
@@ -93,7 +93,7 @@ namespace dolfin
                            std::size_t n, const dolfin::la_index* cols);
                            
     /// Add multiple of given matrix (AXPY operation)
-    virtual void axpy(double a, const GenericMatrix& A,
+    virtual void axpy(double a, const dolfin::GenericMatrix& A,
                       bool same_nonzero_pattern);
 
     /// Return norm of matrix
@@ -122,25 +122,25 @@ namespace dolfin
     virtual void ident_local(std::size_t m, const dolfin::la_index* rows);
     
     // Matrix-vector product, y = Ax
-    virtual void mult(const GenericVector& x, GenericVector& y) const;
+    virtual void mult(const dolfin::GenericVector& x, dolfin::GenericVector& y) const;
 
     // Matrix-vector product, y = A^T x
-    virtual void transpmult(const GenericVector& x, GenericVector& y) const;
+    virtual void transpmult(const dolfin::GenericVector& x, dolfin::GenericVector& y) const;
 
     /// Get diagonal of a matrix
-    virtual void get_diagonal(GenericVector& x) const;
+    virtual void get_diagonal(dolfin::GenericVector& x) const;
 
     /// Set diagonal of a matrix
-    virtual void set_diagonal(const GenericVector& x);
+    virtual void set_diagonal(const dolfin::GenericVector& x);
 
     /// Multiply matrix by given number
-    virtual const PETScMatrix& operator*= (double a);
+    virtual const dolfin::PETScMatrix& operator*= (double a);
 
     /// Divide matrix by given number
-    virtual const PETScMatrix& operator/= (double a);
+    virtual const dolfin::PETScMatrix& operator/= (double a);
 
     /// Assignment operator
-    virtual const GenericMatrix& operator= (const GenericMatrix& A);
+    virtual const dolfin::GenericMatrix& operator= (const dolfin::GenericMatrix& A);
 
     /// Test if matrix is symmetric
     virtual bool is_symmetric(double tol) const;
@@ -148,7 +148,7 @@ namespace dolfin
     //--- Special functions ---
 
     /// Return linear algebra backend factory
-    virtual GenericLinearAlgebraFactory& factory() const;
+    virtual dolfin::GenericLinearAlgebraFactory& factory() const;
 
     //--- Special PETSc Functions ---
 
@@ -164,15 +164,15 @@ namespace dolfin
     void set_from_options();
 
     /// Assignment operator
-    const PETScMatrix& operator= (const PETScMatrix& A);
+    const dolfin::PETScMatrix& operator= (const dolfin::PETScMatrix& A);
 
     /// Attach nullspace to matrix (typically used by Krylov solvers
     /// when solving singular systems)
-    void set_nullspace(const VectorSpaceBasis& nullspace);
+    void set_nullspace(const dolfin::VectorSpaceBasis& nullspace);
 
     /// Attach near nullspace to matrix (used by preconditioners, such
     /// as smoothed aggregation algerbraic multigrid)
-    void set_near_nullspace(const VectorSpaceBasis& nullspace);
+    void set_near_nullspace(const dolfin::VectorSpaceBasis& nullspace);
 
     /// Dump matrix to PETSc binary format
     void binary_dump(std::string file_name) const;

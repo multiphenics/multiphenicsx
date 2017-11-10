@@ -18,5 +18,5 @@
 
 #include <multiphenics/la/BlockInsertMode.h>
 
-using namespace dolfin;
+using namespace multiphenics;
 

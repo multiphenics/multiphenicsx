@@ -70,6 +70,16 @@ def multiphenics_compile_cpp_code(*args):
     multiphenics_code += "\n".join([open(h).read() for h in multiphenics_sources])
     multiphenics_code += "\n".join([open(h).read() for h in multiphenics_pybind11_sources])
     
+    # Move all includes to the top
+    multiphenics_code_includes = ""
+    multiphenics_code_rest = ""
+    for line in multiphenics_code.splitlines():
+        if line.startswith("#include"):
+            multiphenics_code_includes += line + "\n"
+        else:
+            multiphenics_code_rest += line + "\n"
+    multiphenics_code = multiphenics_code_includes + multiphenics_code_rest
+    
     # Patch dijitso
     patch_dijitso(multiphenics_root)
     

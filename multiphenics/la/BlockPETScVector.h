@@ -25,11 +25,11 @@
 #include <multiphenics/fem/BlockDofMap.h>
 #include <multiphenics/la/GenericBlockVector.h>
 
-namespace dolfin
+namespace multiphenics
 {
   class BlockPETScSubVector;
   
-  class BlockPETScVector : public PETScVector, public GenericBlockVector
+  class BlockPETScVector : public dolfin::PETScVector, public GenericBlockVector
   {
   public:
     /// Create empty vector (on MPI_COMM_WORLD)
@@ -42,7 +42,7 @@ namespace dolfin
     BlockPETScVector(MPI_Comm comm, std::size_t N);
 
     /// Create vector
-    explicit BlockPETScVector(const SparsityPattern& sparsity_pattern);
+    explicit BlockPETScVector(const dolfin::SparsityPattern& sparsity_pattern);
 
     /// Copy constructor
     BlockPETScVector(const BlockPETScVector& x);
@@ -58,31 +58,31 @@ namespace dolfin
     //--- Implementation of the GenericVector interface ---
 
     /// Return copy of vector
-    virtual std::shared_ptr<GenericVector> copy() const;
+    virtual std::shared_ptr<dolfin::GenericVector> copy() const;
     
     /// Multiply vector by given number
     virtual const BlockPETScVector& operator*= (double a);
 
     /// Multiply vector by another vector pointwise
-    virtual const BlockPETScVector& operator*= (const GenericVector& x);
+    virtual const BlockPETScVector& operator*= (const dolfin::GenericVector& x);
 
     /// Divide vector by given number
     virtual const BlockPETScVector& operator/= (double a);
 
     /// Add given vector
-    virtual const BlockPETScVector& operator+= (const GenericVector& x);
+    virtual const BlockPETScVector& operator+= (const dolfin::GenericVector& x);
 
     /// Add number to all components of a vector
     virtual const BlockPETScVector& operator+= (double a);
 
     /// Subtract given vector
-    virtual const BlockPETScVector& operator-= (const GenericVector& x);
+    virtual const BlockPETScVector& operator-= (const dolfin::GenericVector& x);
 
     /// Subtract number from all components of a vector
     virtual const BlockPETScVector& operator-= (double a);
 
     /// Assignment operator
-    virtual const BlockPETScVector& operator= (const GenericVector& x);
+    virtual const BlockPETScVector& operator= (const dolfin::GenericVector& x);
 
     /// Assignment operator
     virtual const BlockPETScVector& operator= (double a);
@@ -90,7 +90,7 @@ namespace dolfin
     //--- Special functions ---
 
     /// Return linear algebra backend factory
-    virtual GenericLinearAlgebraFactory& factory() const;
+    virtual dolfin::GenericLinearAlgebraFactory& factory() const;
     
     //--- Special PETSc functions ---
     
@@ -109,7 +109,7 @@ namespace dolfin
     virtual bool has_block_dof_map() const;
     
     /// Block access
-    virtual std::shared_ptr<GenericVector> operator()(std::size_t block_i, BlockInsertMode insert_mode) const;
+    virtual std::shared_ptr<dolfin::GenericVector> operator()(std::size_t block_i, BlockInsertMode insert_mode) const;
     
   private:
     std::shared_ptr<const BlockDofMap> _block_dof_map;

@@ -19,14 +19,11 @@
 #ifndef __BLOCK_ASSEMBLER_BASE_H
 #define __BLOCK_ASSEMBLER_BASE_H
 
+#include <dolfin/la/GenericTensor.h>
 #include <multiphenics/fem/BlockFormBase.h>
 
-namespace dolfin
+namespace multiphenics
 {
-
-  // Forward declarations
-  class GenericTensor;
-
   /// Provide some common functions used in assembler classes.
   class BlockAssemblerBase
   {
@@ -60,7 +57,7 @@ namespace dolfin
     ///  GenericTensor to assemble into
     /// @param[in] a (Form&)
     ///  Form to assemble from
-    void init_global_tensor(GenericTensor& A, const BlockFormBase& a);
+    void init_global_tensor(dolfin::GenericTensor& A, const BlockFormBase& a);
 
   };
 

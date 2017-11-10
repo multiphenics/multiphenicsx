@@ -23,6 +23,7 @@
 #include <multiphenics/fem/BlockDirichletBC.h>
 
 using namespace dolfin;
+using namespace multiphenics;
 
 //-----------------------------------------------------------------------------
 BlockDirichletBC::BlockDirichletBC(std::vector<std::vector<std::shared_ptr<const DirichletBC>>> bcs,

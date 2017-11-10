@@ -21,16 +21,13 @@
 
 #include <multiphenics/la/GenericBlockLinearAlgebraFactory.h>
 
-namespace dolfin
+namespace multiphenics
 {
 
   /// Default linear algebra factory based on global parameter "linear_algebra_backend"
 
   class BlockDefaultFactory : public GenericBlockLinearAlgebraFactory
   {
-
-    class GenericLinearSolver;
-
     public:
 
     /// Constructor
@@ -40,57 +37,57 @@ namespace dolfin
     virtual ~BlockDefaultFactory();
 
     /// Create empty matrix
-    virtual std::shared_ptr<GenericMatrix> create_matrix(MPI_Comm comm) const;
+    virtual std::shared_ptr<dolfin::GenericMatrix> create_matrix(MPI_Comm comm) const;
     
     /// Create empty matrix with attached block_dof_map
-    virtual std::shared_ptr<GenericMatrix> create_matrix_with_attached_block_dof_map(
+    virtual std::shared_ptr<dolfin::GenericMatrix> create_matrix_with_attached_block_dof_map(
       MPI_Comm comm, std::shared_ptr<const BlockDofMap> block_dof_map_0, std::shared_ptr<const BlockDofMap> block_dof_map_1
     ) const;
     
     /// Wrap existing non-block matrix
-    virtual std::shared_ptr<GenericMatrix> wrap_matrix(
-      std::shared_ptr<const GenericMatrix> matrix
+    virtual std::shared_ptr<dolfin::GenericMatrix> wrap_matrix(
+      std::shared_ptr<const dolfin::GenericMatrix> matrix
     ) const;
     
     /// Wrap existing non-block matrix and attach block_dof_map
-    virtual std::shared_ptr<GenericMatrix> wrap_matrix_and_attach_block_dof_map(
-      std::shared_ptr<const GenericMatrix> matrix, std::shared_ptr<const BlockDofMap> block_dof_map_0, std::shared_ptr<const BlockDofMap> block_dof_map_1
+    virtual std::shared_ptr<dolfin::GenericMatrix> wrap_matrix_and_attach_block_dof_map(
+      std::shared_ptr<const dolfin::GenericMatrix> matrix, std::shared_ptr<const BlockDofMap> block_dof_map_0, std::shared_ptr<const BlockDofMap> block_dof_map_1
     ) const;
 
     /// Create submatrix
-    virtual std::shared_ptr<GenericMatrix> create_sub_matrix(
-      const GenericMatrix & A, std::size_t block_i, std::size_t block_j, BlockInsertMode insert_mode
+    virtual std::shared_ptr<dolfin::GenericMatrix> create_sub_matrix(
+      const dolfin::GenericMatrix & A, std::size_t block_i, std::size_t block_j, BlockInsertMode insert_mode
     ) const;
 
     /// Create empty vector
-    virtual std::shared_ptr<GenericVector> create_vector(MPI_Comm comm) const;
+    virtual std::shared_ptr<dolfin::GenericVector> create_vector(MPI_Comm comm) const;
     
     /// Create empty vector with attached block_dof_map
-    virtual std::shared_ptr<GenericVector> create_vector_with_attached_block_dof_map(
+    virtual std::shared_ptr<dolfin::GenericVector> create_vector_with_attached_block_dof_map(
       MPI_Comm comm, std::shared_ptr<const BlockDofMap> block_dof_map
     ) const;
     
     /// Wrap existing non-block vector
-    virtual std::shared_ptr<GenericVector> wrap_vector(
-      std::shared_ptr<const GenericVector> vector
+    virtual std::shared_ptr<dolfin::GenericVector> wrap_vector(
+      std::shared_ptr<const dolfin::GenericVector> vector
     ) const;
     
     /// Wrap existing non-block vector and attach block_dof_map
-    virtual std::shared_ptr<GenericVector> wrap_vector_and_attach_block_dof_map(
-      std::shared_ptr<const GenericVector> vector, std::shared_ptr<const BlockDofMap> block_dof_map
+    virtual std::shared_ptr<dolfin::GenericVector> wrap_vector_and_attach_block_dof_map(
+      std::shared_ptr<const dolfin::GenericVector> vector, std::shared_ptr<const BlockDofMap> block_dof_map
     ) const;
     
     /// Create subvector
-    virtual std::shared_ptr<GenericVector> create_sub_vector(
-      const GenericVector & x, std::size_t block_i, BlockInsertMode insert_mode
+    virtual std::shared_ptr<dolfin::GenericVector> create_sub_vector(
+      const dolfin::GenericVector & x, std::size_t block_i, BlockInsertMode insert_mode
     ) const;
 
     /// Create empty tensor layout
-    virtual std::shared_ptr<TensorLayout> create_layout(MPI_Comm comm ,
+    virtual std::shared_ptr<dolfin::TensorLayout> create_layout(MPI_Comm comm ,
                                                         std::size_t rank) const;
 
     /// Create empty linear operator
-    virtual std::shared_ptr<GenericLinearOperator>
+    virtual std::shared_ptr<dolfin::GenericLinearOperator>
       create_linear_operator(MPI_Comm comm) const;
 
     /// Create LU solver

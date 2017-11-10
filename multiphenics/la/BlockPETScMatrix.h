@@ -25,11 +25,11 @@
 #include <multiphenics/fem/BlockDofMap.h>
 #include <multiphenics/la/GenericBlockMatrix.h>
 
-namespace dolfin
+namespace multiphenics
 {
   class BlockPETScSubMatrix;
   
-  class BlockPETScMatrix : public PETScMatrix, public GenericBlockMatrix
+  class BlockPETScMatrix : public dolfin::PETScMatrix, public GenericBlockMatrix
   {
   public:
     /// Create empty matrix (on MPI_COMM_WORLD)
@@ -51,7 +51,7 @@ namespace dolfin
     //--- Implementation of the GenericMatrix interface --
     
     /// Return copy of matrix
-    virtual std::shared_ptr<GenericMatrix> copy() const;
+    virtual std::shared_ptr<dolfin::GenericMatrix> copy() const;
     
     /// Initialize vector z to be compatible with the matrix-vector product
     /// y = Ax. In the parallel case, both size and layout are
@@ -61,7 +61,7 @@ namespace dolfin
     ///         Vector to initialise
     /// @param  dim (std::size_t)
     ///         The dimension (axis): dim = 0 --> z = y, dim = 1 --> z = x
-    virtual void init_vector(GenericVector& z, std::size_t dim) const;
+    virtual void init_vector(dolfin::GenericVector& z, std::size_t dim) const;
     
     /// Multiply matrix by given number
     virtual const BlockPETScMatrix& operator*= (double a);
@@ -70,12 +70,12 @@ namespace dolfin
     virtual const BlockPETScMatrix& operator/= (double a);
 
     /// Assignment operator
-    virtual const GenericMatrix& operator= (const GenericMatrix& A);
+    virtual const dolfin::GenericMatrix& operator= (const GenericMatrix& A);
     
     //--- Special functions ---
 
     /// Return linear algebra backend factory
-    virtual GenericLinearAlgebraFactory& factory() const;
+    virtual dolfin::GenericLinearAlgebraFactory& factory() const;
     
     //--- Special PETSc Functions ---
     
@@ -94,7 +94,7 @@ namespace dolfin
     virtual bool has_block_dof_map(std::size_t d) const;
     
     /// Block access
-    virtual std::shared_ptr<GenericMatrix> operator()(std::size_t block_i, std::size_t block_j, BlockInsertMode insert_mode) const;
+    virtual std::shared_ptr<dolfin::GenericMatrix> operator()(std::size_t block_i, std::size_t block_j, BlockInsertMode insert_mode) const;
     
   private:
     std::vector<std::shared_ptr<const BlockDofMap>> _block_dof_map;

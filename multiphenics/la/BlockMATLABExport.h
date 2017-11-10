@@ -22,16 +22,16 @@
 #include <dolfin/la/PETScMatrix.h>
 #include <dolfin/la/PETScVector.h>
 
-namespace dolfin
+namespace multiphenics
 {
   class BlockMATLABExport
   {
   public:
     /// Export matrix
-    static void export_(const PETScMatrix & A, std::string A_filename);
+    static void export_(const dolfin::PETScMatrix & A, std::string A_filename);
     
     /// Export vector
-    static void export_(const PETScVector & b, std::string b_filename);
+    static void export_(const dolfin::PETScVector & b, std::string b_filename);
   };
   
 }

@@ -23,7 +23,7 @@
 #include <multiphenics/fem/BlockDofMap.h>
 #include <multiphenics/la/BlockInsertMode.h>
 
-namespace dolfin
+namespace multiphenics
 {
   class GenericBlockMatrix
   {
@@ -42,7 +42,7 @@ namespace dolfin
     virtual bool has_block_dof_map(std::size_t d) const = 0;
     
     /// Block access
-    virtual std::shared_ptr<GenericMatrix> operator()(std::size_t block_i, std::size_t block_j, BlockInsertMode insert_mode) const = 0;
+    virtual std::shared_ptr<dolfin::GenericMatrix> operator()(std::size_t block_i, std::size_t block_j, BlockInsertMode insert_mode) const = 0;
   };
   
 }

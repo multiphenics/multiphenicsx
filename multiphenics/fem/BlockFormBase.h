@@ -23,10 +23,10 @@
 #include <dolfin/mesh/Mesh.h>
 #include <multiphenics/function/BlockFunctionSpace.h>
 
-namespace dolfin
+namespace multiphenics
 {
 
-  class BlockFormBase : public Hierarchical<BlockFormBase>
+  class BlockFormBase : public dolfin::Hierarchical<BlockFormBase>
   {
   public:
     /// Create form (shared data)
@@ -48,7 +48,7 @@ namespace dolfin
     ///
     /// @return Mesh
     ///         Shared pointer to the mesh.
-    std::shared_ptr<const Mesh> mesh() const;
+    std::shared_ptr<const dolfin::Mesh> mesh() const;
 
     /// Return function spaces for arguments
     ///

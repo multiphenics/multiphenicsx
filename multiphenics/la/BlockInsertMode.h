@@ -19,7 +19,7 @@
 #ifndef __BLOCK_INSERT_MODE_H
 #define __BLOCK_INSERT_MODE_H
 
-namespace dolfin
+namespace multiphenics
 {
   enum class BlockInsertMode
   {

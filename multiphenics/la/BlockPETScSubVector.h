@@ -25,22 +25,22 @@
 #include <multiphenics/la/BlockInsertMode.h>
 #include <multiphenics/la/BlockPETScVector.h>
 
-namespace dolfin
+namespace multiphenics
 {
   class BlockPETScVector;
   
   /// This is an extension of PETScVector to be used while assemblying block forms, that
   /// a) carries out the extraction of a sub vector
   /// b) in case of restrictions, overrides get/set/add methods to convert original index without restriction to index with restriction
-  class BlockPETScSubVector : public PETScVector
+  class BlockPETScSubVector : public dolfin::PETScVector
   {
   public:
     /// Constructor
-    BlockPETScSubVector(const GenericVector & x,
+    BlockPETScSubVector(const dolfin::GenericVector & x,
                         const std::vector<dolfin::la_index> & block_owned_dofs__global_numbering,
                         const std::map<dolfin::la_index, dolfin::la_index> & original_to_sub_block,
                         const std::map<dolfin::la_index, dolfin::la_index> & original_to_block,
-                        std::shared_ptr<const IndexMap> sub_index_map,
+                        std::shared_ptr<const dolfin::IndexMap> sub_index_map,
                         std::size_t unrestricted_size,
                         BlockInsertMode insert_mode);
 
@@ -86,16 +86,16 @@ namespace dolfin
     virtual void set_local(const std::vector<double>& values);
 
     /// Add values to each entry on local process
-    virtual void add_local(const Array<double>& values);
+    virtual void add_local(const dolfin::Array<double>& values);
     
     /// Add multiple of given vector (AXPY operation)
-    virtual void axpy(double a, const GenericVector& x);
+    virtual void axpy(double a, const dolfin::GenericVector& x);
 
     /// Replace all entries in the vector by their absolute values
     virtual void abs();
 
     /// Return inner product with given vector
-    virtual double inner(const GenericVector& v) const;
+    virtual double inner(const dolfin::GenericVector& v) const;
 
     /// Return norm of vector
     virtual double norm(std::string norm_type) const;
@@ -110,39 +110,39 @@ namespace dolfin
     virtual double sum() const;
 
     /// Return sum of selected rows in vector
-    virtual double sum(const Array<std::size_t>& rows) const;
+    virtual double sum(const dolfin::Array<std::size_t>& rows) const;
 
     /// Multiply vector by given number
-    virtual const PETScVector& operator*= (double a);
+    virtual const dolfin::PETScVector& operator*= (double a);
 
     /// Multiply vector by another vector pointwise
-    virtual const PETScVector& operator*= (const GenericVector& x);
+    virtual const dolfin::PETScVector& operator*= (const dolfin::GenericVector& x);
 
     /// Divide vector by given number
-    virtual const PETScVector& operator/= (double a);
+    virtual const dolfin::PETScVector& operator/= (double a);
 
     /// Add given vector
-    virtual const PETScVector& operator+= (const GenericVector& x);
+    virtual const dolfin::PETScVector& operator+= (const dolfin::GenericVector& x);
 
     /// Add number to all components of a vector
-    virtual const PETScVector& operator+= (double a);
+    virtual const dolfin::PETScVector& operator+= (double a);
 
     /// Subtract given vector
-    virtual const PETScVector& operator-= (const GenericVector& x);
+    virtual const dolfin::PETScVector& operator-= (const dolfin::GenericVector& x);
 
     /// Subtract number from all components of a vector
-    virtual const PETScVector& operator-= (double a);
+    virtual const dolfin::PETScVector& operator-= (double a);
 
     /// Assignment operator
-    virtual const GenericVector& operator= (const GenericVector& x);
+    virtual const dolfin::GenericVector& operator= (const dolfin::GenericVector& x);
 
     /// Assignment operator
-    virtual const PETScVector& operator= (double a);
+    virtual const dolfin::PETScVector& operator= (double a);
 
     //--- Special functions ---
 
     /// Return linear algebra backend factory
-    virtual GenericLinearAlgebraFactory& factory() const;
+    virtual dolfin::GenericLinearAlgebraFactory& factory() const;
 
     //--- Special PETSc functions ---
 
@@ -159,7 +159,7 @@ namespace dolfin
     void set_from_options();
 
     /// Assignment operator
-    const PETScVector& operator= (const PETScVector& x);
+    const dolfin::PETScVector& operator= (const dolfin::PETScVector& x);
     
   private:
   
@@ -176,7 +176,7 @@ namespace dolfin
       const std::vector<double> & block_unrestricted_subvector_values, std::vector<double> & block_restricted_subvector_values
     ) const;
     void from_restricted_subvector_values(
-      Array<double> & block_unrestricted_subvector_values, const std::vector<double> & block_restricted_subvector_values,
+      dolfin::Array<double> & block_unrestricted_subvector_values, const std::vector<double> & block_restricted_subvector_values,
       const std::vector<bool> & is_in_restriction
     ) const;
     

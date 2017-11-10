@@ -16,12 +16,12 @@
 // along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef __BLOCK_LOG_H
-#define __BLOCK_LOG_H
+#ifndef __MULTIPHENICS_LOG_H
+#define __MULTIPHENICS_LOG_H
 
 #include <dolfin/log/log.h>
 
-namespace dolfin
+namespace multiphenics
 {
 
   /// Print error message. Prefer this to the above generic error message.
@@ -46,7 +46,7 @@ namespace dolfin
 
 #define multiphenics_error(location, task, reason) \
   do { \
-    dolfin::_multiphenics_error(location, task, reason); \
+    multiphenics::_multiphenics_error(location, task, reason); \
     /* Avoid warnings related to return types by explicitly throwing an error, */ \
     /* even though this line will never be reached because execution terminates at dolfin_error */ \
     throw std::runtime_error("multiphenics encountered an error."); \

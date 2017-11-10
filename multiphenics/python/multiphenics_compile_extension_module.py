@@ -69,7 +69,7 @@ def multiphenics_compile_extension_module(*args, **kwargs):
             assert sorted_multiphenics_files == all_multiphenics_files, "Input " + typename + " list contains different files than ones present in the library. The files " + str(sorted_multiphenics_files - all_multiphenics_files) + " seem not to exist."
         
     # Read in the code
-    multiphenics_code = "\n".join([open(h).read() for h in multiphenics_headers])
+    multiphenics_code = replace_multiphenics_namespace("\n".join([open(h).read() for h in multiphenics_headers]))
     
     # Make sure to force recompilation if
     multiphenics_last_edit = max(
@@ -102,13 +102,14 @@ def multiphenics_compile_extension_module(*args, **kwargs):
     multiphenics_module_name = "multiphenics_" + multiphenics_module_signature
     
     # Instant requires source files to be relative to the source directory
+    multiphenics_headers = [os.path.relpath(s, multiphenics_folder) for s in multiphenics_headers]
     multiphenics_sources = [os.path.relpath(s, multiphenics_folder) for s in multiphenics_sources]
     
     # Patch Instant
     patch_instant()
     
     # Set include dirs
-    multiphenics_include_dirs = [multiphenics_root]
+    multiphenics_include_dirs = list()
     if "PETSC_DIR" in os.environ:
         multiphenics_include_dirs.append(os.environ["PETSC_DIR"] + "/include")
     if "SLEPC_DIR" in os.environ:
@@ -118,6 +119,7 @@ def multiphenics_compile_extension_module(*args, **kwargs):
     cpp = compile_extension_module(
         code=multiphenics_code,
         source_directory=multiphenics_folder,
+        local_headers=multiphenics_headers,
         sources=multiphenics_sources,
         include_dirs=multiphenics_include_dirs,
         module_name=multiphenics_module_name,
@@ -137,7 +139,6 @@ def extended_copy_files(source, dest, files):
     files_in_subfolders = dict()
     for f in files:
         subfolder = os.path.dirname(f)
-        assert os.path.dirname(subfolder) == "", "We only handle one level of subfolders"
         if subfolder not in files_in_subfolders:
             files_in_subfolders[subfolder] = list()
         file_ = os.path.basename(f)
@@ -149,6 +150,22 @@ def extended_copy_files(source, dest, files):
         if not os.path.exists(dest_subfolder):
             os.makedirs(dest_subfolder)
         original_copy_files(source_subfolder, dest_subfolder, files_in_subfolder)
+    # Replace multiphenics namespace with dolfin namespace
+    for (subfolder, files_in_subfolder) in files_in_subfolders.items():
+        for filename in files_in_subfolder:
+            filepath = os.path.join(dest, subfolder, filename)
+            with io.open(filepath, "r", encoding="utf8") as f:
+                content = replace_multiphenics_namespace(f.read())
+            with io.open(filepath, "w", encoding="utf8") as f:
+                f.write(content)
+            extension = os.path.splitext(filename)[1]
+            assert extension in (".cpp", ".h")
+            if extension == ".h":
+                filepath_copy = os.path.join(dest, "multiphenics", subfolder, filename)
+                if not os.path.exists(os.path.dirname(filepath_copy)):
+                    os.makedirs(os.path.dirname(filepath_copy))
+                with io.open(filepath_copy, "w", encoding="utf8") as f:
+                    f.write(content)
 
 # Extend instant write interface file to allow both pre and post code
 original_write_interfacefile = instant.build.write_interfacefile
@@ -178,6 +195,9 @@ def extended_write_interfacefile(filename, modulename, code, init_code,
         f.write(extended_write_interfacefile.additional_declarations__post)
         f.flush()
 extended_write_interfacefile.additional_declarations__post = None
+
+def replace_multiphenics_namespace(code):
+    return code.replace("namespace multiphenics", "namespace dolfin").replace("multiphenics::", "").replace("dolfin::", "").replace("\nvoid _multiphenics_error", "\nvoid dolfin::_multiphenics_error")
 
 def patch_instant():
     instant.build.copy_files = extended_copy_files

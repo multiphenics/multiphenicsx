@@ -25,57 +25,57 @@ namespace multiphenics_wrappers
 {
   void la(py::module& m)
   {
-    // dolfin::BlockMATLABExport
-    py::class_<dolfin::BlockMATLABExport>
+    // multiphenics::BlockMATLABExport
+    py::class_<multiphenics::BlockMATLABExport>
       (m, "BlockMATLABExport", "multiphenics BlockMATLABExport object")
       .def_static("export_", (void (*)(const dolfin::PETScMatrix&, std::string))
-                  &dolfin::BlockMATLABExport::export_)
+                  &multiphenics::BlockMATLABExport::export_)
       .def_static("export_", (void (*)(const dolfin::PETScVector&, std::string))
-                  &dolfin::BlockMATLABExport::export_);
+                  &multiphenics::BlockMATLABExport::export_);
       
-    // dolfin::BlockInsertMode
-    py::enum_<dolfin::BlockInsertMode>
+    // multiphenics::BlockInsertMode
+    py::enum_<multiphenics::BlockInsertMode>
       (m, "BlockInsertMode", "multiphenics BlockInsertMode enum")
-      .value("INSERT_VALUES", dolfin::BlockInsertMode::INSERT_VALUES)
-      .value("ADD_VALUES", dolfin::BlockInsertMode::ADD_VALUES);
+      .value("INSERT_VALUES", multiphenics::BlockInsertMode::INSERT_VALUES)
+      .value("ADD_VALUES", multiphenics::BlockInsertMode::ADD_VALUES);
       
-    // dolfin::GenericBlockVector
-    py::class_<dolfin::GenericBlockVector, std::shared_ptr<dolfin::GenericBlockVector>>
+    // multiphenics::GenericBlockVector
+    py::class_<multiphenics::GenericBlockVector, std::shared_ptr<multiphenics::GenericBlockVector>>
       (m, "GenericBlockVector", "multiphenics GenericBlockVector object");
       
-    // dolfin::GenericBlockMatrix
-    py::class_<dolfin::GenericBlockMatrix, std::shared_ptr<dolfin::GenericBlockMatrix>>
+    // multiphenics::GenericBlockMatrix
+    py::class_<multiphenics::GenericBlockMatrix, std::shared_ptr<multiphenics::GenericBlockMatrix>>
       (m, "GenericBlockMatrix", "multiphenics GenericBlockMatrix object");
       
     #ifdef HAS_PETSC
-    // dolfin::BlockPETScVector
-    py::class_<dolfin::BlockPETScVector, std::shared_ptr<dolfin::BlockPETScVector>, dolfin::GenericBlockVector, dolfin::PETScVector>
+    // multiphenics::BlockPETScVector
+    py::class_<multiphenics::BlockPETScVector, std::shared_ptr<multiphenics::BlockPETScVector>, multiphenics::GenericBlockVector, dolfin::PETScVector>
       (m, "BlockPETScVector", "multiphenics BlockPETScVector object");
       
-    // dolfin::BlockPETScMatrix
-    py::class_<dolfin::BlockPETScMatrix, std::shared_ptr<dolfin::BlockPETScMatrix>, dolfin::GenericBlockMatrix, dolfin::PETScMatrix>
+    // multiphenics::BlockPETScMatrix
+    py::class_<multiphenics::BlockPETScMatrix, std::shared_ptr<multiphenics::BlockPETScMatrix>, multiphenics::GenericBlockMatrix, dolfin::PETScMatrix>
       (m, "BlockPETScMatrix", "multiphenics BlockPETScMatrix object");
       
-    // dolfin::BlockPETScSubVector
-    py::class_<dolfin::BlockPETScSubVector, std::shared_ptr<dolfin::BlockPETScSubVector>, dolfin::PETScVector>
+    // multiphenics::BlockPETScSubVector
+    py::class_<multiphenics::BlockPETScSubVector, std::shared_ptr<multiphenics::BlockPETScSubVector>, dolfin::PETScVector>
       (m, "BlockPETScSubVector", "multiphenics BlockPETScSubVector object");
       
-    // dolfin::BlockPETScSubMatrix
-    py::class_<dolfin::BlockPETScSubMatrix, std::shared_ptr<dolfin::BlockPETScSubMatrix>, dolfin::PETScMatrix>
+    // multiphenics::BlockPETScSubMatrix
+    py::class_<multiphenics::BlockPETScSubMatrix, std::shared_ptr<multiphenics::BlockPETScSubMatrix>, dolfin::PETScMatrix>
       (m, "BlockPETScSubMatrix", "multiphenics BlockPETScSubMatrix object");
     #endif
       
-    // dolfin::GenericBlockLinearAlgebraFactory
-    py::class_<dolfin::GenericBlockLinearAlgebraFactory, std::shared_ptr<dolfin::GenericBlockLinearAlgebraFactory>, dolfin::GenericLinearAlgebraFactory>
+    // multiphenics::GenericBlockLinearAlgebraFactory
+    py::class_<multiphenics::GenericBlockLinearAlgebraFactory, std::shared_ptr<multiphenics::GenericBlockLinearAlgebraFactory>, dolfin::GenericLinearAlgebraFactory>
       (m, "GenericBlockLinearAlgebraFactory", "multiphenics GenericBlockLinearAlgebraFactory object");
       
-    // dolfin::BlockDefaultFactory
-    py::class_<dolfin::BlockDefaultFactory, std::shared_ptr<dolfin::BlockDefaultFactory>, dolfin::GenericBlockLinearAlgebraFactory>
+    // multiphenics::BlockDefaultFactory
+    py::class_<multiphenics::BlockDefaultFactory, std::shared_ptr<multiphenics::BlockDefaultFactory>, multiphenics::GenericBlockLinearAlgebraFactory>
       (m, "BlockDefaultFactory", "multiphenics BlockDefaultFactory object");
     
     #ifdef HAS_PETSC
-    // dolfin::BlockPETScFactory
-    py::class_<dolfin::BlockPETScFactory, std::shared_ptr<dolfin::BlockPETScFactory>, dolfin::GenericBlockLinearAlgebraFactory>
+    // multiphenics::BlockPETScFactory
+    py::class_<multiphenics::BlockPETScFactory, std::shared_ptr<multiphenics::BlockPETScFactory>, multiphenics::GenericBlockLinearAlgebraFactory>
       (m, "BlockPETScFactory", "multiphenics BlockPETScFactory object");
     #endif
     
@@ -88,13 +88,13 @@ namespace multiphenics_wrappers
       .def(py::init<std::shared_ptr<const dolfin::PETScMatrix>, std::shared_ptr<const dolfin::PETScMatrix>,
                     std::vector<std::shared_ptr<const dolfin::DirichletBC>>>());
     
-    // dolfin::CondensedBlockSLEPcEigenSolver
-    py::class_<dolfin::CondensedBlockSLEPcEigenSolver, std::shared_ptr<dolfin::CondensedBlockSLEPcEigenSolver>, dolfin::CondensedSLEPcEigenSolver>
+    // multiphenics::CondensedBlockSLEPcEigenSolver
+    py::class_<multiphenics::CondensedBlockSLEPcEigenSolver, std::shared_ptr<multiphenics::CondensedBlockSLEPcEigenSolver>, dolfin::CondensedSLEPcEigenSolver>
       (m, "CondensedBlockSLEPcEigenSolver", "multiphenics CondensedBlockSLEPcEigenSolver object")
-      .def(py::init<std::shared_ptr<const dolfin::BlockPETScMatrix>,
-                    std::shared_ptr<const dolfin::BlockDirichletBC>>())
-      .def(py::init<std::shared_ptr<const dolfin::BlockPETScMatrix>, std::shared_ptr<const dolfin::BlockPETScMatrix>,
-                    std::shared_ptr<const dolfin::BlockDirichletBC>>());
+      .def(py::init<std::shared_ptr<const multiphenics::BlockPETScMatrix>,
+                    std::shared_ptr<const multiphenics::BlockDirichletBC>>())
+      .def(py::init<std::shared_ptr<const multiphenics::BlockPETScMatrix>, std::shared_ptr<const multiphenics::BlockPETScMatrix>,
+                    std::shared_ptr<const multiphenics::BlockDirichletBC>>());
     #endif
   }
 }

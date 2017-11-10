@@ -24,6 +24,7 @@
 #include <multiphenics/la/BlockPETScMatrix.h>
 
 using namespace dolfin;
+using namespace multiphenics;
 
 //-----------------------------------------------------------------------------
 BlockPETScMatrix::BlockPETScMatrix() : PETScMatrix()

@@ -22,6 +22,7 @@
 #include <multiphenics/log/log.h>
 
 using namespace dolfin;
+using namespace multiphenics;
 
 //-----------------------------------------------------------------------------
 BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V)
