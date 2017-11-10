@@ -42,7 +42,7 @@ def test_case_0a_linear(mesh):
     F = BlockForm(f)
     # Assert equality for linear form
     for i in range(F.block_size(0)):
-        assert array_equal(assemble(F[i]).array(), assemble(f[i]).array())
+        assert array_equal(assemble(F[i]).get_local(), assemble(f[i]).get_local())
 
 # Case 0a: simple forms (no nesting), standard forms [bilinear form]
 def test_case_0a_bilinear(mesh):
@@ -85,7 +85,7 @@ def test_case_0b_linear(mesh):
     F_sub = block_restrict(f, W_sub)
     # Assert equality for restricted linear form
     for i in range(F_sub.block_size(0)):
-        assert array_equal(assemble(F_sub[i]).array(), assemble(f[i]).array())
+        assert array_equal(assemble(F_sub[i]).get_local(), assemble(f[i]).get_local())
     
 # Case 0b: simple forms (no nesting), define a useless subspace (equal to original space) and assemble on subspace [bilinear form]
 def test_case_0b_bilinear(mesh):
@@ -130,7 +130,7 @@ def test_case_0c_linear(mesh):
     # Restrict linear form to subspace
     F_sub = block_restrict(f, W_sub)
     # Assert equality for restricted linear form
-    assert array_equal(assemble(F_sub[0]).array(), assemble(f[0]).array())
+    assert array_equal(assemble(F_sub[0]).get_local(), assemble(f[0]).get_local())
     
 # Case 0c: simple forms (no nesting), define the velocity subspace and assemble on subspace [bilinear form]
 def test_case_0c_bilinear(mesh):
@@ -170,7 +170,7 @@ def test_case_0d_linear(mesh):
     # Restrict linear form to subspace
     F_sub = block_restrict(f, W_sub)
     # Assert equality for restricted linear form
-    assert array_equal(assemble(F_sub[0]).array(), assemble(f[1]).array())
+    assert array_equal(assemble(F_sub[0]).get_local(), assemble(f[1]).get_local())
     
 # Case 0d: simple forms (no nesting), define the pressure subspace and assemble on subspace [bilinear form]
 def test_case_0d_bilinear_1(mesh):
@@ -376,8 +376,8 @@ def test_case_1a_linear(mesh):
          f_1]
     F = BlockForm(f)
     # Assert equality for linear form
-    assert array_equal(assemble(F[0]).array(), assemble(f_0[0]).array())
-    assert array_equal(assemble(F[1]).array(), assemble(f_1[0]).array())
+    assert array_equal(assemble(F[0]).get_local(), assemble(f_0[0]).get_local())
+    assert array_equal(assemble(F[1]).get_local(), assemble(f_1[0]).get_local())
 
 # Case 1a: forms with at most one level of nesting, test nesting on standard forms [bilinear form]
 def test_case_1a_bilinear(mesh):
@@ -420,8 +420,8 @@ def test_case_1b_linear(mesh):
          f_1[0]]
     F = BlockForm(f)
     # Assert equality for linear form
-    assert array_equal(assemble(F[0]).array(), assemble(f_0[0]).array())
-    assert array_equal(assemble(F[1]).array(), assemble(f_1[0]).array())
+    assert array_equal(assemble(F[0]).get_local(), assemble(f_0[0]).get_local())
+    assert array_equal(assemble(F[1]).get_local(), assemble(f_1[0]).get_local())
 
 # Case 1b: forms with at most one level of nesting, test non constant nesting levels [bilinear form]
 def test_case_1b_bilinear(mesh):
@@ -489,10 +489,10 @@ def test_case_1d_linear(mesh):
          f_1]
     F = BlockForm(f)
     # Assert equality for linear form
-    assert array_equal(assemble(F[0]).array(), assemble(f_0[0]).array())
-    assert array_equal(assemble(F[1]).array(), assemble(f_0[1]).array())
-    assert array_equal(assemble(F[2]).array(), assemble(f_1[0]).array())
-    assert array_equal(assemble(F[3]).array(), assemble(f_1[1]).array())
+    assert array_equal(assemble(F[0]).get_local(), assemble(f_0[0]).get_local())
+    assert array_equal(assemble(F[1]).get_local(), assemble(f_0[1]).get_local())
+    assert array_equal(assemble(F[2]).get_local(), assemble(f_1[0]).get_local())
+    assert array_equal(assemble(F[3]).get_local(), assemble(f_1[1]).get_local())
     
 # Case 1d: forms with at most one level of nesting, test nesting on standard forms [bilinear form]
 def test_case_1d_bilinear(mesh):
@@ -554,10 +554,10 @@ def test_case_1e_linear(mesh):
          f_1[1]]
     F = BlockForm(f)
     # Assert equality for linear form
-    assert array_equal(assemble(F[0]).array(), assemble(f_0[0]).array())
-    assert array_equal(assemble(F[1]).array(), assemble(f_0[1]).array())
-    assert array_equal(assemble(F[2]).array(), assemble(f_1[0]).array())
-    assert array_equal(assemble(F[3]).array(), assemble(f_1[1]).array())
+    assert array_equal(assemble(F[0]).get_local(), assemble(f_0[0]).get_local())
+    assert array_equal(assemble(F[1]).get_local(), assemble(f_0[1]).get_local())
+    assert array_equal(assemble(F[2]).get_local(), assemble(f_1[0]).get_local())
+    assert array_equal(assemble(F[3]).get_local(), assemble(f_1[1]).get_local())
     
 # Case 1e: forms with at most one level of nesting, test non constant nesting levels [bilinear form]
 def test_case_1e_bilinear(mesh):
@@ -655,9 +655,9 @@ def test_case_1g_linear(mesh):
          f_1]
     F = BlockForm(f)
     # Assert equality for linear form
-    assert array_equal(assemble(F[0]).array(), assemble(f_0[0]).array())
-    assert array_equal(assemble(F[1]).array(), assemble(f_0[1]).array())
-    assert array_equal(assemble(F[2]).array(), assemble(f_1[0]).array())
+    assert array_equal(assemble(F[0]).get_local(), assemble(f_0[0]).get_local())
+    assert array_equal(assemble(F[1]).get_local(), assemble(f_0[1]).get_local())
+    assert array_equal(assemble(F[2]).get_local(), assemble(f_1[0]).get_local())
     
 # Case 1g: forms with at most one level of nesting, test nesting on standard forms [bilinear form]
 def test_case_1g_bilinear(mesh):
@@ -709,9 +709,9 @@ def test_case_1h_linear(mesh):
          f_1]
     F = BlockForm(f)
     # Assert equality for linear form
-    assert array_equal(assemble(F[0]).array(), assemble(f_0[0]).array())
-    assert array_equal(assemble(F[1]).array(), assemble(f_0[1]).array())
-    assert array_equal(assemble(F[2]).array(), assemble(f_1[0]).array())
+    assert array_equal(assemble(F[0]).get_local(), assemble(f_0[0]).get_local())
+    assert array_equal(assemble(F[1]).get_local(), assemble(f_0[1]).get_local())
+    assert array_equal(assemble(F[2]).get_local(), assemble(f_1[0]).get_local())
     
 # Case 1h: forms with at most one level of nesting, test non constant nesting levels [bilinear form]
 def test_case_1h_bilinear(mesh):
@@ -793,9 +793,9 @@ def test_case_2a_linear(mesh):
           f_2]
     F = BlockForm(f)
     # Assert equality for linear form
-    assert array_equal(assemble(F[0]).array(), assemble(f_0[0]).array())
-    assert array_equal(assemble(F[1]).array(), assemble(f_1[0]).array())
-    assert array_equal(assemble(F[2]).array(), assemble(f_2[0]).array())
+    assert array_equal(assemble(F[0]).get_local(), assemble(f_0[0]).get_local())
+    assert array_equal(assemble(F[1]).get_local(), assemble(f_1[0]).get_local())
+    assert array_equal(assemble(F[2]).get_local(), assemble(f_2[0]).get_local())
     
 # Case 2a: forms with at most two levels of nesting, test nesting on standard forms [bilinear form]
 def test_case_2a_bilinear(mesh):
@@ -890,12 +890,12 @@ def test_case_2c_linear(mesh):
           f_2]
     F = BlockForm(f)
     # Assert equality for linear form
-    assert array_equal(assemble(F[0]).array(), assemble(f_0[0]).array())
-    assert array_equal(assemble(F[1]).array(), assemble(f_0[1]).array())
-    assert array_equal(assemble(F[2]).array(), assemble(f_1[0]).array())
-    assert array_equal(assemble(F[3]).array(), assemble(f_1[1]).array())
-    assert array_equal(assemble(F[4]).array(), assemble(f_2[0]).array())
-    assert array_equal(assemble(F[5]).array(), assemble(f_2[1]).array())
+    assert array_equal(assemble(F[0]).get_local(), assemble(f_0[0]).get_local())
+    assert array_equal(assemble(F[1]).get_local(), assemble(f_0[1]).get_local())
+    assert array_equal(assemble(F[2]).get_local(), assemble(f_1[0]).get_local())
+    assert array_equal(assemble(F[3]).get_local(), assemble(f_1[1]).get_local())
+    assert array_equal(assemble(F[4]).get_local(), assemble(f_2[0]).get_local())
+    assert array_equal(assemble(F[5]).get_local(), assemble(f_2[1]).get_local())
     
 # Case 2c: forms with at most two levels of nesting, test nesting on standard forms [bilinear form]
 def test_case_2c_bilinear(mesh):
@@ -1055,11 +1055,11 @@ def test_case_2e_linear(mesh):
           f_2]
     F = BlockForm(f)
     # Assert equality for linear form
-    assert array_equal(assemble(F[0]).array(), assemble(f_0[0]).array())
-    assert array_equal(assemble(F[1]).array(), assemble(f_0[1]).array())
-    assert array_equal(assemble(F[2]).array(), assemble(f_1[0]).array())
-    assert array_equal(assemble(F[3]).array(), assemble(f_1[1]).array())
-    assert array_equal(assemble(F[4]).array(), assemble(f_2[0]).array())
+    assert array_equal(assemble(F[0]).get_local(), assemble(f_0[0]).get_local())
+    assert array_equal(assemble(F[1]).get_local(), assemble(f_0[1]).get_local())
+    assert array_equal(assemble(F[2]).get_local(), assemble(f_1[0]).get_local())
+    assert array_equal(assemble(F[3]).get_local(), assemble(f_1[1]).get_local())
+    assert array_equal(assemble(F[4]).get_local(), assemble(f_2[0]).get_local())
     
 # Case 2e: forms with at most two levels of nesting, test nesting on standard forms [bilinear form]
 def test_case_2e_bilinear(mesh):

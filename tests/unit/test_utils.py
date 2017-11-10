@@ -170,9 +170,9 @@ def assert_functions_manipulations(functions, block_V):
     block_assign(block_function_b, block_function_a)
     # Each sub function should now contain the same data as the original block function
     for index in range(n_blocks):
-        assert array_equal(block_function_b.sub(index).vector().array(), block_function_a.sub(index).vector().array())
+        assert array_equal(block_function_b.sub(index).vector().get_local(), block_function_a.sub(index).vector().get_local())
     # The two block vectors should store the same data
-    assert array_equal(block_function_b.block_vector().array(), block_function_a.block_vector().array())
+    assert array_equal(block_function_b.block_vector().get_local(), block_function_a.block_vector().get_local())
     
 # ================ FUNCTION SPACES GENERATOR ================ #
 def StokesFunctionSpace(mesh, family, degree):

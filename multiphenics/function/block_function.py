@@ -231,7 +231,7 @@ class BlockFunction(object):
         if isinstance(other, BlockFunction):
             output = self.copy(deepcopy=True)
             for (block_fun_output, block_fun_other) in zip(output, other):
-                block_fun_output.vector().add_local(block_fun_other.vector().array())
+                block_fun_output.vector().add_local(block_fun_other.vector().get_local())
                 block_fun_output.vector().apply("add")
             output.apply("from subfunctions")
             return output
@@ -242,7 +242,7 @@ class BlockFunction(object):
         if isinstance(other, BlockFunction):
             output = self.copy(deepcopy=True)
             for (block_fun_output, block_fun_other) in zip(output, other):
-                block_fun_output.vector().add_local(- block_fun_other.vector().array())
+                block_fun_output.vector().add_local(- block_fun_other.vector().get_local())
                 block_fun_output.vector().apply("add")
             output.apply("from subfunctions")
             return output
@@ -286,7 +286,7 @@ class BlockFunction(object):
     def __iadd__(self, other):
         if isinstance(other, BlockFunction):
             for (block_fun_output, block_fun_other) in zip(self, other):
-                block_fun_output.vector().add_local(block_fun_other.vector().array())
+                block_fun_output.vector().add_local(block_fun_other.vector().get_local())
                 block_fun_output.vector().apply("add")
             self.apply("from subfunctions")
             return self
@@ -296,7 +296,7 @@ class BlockFunction(object):
     def __isub__(self, other):
         if isinstance(other, BlockFunction):
             for (block_fun_output, block_fun_other) in zip(self, other):
-                block_fun_output.vector().add_local(- block_fun_other.vector().array())
+                block_fun_output.vector().add_local(- block_fun_other.vector().get_local())
                 block_fun_output.vector().apply("add")
             self.apply("from subfunctions")
             return self

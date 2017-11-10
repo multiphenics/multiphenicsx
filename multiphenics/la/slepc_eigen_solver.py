@@ -33,11 +33,11 @@ def DecorateGetEigenPair(SLEPcEigenSolver):
                 c_vec_in = c_vec
             (lr, lc, r_vec_out, c_vec_out) = SLEPcEigenSolver.get_eigenpair(self, i, r_vec_in, c_vec_in)
             if isinstance(r_vec, Function):
-                r_vec.vector().set_local(r_vec_out.array())
+                r_vec.vector().set_local(r_vec_out.get_local())
                 r_vec.vector().apply("insert")
                 r_vec_out = r_vec
             if isinstance(c_vec, Function):
-                c_vec.vector().set_local(c_vec_out.array())
+                c_vec.vector().set_local(c_vec_out.get_local())
                 c_vec.vector().apply("insert")
                 c_vec_out = c_vec
             return (lr, lc, r_vec_out, c_vec_out)
