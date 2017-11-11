@@ -54,13 +54,6 @@ std::shared_ptr<GenericMatrix> BlockDefaultFactory::wrap_matrix(
   return factory().wrap_matrix(matrix);
 }
 //-----------------------------------------------------------------------------
-std::shared_ptr<GenericMatrix> BlockDefaultFactory::wrap_matrix_and_attach_block_dof_map(
-  const GenericMatrix & matrix, std::shared_ptr<const BlockDofMap> block_dof_map_0, std::shared_ptr<const BlockDofMap> block_dof_map_1
-) const
-{
-  return factory().wrap_matrix_and_attach_block_dof_map(matrix, block_dof_map_0, block_dof_map_1);
-}
-//-----------------------------------------------------------------------------
 std::shared_ptr<GenericMatrix> BlockDefaultFactory::create_sub_matrix(
   const GenericMatrix & A, std::size_t block_i, std::size_t block_j, BlockInsertMode insert_mode
 ) const
@@ -85,13 +78,6 @@ std::shared_ptr<GenericVector> BlockDefaultFactory::wrap_vector(
 ) const
 {
   return factory().wrap_vector(vector);
-}
-//-----------------------------------------------------------------------------
-std::shared_ptr<GenericVector> BlockDefaultFactory::wrap_vector_and_attach_block_dof_map(
-  const GenericVector & vector, std::shared_ptr<const BlockDofMap> block_dof_map
-) const
-{
-  return factory().wrap_vector_and_attach_block_dof_map(vector, block_dof_map);
 }
 //-----------------------------------------------------------------------------
 std::shared_ptr<GenericVector> BlockDefaultFactory::create_sub_vector(

@@ -49,11 +49,6 @@ namespace multiphenics
       const dolfin::GenericMatrix & matrix
     ) const = 0;
     
-    /// Wrap existing non-block matrix and attach block_dof_map
-    virtual std::shared_ptr<dolfin::GenericMatrix> wrap_matrix_and_attach_block_dof_map(
-      const dolfin::GenericMatrix & matrix, std::shared_ptr<const BlockDofMap> block_dof_map_0, std::shared_ptr<const BlockDofMap> block_dof_map_1
-    ) const = 0;
-
     /// Create submatrix
     virtual std::shared_ptr<dolfin::GenericMatrix> create_sub_matrix(
       const dolfin::GenericMatrix & A, std::size_t block_i, std::size_t block_j, BlockInsertMode insert_mode
@@ -67,11 +62,6 @@ namespace multiphenics
     /// Wrap existing non-block vector
     virtual std::shared_ptr<dolfin::GenericVector> wrap_vector(
       const dolfin::GenericVector & vector
-    ) const = 0;
-    
-    /// Wrap existing non-block vector and attach block_dof_map
-    virtual std::shared_ptr<dolfin::GenericVector> wrap_vector_and_attach_block_dof_map(
-      const dolfin::GenericVector & vector, std::shared_ptr<const BlockDofMap> block_dof_map
     ) const = 0;
     
     /// Create subvector
