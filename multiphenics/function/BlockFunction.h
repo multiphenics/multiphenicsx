@@ -96,7 +96,7 @@ namespace multiphenics
     /// *Returns*
     ///     _Function_
     ///         The subfunction.
-    dolfin::Function& operator[] (std::size_t i) const;
+    std::shared_ptr<dolfin::Function> operator[] (std::size_t i) const;
 
     /// Return shared pointer to function space
     ///

@@ -98,9 +98,9 @@ const BlockFunction& BlockFunction::operator= (const BlockFunction& v)
   return *this;
 }
 //-----------------------------------------------------------------------------
-Function& BlockFunction::operator[] (std::size_t i) const
+std::shared_ptr<Function> BlockFunction::operator[] (std::size_t i) const
 {
-  return *_sub_functions[i];
+  return _sub_functions[i];
 }
 //-----------------------------------------------------------------------------
 std::shared_ptr<const BlockFunctionSpace> BlockFunction::block_function_space() const
