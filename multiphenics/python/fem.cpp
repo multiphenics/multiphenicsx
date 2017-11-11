@@ -26,27 +26,32 @@ namespace multiphenics_wrappers
   void fem(py::module& m)
   {
     // multiphenics::BlockDofMap
-    py::class_<multiphenics::BlockDofMap, std::shared_ptr<multiphenics::BlockDofMap>>
+    py::class_<multiphenics::BlockDofMap, std::shared_ptr<multiphenics::BlockDofMap>, dolfin::GenericDofMap>
       (m, "BlockDofMap", "multiphenics BlockDofMap object")
       .def(py::init<std::vector<std::shared_ptr<const dolfin::GenericDofMap>>,
                     std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>>,
                     const dolfin::Mesh&>())
-      .def("ownership_range", &multiphenics::BlockDofMap::ownership_range);
+      .def("ownership_range", &multiphenics::BlockDofMap::ownership_range)
+      .def("global_dimension", &multiphenics::BlockDofMap::global_dimension)
+      .def("block_to_original", &multiphenics::BlockDofMap::block_to_original)
+      .def("sub_index_map", &multiphenics::BlockDofMap::sub_index_map)
+      ;
       
     // multiphenics::BlockFormBase
     py::class_<multiphenics::BlockFormBase, std::shared_ptr<multiphenics::BlockFormBase>>
       (m, "BlockFormBase", "multiphenics BlockFormBase object")
       .def("rank", &multiphenics::BlockFormBase::rank)
-      .def("mesh", &multiphenics::BlockFormBase::mesh);
+      .def("mesh", &multiphenics::BlockFormBase::mesh)
+      .def("block_size", &multiphenics::BlockFormBase::block_size);
       
     // multiphenics::BlockForm1
-    py::class_<multiphenics::BlockForm1, std::shared_ptr<multiphenics::BlockForm1>>
+    py::class_<multiphenics::BlockForm1, std::shared_ptr<multiphenics::BlockForm1>, multiphenics::BlockFormBase>
       (m, "BlockForm1", "multiphenics BlockForm1 object")
       .def(py::init<std::vector<std::shared_ptr<const dolfin::Form>>,
                     std::vector<std::shared_ptr<const multiphenics::BlockFunctionSpace>>>());
                     
     // multiphenics::BlockForm2
-    py::class_<multiphenics::BlockForm2, std::shared_ptr<multiphenics::BlockForm2>>
+    py::class_<multiphenics::BlockForm2, std::shared_ptr<multiphenics::BlockForm2>, multiphenics::BlockFormBase>
       (m, "BlockForm2", "multiphenics BlockForm2 object")
       .def(py::init<std::vector<std::vector<std::shared_ptr<const dolfin::Form>>>,
                     std::vector<std::shared_ptr<const multiphenics::BlockFunctionSpace>>>());
@@ -65,7 +70,7 @@ namespace multiphenics_wrappers
       .def("assemble", &multiphenics::BlockAssembler::assemble);
       
     // multiphenics::BlockDirichletBC
-    py::class_<multiphenics::BlockDirichletBC, std::shared_ptr<multiphenics::BlockDirichletBC>>
+    py::class_<multiphenics::BlockDirichletBC, std::shared_ptr<multiphenics::BlockDirichletBC>, dolfin::Variable>
       (m, "BlockDirichletBC", "multiphenics BlockDirichletBC object")
       .def(py::init<std::vector<std::vector<std::shared_ptr<const DirichletBC>>>,
                     std::shared_ptr<const BlockFunctionSpace>>())
@@ -82,6 +87,10 @@ namespace multiphenics_wrappers
       .def("apply", (void (multiphenics::BlockDirichletBC::*)(dolfin::GenericMatrix&) const)
            &multiphenics::BlockDirichletBC::apply)
       .def("apply", (void (multiphenics::BlockDirichletBC::*)(dolfin::GenericMatrix&, dolfin::GenericVector&) const)
+           &multiphenics::BlockDirichletBC::apply)
+      .def("apply", (void (multiphenics::BlockDirichletBC::*)(dolfin::GenericVector&, const dolfin::GenericVector&) const)
+           &multiphenics::BlockDirichletBC::apply)
+      .def("apply", (void (multiphenics::BlockDirichletBC::*)(dolfin::GenericMatrix&, dolfin::GenericVector&, const dolfin::GenericVector&) const)
            &multiphenics::BlockDirichletBC::apply);
   }
 }

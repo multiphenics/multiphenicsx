@@ -70,6 +70,7 @@ namespace multiphenics_wrappers
            &multiphenics::BlockFunction::operator=)
       .def("sub", &multiphenics::BlockFunction::operator[])
       .def("block_vector", (std::shared_ptr<const dolfin::GenericVector> (multiphenics::BlockFunction::*)() const)
-           &multiphenics::BlockFunction::block_vector, "Return the block vector associated with the finite element BlockFunction");
+           &multiphenics::BlockFunction::block_vector, "Return the block vector associated with the finite element BlockFunction")
+      .def("apply", &multiphenics::BlockFunction::apply);
   }
 }

@@ -94,8 +94,8 @@ def run_monolithic():
     print("Inf-sup constant (monolithic): ", sqrt(r))
 
     # Extract eigenfunctions
-    r_fun = Function(W)
-    eigensolver.get_eigenpair(0, r_fun)
+    r_fun, c_fun = Function(W), Function(W)
+    eigensolver.get_eigenpair(0, r_fun, c_fun)
     (u_fun, p_fun) = r_fun.split(deepcopy=True)
     (u_fun_1, u_fun_2) = u_fun.split(deepcopy=True)
     normalize(u_fun_1, u_fun_2, p_fun)
@@ -151,8 +151,8 @@ def run_block():
     print("Inf-sup constant (block): ", sqrt(r))
     
     # Extract eigenfunctions
-    r_fun = BlockFunction(W)
-    eigensolver.get_eigenpair(0, r_fun)
+    r_fun, c_fun = BlockFunction(W), BlockFunction(W)
+    eigensolver.get_eigenpair(0, r_fun, c_fun)
     (u_fun, p_fun) = r_fun.block_split()
     (u_fun_1, u_fun_2) = u_fun.split(deepcopy=True)
     normalize(u_fun_1, u_fun_2, p_fun)

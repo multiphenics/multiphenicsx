@@ -20,7 +20,14 @@ import numbers
 import types
 import pytest
 from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, hstack as bvec, sort, unique, vstack
-from dolfin import assemble, Constant, DOLFIN_EPS, dx, ERROR, Expression, FiniteElement, Function, FunctionSpace, GenericMatrix, GenericVector, inner, MixedElement, PROGRESS, project as dolfin_project, set_log_level, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
+from dolfin import assemble, Constant, DOLFIN_EPS, dx, Expression, FiniteElement, Function, FunctionSpace, has_pybind11, inner, MixedElement, project as dolfin_project, set_log_level, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
+if has_pybind11():
+    from dolfin.cpp.la import GenericMatrix, GenericVector
+    from dolfin.cpp.log import LogLevel
+    ERROR = LogLevel.ERROR
+    PROGRESS = LogLevel.PROGRESS
+else:
+    from dolfin import ERROR, GenericMatrix, GenericVector, PROGRESS
 from multiphenics import assign, block_assemble, block_assign, BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
 set_log_level(PROGRESS)
 
@@ -84,7 +91,9 @@ def assert_block_vectors_equal(rhs, block_rhs, block_V):
     else:
         rhs1 = rhs
         rhs2 = None
-    comm = block_rhs.mpi_comm().tompi4py()
+    comm = block_rhs.mpi_comm()
+    if not has_pybind11():
+        comm = comm.tompi4py()
     if rhs2:
         map_block_to_original = gather_on_zero((block_V.block_dofmap().block_to_original(0), block_V.block_dofmap().block_to_original(1)), comm, block_dofmap=block_V.block_dofmap(), dofmap=(block_V[0].dofmap(), block_V[1].dofmap()))
         rhs1g = gather_on_zero(rhs1, comm)
@@ -118,7 +127,9 @@ def assert_block_matrices_equal(lhs, block_lhs, block_V):
         lhs12 = None
         lhs21 = None
         lhs22 = None
-    comm = block_lhs.mpi_comm().tompi4py()
+    comm = block_lhs.mpi_comm()
+    if not has_pybind11():
+        comm = comm.tompi4py()
     if lhs22:
         map_block_to_original = gather_on_zero((block_V.block_dofmap().block_to_original(0), block_V.block_dofmap().block_to_original(1)), comm, block_dofmap=block_V.block_dofmap(), dofmap=(block_V[0].dofmap(), block_V[1].dofmap()))
         lhs11g = gather_on_zero(lhs11, comm)

@@ -25,8 +25,14 @@ from multiphenics.la.as_backend_type import as_backend_type
 from multiphenics.la.generic_block_vector import GenericBlockVector
 
 if has_pybind11():
+    def unwrap_sub_functions(sub_functions):
+        return [sub_function._cpp_object for sub_function in sub_functions]
+        
     BlockFunction_Base = cpp.function.BlockFunction
 else:
+    def unwrap_sub_functions(sub_functions):
+        return sub_functions
+        
     BlockFunction_Base = cpp.BlockFunction
 
 class BlockFunction(object):
@@ -67,14 +73,14 @@ class BlockFunction(object):
         self._init_sub_functions()
         
     def _init_from_block_function_space_and_sub_functions(self, block_V, sub_functions):
-        self._cpp_object = BlockFunction_Base(block_V.cpp_object(), sub_functions)
+        self._cpp_object = BlockFunction_Base(block_V.cpp_object(), unwrap_sub_functions(sub_functions))
         self._block_function_space = block_V
         self._num_sub_spaces = block_V.num_sub_spaces()
         assert len(sub_functions) == self._num_sub_spaces
         self._sub_functions = sub_functions
         
     def _init_from_block_function_space_and_block_vector_and_sub_functions(self, block_V, block_vec, sub_functions):
-        self._cpp_object = BlockFunction_Base(block_V.cpp_object(), block_vec, sub_functions)
+        self._cpp_object = BlockFunction_Base(block_V.cpp_object(), block_vec, unwrap_sub_functions(sub_functions))
         self._block_function_space = block_V
         self._num_sub_spaces = block_V.num_sub_spaces()
         assert len(sub_functions) == self._num_sub_spaces

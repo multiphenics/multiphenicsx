@@ -43,11 +43,17 @@ namespace multiphenics_wrappers
       
     // multiphenics::GenericBlockVector
     py::class_<multiphenics::GenericBlockVector, std::shared_ptr<multiphenics::GenericBlockVector>>
-      (m, "GenericBlockVector", "multiphenics GenericBlockVector object");
+      (m, "GenericBlockVector", "multiphenics GenericBlockVector object", py::dynamic_attr())
+      .def("attach_block_dof_map", &multiphenics::GenericBlockVector::attach_block_dof_map)
+      .def("get_block_dof_map", &multiphenics::GenericBlockVector::get_block_dof_map)
+      .def("has_block_dof_map", &multiphenics::GenericBlockVector::has_block_dof_map);
       
     // multiphenics::GenericBlockMatrix
     py::class_<multiphenics::GenericBlockMatrix, std::shared_ptr<multiphenics::GenericBlockMatrix>>
-      (m, "GenericBlockMatrix", "multiphenics GenericBlockMatrix object");
+      (m, "GenericBlockMatrix", "multiphenics GenericBlockMatrix object")
+      .def("attach_block_dof_map", &multiphenics::GenericBlockMatrix::attach_block_dof_map)
+      .def("get_block_dof_map", &multiphenics::GenericBlockMatrix::get_block_dof_map)
+      .def("has_block_dof_map", &multiphenics::GenericBlockMatrix::has_block_dof_map);
       
     #ifdef HAS_PETSC
     // multiphenics::BlockPETScVector
@@ -73,12 +79,27 @@ namespace multiphenics_wrappers
       
     // multiphenics::BlockDefaultFactory
     py::class_<multiphenics::BlockDefaultFactory, std::shared_ptr<multiphenics::BlockDefaultFactory>, multiphenics::GenericBlockLinearAlgebraFactory>
-      (m, "BlockDefaultFactory", "multiphenics BlockDefaultFactory object");
+      (m, "BlockDefaultFactory", "multiphenics BlockDefaultFactory object")
+      .def(py::init<>())
+      .def_static("factory", &multiphenics::BlockDefaultFactory::factory)
+      .def("create_matrix", [](const multiphenics::BlockDefaultFactory &self, const dolfin_wrappers::MPICommWrapper comm)
+        { return self.create_matrix(comm.get()); })
+      .def("create_vector", [](const multiphenics::BlockDefaultFactory &self, const dolfin_wrappers::MPICommWrapper comm)
+        { return self.create_vector(comm.get()); })
+      .def("wrap_matrix", &multiphenics::BlockDefaultFactory::wrap_matrix)
+      .def("wrap_vector", &multiphenics::BlockDefaultFactory::wrap_vector);
     
     #ifdef HAS_PETSC
     // multiphenics::BlockPETScFactory
     py::class_<multiphenics::BlockPETScFactory, std::shared_ptr<multiphenics::BlockPETScFactory>, multiphenics::GenericBlockLinearAlgebraFactory>
-      (m, "BlockPETScFactory", "multiphenics BlockPETScFactory object");
+      (m, "BlockPETScFactory", "multiphenics BlockPETScFactory object")
+      .def("instance", &multiphenics::BlockPETScFactory::instance)
+      .def("create_matrix", [](const multiphenics::BlockPETScFactory &self, const dolfin_wrappers::MPICommWrapper comm)
+        { return self.create_matrix(comm.get()); })
+      .def("create_vector", [](const multiphenics::BlockPETScFactory &self, const dolfin_wrappers::MPICommWrapper comm)
+        { return self.create_vector(comm.get()); })
+      .def("wrap_matrix", &multiphenics::BlockPETScFactory::wrap_matrix)
+      .def("wrap_vector", &multiphenics::BlockPETScFactory::wrap_vector);
     #endif
     
     #ifdef HAS_SLEPC
@@ -88,7 +109,22 @@ namespace multiphenics_wrappers
       .def(py::init<std::shared_ptr<const dolfin::PETScMatrix>,
                     std::vector<std::shared_ptr<const dolfin::DirichletBC>>>())
       .def(py::init<std::shared_ptr<const dolfin::PETScMatrix>, std::shared_ptr<const dolfin::PETScMatrix>,
-                    std::vector<std::shared_ptr<const dolfin::DirichletBC>>>());
+                    std::vector<std::shared_ptr<const dolfin::DirichletBC>>>())
+      .def("get_eigenpair", [](dolfin::CondensedSLEPcEigenSolver& self, std::size_t i, dolfin::Function& r_fun, dolfin::Function& c_fun)
+           {
+             double lr, lc;
+             dolfin::PETScVector r, c; // cannot use r_fun and c_fun vectors due to different ghosting
+             self.get_eigenpair(lr, lc, r, c, i);
+             std::vector<double> r_local;
+             r.get_local(r_local);
+             r_fun.vector()->set_local(r_local);
+             r_fun.vector()->apply("insert");
+             std::vector<double> c_local;
+             c.get_local(c_local);
+             c_fun.vector()->set_local(c_local);
+             c_fun.vector()->apply("insert");
+             return py::make_tuple(lr, lc, r_fun, c_fun);
+           });
     
     // multiphenics::CondensedBlockSLEPcEigenSolver
     py::class_<multiphenics::CondensedBlockSLEPcEigenSolver, std::shared_ptr<multiphenics::CondensedBlockSLEPcEigenSolver>, dolfin::CondensedSLEPcEigenSolver>
@@ -96,7 +132,24 @@ namespace multiphenics_wrappers
       .def(py::init<std::shared_ptr<const multiphenics::BlockPETScMatrix>,
                     std::shared_ptr<const multiphenics::BlockDirichletBC>>())
       .def(py::init<std::shared_ptr<const multiphenics::BlockPETScMatrix>, std::shared_ptr<const multiphenics::BlockPETScMatrix>,
-                    std::shared_ptr<const multiphenics::BlockDirichletBC>>());
+                    std::shared_ptr<const multiphenics::BlockDirichletBC>>())
+      .def("get_eigenpair", [](multiphenics::CondensedBlockSLEPcEigenSolver& self, std::size_t i, multiphenics::BlockFunction& r_fun, multiphenics::BlockFunction& c_fun)
+           {
+             double lr, lc;
+             dolfin::PETScVector r, c; // cannot use r_fun and c_fun block vectors due to different ghosting
+             self.get_eigenpair(lr, lc, r, c, i);
+             std::vector<double> r_local;
+             r.get_local(r_local);
+             r_fun.block_vector()->set_local(r_local);
+             r_fun.block_vector()->apply("insert");
+             r_fun.apply("to subfunctions");
+             std::vector<double> c_local;
+             c.get_local(c_local);
+             c_fun.block_vector()->set_local(c_local);
+             c_fun.block_vector()->apply("insert");
+             c_fun.apply("to subfunctions");
+             return py::make_tuple(lr, lc, r_fun, c_fun);
+           });
     #endif
   }
 }

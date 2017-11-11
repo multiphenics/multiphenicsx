@@ -25,7 +25,6 @@ from multiphenics.python import cpp
 from multiphenics.mesh import MeshRestriction
 
 if has_pybind11():
-    BlockFunctionSpace_Base = cpp.function.BlockFunctionSpace
     from dolfin.cpp.mesh import MeshFunctionBool
     import dolfin.cpp as dolfin_cpp
     from dolfin.jit.jit import ffc_jit
@@ -42,10 +41,19 @@ if has_pybind11():
         dolfin_dofmap = dolfin_cpp.fem.DofMap(ufc_dofmap, mesh)
         
         return dolfin_element, dolfin_dofmap
+        
+    def unwrap_function_spaces(function_spaces):
+        return [function_space._cpp_object for function_space in function_spaces]
+        
+    BlockFunctionSpace_Base = cpp.function.BlockFunctionSpace
 else:
-    BlockFunctionSpace_Base = cpp.BlockFunctionSpace
     from dolfin import MeshFunctionBool
     from dolfin.functions.functionspace import _compile_dolfin_element
+    
+    def unwrap_function_spaces(function_spaces):
+        return function_spaces
+        
+    BlockFunctionSpace_Base = cpp.BlockFunctionSpace
 
 class BlockFunctionSpace(object):
     "Base class for all block function spaces."
@@ -86,11 +94,11 @@ class BlockFunctionSpace(object):
             assert function_space.mesh().ufl_domain() == mesh.ufl_domain()
         # Initialize the BlockFunctionSpace_Base
         if restrict is None:
-            self._cpp_object = BlockFunctionSpace_Base(function_spaces)
+            self._cpp_object = BlockFunctionSpace_Base(unwrap_function_spaces(function_spaces))
         else:
             restrict = self._init_restriction(mesh, restrict)
             assert len(restrict) == len(function_spaces)
-            self._cpp_object = BlockFunctionSpace_Base(function_spaces, restrict)
+            self._cpp_object = BlockFunctionSpace_Base(unwrap_function_spaces(function_spaces), restrict)
             
         # Fill in subspaces
         self._init_sub_spaces(len(function_spaces))

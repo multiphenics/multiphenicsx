@@ -20,44 +20,75 @@ import dolfin
 from dolfin import has_pybind11
 from multiphenics.python import cpp
 
-def DecorateGetEigenPair(BlockSLEPcEigenSolver):
-    from multiphenics.function import BlockFunction # avoid recursive imports
-    
-    class DecoratedBlockSLEPcEigenSolver(BlockSLEPcEigenSolver):
-        def get_eigenpair(self, i, r_vec=None, c_vec=None):
-            if isinstance(r_vec, BlockFunction):
-                r_vec_in = None # cannot use r_vec due to different ghosting
-            else:
-                r_vec_in = r_vec
-            if isinstance(c_vec, BlockFunction):
-                c_vec_in = None # cannot use r_vec due to different ghosting
-            else:
-                c_vec_in = c_vec
-            (lr, lc, r_vec_out, c_vec_out) = BlockSLEPcEigenSolver.get_eigenpair(self, i, r_vec_in, c_vec_in)
-            if isinstance(r_vec, BlockFunction):
-                r_vec.block_vector().set_local(r_vec_out.get_local())
-                r_vec.block_vector().apply("insert")
-                r_vec.apply("to subfunctions")
-                r_vec_out = r_vec
-            if isinstance(c_vec, BlockFunction):
-                c_vec.block_vector().set_local(c_vec_out.get_local())
-                c_vec.block_vector().apply("insert")
-                c_vec.apply("to subfunctions")
-                c_vec_out = c_vec
-            return (lr, lc, r_vec_out, c_vec_out)
-            
-    return DecoratedBlockSLEPcEigenSolver
-
-def BlockSLEPcEigenSolver(A, B=None, bcs=None):
-    from multiphenics.fem import BlockDirichletBC # avoid recursive imports
-    
-    if bcs is None:
-        EigenSolver = DecorateGetEigenPair(dolfin.SLEPcEigenSolver) # applicable also to block matrices, because block la inherits from standard la
-        return EigenSolver(A, B)
-    else:
-        assert isinstance(bcs, BlockDirichletBC)
-        if has_pybind11():
-            EigenSolver = DecorateGetEigenPair(cpp.la.CondensedBlockSLEPcEigenSolver)
+if has_pybind11():
+    def DecorateGetEigenPair(BlockSLEPcEigenSolver):
+        from multiphenics.function import BlockFunction # avoid recursive imports
+        
+        class DecoratedBlockSLEPcEigenSolver(BlockSLEPcEigenSolver):
+            def get_eigenpair(self, i, r_vec=None, c_vec=None):
+                if isinstance(r_vec, BlockFunction):
+                    r_vec_in = r_vec._cpp_object
+                else:
+                    r_vec_in = r_vec
+                if isinstance(c_vec, BlockFunction):
+                    c_vec_in = c_vec._cpp_object
+                else:
+                    c_vec_in = c_vec
+                (lr, lc, r_vec_out, c_vec_out) = BlockSLEPcEigenSolver.get_eigenpair(self, i, r_vec_in, c_vec_in)
+                if isinstance(r_vec_out, cpp.function.BlockFunction):
+                    r_vec_out = BlockFunction(r_vec_out)
+                if isinstance(c_vec_out, cpp.function.BlockFunction):
+                    c_vec_out = BlockFunction(c_vec_out)
+                return (lr, lc, r_vec_out, c_vec_out)
+                
+        return DecoratedBlockSLEPcEigenSolver
+        
+    def BlockSLEPcEigenSolver(A, B=None, bcs=None):
+        from multiphenics.fem import BlockDirichletBC # avoid recursive imports
+        
+        if bcs is None:
+            EigenSolver = DecorateGetEigenPair(dolfin.SLEPcEigenSolver) # applicable also to block matrices, because block la inherits from standard la
+            return EigenSolver(A, B)
         else:
+            assert isinstance(bcs, BlockDirichletBC)
+            EigenSolver = DecorateGetEigenPair(cpp.la.CondensedBlockSLEPcEigenSolver)
+            return EigenSolver(A, B, bcs)
+else:
+    def DecorateGetEigenPair(BlockSLEPcEigenSolver):
+        from multiphenics.function import BlockFunction # avoid recursive imports
+        
+        class DecoratedBlockSLEPcEigenSolver(BlockSLEPcEigenSolver):
+            def get_eigenpair(self, i, r_vec=None, c_vec=None):
+                if isinstance(r_vec, BlockFunction):
+                    r_vec_in = None # cannot use r_vec due to different ghosting
+                else:
+                    r_vec_in = r_vec
+                if isinstance(c_vec, BlockFunction):
+                    c_vec_in = None # cannot use r_vec due to different ghosting
+                else:
+                    c_vec_in = c_vec
+                (lr, lc, r_vec_out, c_vec_out) = BlockSLEPcEigenSolver.get_eigenpair(self, i, r_vec_in, c_vec_in)
+                if isinstance(r_vec, BlockFunction):
+                    r_vec.block_vector().set_local(r_vec_out.get_local())
+                    r_vec.block_vector().apply("insert")
+                    r_vec.apply("to subfunctions")
+                    r_vec_out = r_vec
+                if isinstance(c_vec, BlockFunction):
+                    c_vec.block_vector().set_local(c_vec_out.get_local())
+                    c_vec.block_vector().apply("insert")
+                    c_vec.apply("to subfunctions")
+                    c_vec_out = c_vec
+                return (lr, lc, r_vec_out, c_vec_out)
+                
+        return DecoratedBlockSLEPcEigenSolver
+
+    def BlockSLEPcEigenSolver(A, B=None, bcs=None):
+        from multiphenics.fem import BlockDirichletBC # avoid recursive imports
+        
+        if bcs is None:
+            EigenSolver = DecorateGetEigenPair(dolfin.SLEPcEigenSolver) # applicable also to block matrices, because block la inherits from standard la
+            return EigenSolver(A, B)
+        else:
+            assert isinstance(bcs, BlockDirichletBC)
             EigenSolver = DecorateGetEigenPair(cpp.CondensedBlockSLEPcEigenSolver)
-        return EigenSolver(A, B, bcs)
+            return EigenSolver(A, B, bcs)
