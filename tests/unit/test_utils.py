@@ -94,7 +94,7 @@ def assert_block_vectors_equal(rhs, block_rhs, block_V):
     comm = block_rhs.mpi_comm()
     if not has_pybind11():
         comm = comm.tompi4py()
-    if rhs2:
+    if rhs2 is not None:
         map_block_to_original = gather_on_zero((block_V.block_dofmap().block_to_original(0), block_V.block_dofmap().block_to_original(1)), comm, block_dofmap=block_V.block_dofmap(), dofmap=(block_V[0].dofmap(), block_V[1].dofmap()))
         rhs1g = gather_on_zero(rhs1, comm)
         rhs2g = gather_on_zero(rhs2, comm)
@@ -130,7 +130,7 @@ def assert_block_matrices_equal(lhs, block_lhs, block_V):
     comm = block_lhs.mpi_comm()
     if not has_pybind11():
         comm = comm.tompi4py()
-    if lhs22:
+    if lhs22 is not None:
         map_block_to_original = gather_on_zero((block_V.block_dofmap().block_to_original(0), block_V.block_dofmap().block_to_original(1)), comm, block_dofmap=block_V.block_dofmap(), dofmap=(block_V[0].dofmap(), block_V[1].dofmap()))
         lhs11g = gather_on_zero(lhs11, comm)
         lhs12g = gather_on_zero(lhs12, comm)
