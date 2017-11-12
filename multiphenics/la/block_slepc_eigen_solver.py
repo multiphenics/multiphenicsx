@@ -36,9 +36,9 @@ if has_pybind11():
                     c_vec_in = c_vec
                 (lr, lc, r_vec_out, c_vec_out) = BlockSLEPcEigenSolver.get_eigenpair(self, i, r_vec_in, c_vec_in)
                 if isinstance(r_vec_out, cpp.function.BlockFunction):
-                    r_vec_out = BlockFunction(r_vec_out)
+                    r_vec_out = BlockFunction(r_vec.block_function_space(), r_vec_out)
                 if isinstance(c_vec_out, cpp.function.BlockFunction):
-                    c_vec_out = BlockFunction(c_vec_out)
+                    c_vec_out = BlockFunction(c_vec.block_function_space(), c_vec_out)
                 return (lr, lc, r_vec_out, c_vec_out)
                 
         return DecoratedBlockSLEPcEigenSolver

@@ -49,6 +49,10 @@ class BlockFunction(object):
             # If passing BlockFunctionSpace together with a block vector
             if isinstance(args[1], GenericBlockVector):
                 self._init_from_block_function_space_and_block_vector(block_V, args[1])
+            # If passing BlockFunctionSpace together with a BlockFunction_Base
+            elif isinstance(args[1], BlockFunction_Base):
+                self._init_from_block_function_space_and_cpp_block_function(block_V, args[1])
+            # If passing BlockFunctionSpace together with a list of subfunctions
             elif isinstance(args[1], list) and isinstance(args[1][0], Function):
                 self._init_from_block_function_space_and_sub_functions(block_V, args[1])
             else:
@@ -69,6 +73,11 @@ class BlockFunction(object):
 
     def _init_from_block_function_space_and_block_vector(self, block_V, block_vec):
         self._cpp_object = BlockFunction_Base(block_V.cpp_object(), block_vec)
+        self._block_function_space = block_V
+        self._init_sub_functions()
+        
+    def _init_from_block_function_space_and_cpp_block_function(self, block_V, cpp_object):
+        self._cpp_object = cpp_object
         self._block_function_space = block_V
         self._init_sub_functions()
         

@@ -17,6 +17,7 @@
 #
 
 from numpy import isclose
+from ufl import replace
 from dolfin import *
 # import matplotlib.pyplot as plt
 from multiphenics import *

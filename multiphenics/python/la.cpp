@@ -136,7 +136,7 @@ namespace multiphenics_wrappers
       .def("get_eigenpair", [](multiphenics::CondensedBlockSLEPcEigenSolver& self, std::size_t i, multiphenics::BlockFunction& r_fun, multiphenics::BlockFunction& c_fun)
            {
              double lr, lc;
-             dolfin::PETScVector r, c; // cannot use r_fun and c_fun block vectors due to different ghosting
+             multiphenics::BlockPETScVector r, c; // cannot use r_fun and c_fun block vectors due to different ghosting
              self.get_eigenpair(lr, lc, r, c, i);
              std::vector<double> r_local;
              r.get_local(r_local);
