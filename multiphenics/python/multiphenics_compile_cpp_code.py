@@ -16,15 +16,9 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys
 import os
-import io
 import glob
-import hashlib
 import mpi4py
-import dijitso
-import ffc
-from ufl.utils.sorting import canonicalize_metadata
 import dolfin
 from dolfin import compile_cpp_code
 
