@@ -226,6 +226,9 @@ class BlockFunctionSpace(object):
         
     def tabulate_dof_coordinates(self):
         return self._cpp_object.tabulate_dof_coordinates()
+        
+    def dim(self):
+        return self._cpp_object.dim()
 
     def num_sub_spaces(self):
         "Return the number of sub spaces"
