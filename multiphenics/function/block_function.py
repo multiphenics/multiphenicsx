@@ -179,6 +179,9 @@ class BlockFunction(object):
         extend_block_vector(block_vector)
         
         return block_vector
+        
+    def ufl_element(self):
+        return self._block_function_space.ufl_element()
 
     def sub(self, i, deepcopy=False):
         """
