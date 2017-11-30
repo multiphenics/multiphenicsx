@@ -58,11 +58,13 @@ namespace multiphenics_wrappers
     #ifdef HAS_PETSC
     // multiphenics::BlockPETScVector
     py::class_<multiphenics::BlockPETScVector, std::shared_ptr<multiphenics::BlockPETScVector>, multiphenics::GenericBlockVector, dolfin::PETScVector>
-      (m, "BlockPETScVector", "multiphenics BlockPETScVector object");
+      (m, "BlockPETScVector", "multiphenics BlockPETScVector object")
+      .def(py::init<>());
       
     // multiphenics::BlockPETScMatrix
     py::class_<multiphenics::BlockPETScMatrix, std::shared_ptr<multiphenics::BlockPETScMatrix>, multiphenics::GenericBlockMatrix, dolfin::PETScMatrix>
-      (m, "BlockPETScMatrix", "multiphenics BlockPETScMatrix object");
+      (m, "BlockPETScMatrix", "multiphenics BlockPETScMatrix object")
+      .def(py::init<>());
       
     // multiphenics::BlockPETScSubVector
     py::class_<multiphenics::BlockPETScSubVector, std::shared_ptr<multiphenics::BlockPETScSubVector>, dolfin::PETScVector>
