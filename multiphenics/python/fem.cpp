@@ -31,11 +31,12 @@ namespace multiphenics_wrappers
       .def(py::init<std::vector<std::shared_ptr<const dolfin::GenericDofMap>>,
                     std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>>,
                     const dolfin::Mesh&>())
+      .def("dofmaps", &multiphenics::BlockDofMap::dofmaps)
       .def("ownership_range", &multiphenics::BlockDofMap::ownership_range)
       .def("global_dimension", &multiphenics::BlockDofMap::global_dimension)
+      .def("original_to_block", &multiphenics::BlockDofMap::original_to_block)
       .def("block_to_original", &multiphenics::BlockDofMap::block_to_original)
-      .def("sub_index_map", &multiphenics::BlockDofMap::sub_index_map)
-      ;
+      .def("sub_index_map", &multiphenics::BlockDofMap::sub_index_map);
       
     // multiphenics::BlockFormBase
     py::class_<multiphenics::BlockFormBase, std::shared_ptr<multiphenics::BlockFormBase>>
