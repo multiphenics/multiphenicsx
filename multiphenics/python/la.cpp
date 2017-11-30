@@ -20,6 +20,7 @@
 #include <pybind11/stl.h>
 
 #include <multiphenics/python/mpi_casters.h> // TODO remove local copy of DOLFIN's pybind11 files
+#include <multiphenics/python/petsc_casters.h> // TODO remove local copy of DOLFIN's pybind11 files
 
 namespace py = pybind11;
 
@@ -59,12 +60,14 @@ namespace multiphenics_wrappers
     // multiphenics::BlockPETScVector
     py::class_<multiphenics::BlockPETScVector, std::shared_ptr<multiphenics::BlockPETScVector>, multiphenics::GenericBlockVector, dolfin::PETScVector>
       (m, "BlockPETScVector", "multiphenics BlockPETScVector object")
-      .def(py::init<>());
+      .def(py::init<>())
+      .def(py::init<Vec>());
       
     // multiphenics::BlockPETScMatrix
     py::class_<multiphenics::BlockPETScMatrix, std::shared_ptr<multiphenics::BlockPETScMatrix>, multiphenics::GenericBlockMatrix, dolfin::PETScMatrix>
       (m, "BlockPETScMatrix", "multiphenics BlockPETScMatrix object")
-      .def(py::init<>());
+      .def(py::init<>())
+      .def(py::init<Mat>());
       
     // multiphenics::BlockPETScSubVector
     py::class_<multiphenics::BlockPETScSubVector, std::shared_ptr<multiphenics::BlockPETScSubVector>, dolfin::PETScVector>
