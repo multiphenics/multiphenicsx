@@ -65,6 +65,9 @@ namespace multiphenics_wrappers
       (m, "BlockFunction", "A finite element block function")
       .def(py::init<std::shared_ptr<const multiphenics::BlockFunctionSpace>>(), "Create a function on the given block function space")
       .def(py::init<std::shared_ptr<const multiphenics::BlockFunctionSpace>, std::vector<std::shared_ptr<Function>>>())
+      .def(py::init<std::shared_ptr<const multiphenics::BlockFunctionSpace>, std::shared_ptr<dolfin::GenericVector>>())
+      .def(py::init<std::shared_ptr<const multiphenics::BlockFunctionSpace>, std::shared_ptr<dolfin::GenericVector>,
+                    std::vector<std::shared_ptr<Function>>>())
       .def(py::init<multiphenics::BlockFunction&>())
       .def("_assign", (const multiphenics::BlockFunction& (multiphenics::BlockFunction::*)(const multiphenics::BlockFunction&))
            &multiphenics::BlockFunction::operator=)
