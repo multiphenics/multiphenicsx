@@ -17,7 +17,6 @@
 #
 
 import dolfin
-from multiphenics.mesh import MeshRestriction
 
 class MeshRestrictionXMLFile(object):
     def __init__(self, filename, encoding=None):
