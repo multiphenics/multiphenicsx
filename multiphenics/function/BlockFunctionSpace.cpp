@@ -203,9 +203,6 @@ std::shared_ptr<BlockFunctionSpace>
 BlockFunctionSpace::extract_block_sub_space(const std::vector<std::size_t>& component, bool with_restrictions) const
 {
   dolfin_assert(_mesh);
-  dolfin_assert(_elements);
-  dolfin_assert(_dofmaps);
-  dolfin_assert(_restrictions);
 
   // Check if sub space is already in the cache
   BlockSubpsacesType* block_subspaces;
