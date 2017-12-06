@@ -83,7 +83,7 @@ void BlockFunctionSpace::_init_mesh_and_elements_and_dofmaps_from_function_space
 }
 //-----------------------------------------------------------------------------
 void BlockFunctionSpace::_init_function_spaces_from_elements_and_dofmaps() {
-  dolfin_assert(_elements.size() == _dofmaps.size())
+  dolfin_assert(_elements.size() == _dofmaps.size());
   for (unsigned int i(0); i < _elements.size(); ++i) 
   {
     std::shared_ptr<const FunctionSpace> function_space_i(new FunctionSpace(_mesh, _elements[i], _dofmaps[i]));

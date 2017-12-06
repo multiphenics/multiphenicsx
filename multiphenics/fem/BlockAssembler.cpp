@@ -53,7 +53,7 @@ void BlockAssembler::assemble(GenericTensor& A, const BlockFormBase& a)
   assembler.add_values = add_values;
   assembler.finalize_tensor = false;
   
-  dolfin_assert(a.rank() == 2 || a.rank() == 1)
+  dolfin_assert(a.rank() == 2 || a.rank() == 1);
   if (a.rank() == 2)
   {
     GenericMatrix& A_mat = dynamic_cast<GenericMatrix&>(A);

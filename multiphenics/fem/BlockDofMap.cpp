@@ -343,7 +343,7 @@ BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const GenericDofMap>> dofma
     {
       auto original_global_dof = unowned_dofs_in_restriction__local_to_global[i].at(original_local_dof);
       const int index_owner = dofmap->index_map()->global_index_owner(original_global_dof/dofmap_block_size);
-      dolfin_assert(index_owner != mpi_rank)
+      dolfin_assert(index_owner != mpi_rank);
       send_buffer[index_owner].push_back(original_global_dof);
       send_buffer[index_owner].push_back(mpi_rank);
     }

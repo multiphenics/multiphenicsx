@@ -571,7 +571,7 @@ void BlockPETScSubMatrix::to_restricted_submatrix_indices_and_values(
         block_restricted_submatrix_values.push_back(block_unrestricted_submatrix_values[unrestricted_value_iterator]);
       unrestricted_value_iterator++;
     }
-  dolfin_assert(unrestricted_value_iterator == block_unrestricted_submatrix_values.size())
+  dolfin_assert(unrestricted_value_iterator == block_unrestricted_submatrix_values.size());
   dolfin_assert(block_restricted_submatrix_values.size() == block_restricted_submatrix_row_indices.size()*block_restricted_submatrix_col_indices.size());
 }
 

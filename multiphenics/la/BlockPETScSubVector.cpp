@@ -490,7 +490,7 @@ void BlockPETScSubVector::to_restricted_subvector_indices_and_values(
       restricted_value_iterator++;
     }
   }
-  dolfin_assert(restricted_value_iterator == block_restricted_subvector_values.size())
+  dolfin_assert(restricted_value_iterator == block_restricted_subvector_values.size());
 }
 //-----------------------------------------------------------------------------
 void BlockPETScSubVector::from_restricted_subvector_values(
@@ -510,7 +510,7 @@ void BlockPETScSubVector::from_restricted_subvector_values(
       ++restricted_value_iterator;
     }
   }
-  dolfin_assert(restricted_value_iterator == block_restricted_subvector_values.size())
+  dolfin_assert(restricted_value_iterator == block_restricted_subvector_values.size());
 }
 
 #endif
