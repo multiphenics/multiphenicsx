@@ -421,8 +421,9 @@ void BlockPETScSubVector::to_restricted_subvector_indices(
   std::vector<bool> * is_in_restriction
 ) const
 {
-  dolfin_assert(block_unrestricted_subvector_indices.size() > 0);
   dolfin_assert(block_restricted_subvector_indices.size() == 0);
+  if (is_in_restriction != NULL)
+      dolfin_assert(is_in_restriction->size() == 0);
   
   for (auto block_unrestricted_subvector_index : block_unrestricted_subvector_indices)
     if (_original_to_sub_block.count(block_unrestricted_subvector_index) > 0) 
@@ -445,8 +446,9 @@ void BlockPETScSubVector::to_restricted_vector_indices(
   std::vector<bool> * is_in_restriction
 ) const
 {
-  dolfin_assert(block_unrestricted_subvector_indices.size() > 0);
   dolfin_assert(block_restricted_vector_indices.size() == 0);
+  if (is_in_restriction != NULL)
+      dolfin_assert(is_in_restriction->size() == 0);
   
   for (auto block_unrestricted_subvector_index : block_unrestricted_subvector_indices)
     if (_original_to_block.count(block_unrestricted_subvector_index) > 0) 

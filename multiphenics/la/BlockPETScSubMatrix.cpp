@@ -508,6 +508,10 @@ void BlockPETScSubMatrix::to_restricted_submatrix_row_indices(
   std::vector<bool> * is_row_in_restriction
 ) 
 {
+  dolfin_assert(block_restricted_submatrix_row_indices.size() == 0);
+  if (is_row_in_restriction != NULL)
+      dolfin_assert(is_row_in_restriction->size() == 0);
+  
   for (auto block_unrestricted_submatrix_row_index : block_unrestricted_submatrix_row_indices)
     if (_original_to_sub_block_0.count(block_unrestricted_submatrix_row_index) > 0)
     {
@@ -529,6 +533,10 @@ void BlockPETScSubMatrix::to_restricted_submatrix_col_indices(
   std::vector<bool> * is_col_in_restriction
 ) 
 {
+  dolfin_assert(block_restricted_submatrix_col_indices.size() == 0);
+  if (is_col_in_restriction != NULL)
+      dolfin_assert(is_col_in_restriction->size() == 0);
+  
   for (auto block_unrestricted_submatrix_col_index : block_unrestricted_submatrix_col_indices)
     if (_original_to_sub_block_1.count(block_unrestricted_submatrix_col_index) > 0) 
     {
