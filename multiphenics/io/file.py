@@ -19,19 +19,22 @@
 import dolfin
 from multiphenics.mesh import MeshRestriction
 
-class File(object):
+class MeshRestrictionXMLFile(object):
     def __init__(self, filename, encoding=None):
-        if filename.endswith(".rtc.xml"):
-            assert encoding is None
-            self.filename = filename
-        else:
-            if encoding is not None:
-                self.backend = dolfin.File(filename, encoding)
-            else:
-                self.backend = dolfin.File(filename)
-        
+        self.filename = filename
+    
+    def write(self, content):
+        content._write(self.filename)
+            
     def __lshift__(self, content):
-        if isinstance(content, MeshRestriction):
-            content._write(self.filename)
+        self.write(content)
+            
+def File(filename, encoding=None):
+    if filename.endswith(".rtc.xml"):
+        assert encoding is None
+        return MeshRestrictionXMLFile(filename)
+    else:
+        if encoding is not None:
+            return dolfin.File(filename, encoding)
         else:
-            self.backend.__lshift__(content)
+            return dolfin.File(filename)
