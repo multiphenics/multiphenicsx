@@ -31,8 +31,10 @@ domain and constrain it in the interior. This procedure would require
 the definition of suitable FacetFunction-s to constrain the additional DOFs,
 resulting in a (1) cumbersome mesh definition for the user and (2) unnecessarily
 large linear system.
-Instead, using multiphenics, we provide a BlockDiscardDOFs class that carries out
-automatically the discard of unnecessary DOFs, also reducing the linear system.
+This task is more easily handled by multiphenics by providing a restriction
+in the definition of the (block) function space. Such restriction (which is
+basically a collection of MeshFunction-s) can be generated from a SubDomain object,
+see data/generate_mesh.py
 """
 
 # MESHES #
