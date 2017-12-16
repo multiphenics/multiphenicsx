@@ -21,7 +21,7 @@ from dolfin import File, Mesh, MeshFunction, SubDomain, XDMFFile
 
 class MeshRestriction(list):
     """
-    This type converts a SubDomain into a list of [VertexFunction, EdgeFunction, FacetFunction, CellFunction]
+    This type converts a SubDomain into a hierarchy of MeshFunctions.
     """
     def __init__(self, mesh, arg):
         # Initialize empty list

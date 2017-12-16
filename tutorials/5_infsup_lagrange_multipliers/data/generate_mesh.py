@@ -33,7 +33,7 @@ class OnBoundary(SubDomain):
     def inside(self, x, on_boundary):
         return on_boundary
 
-boundaries = FacetFunction("size_t", mesh)
+boundaries = MeshFunction("size_t", mesh, mesh.topology().dim() - 1)
 on_boundary = OnBoundary()
 on_boundary.mark(boundaries, 1)
 

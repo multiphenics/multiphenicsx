@@ -88,7 +88,7 @@ class Boundary_w(SubDomain):
             )
         )
         
-boundaries = FacetFunction("size_t", mesh)
+boundaries = MeshFunction("size_t", mesh, mesh.topology().dim() - 1)
 inlet = Inlet()
 inlet.mark(boundaries, 1) # Gamma_in
 boundary_s = Boundary_s()

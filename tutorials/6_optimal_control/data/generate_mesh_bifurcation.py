@@ -103,7 +103,7 @@ class Boundary_Obs(SubDomain):
     def inside(self, x, on_boundary):
         return x[0] < (L-mu4 + DOLFIN_EPS) and x[0] > (L-mu4 - DOLFIN_EPS) and x[1] >= X and x[1] <= Y
         
-boundaries = FacetFunction("size_t", mesh)
+boundaries = MeshFunction("size_t", mesh, mesh.topology().dim() - 1)
 inlet = Inlet()
 inlet.mark(boundaries, 1)
 boundary_d = Boundary_D()

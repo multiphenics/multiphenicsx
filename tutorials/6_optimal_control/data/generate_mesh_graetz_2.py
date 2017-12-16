@@ -76,7 +76,7 @@ class Boundary_N(SubDomain):
             (x[0] > 3 - DOLFIN_EPS and x[0] < 3 + DOLFIN_EPS and x[1] >= 0 and x[1] <= 1)
         )
         
-boundaries = FacetFunction("size_t", mesh)
+boundaries = MeshFunction("size_t", mesh, mesh.topology().dim() - 1)
 boundary_D = Boundary_D()
 boundary_D.mark(boundaries, 1)
 boundary_C = Boundary_C()

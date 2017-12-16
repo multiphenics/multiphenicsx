@@ -39,7 +39,7 @@ class OnInterface(SubDomain):
     def inside(self, x, on_boundary):
         return near(x[0], 0.)
 
-boundaries = FacetFunction("size_t", mesh)
+boundaries = MeshFunction("size_t", mesh, mesh.topology().dim() - 1)
 on_boundary = OnBoundary()
 on_boundary.mark(boundaries, 1)
 on_interface = OnInterface()

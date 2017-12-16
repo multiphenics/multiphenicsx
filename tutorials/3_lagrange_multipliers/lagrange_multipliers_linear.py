@@ -28,7 +28,7 @@ Note that standard FEniCS code does not easily support Lagrange multipliers,
 because FEniCS does not support subdomain/boundary restricted function spaces,
 and thus one would have to declare the Lagrange multiplier on the entire
 domain and constrain it in the interior. This procedure would require
-the definition of suitable FacetFunction-s to constrain the additional DOFs,
+the definition of suitable MeshFunction-s to constrain the additional DOFs,
 resulting in a (1) cumbersome mesh definition for the user and (2) unnecessarily
 large linear system.
 This task is more easily handled by multiphenics by providing a restriction
