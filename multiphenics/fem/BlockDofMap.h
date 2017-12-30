@@ -38,11 +38,56 @@ namespace multiphenics
                 std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>> restrictions,
                 const dolfin::Mesh& mesh);
 
+  protected:
+    
+    /// Helper functions for constructor
+    BlockDofMap(std::vector<std::shared_ptr<const dolfin::GenericDofMap>> dofmaps,
+                std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>> restrictions);
+    BlockDofMap(std::vector<std::shared_ptr<const dolfin::GenericDofMap>> dofmaps,
+                std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>> restrictions,
+                std::vector<std::shared_ptr<const dolfin::Mesh>> meshes);
+    void _extract_dofs_from_original_dofmaps(
+      std::vector<std::shared_ptr<const dolfin::GenericDofMap>> dofmaps,
+      std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>> restrictions,
+      std::vector<std::shared_ptr<const dolfin::Mesh>> meshes,
+      std::vector<std::set<dolfin::la_index>>& owned_dofs,
+      std::vector<std::map<dolfin::la_index, bool>>& owned_dofs__to__in_restriction,
+      std::vector<std::map<dolfin::la_index, std::set<dolfin::la_index>>>& owned_dofs__to__cell_indices,
+      std::vector<std::set<dolfin::la_index>>& unowned_dofs_in_restriction,
+      std::vector<std::map<dolfin::la_index, dolfin::la_index>>& unowned_dofs_in_restriction__local_to_global,
+      std::vector<std::map<dolfin::la_index, std::set<dolfin::la_index>>>& unowned_dofs_in_restriction__to__cell_indices,
+      std::vector<std::set<std::size_t>>& real_dofs
+    ) const;
+    void _assign_owned_dofs_to_block_dofmap(
+      std::vector<std::shared_ptr<const dolfin::GenericDofMap>> dofmaps,
+      std::vector<std::shared_ptr<const dolfin::Mesh>> meshes,
+      const std::vector<std::set<dolfin::la_index>>& owned_dofs,
+      const std::vector<std::map<dolfin::la_index, bool>>& owned_dofs__to__in_restriction,
+      const std::vector<std::map<dolfin::la_index, std::set<dolfin::la_index>>>& owned_dofs__to__cell_indices,
+      dolfin::la_index& block_dofmap_local_size,
+      std::vector<dolfin::la_index>& sub_block_dofmap_local_size
+    );
+    void _prepare_local_to_global_for_unowned_dofs(
+      std::vector<std::shared_ptr<const dolfin::GenericDofMap>> dofmaps,
+      MPI_Comm comm,
+      const std::vector<std::set<dolfin::la_index>>& unowned_dofs_in_restriction,
+      const std::vector<std::map<dolfin::la_index, dolfin::la_index>>& unowned_dofs_in_restriction__local_to_global,
+      const std::vector<std::map<dolfin::la_index, std::set<dolfin::la_index>>>& unowned_dofs_in_restriction__to__cell_indices,
+      dolfin::la_index block_dofmap_local_size,
+      const std::vector<dolfin::la_index>& sub_block_dofmap_local_size
+    );
+    void _store_real_dofs(
+      const std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,
+      const std::vector<std::set<std::size_t>>& real_dofs
+    );
+    
   private:
-    // Copy constructor
+    
+    /// Copy constructor
     BlockDofMap(const BlockDofMap& block_dofmap);
 
   public:
+    
     /// Destructor
     virtual ~BlockDofMap();
     
@@ -342,7 +387,7 @@ namespace multiphenics
     const std::map<dolfin::la_index, dolfin::la_index> & original_to_sub_block(std::size_t b) const;
     const std::map<dolfin::la_index, dolfin::la_index> & sub_block_to_original(std::size_t b) const;
 
-  private:
+  protected:
     
     // Constructor arguments
     std::vector<std::shared_ptr<const dolfin::GenericDofMap>> _constructor_dofmaps;
