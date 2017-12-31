@@ -22,7 +22,7 @@ import mpi4py
 import dolfin
 from dolfin import compile_cpp_code
 
-def multiphenics_compile_cpp_code(*args):
+def multiphenics_compile_cpp_code(package_name, *args):
     # Remove extension from files
     files = [os.path.splitext(f)[0] for f in args]
     
@@ -31,7 +31,7 @@ def multiphenics_compile_cpp_code(*args):
     
     # Extract folders
     multiphenics_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../.."))
-    multiphenics_folder = os.path.join(multiphenics_root, "multiphenics")
+    multiphenics_folder = os.path.join(multiphenics_root, package_name)
     
     # Extract files
     multiphenics_headers = [os.path.join(multiphenics_folder, f + ".h") for f in files]
@@ -59,7 +59,7 @@ def multiphenics_compile_cpp_code(*args):
     for multiphenics_submodule in multiphenics_submodules:
         multiphenics_pybind11_sources.append(os.path.join(multiphenics_folder, "python", multiphenics_submodule + ".cpp"))
     multiphenics_pybind11_sources.append(os.path.join(multiphenics_folder, "python", "MPICommWrapper.cpp")) # TODO remove local copy of DOLFIN's pybind11 files
-    multiphenics_pybind11_sources.append(os.path.join(multiphenics_folder, "python", "multiphenics.cpp"))
+    multiphenics_pybind11_sources.append(os.path.join(multiphenics_folder, "python", package_name + ".cpp"))
     
     # Read in the code
     multiphenics_code = ""
@@ -77,7 +77,7 @@ def multiphenics_compile_cpp_code(*args):
     multiphenics_code = multiphenics_code_includes + multiphenics_code_rest
     
     # Patch dijitso
-    patch_dijitso(multiphenics_root)
+    patch_dijitso(multiphenics_root, package_name)
     
     # Call DOLFIN's compile_cpp_code
     cpp = compile_cpp_code(multiphenics_code)
@@ -90,11 +90,11 @@ def multiphenics_compile_cpp_code(*args):
     
 original_dijitso_jit = dolfin.jit.pybind11jit.dijitso_jit
 
-def patch_dijitso(multiphenics_root):
+def patch_dijitso(multiphenics_root, package_name):
     def dijitso_jit(jitable, name, params, generate=None, send=None, receive=None, wait=None):
-        name = name.replace("dolfin", "multiphenics")
-        params['build']['include_dirs'].append(multiphenics_root)
-        params['build']['include_dirs'].append(mpi4py.get_include())
+        name = name.replace("dolfin", package_name)
+        params["build"]["include_dirs"].append(multiphenics_root)
+        params["build"]["include_dirs"].append(mpi4py.get_include())
         return original_dijitso_jit(jitable, name, params, generate, send, receive, wait)
     dolfin.jit.pybind11jit.dijitso_jit = dijitso_jit
     

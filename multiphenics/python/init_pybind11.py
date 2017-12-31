@@ -20,6 +20,7 @@ from multiphenics.python.multiphenics_compile_cpp_code import multiphenics_compi
 
 # Compile cpp code
 cpp = multiphenics_compile_cpp_code(
+    "multiphenics",
     # Files are manually sorted to handle dependencies
     "log/log.cpp",
     "fem/BlockDofMap.cpp",
