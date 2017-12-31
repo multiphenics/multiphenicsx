@@ -36,16 +36,16 @@ namespace multiphenics
     /// @param[out] A (GenericTensor)
     ///         The block tensor to assemble.
     /// @param[in]  a (BlockFormBase&)
-    ///         The block form to assemble the tensor from.
+    ///         The block form to assemble.
     void assemble(dolfin::GenericTensor& A, const BlockFormBase& a);
     
-  private:
+  protected:
     /// Assemble subtensor from given form
     ///
     /// @param[out] A (GenericTensor)
     ///         The tensor to assemble.
     /// @param[in]  a (Form&)
-    ///         The form to assemble the tensor from.
+    ///         The form to assemble.
     void sub_assemble(dolfin::GenericTensor& A, const dolfin::Form& a, dolfin::Assembler& assembler);
 
   };
