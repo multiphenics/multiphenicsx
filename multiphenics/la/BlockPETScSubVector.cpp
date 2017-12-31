@@ -163,7 +163,7 @@ void BlockPETScSubVector::set_local(const std::vector<double>& values)
                        "This method is available only when INSERT_VALUES is chosen as mode in the constructor");
                 
   const auto _local_range = local_range();
-  const std::size_t local_size = _local_range.second - _local_range.first;
+  const dolfin::la_index local_size = _local_range.second - _local_range.first;
   std::vector<double> restricted_values(local_size);
   for (auto & it: _original_to_sub_block)
   {

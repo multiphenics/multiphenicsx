@@ -135,7 +135,7 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
     Array<double> _x(x.size(), x.data());
     
     // Local size
-    const std::size_t dofmap_local_size = dofmap->ownership_range().second - dofmap->ownership_range().first;
+    const dolfin::la_index dofmap_local_size = dofmap->ownership_range().second - dofmap->ownership_range().first;
     
     // Retrieve Real dofs on the current dofmap
     std::vector<std::size_t> real_dofs_i;
@@ -250,7 +250,7 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
     // Handle Real dofs. They are connected to every cell, regardless of restriction (which is ignored).
     for (auto real_dof : real_dofs[i])
     {
-      if (real_dof < dofmap_local_size) 
+      if (real_dof < static_cast<std::size_t>(dofmap_local_size))
       {
         owned_dofs[i].insert(real_dof);
         owned_dofs__to__in_restriction[i][real_dof] = true;
