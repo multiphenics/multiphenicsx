@@ -169,7 +169,7 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
         {
           // Check if the mesh entity is in restriction
           bool in_restriction;
-          if (restriction[d])
+          if (restriction.size() > 0)
           {
             in_restriction = restriction[d]->operator[](e->index());
           }
