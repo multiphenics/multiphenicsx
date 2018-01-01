@@ -19,6 +19,7 @@
 import os
 import glob
 import mpi4py
+import petsc4py
 import dolfin
 from dolfin import compile_cpp_code
 
@@ -95,6 +96,7 @@ def patch_dijitso(multiphenics_root, package_name):
         name = name.replace("dolfin", package_name)
         params["build"]["include_dirs"].append(multiphenics_root)
         params["build"]["include_dirs"].append(mpi4py.get_include())
+        params["build"]["include_dirs"].append(petsc4py.get_include())
         return original_dijitso_jit(jitable, name, params, generate, send, receive, wait)
     dolfin.jit.pybind11jit.dijitso_jit = dijitso_jit
     

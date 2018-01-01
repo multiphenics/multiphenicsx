@@ -16,7 +16,18 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import has_pybind11
+try:
+    from dolfin import has_pybind11
+except ImportError:
+    from dolfin import __version__ as dolfin_version
+    if dolfin_version.startswith("2018.1.0"):
+        def has_pybind11():
+            return True
+    else:
+        def has_pybind11():
+            return False
+    import dolfin
+    dolfin.has_pybind11 = has_pybind11
 
 if has_pybind11():
     from multiphenics.python.init_pybind11 import cpp
