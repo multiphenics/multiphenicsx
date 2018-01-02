@@ -81,7 +81,7 @@ BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const GenericDofMap>> dofma
   );
   
   // C. PREPARE LOCAL TO GLOBAL MAP OF BLOCK DOF MAP FOR UNOWNED DOFS
-  dolfin_assert(std::all_of(meshes.begin(), meshes.end(), [](std::shared_ptr<const dolfin::Mesh> mesh){return mesh->mpi_comm() == meshes[0]->mpi_comm();}));
+  dolfin_assert(std::all_of(meshes.begin(), meshes.end(), [&meshes](std::shared_ptr<const dolfin::Mesh> mesh){return mesh->mpi_comm() == meshes[0]->mpi_comm();}));
   _prepare_local_to_global_for_unowned_dofs(
     dofmaps, meshes[0]->mpi_comm(),
     unowned_dofs_in_restriction, unowned_dofs_in_restriction__local_to_global, unowned_dofs_in_restriction__to__cell_indices,
@@ -304,7 +304,7 @@ void BlockDofMap::_assign_owned_dofs_to_block_dofmap(
   }
   
   // Communicator
-  dolfin_assert(std::all_of(meshes.begin(), meshes.end(), [](std::shared_ptr<const dolfin::Mesh> mesh){return mesh->mpi_comm() == meshes[0]->mpi_comm();}));
+  dolfin_assert(std::all_of(meshes.begin(), meshes.end(), [&meshes](std::shared_ptr<const dolfin::Mesh> mesh){return mesh->mpi_comm() == meshes[0]->mpi_comm();}));
   MPI_Comm comm = meshes[0]->mpi_comm();
   
   // Prepare index map
