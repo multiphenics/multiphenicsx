@@ -19,6 +19,7 @@
 #ifndef __BLOCK_ASSEMBLER_H
 #define __BLOCK_ASSEMBLER_H
 
+#include <dolfin/fem/Assembler.h>
 #include <multiphenics/fem/BlockAssemblerBase.h>
 
 namespace multiphenics

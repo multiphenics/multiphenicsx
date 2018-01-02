@@ -17,7 +17,6 @@
 //
 
 #include <memory>
-#include <dolfin/fem/Assembler.h>
 #include <dolfin/fem/UFC.h>
 #include <dolfin/la/GenericLinearAlgebraFactory.h>
 #include <dolfin/la/GenericMatrix.h>

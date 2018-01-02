@@ -81,8 +81,6 @@ namespace multiphenics
       const std::vector<std::set<std::size_t>>& real_dofs
     );
     
-  private:
-    
     /// Copy constructor
     BlockDofMap(const BlockDofMap& block_dofmap);
 
