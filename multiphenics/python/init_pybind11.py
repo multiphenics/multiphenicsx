@@ -16,11 +16,13 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from multiphenics.python.multiphenics_compile_cpp_code import multiphenics_compile_cpp_code
+import os
+from multiphenics.python.compile_pybind11_package import compile_pybind11_package
 
-# Compile cpp code
-cpp = multiphenics_compile_cpp_code(
+# Compile pybind11 package
+cpp = compile_pybind11_package(
     "multiphenics",
+    os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../..")),
     # Files are manually sorted to handle dependencies
     "log/log.cpp",
     "fem/BlockDofMap.cpp",

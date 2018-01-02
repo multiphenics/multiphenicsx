@@ -28,7 +28,7 @@ import dolfin
 from dolfin import compile_extension_module
 from dolfin.compilemodules.compilemodule import _interface_version
 
-def multiphenics_compile_extension_module(*args, **kwargs):
+def compile_swig_package(*args, **kwargs):
     # Remove extension from files
     files = [os.path.splitext(f)[0] for f in args]
     

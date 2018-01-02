@@ -16,7 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from multiphenics.python.multiphenics_compile_extension_module import multiphenics_compile_extension_module
+from multiphenics.python.compile_swig_package import compile_swig_package
 
 # Storage for additional declarations
 additional_declarations = dict()
@@ -344,8 +344,8 @@ all_additional_declarations = {
         additional_declarations["nls"]["post"]
 }
 
-# Compile extension module
-cpp = multiphenics_compile_extension_module(
+# Compile swig package
+cpp = compile_swig_package(
     # Files are manually sorted to handle dependencies
     "log/log.cpp",
     "fem/BlockDofMap.cpp",
