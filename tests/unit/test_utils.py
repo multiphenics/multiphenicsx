@@ -17,19 +17,14 @@
 #
 
 import numbers
-import types
 import pytest
 from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, hstack as bvec, sort, unique, vstack
-from dolfin import assemble, Constant, DOLFIN_EPS, dx, Expression, FiniteElement, Function, FunctionSpace, has_pybind11, inner, MixedElement, project as dolfin_project, set_log_level, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
+from dolfin import assemble, Constant, DOLFIN_EPS, dx, Expression, FiniteElement, Function, FunctionSpace, has_pybind11, inner, MixedElement, project, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
 if has_pybind11():
     from dolfin.cpp.la import GenericMatrix, GenericVector
-    from dolfin.cpp.log import LogLevel
-    ERROR = LogLevel.ERROR
-    PROGRESS = LogLevel.PROGRESS
 else:
-    from dolfin import ERROR, GenericMatrix, GenericVector, PROGRESS
+    from dolfin import GenericMatrix, GenericVector
 from multiphenics import assign, block_assemble, block_assign, BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
-set_log_level(PROGRESS)
 
 # ================ PYTEST HELPER ================ #
 def pytest_mark_slow_for_cartesian_product(generator_1, generator_2):
@@ -323,9 +318,7 @@ def get_block_bcs_1():
         elif len(shape_1) is 2:
             bc1_fun = Constant(((1., 2.),
                                 (3., 4.)))
-        bc1 = DirichletBC(block_V.sub(0), bc1_fun, on_boundary)
-        unclutter_bc_apply(bc1)
-        return bc1
+        return DirichletBC(block_V.sub(0), bc1_fun, on_boundary)
     return (
         lambda block_V: None,
         pytest.mark.slow(lambda block_V: BlockDirichletBC([None], block_function_space=block_V)),
@@ -346,9 +339,7 @@ def get_block_bcs_2():
         elif len(shape_1) is 2:
             bc1_fun = Constant(((1., 2.),
                                 (3., 4.)))
-        bc1 = DirichletBC(block_V.sub(0), bc1_fun, on_boundary)
-        unclutter_bc_apply(bc1)
-        return bc1
+        return DirichletBC(block_V.sub(0), bc1_fun, on_boundary)
     def _get_bc_2(block_V):
         on_boundary = OnBoundary()
         shape_2 = block_V[1].ufl_element().value_shape()
@@ -361,9 +352,7 @@ def get_block_bcs_2():
         elif len(shape_2) is 2:
             bc2_fun = Constant(((11., 12.),
                                 (13., 14.)))
-        bc2 = DirichletBC(block_V.sub(1), bc2_fun, on_boundary)
-        unclutter_bc_apply(bc2)
-        return bc2
+        return DirichletBC(block_V.sub(1), bc2_fun, on_boundary)
     return (
         lambda block_V: None,
         pytest.mark.slow(lambda block_V: BlockDirichletBC([None, None], block_function_space=block_V)),
@@ -614,8 +603,6 @@ def apply_bc_and_block_bc_matrix(lhs, block_lhs, block_bcs):
 # ================ BLOCK FUNCTIONS GENERATOR ================ #
 # Computation of block function for single block
 def get_list_of_functions_1(block_V):
-    block_v = BlockTestFunction(block_V)
-    (v, ) = block_split(block_v)
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) is 0:
         f = Expression("2*x[0] + 4*x[1]*x[1]", degree=2)
@@ -630,8 +617,6 @@ def get_list_of_functions_1(block_V):
     
 # Computation of block function for two blocks
 def get_list_of_functions_2(block_V):
-    block_v = BlockTestFunction(block_V)
-    (v1, v2) = block_split(block_v)
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) is 0:
         f1 = Expression("2*x[0] + 4*x[1]*x[1]", degree=2)
@@ -723,20 +708,3 @@ def gather_on_zero(obj, comm, **kwargs):
         return obj.gather_on_zero()
     else:
         raise AssertionError("Invalid arguments to gather_on_zero")
-        
-# Do not clutter output with project progress
-def project(*args, **kwargs):
-    set_log_level(ERROR)
-    output = dolfin_project(*args, **kwargs)
-    set_log_level(PROGRESS)
-    return output
-    
-# Do not clutter output with bc.apply progress
-def unclutter_bc_apply(bc):
-    original_apply = bc.apply
-    def custom_apply(self_, *args, **kwargs):
-        set_log_level(ERROR)
-        original_apply(*args, **kwargs)
-        set_log_level(PROGRESS)
-    bc.apply = types.MethodType(custom_apply, bc)
-    return bc
