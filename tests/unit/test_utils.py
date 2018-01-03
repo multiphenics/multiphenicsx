@@ -427,17 +427,17 @@ def get_lhs_block_form_1(block_V):
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) is 0:
         f = Expression("2*x[0] + 4*x[1]*x[1]", degree=2)
-        block_form = [[f*u*v.dx(0)*dx]]
+        block_form = [[f*u*v*dx]]
     elif len(shape_1) is 1 and shape_1[0] is 2:
         f = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"), degree=2)
-        block_form = [[(f[0]*u[0]*v[0].dx(0) + f[1]*u[1].dx(1)*v[1])*dx]]
+        block_form = [[(f[0]*u[0]*v[0] + f[1]*u[1].dx(1)*v[1])*dx]]
     elif len(shape_1) is 1 and shape_1[0] is 3:
         f = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]", "7*x[0] + 11*x[1]*x[1]"), degree=2)
-        block_form = [[(f[0]*u[0]*v[0].dx(0) + f[1]*u[1].dx(1)*v[1] + f[2]*u[2].dx(0)*v[2].dx(1))*dx]]
+        block_form = [[(f[0]*u[0]*v[0] + f[1]*u[1].dx(1)*v[1] + f[2]*u[2].dx(0)*v[2].dx(1))*dx]]
     elif len(shape_1) is 2:
         f = Expression((("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"),
                         ("7*x[0] + 11*x[1]*x[1]", "13*x[0] + 17*x[1]*x[1]")), degree=2)
-        block_form = [[(f[0, 0]*u[0, 0]*v[0, 0].dx(0) + f[0, 1]*u[0, 1].dx(1)*v[0, 1] + f[1, 0]*u[1, 0].dx(0)*v[1, 0].dx(1) + f[1, 1]*u[1, 1].dx(0)*v[1, 1])*dx]]
+        block_form = [[(f[0, 0]*u[0, 0]*v[0, 0] + f[0, 1]*u[0, 1].dx(1)*v[0, 1] + f[1, 0]*u[1, 0].dx(0)*v[1, 0].dx(1) + f[1, 1]*u[1, 1].dx(0)*v[1, 1])*dx]]
     return block_form
     
 # Computation of lhs block form for two blocks
@@ -451,85 +451,85 @@ def get_lhs_block_form_2(block_V):
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) is 0:
         f1 = Expression("2*x[0] + 4*x[1]*x[1]", degree=2)
-        block_form[0][0] = f1*u1*v1.dx(0)*dx
+        block_form[0][0] = f1*u1*v1*dx
     elif len(shape_1) is 1 and shape_1[0] is 2:
         f1 = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"), degree=2)
-        block_form[0][0] = (f1[0]*u1[0]*v1[0].dx(0) + f1[1]*u1[1].dx(1)*v1[1])*dx
+        block_form[0][0] = (f1[0]*u1[0]*v1[0] + f1[1]*u1[1].dx(1)*v1[1])*dx
     elif len(shape_1) is 1 and shape_1[0] is 3:
         f1 = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]", "7*x[0] + 11*x[1]*x[1]"), degree=2)
-        block_form[0][0] = (f1[0]*u1[0]*v1[0].dx(0) + f1[1]*u1[1].dx(1)*v1[1] + f1[2]*u1[2].dx(0)*v1[2].dx(1))*dx
+        block_form[0][0] = (f1[0]*u1[0]*v1[0] + f1[1]*u1[1].dx(1)*v1[1] + f1[2]*u1[2].dx(0)*v1[2].dx(1))*dx
     elif len(shape_1) is 2:
         f1 = Expression((("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"),
                          ("7*x[0] + 11*x[1]*x[1]", "13*x[0] + 17*x[1]*x[1]")), degree=2)
-        block_form[0][0] = (f1[0, 0]*u1[0, 0]*v1[0, 0].dx(0) + f1[0, 1]*u1[0, 1].dx(1)*v1[0, 1] + f1[1, 0]*u1[1, 0].dx(0)*v1[1, 0].dx(1) + f1[1, 1]*u1[1, 1].dx(0)*v1[1, 1])*dx
+        block_form[0][0] = (f1[0, 0]*u1[0, 0]*v1[0, 0] + f1[0, 1]*u1[0, 1].dx(1)*v1[0, 1] + f1[1, 0]*u1[1, 0].dx(0)*v1[1, 0].dx(1) + f1[1, 1]*u1[1, 1].dx(0)*v1[1, 1])*dx
     # (2, 2) block
     shape_2 = block_V[1].ufl_element().value_shape()
     if len(shape_2) is 0:
         f2 = Expression("2*x[1] + 4*x[0]*x[0]", degree=2)
-        block_form[1][1] = f2*u2*v2.dx(0)*dx
+        block_form[1][1] = f2*u2*v2*dx
     elif len(shape_2) is 1 and shape_2[0] is 2:
         f2 = Expression(("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]"), degree=2)
-        block_form[1][1] = (f2[0]*u2[0]*v2[0].dx(0) + f2[1]*u2[1].dx(1)*v2[1])*dx
+        block_form[1][1] = (f2[0]*u2[0]*v2[0] + f2[1]*u2[1].dx(1)*v2[1])*dx
     elif len(shape_2) is 1 and shape_2[0] is 3:
         f2 = Expression(("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]", "7*x[1] + 11*x[0]*x[0]"), degree=2)
-        block_form[1][1] = (f2[0]*u2[0]*v2[0].dx(0) + f2[1]*u2[1].dx(1)*v2[1] + f2[2]*u2[2].dx(0)*v2[2].dx(1))*dx
+        block_form[1][1] = (f2[0]*u2[0]*v2[0] + f2[1]*u2[1].dx(1)*v2[1] + f2[2]*u2[2].dx(0)*v2[2].dx(1))*dx
     elif len(shape_2) is 2:
         f2 = Expression((("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]"),
                          ("7*x[1] + 11*x[0]*x[0]", "13*x[1] + 17*x[0]*x[0]")), degree=2)
-        block_form[1][1] = (f2[0, 0]*u2[0, 0]*v2[0, 0].dx(0) + f2[0, 1]*u2[0, 1].dx(1)*v2[0, 1] + f2[1, 0]*u2[1, 0].dx(0)*v2[1, 0].dx(1) + f2[1, 1]*u2[1, 1].dx(0)*v2[1, 1])*dx
+        block_form[1][1] = (f2[0, 0]*u2[0, 0]*v2[0, 0] + f2[0, 1]*u2[0, 1].dx(1)*v2[0, 1] + f2[1, 0]*u2[1, 0].dx(0)*v2[1, 0].dx(1) + f2[1, 1]*u2[1, 1].dx(0)*v2[1, 1])*dx
     # (1, 2) and (2, 1) blocks
     if len(shape_1) is 0:
         if len(shape_2) is 0:
-            block_form[0][1] = f1*u2*v1.dx(0)*dx
-            block_form[1][0] = f2*u1*v2.dx(0)*dx
+            block_form[0][1] = f1*u2*v1*dx
+            block_form[1][0] = f2*u1*v2*dx
         elif len(shape_2) is 1 and shape_2[0] is 2:
-            block_form[0][1] = f1*u2[0]*v1.dx(0)*dx + f1*u2[1]*v1.dx(1)*dx
-            block_form[1][0] = (f2[0]*u1*v2[0].dx(0) + f2[1]*u1.dx(1)*v2[1])*dx
+            block_form[0][1] = f1*u2[0]*v1*dx + f1*u2[1]*v1.dx(1)*dx
+            block_form[1][0] = (f2[0]*u1*v2[0] + f2[1]*u1.dx(1)*v2[1])*dx
         elif len(shape_2) is 1 and shape_2[0] is 3:
-            block_form[0][1] = f1*u2[0]*v1.dx(0)*dx + f1*u2[1]*v1.dx(1)*dx + f1*u2[2]*v1*dx
-            block_form[1][0] = (f2[0]*u1*v2[0].dx(0) + f2[1]*u1.dx(1)*v2[1] + f2[2]*u1.dx(0)*v2[2].dx(1))*dx
+            block_form[0][1] = f1*u2[0]*v1*dx + f1*u2[1]*v1.dx(1)*dx + f1*u2[2]*v1*dx
+            block_form[1][0] = (f2[0]*u1*v2[0] + f2[1]*u1.dx(1)*v2[1] + f2[2]*u1.dx(0)*v2[2].dx(1))*dx
         elif len(shape_2) is 2:
-            block_form[0][1] = f1*u2[0, 0]*v1.dx(0)*dx + f1*u2[1, 1]*v1.dx(0)*dx
-            block_form[1][0] = (f2[0, 0]*u1*v2[0, 0].dx(0) + f2[0, 1]*u1.dx(1)*v2[0, 1] + f2[1, 0]*u1.dx(0)*v2[1, 0].dx(1) + f2[1, 1]*u1.dx(0)*v2[1, 1])*dx
+            block_form[0][1] = f1*u2[0, 0]*v1*dx + f1*u2[1, 1]*v1.dx(0)*dx
+            block_form[1][0] = (f2[0, 0]*u1*v2[0, 0] + f2[0, 1]*u1.dx(1)*v2[0, 1] + f2[1, 0]*u1.dx(0)*v2[1, 0].dx(1) + f2[1, 1]*u1.dx(0)*v2[1, 1])*dx
     elif len(shape_1) is 1 and shape_1[0] is 2:
         if len(shape_2) is 0:
-            block_form[0][1] = (f1[0]*u2*v1[0].dx(0) + f1[1]*u2.dx(1)*v1[1])*dx
-            block_form[1][0] = f2*u1[0]*v2.dx(0)*dx + f2*u1[1]*v2.dx(0)*dx
+            block_form[0][1] = (f1[0]*u2*v1[0] + f1[1]*u2.dx(1)*v1[1])*dx
+            block_form[1][0] = f2*u1[0]*v2*dx + f2*u1[1]*v2.dx(0)*dx
         elif len(shape_2) is 1 and shape_2[0] is 2:
-            block_form[0][1] = (f1[0]*u2[0]*v1[0].dx(0) + f1[1]*u2[1].dx(1)*v1[1])*dx
-            block_form[1][0] = (f2[0]*u1[0]*v2[0].dx(0) + f2[1]*u1[1].dx(1)*v2[1])*dx
+            block_form[0][1] = (f1[0]*u2[0]*v1[0] + f1[1]*u2[1].dx(1)*v1[1])*dx
+            block_form[1][0] = (f2[0]*u1[0]*v2[0] + f2[1]*u1[1].dx(1)*v2[1])*dx
         elif len(shape_2) is 1 and shape_2[0] is 3:
-            block_form[0][1] = (f1[0]*u2[0]*v1[0].dx(0) + f1[1]*u2[1].dx(1)*v1[1] + f1[0]*u2[2]*v1[0])*dx
-            block_form[1][0] = (f2[0]*u1[0]*v2[0].dx(0) + f2[1]*u1[1].dx(1)*v2[1] + f2[2]*u1[0].dx(0)*v2[2].dx(1))*dx
+            block_form[0][1] = (f1[0]*u2[0]*v1[0] + f1[1]*u2[1].dx(1)*v1[1] + f1[0]*u2[2]*v1[0])*dx
+            block_form[1][0] = (f2[0]*u1[0]*v2[0] + f2[1]*u1[1].dx(1)*v2[1] + f2[2]*u1[0].dx(0)*v2[2].dx(1))*dx
         elif len(shape_2) is 2:
-            block_form[0][1] = (f1[0]*u2[0, 0]*v1[0].dx(0) + f1[1]*u2[1, 1].dx(1)*v1[1])*dx
-            block_form[1][0] = (f2[0, 0]*u1[0]*v2[0, 0].dx(0) + f2[0, 1]*u1[0].dx(1)*v2[0, 1] + f2[1, 0]*u1[1].dx(0)*v2[1, 0].dx(1) + f2[1, 1]*u1[0].dx(0)*v2[1, 1])*dx
+            block_form[0][1] = (f1[0]*u2[0, 0]*v1[0] + f1[1]*u2[1, 1].dx(1)*v1[1])*dx
+            block_form[1][0] = (f2[0, 0]*u1[0]*v2[0, 0] + f2[0, 1]*u1[0].dx(1)*v2[0, 1] + f2[1, 0]*u1[1].dx(0)*v2[1, 0].dx(1) + f2[1, 1]*u1[0].dx(0)*v2[1, 1])*dx
     elif len(shape_1) is 1 and shape_1[0] is 3:
         if len(shape_2) is 0:
-            block_form[0][1] = (f1[0]*u2*v1[0].dx(0) + f1[1]*u2.dx(1)*v1[1] + f1[2]*u2.dx(0)*v1[2].dx(1))*dx
-            block_form[1][0] = f2*u1[0]*v2.dx(0)*dx + f2*u1[1]*v2.dx(1)*dx + f2*u1[2]*v2*dx
+            block_form[0][1] = (f1[0]*u2*v1[0] + f1[1]*u2.dx(1)*v1[1] + f1[2]*u2.dx(0)*v1[2].dx(1))*dx
+            block_form[1][0] = f2*u1[0]*v2*dx + f2*u1[1]*v2.dx(1)*dx + f2*u1[2]*v2*dx
         elif len(shape_2) is 1 and shape_2[0] is 2:
-            block_form[0][1] = (f1[0]*u2[0]*v1[0].dx(0) + f1[1]*u2[1].dx(1)*v1[1] + f1[2]*u2[0].dx(0)*v1[2].dx(1))*dx
-            block_form[1][0] = (f2[0]*u1[0]*v2[0].dx(0) + f2[1]*u1[1].dx(1)*v2[1] + f2[1]*u1[2].dx(1)*v2[1])*dx
+            block_form[0][1] = (f1[0]*u2[0]*v1[0] + f1[1]*u2[1].dx(1)*v1[1] + f1[2]*u2[0].dx(0)*v1[2].dx(1))*dx
+            block_form[1][0] = (f2[0]*u1[0]*v2[0] + f2[1]*u1[1].dx(1)*v2[1] + f2[1]*u1[2].dx(1)*v2[1])*dx
         elif len(shape_2) is 1 and shape_2[0] is 3:
-            block_form[0][1] = (f1[0]*u2[0]*v1[0].dx(0) + f1[1]*u2[1].dx(1)*v1[1] + f1[2]*u2[2].dx(0)*v1[2].dx(1))*dx
-            block_form[1][0] = (f2[0]*u1[0]*v2[0].dx(0) + f2[1]*u1[1].dx(1)*v2[1] + f2[2]*u1[2].dx(0)*v2[2].dx(1))*dx
+            block_form[0][1] = (f1[0]*u2[0]*v1[0] + f1[1]*u2[1].dx(1)*v1[1] + f1[2]*u2[2].dx(0)*v1[2].dx(1))*dx
+            block_form[1][0] = (f2[0]*u1[0]*v2[0] + f2[1]*u1[1].dx(1)*v2[1] + f2[2]*u1[2].dx(0)*v2[2].dx(1))*dx
         elif len(shape_2) is 2:
-            block_form[0][1] = (f1[0]*u2[0, 0]*v1[0].dx(0) + f1[1]*u2[1, 0].dx(1)*v1[1] + f1[2]*u2[0, 1].dx(0)*v1[2].dx(1) + f1[0]*u2[1, 1]*v1[0].dx(1))*dx
-            block_form[1][0] = (f2[0, 0]*u1[0]*v2[0, 0].dx(0) + f2[0, 1]*u1[1].dx(1)*v2[0, 1] + f2[1, 0]*u1[2].dx(0)*v2[1, 0].dx(1) + f2[1, 1]*u1[0].dx(0)*v2[1, 1])*dx
+            block_form[0][1] = (f1[0]*u2[0, 0]*v1[0] + f1[1]*u2[1, 0].dx(1)*v1[1] + f1[2]*u2[0, 1].dx(0)*v1[2].dx(1) + f1[0]*u2[1, 1]*v1[0].dx(1))*dx
+            block_form[1][0] = (f2[0, 0]*u1[0]*v2[0, 0] + f2[0, 1]*u1[1].dx(1)*v2[0, 1] + f2[1, 0]*u1[2].dx(0)*v2[1, 0].dx(1) + f2[1, 1]*u1[0].dx(0)*v2[1, 1])*dx
     elif len(shape_1) is 2:
         if len(shape_2) is 0:
-            block_form[0][1] = (f1[0, 0]*u2*v1[0, 0].dx(0) + f1[0, 1]*u2.dx(1)*v1[0, 1] + f1[1, 0]*u2.dx(0)*v1[1, 0].dx(1) + f1[1, 1]*u2.dx(0)*v1[1, 1])*dx
-            block_form[1][0] = f2*u1[0, 0]*v2.dx(0)*dx + f2*u1[1, 1]*v2.dx(1)*dx
+            block_form[0][1] = (f1[0, 0]*u2*v1[0, 0] + f1[0, 1]*u2.dx(1)*v1[0, 1] + f1[1, 0]*u2.dx(0)*v1[1, 0].dx(1) + f1[1, 1]*u2.dx(0)*v1[1, 1])*dx
+            block_form[1][0] = f2*u1[0, 0]*v2*dx + f2*u1[1, 1]*v2.dx(1)*dx
         elif len(shape_2) is 1 and shape_2[0] is 2:
-            block_form[0][1] = (f1[0, 0]*u2[0]*v1[0, 0].dx(0) + f1[0, 1]*u2[0].dx(1)*v1[0, 1] + f1[1, 0]*u2[1].dx(0)*v1[1, 0].dx(1) + f1[1, 1]*u2[1].dx(0)*v1[1, 1])*dx
-            block_form[1][0] = (f2[0]*u1[0, 0]*v2[0].dx(0) + f2[1]*u1[1, 1].dx(1)*v2[1])*dx
+            block_form[0][1] = (f1[0, 0]*u2[0]*v1[0, 0] + f1[0, 1]*u2[0].dx(1)*v1[0, 1] + f1[1, 0]*u2[1].dx(0)*v1[1, 0].dx(1) + f1[1, 1]*u2[1].dx(0)*v1[1, 1])*dx
+            block_form[1][0] = (f2[0]*u1[0, 0]*v2[0] + f2[1]*u1[1, 1].dx(1)*v2[1])*dx
         elif len(shape_2) is 1 and shape_2[0] is 3:
-            block_form[0][1] = (f1[0, 0]*u2[0]*v1[0, 0].dx(0) + f1[0, 1]*u2[1].dx(1)*v1[0, 1] + f1[1, 0]*u2[2].dx(0)*v1[1, 0].dx(1) + f1[1, 1]*u2[0].dx(0)*v1[1, 1])*dx
-            block_form[1][0] = (f2[0]*u1[0, 0]*v2[0].dx(0) + f2[1]*u1[1, 0].dx(1)*v2[1] + f2[2]*u1[0, 1].dx(0)*v2[2].dx(1) + f2[0]*u1[1, 1]*v2[0].dx(1))*dx
+            block_form[0][1] = (f1[0, 0]*u2[0]*v1[0, 0] + f1[0, 1]*u2[1].dx(1)*v1[0, 1] + f1[1, 0]*u2[2].dx(0)*v1[1, 0].dx(1) + f1[1, 1]*u2[0].dx(0)*v1[1, 1])*dx
+            block_form[1][0] = (f2[0]*u1[0, 0]*v2[0] + f2[1]*u1[1, 0].dx(1)*v2[1] + f2[2]*u1[0, 1].dx(0)*v2[2].dx(1) + f2[0]*u1[1, 1]*v2[0].dx(1))*dx
         elif len(shape_2) is 2:
-            block_form[0][1] = (f1[0, 0]*u2[0, 0]*v1[0, 0].dx(0) + f1[0, 1]*u2[0, 1].dx(1)*v1[0, 1] + f1[1, 0]*u2[1, 0].dx(0)*v1[1, 0].dx(1) + f1[1, 1]*u2[1, 1].dx(0)*v1[1, 1])*dx
-            block_form[1][0] = (f2[0, 0]*u1[0, 0]*v2[0, 0].dx(0) + f2[0, 1]*u1[0, 1].dx(1)*v2[0, 1] + f2[1, 0]*u1[1, 0].dx(0)*v2[1, 0].dx(1) + f2[1, 1]*u1[1, 1].dx(0)*v2[1, 1])*dx
+            block_form[0][1] = (f1[0, 0]*u2[0, 0]*v1[0, 0] + f1[0, 1]*u2[0, 1].dx(1)*v1[0, 1] + f1[1, 0]*u2[1, 0].dx(0)*v1[1, 0].dx(1) + f1[1, 1]*u2[1, 1].dx(0)*v1[1, 1])*dx
+            block_form[1][0] = (f2[0, 0]*u1[0, 0]*v2[0, 0] + f2[0, 1]*u1[0, 1].dx(1)*v2[0, 1] + f2[1, 0]*u1[1, 0].dx(0)*v2[1, 0].dx(1) + f2[1, 1]*u1[1, 1].dx(0)*v2[1, 1])*dx
     return block_form
     
 # ================ RIGHT-HAND SIDE BLOCK FORM ASSEMBLER ================ #
