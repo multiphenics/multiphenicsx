@@ -324,7 +324,7 @@ class BlockFunction(object):
     def __imul__(self, other):
         if isinstance(other, float):
             for block_fun_output in self:
-                block_fun_output.vector()._scale(other)
+                block_fun_output.vector()[:] *= other
             self.apply("from subfunctions")
             return self
         else:
@@ -333,7 +333,7 @@ class BlockFunction(object):
     def __itruediv__(self, other):
         if isinstance(other, float):
             for block_fun_output in self:
-                block_fun_output.vector()._scale(1./other)
+                block_fun_output.vector()[:] /= other
             self.apply("from subfunctions")
             return self
         else:
