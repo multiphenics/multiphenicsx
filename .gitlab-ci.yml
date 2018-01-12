@@ -19,7 +19,7 @@ build:
     - python3 -c "import multiphenics"
   artifacts:
     paths:
-      - .dijitso/multiphenics_*/compile.log
+      - jitfailure*
     when: on_failure
     
 flake8:
