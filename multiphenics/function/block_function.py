@@ -271,7 +271,7 @@ class BlockFunction(object):
         if isinstance(other, float):
             output = self.copy(deepcopy=True)
             for block_fun_output in output:
-                block_fun_output.vector()._scale(other)
+                block_fun_output.vector()[:] *= other
             output.apply("from subfunctions")
             return output
         else:
@@ -281,7 +281,7 @@ class BlockFunction(object):
         if isinstance(other, float):
             output = self.copy(deepcopy=True)
             for block_fun_output in output:
-                block_fun_output.vector()._scale(1./other)
+                block_fun_output.vector()[:] /= other
             output.apply("from subfunctions")
             return output
         else:
