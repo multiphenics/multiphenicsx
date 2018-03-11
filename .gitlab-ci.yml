@@ -1,20 +1,32 @@
-image:
-  name: quay.io/fenicsproject_dev/dolfin:py3-master
-  entrypoint: ["/sbin/my_init","--quiet","--","/sbin/setuser","fenics"]
-  
-before_script:
-  - source $FENICS_HOME/fenics.env.conf
-  - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
-  - sudo apt-get -qq remove python3-pytest
-  - sudo -H pip3 -q install pytest pytest-flake8 pytest-html pytest-instafail pytest-xdist
-  - python3 setup.py -q install --user
-  
 stages:
   - build
+  - import
   - test
-  
+  - release
+
+variables:
+  TESTING_IMAGE: $CI_REGISTRY_IMAGE:testing-$CI_COMMIT_SHA
+  RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
+
 build:
+  image: docker:latest
+  services:
+    - docker:dind
   stage: build
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build --pull -t $TESTING_IMAGE -f docker/Dockerfile.build .
+    - docker push $TESTING_IMAGE
+    
+import:
+  image:
+    name: $TESTING_IMAGE
+    entrypoint: ["/sbin/my_init","--quiet","--","/sbin/setuser","fenics"]
+  stage: import
+  before_script:
+    - source $FENICS_HOME/fenics.env.conf
+    - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
   script:
     - python3 -c "import multiphenics"
   artifacts:
@@ -23,7 +35,14 @@ build:
     when: on_failure
     
 flake8:
+  image:
+    name: $TESTING_IMAGE
+    entrypoint: ["/sbin/my_init","--quiet","--","/sbin/setuser","fenics"]
   stage: test
+  before_script:
+    - source $FENICS_HOME/fenics.env.conf
+    - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
+    - python3 -c "import multiphenics"
   script:
     - pytest --flake8 -m flake8 -n auto -vv --html=pytest_flake8.html --self-contained-html
   artifacts:
@@ -32,7 +51,14 @@ flake8:
     when: on_failure
     
 tutorials_serial:
+  image:
+    name: $TESTING_IMAGE
+    entrypoint: ["/sbin/my_init","--quiet","--","/sbin/setuser","fenics"]
   stage: test
+  before_script:
+    - source $FENICS_HOME/fenics.env.conf
+    - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
+    - python3 -c "import multiphenics"
   script:
     - pytest -n auto -vv --html=pytest_tutorials_serial.html --self-contained-html tutorials
   artifacts:
@@ -41,7 +67,14 @@ tutorials_serial:
     when: on_failure
     
 tests_serial:
+  image:
+    name: $TESTING_IMAGE
+    entrypoint: ["/sbin/my_init","--quiet","--","/sbin/setuser","fenics"]
   stage: test
+  before_script:
+    - source $FENICS_HOME/fenics.env.conf
+    - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
+    - python3 -c "import multiphenics"
   script:
     - pytest -n auto -vv --html=pytest_tests_serial.html --self-contained-html tests
   artifacts:
@@ -50,7 +83,14 @@ tests_serial:
     when: on_failure
     
 .tutorials_parallel:
+  image:
+    name: $TESTING_IMAGE
+    entrypoint: ["/sbin/my_init","--quiet","--","/sbin/setuser","fenics"]
   stage: test
+  before_script:
+    - source $FENICS_HOME/fenics.env.conf
+    - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
+    - python3 -c "import multiphenics"
   script:
     - mpirun -n 2 pytest -vv --html=pytest_tutorials_parallel.html --self-contained-html tutorials
   artifacts:
@@ -59,10 +99,31 @@ tests_serial:
     when: on_failure
     
 .tests_parallel:
+  image:
+    name: $TESTING_IMAGE
+    entrypoint: ["/sbin/my_init","--quiet","--","/sbin/setuser","fenics"]
   stage: test
+  before_script:
+    - source $FENICS_HOME/fenics.env.conf
+    - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
+    - python3 -c "import multiphenics"
   script:
     - mpirun -n 2 pytest -vv --html=pytest_tests_parallel.html --self-contained-html tests
   artifacts:
     paths:
       - pytest_tests_parallel.html
     when: on_failure
+
+release:
+  image: docker:latest
+  services:
+    - docker:dind
+  stage: release
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - sed -i "s|TESTING_IMAGE|$TESTING_IMAGE|g" docker/Dockerfile.release
+    - docker build --pull -t $RELEASE_IMAGE -f docker/Dockerfile.release .
+    - docker push $RELEASE_IMAGE
+  only:
+    - master

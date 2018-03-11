@@ -17,6 +17,12 @@ and install the package by typing
 python3 setup.py install
 ```
 
+#### 2.1. multiphenics docker image
+If you want to try **multiphenics** out but do not have **FEniCS** already installed, you can [pull our docker image from Docker Hub](https://hub.docker.com/r/multiphenics/multiphenics/). All required dependencies are already installed. **multiphenics** tutorials and tests are located at
+```
+$FENICS_HOME/local/share/multiphenics
+```
+
 ### 3. Tutorials
 Several tutorials are provided in the [**tutorials** subfolder](https://gitlab.com/multiphenics/multiphenics/tree/master/tutorials).
 * **Tutorial 1**: block Poisson test case, to introduce the block notation used in the library.
