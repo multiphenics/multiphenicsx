@@ -10,5 +10,6 @@
 *.py[cod]
 *.vtu
 *.xdmf
+.pytest_cache
 build
 dist
