@@ -16,7 +16,7 @@ build:
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - docker build --pull -t $TESTING_IMAGE -f docker/Dockerfile.build .
+    - docker build --pull -t $TESTING_IMAGE -f docker/Dockerfile .
     - docker push $TESTING_IMAGE
     
 import:
@@ -122,8 +122,8 @@ release:
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - sed -i "s|TESTING_IMAGE|$TESTING_IMAGE|g" docker/Dockerfile.release
-    - docker build --pull -t $RELEASE_IMAGE -f docker/Dockerfile.release .
+    - docker pull $TESTING_IMAGE
+    - docker tag $TESTING_IMAGE $RELEASE_IMAGE
     - docker push $RELEASE_IMAGE
   only:
     - master
