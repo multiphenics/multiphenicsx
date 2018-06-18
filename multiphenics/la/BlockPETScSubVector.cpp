@@ -140,6 +140,9 @@ BlockPETScSubVector::~BlockPETScSubVector()
   // Also destroy IS
   ierr = ISDestroy(&_is);
   if (ierr != 0) petsc_error(ierr, __FILE__, "ISDestroy");
+  // Finally, destroy vector container
+  ierr = VecDestroy(&_x);
+  if (ierr != 0) petsc_error(ierr, __FILE__, "VecDestroy");
   // --- end --- from VecRestoreSubVector --- end --- //
 }
 //-----------------------------------------------------------------------------
