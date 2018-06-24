@@ -19,11 +19,12 @@
 import pytest
 from numpy.linalg import norm
 from dolfin import assemble, div, ds, dx, grad, FunctionSpace, inner, UnitSquareMesh, VectorFunctionSpace
+from dolfin_utils.test import fixture as module_fixture
 from multiphenics import block_adjoint, block_derivative, BlockForm, BlockFunction, BlockFunctionSpace, block_restrict, block_split, BlockTestFunction, BlockTrialFunction
 from test_utils import array_equal
 
 # Mesh
-@pytest.fixture(scope="module")
+@module_fixture
 def mesh():
     return UnitSquareMesh(4, 4)
     
