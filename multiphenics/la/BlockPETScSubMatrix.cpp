@@ -70,6 +70,8 @@ BlockPETScSubMatrix::BlockPETScSubMatrix(
   _is.push_back(is_0);
   _is.push_back(is_1);
   
+  ierr = MatDestroy(&this->_matA); // which was automatically created by parent constructor
+  if (ierr != 0) petsc_error(ierr, __FILE__, "MatDestroy");
   ierr = MatGetLocalSubMatrix(_global_matrix.mat(), _is[0], _is[1], &this->_matA);
   if (ierr != 0) petsc_error(ierr, __FILE__, "MatGetLocalSubMatrix");
   
