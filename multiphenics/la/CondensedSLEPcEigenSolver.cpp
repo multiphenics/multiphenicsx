@@ -76,6 +76,16 @@ CondensedSLEPcEigenSolver::~CondensedSLEPcEigenSolver()
   PetscErrorCode ierr;
   ierr = ISDestroy(&_is);
   if (ierr != 0) petsc_error(ierr, __FILE__, "ISDestroy");
+  
+  if (_condensed_A) {
+    ierr = MatDestroy(&_condensed_A);
+    if (ierr != 0) petsc_error(ierr, __FILE__, "MatDestroy");
+  }
+  
+  if (_condensed_B) {
+    ierr = MatDestroy(&_condensed_B);
+    if (ierr != 0) petsc_error(ierr, __FILE__, "MatDestroy");
+  }
 }
 //-----------------------------------------------------------------------------
 void CondensedSLEPcEigenSolver::set_boundary_conditions(std::vector<std::shared_ptr<const DirichletBC>> bcs)
@@ -126,15 +136,15 @@ void CondensedSLEPcEigenSolver::set_operators(std::shared_ptr<const PETScMatrix>
   {
     _B = B;
     _condensed_B = _condense_matrix(B);
-    EPSSetOperators(this->eps(), _condensed_A->mat(), _condensed_B->mat());
+    EPSSetOperators(this->eps(), _condensed_A, _condensed_B);
   }
   else
   {
-    EPSSetOperators(this->eps(), _condensed_A->mat(), NULL);
+    EPSSetOperators(this->eps(), _condensed_A, NULL);
   }
 }
 //-----------------------------------------------------------------------------
-std::shared_ptr<const PETScMatrix> CondensedSLEPcEigenSolver::_condense_matrix(std::shared_ptr<const PETScMatrix> mat)
+Mat CondensedSLEPcEigenSolver::_condense_matrix(std::shared_ptr<const PETScMatrix> mat)
 {
   PetscErrorCode ierr;
   
@@ -147,7 +157,7 @@ std::shared_ptr<const PETScMatrix> CondensedSLEPcEigenSolver::_condense_matrix(s
   if (ierr != 0) petsc_error(ierr, __FILE__, "MatCreateSubMatrix");
   #endif
   
-  return std::make_shared<const PETScMatrix>(condensed_mat);
+  return condensed_mat;
 }
 //-----------------------------------------------------------------------------
 void CondensedSLEPcEigenSolver::get_eigenpair(double& lr, double& lc,
@@ -179,13 +189,9 @@ void CondensedSLEPcEigenSolver::get_eigenpair(double& lr, double& lc,
     
     // Condense input vectors
     Vec condensed_r_vec;
-    ierr = VecCreate(r.mpi_comm(), &condensed_r_vec);
-    if (ierr != 0) petsc_error(ierr, __FILE__, "VecCreate");
     ierr = VecGetSubVector(r.vec(), _is, &condensed_r_vec);
     if (ierr != 0) petsc_error(ierr, __FILE__, "VecGetSubVector");
     Vec condensed_c_vec;
-    ierr = VecCreate(c.mpi_comm(), &condensed_c_vec);
-    if (ierr != 0) petsc_error(ierr, __FILE__, "VecCreate");
     ierr = VecGetSubVector(c.vec(), _is, &condensed_c_vec);
     if (ierr != 0) petsc_error(ierr, __FILE__, "VecGetSubVector");
     

@@ -82,12 +82,12 @@ namespace dolfin
     IS _is;
     
   private:
-    std::shared_ptr<const PETScMatrix> _condense_matrix(std::shared_ptr<const PETScMatrix> mat);
+    Mat _condense_matrix(std::shared_ptr<const PETScMatrix> mat);
     
     std::shared_ptr<const PETScMatrix> _A;
     std::shared_ptr<const PETScMatrix> _B;
-    std::shared_ptr<const PETScMatrix> _condensed_A;
-    std::shared_ptr<const PETScMatrix> _condensed_B;
+    Mat _condensed_A;
+    Mat _condensed_B;
 
   };
 
