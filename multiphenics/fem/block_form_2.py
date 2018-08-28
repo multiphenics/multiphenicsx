@@ -38,7 +38,7 @@ class BlockForm2(BlockForm2_Base):
         #  placeholders have been replaced by zero forms)
         N = len(block_form)
         M = len(block_form[0])
-        assert all([len(block_form_I) is M for block_form_I in block_form])
+        assert all([len(block_form_I) == M for block_form_I in block_form])
         replaced_block_form = empty((N, M), dtype=object)
         for I in range(N):
             for J in range(M):
