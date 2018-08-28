@@ -16,13 +16,10 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import as_backend_type, has_pybind11
+from dolfin import as_backend_type
 from multiphenics.python import cpp
 
-if has_pybind11():
-    BlockMATLABExport = cpp.la.BlockMATLABExport
-else:
-    BlockMATLABExport = cpp.BlockMATLABExport
+BlockMATLABExport = cpp.la.BlockMATLABExport
 
 def block_matlab_export(block_tensor, name_tensor):
     BlockMATLABExport.export_(as_backend_type(block_tensor), name_tensor)

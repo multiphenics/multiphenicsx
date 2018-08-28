@@ -16,10 +16,6 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import has_pybind11
 from multiphenics.python import cpp
 
-if has_pybind11():
-    BlockPETScSubVector = cpp.la.BlockPETScSubVector
-else:
-    BlockPETScSubVector = cpp.BlockPETScSubVector
+BlockPETScSubVector = cpp.la.BlockPETScSubVector

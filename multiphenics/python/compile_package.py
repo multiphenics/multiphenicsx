@@ -23,7 +23,7 @@ import petsc4py
 import dolfin
 from dolfin import compile_cpp_code
 
-def compile_pybind11_package(package_name, package_root, *args, **kwargs):
+def compile_package(package_name, package_root, *args, **kwargs):
     # Remove extension from files
     files = [os.path.splitext(f)[0] for f in args]
     

@@ -17,78 +17,39 @@
 #
 
 import dolfin
-from dolfin import DirichletBC, Function, has_pybind11
+from dolfin import DirichletBC, Function
+import dolfin.cpp
 from multiphenics.python import cpp
-
-if has_pybind11():
-    import dolfin.cpp
     
-    def DecorateGetEigenPair(SLEPcEigenSolver):
-        class DecoratedSLEPcEigenSolver(SLEPcEigenSolver):
-            def get_eigenpair(self, i, r_vec=None, c_vec=None):
-                if isinstance(r_vec, Function):
-                    r_vec_in = r_vec._cpp_object
-                else:
-                    r_vec_in = r_vec
-                if isinstance(c_vec, Function):
-                    c_vec_in = c_vec._cpp_object
-                else:
-                    c_vec_in = c_vec
-                (lr, lc, r_vec_out, c_vec_out) = SLEPcEigenSolver.get_eigenpair(self, i, r_vec_in, c_vec_in)
-                if isinstance(r_vec_out, dolfin.cpp.function.Function):
-                    r_vec_out = Function(r_vec_out)
-                if isinstance(c_vec_out, dolfin.cpp.function.Function):
-                    c_vec_out = Function(c_vec_out)
-                return (lr, lc, r_vec_out, c_vec_out)
-        
-        return DecoratedSLEPcEigenSolver
-        
-    def SLEPcEigenSolver(A, B=None, bcs=None):
-        if bcs is None:
-            EigenSolver = DecorateGetEigenPair(dolfin.SLEPcEigenSolver)
-            return EigenSolver(A, B)
-        else:
-            assert isinstance(bcs, (DirichletBC, list))
-            if isinstance(bcs, DirichletBC):
-                bcs = [bcs]
+def DecorateGetEigenPair(SLEPcEigenSolver):
+    class DecoratedSLEPcEigenSolver(SLEPcEigenSolver):
+        def get_eigenpair(self, i, r_vec=None, c_vec=None):
+            if isinstance(r_vec, Function):
+                r_vec_in = r_vec._cpp_object
             else:
-                assert all([isinstance(bc, DirichletBC) for bc in bcs])
-            EigenSolver = DecorateGetEigenPair(cpp.la.CondensedSLEPcEigenSolver)
-            return EigenSolver(A, B, bcs)
-else:
-    def DecorateGetEigenPair(SLEPcEigenSolver):
-        class DecoratedSLEPcEigenSolver(SLEPcEigenSolver):
-            def get_eigenpair(self, i, r_vec=None, c_vec=None):
-                if isinstance(r_vec, Function):
-                    r_vec_in = None # cannot use r_vec due to different ghosting
-                else:
-                    r_vec_in = r_vec
-                if isinstance(c_vec, Function):
-                    c_vec_in = None # cannot use r_vec due to different ghosting
-                else:
-                    c_vec_in = c_vec
-                (lr, lc, r_vec_out, c_vec_out) = SLEPcEigenSolver.get_eigenpair(self, i, r_vec_in, c_vec_in)
-                if isinstance(r_vec, Function):
-                    r_vec.vector().set_local(r_vec_out.get_local())
-                    r_vec.vector().apply("insert")
-                    r_vec_out = r_vec
-                if isinstance(c_vec, Function):
-                    c_vec.vector().set_local(c_vec_out.get_local())
-                    c_vec.vector().apply("insert")
-                    c_vec_out = c_vec
-                return (lr, lc, r_vec_out, c_vec_out)
-        
-        return DecoratedSLEPcEigenSolver
-
-    def SLEPcEigenSolver(A, B=None, bcs=None):
-        if bcs is None:
-            EigenSolver = DecorateGetEigenPair(dolfin.SLEPcEigenSolver)
-            return EigenSolver(A, B)
-        else:
-            assert isinstance(bcs, (DirichletBC, list))
-            EigenSolver = DecorateGetEigenPair(cpp.CondensedSLEPcEigenSolver)
-            if isinstance(bcs, DirichletBC):
-                return EigenSolver(A, B, [bcs])
+                r_vec_in = r_vec
+            if isinstance(c_vec, Function):
+                c_vec_in = c_vec._cpp_object
             else:
-                assert all([isinstance(bc, DirichletBC) for bc in bcs])
-                return EigenSolver(A, B, bcs)
+                c_vec_in = c_vec
+            (lr, lc, r_vec_out, c_vec_out) = SLEPcEigenSolver.get_eigenpair(self, i, r_vec_in, c_vec_in)
+            if isinstance(r_vec_out, dolfin.cpp.function.Function):
+                r_vec_out = Function(r_vec_out)
+            if isinstance(c_vec_out, dolfin.cpp.function.Function):
+                c_vec_out = Function(c_vec_out)
+            return (lr, lc, r_vec_out, c_vec_out)
+    
+    return DecoratedSLEPcEigenSolver
+    
+def SLEPcEigenSolver(A, B=None, bcs=None):
+    if bcs is None:
+        EigenSolver = DecorateGetEigenPair(dolfin.SLEPcEigenSolver)
+        return EigenSolver(A, B)
+    else:
+        assert isinstance(bcs, (DirichletBC, list))
+        if isinstance(bcs, DirichletBC):
+            bcs = [bcs]
+        else:
+            assert all([isinstance(bc, DirichletBC) for bc in bcs])
+        EigenSolver = DecorateGetEigenPair(cpp.la.CondensedSLEPcEigenSolver)
+        return EigenSolver(A, B, bcs)

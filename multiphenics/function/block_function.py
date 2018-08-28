@@ -18,22 +18,16 @@
 
 import types
 import dolfin
-from dolfin import Function, has_pybind11
+from dolfin import Function
 from multiphenics.python import cpp
 from multiphenics.function.block_function_space import BlockFunctionSpace
 from multiphenics.la.as_backend_type import as_backend_type
 from multiphenics.la.generic_block_vector import GenericBlockVector
 
-if has_pybind11():
-    def unwrap_sub_functions(sub_functions):
-        return [sub_function._cpp_object for sub_function in sub_functions]
-        
-    BlockFunction_Base = cpp.function.BlockFunction
-else:
-    def unwrap_sub_functions(sub_functions):
-        return sub_functions
-        
-    BlockFunction_Base = cpp.BlockFunction
+def unwrap_sub_functions(sub_functions):
+    return [sub_function._cpp_object for sub_function in sub_functions]
+    
+BlockFunction_Base = cpp.function.BlockFunction
 
 class BlockFunction(object):
     def __init__(self, *args, **kwargs):

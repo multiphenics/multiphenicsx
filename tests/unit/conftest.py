@@ -16,16 +16,10 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import multiphenics # to add has_pybind11 to dolfin  # noqa
-from dolfin import has_pybind11, MPI
-if not has_pybind11():
-    from dolfin import mpi_comm_world
+from dolfin import MPI
 
 def pytest_runtest_teardown(item, nextitem):
     # Do the normal teardown
     item.teardown()
     # Add a MPI barrier in parallel
-    if has_pybind11():
-        MPI.barrier(MPI.comm_world)
-    else:
-        MPI.barrier(mpi_comm_world())
+    MPI.barrier(MPI.comm_world)

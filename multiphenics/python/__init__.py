@@ -16,23 +16,38 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-try:
-    from dolfin import has_pybind11
-except ImportError:
-    from dolfin import __version__ as dolfin_version
-    if dolfin_version.startswith("2018"):
-        def has_pybind11():
-            return True
-    else:
-        def has_pybind11():
-            return False
-    import dolfin
-    dolfin.has_pybind11 = has_pybind11
+import os
+from multiphenics.python.compile_package import compile_package
 
-if has_pybind11():
-    from multiphenics.python.init_pybind11 import cpp
-else:
-    from multiphenics.python.init_swig import cpp
+# Compile package
+cpp = compile_package(
+    "multiphenics",
+    os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../..")),
+    # Files are manually sorted to handle dependencies
+    "log/log.cpp",
+    "fem/BlockDofMap.cpp",
+    "function/BlockFunctionSpace.cpp",
+    "fem/BlockFormBase.cpp",
+    "fem/BlockForm1.cpp",
+    "fem/BlockForm2.cpp",
+    "la/BlockMATLABExport.cpp",
+    "la/BlockInsertMode.cpp",
+    "la/GenericBlockVector.cpp",
+    "la/GenericBlockMatrix.cpp",
+    "la/BlockPETScVector.cpp",
+    "la/BlockPETScMatrix.cpp",
+    "la/BlockPETScSubMatrix.cpp",
+    "la/BlockPETScSubVector.cpp",
+    "la/GenericBlockLinearAlgebraFactory.cpp",
+    "la/BlockDefaultFactory.cpp",
+    "la/BlockPETScFactory.cpp",
+    "function/BlockFunction.cpp",
+    "fem/BlockAssemblerBase.cpp",
+    "fem/BlockAssembler.cpp",
+    "fem/BlockDirichletBC.cpp",
+    "la/CondensedSLEPcEigenSolver.cpp",
+    "la/CondensedBlockSLEPcEigenSolver.cpp",
+)
     
 __all__ = [
     'cpp'

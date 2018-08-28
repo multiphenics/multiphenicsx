@@ -16,10 +16,6 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import has_pybind11
 from multiphenics.python import cpp
 
-if has_pybind11():
-    BlockDefaultFactory = cpp.la.BlockDefaultFactory
-else:
-    BlockDefaultFactory = cpp.BlockDefaultFactory
+BlockDefaultFactory = cpp.la.BlockDefaultFactory

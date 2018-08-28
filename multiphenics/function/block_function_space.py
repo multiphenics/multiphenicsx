@@ -19,41 +19,31 @@
 import types
 import numpy
 from ufl.finiteelement import FiniteElementBase
-from dolfin import FunctionSpace, has_pybind11, Mesh, MeshFunction, SubDomain
+from dolfin import FunctionSpace, Mesh, MeshFunction, SubDomain
+import dolfin.cpp as dolfin_cpp
+from dolfin.cpp.mesh import MeshFunctionBool
+from dolfin.jit.jit import ffc_jit
 from multiphenics.function.block_element import BlockElement
 from multiphenics.python import cpp
 from multiphenics.mesh import MeshRestriction
 
-if has_pybind11():
-    from dolfin.cpp.mesh import MeshFunctionBool
-    import dolfin.cpp as dolfin_cpp
-    from dolfin.jit.jit import ffc_jit
-    
-    def _compile_dolfin_element(element, mesh):
-        # Compile dofmap and element
-        ufc_element, ufc_dofmap = ffc_jit(element, form_compiler_parameters=None,
-                                          mpi_comm=mesh.mpi_comm())
-        ufc_element = dolfin_cpp.fem.make_ufc_finite_element(ufc_element)
+def _compile_dolfin_element(element, mesh):
+    # Compile dofmap and element
+    ufc_element, ufc_dofmap = ffc_jit(element, form_compiler_parameters=None,
+                                      mpi_comm=mesh.mpi_comm())
+    ufc_element = dolfin_cpp.fem.make_ufc_finite_element(ufc_element)
 
-        # Create DOLFIN element and dofmap
-        dolfin_element = dolfin_cpp.fem.FiniteElement(ufc_element)
-        ufc_dofmap = dolfin_cpp.fem.make_ufc_dofmap(ufc_dofmap)
-        dolfin_dofmap = dolfin_cpp.fem.DofMap(ufc_dofmap, mesh)
-        
-        return dolfin_element, dolfin_dofmap
-        
-    def unwrap_function_spaces(function_spaces):
-        return [function_space._cpp_object for function_space in function_spaces]
-        
-    BlockFunctionSpace_Base = cpp.function.BlockFunctionSpace
-else:
-    from dolfin import MeshFunctionBool
-    from dolfin.functions.functionspace import _compile_dolfin_element
+    # Create DOLFIN element and dofmap
+    dolfin_element = dolfin_cpp.fem.FiniteElement(ufc_element)
+    ufc_dofmap = dolfin_cpp.fem.make_ufc_dofmap(ufc_dofmap)
+    dolfin_dofmap = dolfin_cpp.fem.DofMap(ufc_dofmap, mesh)
     
-    def unwrap_function_spaces(function_spaces):
-        return function_spaces
-        
-    BlockFunctionSpace_Base = cpp.BlockFunctionSpace
+    return dolfin_element, dolfin_dofmap
+    
+def unwrap_function_spaces(function_spaces):
+    return [function_space._cpp_object for function_space in function_spaces]
+    
+BlockFunctionSpace_Base = cpp.function.BlockFunctionSpace
 
 class BlockFunctionSpace(object):
     "Base class for all block function spaces."

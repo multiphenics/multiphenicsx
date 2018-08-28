@@ -17,13 +17,9 @@
 #
 
 import collections
-from dolfin import has_pybind11
 from multiphenics.python import cpp
 
-if has_pybind11():
-    BlockDirichletBC_Base = cpp.fem.BlockDirichletBC
-else:
-    BlockDirichletBC_Base = cpp.BlockDirichletBC
+BlockDirichletBC_Base = cpp.fem.BlockDirichletBC
 
 class BlockDirichletBC(BlockDirichletBC_Base):
     def __init__(self, bcs, block_function_space=None):

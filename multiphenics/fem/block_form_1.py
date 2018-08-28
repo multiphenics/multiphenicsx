@@ -17,14 +17,10 @@
 #
 
 from numpy import empty
-from dolfin import has_pybind11
 from dolfin.fem.assembling import _create_dolfin_form
 from multiphenics.python import cpp
 
-if has_pybind11():
-    BlockForm1_Base = cpp.fem.BlockForm1
-else:
-    BlockForm1_Base = cpp.BlockForm1
+BlockForm1_Base = cpp.fem.BlockForm1
 
 class BlockForm1(BlockForm1_Base):
     def __init__(self, block_form, block_function_space, form_compiler_parameters=None):

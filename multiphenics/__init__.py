@@ -16,7 +16,6 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import multiphenics.python # TODO to patch DOLFIN with has_pybind11 function: remove after 2018.1.0 release  # noqa
 from multiphenics.fem import block_adjoint, block_assemble, block_derivative, BlockDirichletBC, BlockForm, block_restrict, DirichletBC
 from multiphenics.function import assign, block_assign, BlockElement, BlockFunction, BlockFunctionSpace, block_split, BlockTestFunction, BlockTrialFunction, split, TestFunction, TrialFunction
 from multiphenics.io import File, plot, XDMFFile
