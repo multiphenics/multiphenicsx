@@ -25,7 +25,7 @@ RUN apt-get -qq update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     pip3 -q install --upgrade pytest pytest-flake8 pytest-html pytest-instafail pytest-xdist && \
-    sed -i "s/pytest_report_header/DISABLED_pytest_report_header/g" /usr/local/lib/python3.5/dist-packages/pytest_metadata/plugin.py && \
+    sed -i "s/pytest_report_header/DISABLED_pytest_report_header/g" /usr/local/lib/python3.6/dist-packages/pytest_metadata/plugin.py && \
     cat /dev/null > $FENICS_HOME/WELCOME
 
 USER fenics
@@ -38,7 +38,7 @@ RUN python3 setup.py -q install
 USER fenics
 WORKDIR $FENICS_HOME
 RUN mkdir multiphenics && \
-    ln -s $FENICS_PREFIX/lib/python3.5/site-packages/multiphenics multiphenics/source && \
+    ln -s $FENICS_PREFIX/lib/python3.6/site-packages/multiphenics multiphenics/source && \
     mv /tmp/multiphenics/tests multiphenics/ && \
     mv /tmp/multiphenics/tutorials multiphenics
     
