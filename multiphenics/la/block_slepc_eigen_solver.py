@@ -23,21 +23,11 @@ def DecorateGetEigenPair(BlockSLEPcEigenSolver):
     from multiphenics.function import BlockFunction # avoid recursive imports
     
     class DecoratedBlockSLEPcEigenSolver(BlockSLEPcEigenSolver):
-        def get_eigenpair(self, i, r_vec=None, c_vec=None):
-            if isinstance(r_vec, BlockFunction):
-                r_vec_in = r_vec._cpp_object
-            else:
-                r_vec_in = r_vec
-            if isinstance(c_vec, BlockFunction):
-                c_vec_in = c_vec._cpp_object
-            else:
-                c_vec_in = c_vec
-            (lr, lc, r_vec_out, c_vec_out) = BlockSLEPcEigenSolver.get_eigenpair(self, i, r_vec_in, c_vec_in)
-            if isinstance(r_vec_out, cpp.function.BlockFunction):
-                r_vec_out = BlockFunction(r_vec.block_function_space(), r_vec_out)
-            if isinstance(c_vec_out, cpp.function.BlockFunction):
-                c_vec_out = BlockFunction(c_vec.block_function_space(), c_vec_out)
-            return (lr, lc, r_vec_out, c_vec_out)
+        def get_eigenpair(self, r_fun, c_fun, i):
+            assert isinstance(r_fun, BlockFunction)
+            assert isinstance(c_fun, BlockFunction)
+            (lr, lc, _, _) = BlockSLEPcEigenSolver.get_eigenpair(self, r_fun._cpp_object, c_fun._cpp_object, i)
+            return (lr, lc, r_fun, c_fun)
             
     return DecoratedBlockSLEPcEigenSolver
     

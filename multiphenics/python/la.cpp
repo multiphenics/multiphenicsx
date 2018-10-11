@@ -115,7 +115,7 @@ namespace multiphenics_wrappers
                     std::vector<std::shared_ptr<const dolfin::DirichletBC>>>())
       .def(py::init<std::shared_ptr<const dolfin::PETScMatrix>, std::shared_ptr<const dolfin::PETScMatrix>,
                     std::vector<std::shared_ptr<const dolfin::DirichletBC>>>())
-      .def("get_eigenpair", [](dolfin::CondensedSLEPcEigenSolver& self, std::size_t i, dolfin::Function& r_fun, dolfin::Function& c_fun)
+      .def("get_eigenpair", [](dolfin::CondensedSLEPcEigenSolver& self, dolfin::Function& r_fun, dolfin::Function& c_fun, std::size_t i)
            {
              double lr, lc;
              dolfin::PETScVector r, c; // cannot use r_fun and c_fun vectors due to different ghosting
@@ -138,7 +138,7 @@ namespace multiphenics_wrappers
                     std::shared_ptr<const multiphenics::BlockDirichletBC>>())
       .def(py::init<std::shared_ptr<const multiphenics::BlockPETScMatrix>, std::shared_ptr<const multiphenics::BlockPETScMatrix>,
                     std::shared_ptr<const multiphenics::BlockDirichletBC>>())
-      .def("get_eigenpair", [](multiphenics::CondensedBlockSLEPcEigenSolver& self, std::size_t i, multiphenics::BlockFunction& r_fun, multiphenics::BlockFunction& c_fun)
+      .def("get_eigenpair", [](multiphenics::CondensedBlockSLEPcEigenSolver& self, multiphenics::BlockFunction& r_fun, multiphenics::BlockFunction& c_fun, std::size_t i)
            {
              double lr, lc;
              multiphenics::BlockPETScVector r, c; // cannot use r_fun and c_fun block vectors due to different ghosting

@@ -95,7 +95,7 @@ def run_monolithic():
 
     # Extract eigenfunctions
     r_fun, c_fun = Function(W), Function(W)
-    eigensolver.get_eigenpair(0, r_fun, c_fun)
+    eigensolver.get_eigenpair(r_fun, c_fun, 0)
     (u_fun, p_fun) = r_fun.split(deepcopy=True)
     (u_fun_1, u_fun_2) = u_fun.split(deepcopy=True)
     normalize(u_fun_1, u_fun_2, p_fun)
@@ -152,7 +152,7 @@ def run_block():
     
     # Extract eigenfunctions
     r_fun, c_fun = BlockFunction(W), BlockFunction(W)
-    eigensolver.get_eigenpair(0, r_fun, c_fun)
+    eigensolver.get_eigenpair(r_fun, c_fun, 0)
     (u_fun, p_fun) = r_fun.block_split()
     (u_fun_1, u_fun_2) = u_fun.split(deepcopy=True)
     normalize(u_fun_1, u_fun_2, p_fun)

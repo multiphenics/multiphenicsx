@@ -23,21 +23,11 @@ from multiphenics.python import cpp
     
 def DecorateGetEigenPair(SLEPcEigenSolver):
     class DecoratedSLEPcEigenSolver(SLEPcEigenSolver):
-        def get_eigenpair(self, i, r_vec=None, c_vec=None):
-            if isinstance(r_vec, Function):
-                r_vec_in = r_vec._cpp_object
-            else:
-                r_vec_in = r_vec
-            if isinstance(c_vec, Function):
-                c_vec_in = c_vec._cpp_object
-            else:
-                c_vec_in = c_vec
-            (lr, lc, r_vec_out, c_vec_out) = SLEPcEigenSolver.get_eigenpair(self, i, r_vec_in, c_vec_in)
-            if isinstance(r_vec_out, dolfin.cpp.function.Function):
-                r_vec_out = Function(r_vec_out)
-            if isinstance(c_vec_out, dolfin.cpp.function.Function):
-                c_vec_out = Function(c_vec_out)
-            return (lr, lc, r_vec_out, c_vec_out)
+        def get_eigenpair(self, r_fun, c_fun, i):
+            assert isinstance(r_fun, Function)
+            assert isinstance(c_fun, Function)
+            (lr, lc, _, _) = SLEPcEigenSolver.get_eigenpair(self, r_fun._cpp_object, c_fun._cpp_object, i)
+            return (lr, lc, r_fun, c_fun)
     
     return DecoratedSLEPcEigenSolver
     
