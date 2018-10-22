@@ -38,7 +38,7 @@ RUN python3 setup.py -q install
 USER fenics
 WORKDIR $FENICS_HOME
 RUN mkdir multiphenics && \
-    ln -s $FENICS_PREFIX/lib/python3.6/site-packages/multiphenics multiphenics/source && \
+    ln -s $FENICS_PREFIX/lib/python3.6/dist-packages/multiphenics*egg/multiphenics multiphenics/source && \
     mv /tmp/multiphenics/tests multiphenics/ && \
     mv /tmp/multiphenics/tutorials multiphenics
     
