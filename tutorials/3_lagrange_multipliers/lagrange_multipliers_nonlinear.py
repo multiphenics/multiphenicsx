@@ -22,7 +22,7 @@ from dolfin import *
 # import matplotlib.pyplot as plt
 from multiphenics import *
 
-"""
+r"""
 In this example we solve a nonlinear Laplace problem associated to
     min E(u)
     s.t. u = g on \partial \Omega

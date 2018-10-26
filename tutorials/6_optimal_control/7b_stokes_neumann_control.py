@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from multiphenics import *
 parameters["ghost_mode"] = "shared_facet" # required by dS
 
-"""
+r"""
 In this tutorial we solve the optimal control problem
 
 min J(y, u) = 1/2 \int_{\Omega} (v - v_d)^2 dx + \alpha1/2 \int_{\Gamma_C [id 4]} |\partial_t u|^2 ds + \alpha2/2 \int_{\Gamma_C [id 4]} |u|^2 ds

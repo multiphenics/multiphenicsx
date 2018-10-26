@@ -22,7 +22,7 @@ from dolfin import *
 from multiphenics import *
 parameters["ghost_mode"] = "shared_facet" # required by dS
 
-"""
+r"""
 In this example we solve
     - \Delta u = f      in \Omega
              u = 0      in \partial \Omega

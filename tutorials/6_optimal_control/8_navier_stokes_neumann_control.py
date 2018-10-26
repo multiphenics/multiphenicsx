@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from multiphenics import *
 from sympy import ccode, cos, symbols
 
-"""
+r"""
 In this tutorial we solve the optimal control problem
 
 min J(y, u) = 1/2 \int_{\Omega} |v - v_d|^2 dx + \alpha/2 \int_{\Gamma_2} |u|^2 ds

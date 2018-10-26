@@ -21,7 +21,7 @@ from dolfin import *
 import matplotlib.pyplot as plt
 from multiphenics import *
 
-"""
+r"""
 In this tutorial we solve the optimal control problem
 
 min J(y, u) = 1/2 \int_{\Omega} |curl v|^2 dx + \alpha/2 \int_{\Gamma_C} |\partial_t u|^2 ds
