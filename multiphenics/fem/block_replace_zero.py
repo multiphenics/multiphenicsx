@@ -30,7 +30,7 @@ zeros = (0, 0.)
 def block_replace_zero(block_form, index, block_function_space):
     assert len(index) in (1, 2)
     if len(index) == 2:
-        I = index[0]  # noqa
+        I = index[0]  # noqa: E741
         J = index[1]
         assert (
             isinstance(block_form[I][J], Form) # this function is always called after flattening, so it cannot be an array or list
@@ -49,7 +49,7 @@ def block_replace_zero(block_form, index, block_function_space):
             assert not block_form_IJ.empty()
         return block_form_IJ
     else:
-        I = index[0]  # noqa
+        I = index[0]  # noqa: E741
         assert (
             isinstance(block_form[I], Form) # this function is always called after flattening, so it cannot be an array or list
                 or
