@@ -18,28 +18,36 @@
 
 import numbers
 import pytest
+from _pytest.mark import ParameterSet
 from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, hstack as bvec, sort, unique, vstack
 from dolfin import assemble, Constant, DOLFIN_EPS, dx, Expression, FiniteElement, Function, FunctionSpace, inner, MixedElement, project, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
 from dolfin.cpp.la import GenericMatrix, GenericVector
 from multiphenics import assign, block_assemble, block_assign, BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
 
 # ================ PYTEST HELPER ================ #
+def pytest_mark_slow(item):
+    return pytest.param(item, marks=pytest.mark.slow)
+
 def pytest_mark_slow_for_cartesian_product(generator_1, generator_2):
     for i in generator_1():
         for j in generator_2():
             slow = False
-            if hasattr(i, "mark"):
-                assert i.name == "slow"
-                assert len(i.args) is 1
-                i = i.args[0]
+            if isinstance(i, ParameterSet):
+                assert len(i.marks) is 1
+                assert i.marks[0].name == "slow"
+                assert len(i.values) is 1
+                i = i.values[0]
                 slow = True
-            if hasattr(j, "mark"):
-                assert j.name == "slow"
-                assert len(j.args) is 1
-                j = j.args[0]
+            if isinstance(j, ParameterSet):
+                assert len(j.marks) is 1
+                assert j.marks[0].name == "slow"
+                assert len(j.values) is 1
+                j = j.values[0]
                 slow = True
+            assert not isinstance(i, ParameterSet)
+            assert not isinstance(j, ParameterSet)
             if slow:
-                yield pytest.mark.slow((i, j))
+                yield pytest_mark_slow((i, j))
             else:
                 yield (i, j)
 
@@ -195,17 +203,17 @@ def FunctionAndRealElement(family, cell, degree):
 def get_function_spaces_1():
     return (
         lambda mesh: FunctionSpace(mesh, "Lagrange", 1),
-        pytest.mark.slow(lambda mesh: FunctionSpace(mesh, "Lagrange", 2)),
+        pytest_mark_slow(lambda mesh: FunctionSpace(mesh, "Lagrange", 2)),
         lambda mesh: VectorFunctionSpace(mesh, "Lagrange", 1),
-        pytest.mark.slow(lambda mesh: VectorFunctionSpace(mesh, "Lagrange", 2)),
-        pytest.mark.slow(lambda mesh: TensorFunctionSpace(mesh, "Lagrange", 1)),
-        pytest.mark.slow(lambda mesh: TensorFunctionSpace(mesh, "Lagrange", 2)),
+        pytest_mark_slow(lambda mesh: VectorFunctionSpace(mesh, "Lagrange", 2)),
+        pytest_mark_slow(lambda mesh: TensorFunctionSpace(mesh, "Lagrange", 1)),
+        pytest_mark_slow(lambda mesh: TensorFunctionSpace(mesh, "Lagrange", 2)),
         lambda mesh: StokesFunctionSpace(mesh, "Lagrange", 1),
-        pytest.mark.slow(lambda mesh: StokesFunctionSpace(mesh, "Lagrange", 2)),
+        pytest_mark_slow(lambda mesh: StokesFunctionSpace(mesh, "Lagrange", 2)),
         lambda mesh: FunctionSpace(mesh, "Real", 0),
-        pytest.mark.slow(lambda mesh: VectorFunctionSpace(mesh, "Real", 0)),
-        pytest.mark.slow(lambda mesh: FunctionAndRealSpace(mesh, "Lagrange", 1)),
-        pytest.mark.slow(lambda mesh: FunctionAndRealSpace(mesh, "Lagrange", 2))
+        pytest_mark_slow(lambda mesh: VectorFunctionSpace(mesh, "Real", 0)),
+        pytest_mark_slow(lambda mesh: FunctionAndRealSpace(mesh, "Lagrange", 1)),
+        pytest_mark_slow(lambda mesh: FunctionAndRealSpace(mesh, "Lagrange", 2))
     )
     
 def get_function_spaces_2():
@@ -214,17 +222,17 @@ def get_function_spaces_2():
 def get_elements_1():
     return (
         lambda mesh: FiniteElement("Lagrange", mesh.ufl_cell(), 1),
-        pytest.mark.slow(lambda mesh: FiniteElement("Lagrange", mesh.ufl_cell(), 2)),
+        pytest_mark_slow(lambda mesh: FiniteElement("Lagrange", mesh.ufl_cell(), 2)),
         lambda mesh: VectorElement("Lagrange", mesh.ufl_cell(), 1),
-        pytest.mark.slow(lambda mesh: VectorElement("Lagrange", mesh.ufl_cell(), 2)),
-        pytest.mark.slow(lambda mesh: TensorElement("Lagrange", mesh.ufl_cell(), 1)),
-        pytest.mark.slow(lambda mesh: TensorElement("Lagrange", mesh.ufl_cell(), 2)),
+        pytest_mark_slow(lambda mesh: VectorElement("Lagrange", mesh.ufl_cell(), 2)),
+        pytest_mark_slow(lambda mesh: TensorElement("Lagrange", mesh.ufl_cell(), 1)),
+        pytest_mark_slow(lambda mesh: TensorElement("Lagrange", mesh.ufl_cell(), 2)),
         lambda mesh: StokesElement("Lagrange", mesh.ufl_cell(), 1),
-        pytest.mark.slow(lambda mesh: StokesElement("Lagrange", mesh.ufl_cell(), 2)),
+        pytest_mark_slow(lambda mesh: StokesElement("Lagrange", mesh.ufl_cell(), 2)),
         lambda mesh: FiniteElement("Real", mesh.ufl_cell(), 0),
-        pytest.mark.slow(lambda mesh: VectorElement("Real", mesh.ufl_cell(), 0)),
-        pytest.mark.slow(lambda mesh: FunctionAndRealElement("Lagrange", mesh.ufl_cell(), 1)),
-        pytest.mark.slow(lambda mesh: FunctionAndRealElement("Lagrange", mesh.ufl_cell(), 2))
+        pytest_mark_slow(lambda mesh: VectorElement("Real", mesh.ufl_cell(), 0)),
+        pytest_mark_slow(lambda mesh: FunctionAndRealElement("Lagrange", mesh.ufl_cell(), 1)),
+        pytest_mark_slow(lambda mesh: FunctionAndRealElement("Lagrange", mesh.ufl_cell(), 2))
     )
     
 def get_elements_2():
@@ -267,33 +275,33 @@ def get_restrictions_1():
         None,
         UnitSquareSubDomain(0.5, 0.5),
         UnitSquareInterface(on_boundary=True),
-        pytest.mark.slow(UnitSquareInterface(X=1.0)),
-        pytest.mark.slow(UnitSquareInterface(Y=0.0)),
+        pytest_mark_slow(UnitSquareInterface(X=1.0)),
+        pytest_mark_slow(UnitSquareInterface(Y=0.0)),
         UnitSquareInterface(X=0.75),
-        pytest.mark.slow(UnitSquareInterface(Y=0.25))
+        pytest_mark_slow(UnitSquareInterface(Y=0.25))
     )
 
 def get_restrictions_2():
     return (
         (None, None),
         (None, UnitSquareSubDomain(0.75, 0.75)),
-        pytest.mark.slow((None, UnitSquareInterface(on_boundary=True))),
+        pytest_mark_slow((None, UnitSquareInterface(on_boundary=True))),
         (None, UnitSquareInterface(Y=0.0)),
-        pytest.mark.slow((UnitSquareSubDomain(0.5, 0.75), None)),
-        pytest.mark.slow((UnitSquareInterface(on_boundary=True), None)),
-        pytest.mark.slow((UnitSquareInterface(X=1.0), None)),
+        pytest_mark_slow((UnitSquareSubDomain(0.5, 0.75), None)),
+        pytest_mark_slow((UnitSquareInterface(on_boundary=True), None)),
+        pytest_mark_slow((UnitSquareInterface(X=1.0), None)),
         (UnitSquareSubDomain(0.75, 0.75), UnitSquareSubDomain(0.75, 0.75)),
-        pytest.mark.slow((UnitSquareSubDomain(0.5, 0.75), UnitSquareSubDomain(0.75, 0.75))),
-        pytest.mark.slow((UnitSquareInterface(on_boundary=True), UnitSquareInterface(on_boundary=True))),
+        pytest_mark_slow((UnitSquareSubDomain(0.5, 0.75), UnitSquareSubDomain(0.75, 0.75))),
+        pytest_mark_slow((UnitSquareInterface(on_boundary=True), UnitSquareInterface(on_boundary=True))),
         (UnitSquareInterface(on_boundary=True), UnitSquareInterface(X=1.0)),
-        pytest.mark.slow((UnitSquareInterface(X=1.0), UnitSquareInterface(on_boundary=True))),
+        pytest_mark_slow((UnitSquareInterface(X=1.0), UnitSquareInterface(on_boundary=True))),
         (UnitSquareInterface(X=1.0), UnitSquareInterface(Y=0.0)),
-        pytest.mark.slow((UnitSquareInterface(X=0.75), UnitSquareInterface(Y=0.0))),
-        pytest.mark.slow((UnitSquareInterface(X=0.75), UnitSquareInterface(Y=0.25))),
+        pytest_mark_slow((UnitSquareInterface(X=0.75), UnitSquareInterface(Y=0.0))),
+        pytest_mark_slow((UnitSquareInterface(X=0.75), UnitSquareInterface(Y=0.25))),
         (UnitSquareSubDomain(0.5, 0.75), UnitSquareInterface(on_boundary=True)),
-        pytest.mark.slow((UnitSquareSubDomain(0.5, 0.75), UnitSquareInterface(Y=0.25))),
-        pytest.mark.slow((UnitSquareInterface(on_boundary=True), UnitSquareSubDomain(0.5, 0.75))),
-        pytest.mark.slow((UnitSquareInterface(Y=0.25), UnitSquareSubDomain(0.5, 0.75)))
+        pytest_mark_slow((UnitSquareSubDomain(0.5, 0.75), UnitSquareInterface(Y=0.25))),
+        pytest_mark_slow((UnitSquareInterface(on_boundary=True), UnitSquareSubDomain(0.5, 0.75))),
+        pytest_mark_slow((UnitSquareInterface(Y=0.25), UnitSquareSubDomain(0.5, 0.75)))
     )
     
 # ================ BLOCK BOUNDARY CONDITIONS GENERATOR ================ #
@@ -314,7 +322,7 @@ def get_block_bcs_1():
         return DirichletBC(block_V.sub(0), bc1_fun, on_boundary)
     return (
         lambda block_V: None,
-        pytest.mark.slow(lambda block_V: BlockDirichletBC([None], block_function_space=block_V)),
+        pytest_mark_slow(lambda block_V: BlockDirichletBC([None], block_function_space=block_V)),
         lambda block_V: BlockDirichletBC([_get_bc_1(block_V)])
     )
     
@@ -348,9 +356,9 @@ def get_block_bcs_2():
         return DirichletBC(block_V.sub(1), bc2_fun, on_boundary)
     return (
         lambda block_V: None,
-        pytest.mark.slow(lambda block_V: BlockDirichletBC([None, None], block_function_space=block_V)),
+        pytest_mark_slow(lambda block_V: BlockDirichletBC([None, None], block_function_space=block_V)),
         lambda block_V: BlockDirichletBC([_get_bc_1(block_V), None]),
-        pytest.mark.slow(lambda block_V: BlockDirichletBC([None, _get_bc_2(block_V)])),
+        pytest_mark_slow(lambda block_V: BlockDirichletBC([None, _get_bc_2(block_V)])),
         lambda block_V: BlockDirichletBC([_get_bc_1(block_V), _get_bc_2(block_V)])
     )
     
