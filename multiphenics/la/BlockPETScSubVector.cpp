@@ -74,8 +74,13 @@ BlockPETScSubVector::BlockPETScSubVector(
   if (ierr != 0) petsc_error(ierr, __FILE__, "VecGetType");
   ierr = VecSetType(_x, vec_type);
   if (ierr != 0) petsc_error(ierr, __FILE__, "VecSetType");
+  #if PETSC_VERSION_MAJOR == 3 && PETSC_VERSION_MINOR <= 10 && PETSC_VERSION_RELEASE == 1
   ierr = VecScatterCreate(_global_vector.vec(), _is, _x, NULL, &_scatter);
   if (ierr != 0) petsc_error(ierr, __FILE__, "VecScatterCreate");
+  #else
+  ierr = VecScatterCreateWithData(_global_vector.vec(), _is, _x, NULL, &_scatter);
+  if (ierr != 0) petsc_error(ierr, __FILE__, "VecScatterCreateWithData");
+  #endif
   ierr = VecScatterBegin(_scatter, _global_vector.vec(), _x, _insert_mode, SCATTER_FORWARD);
   if (ierr != 0) petsc_error(ierr, __FILE__, "VecScatterBegin");
   ierr = VecScatterEnd(_scatter, _global_vector.vec(), _x, _insert_mode, SCATTER_FORWARD);
