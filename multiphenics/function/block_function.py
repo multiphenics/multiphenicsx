@@ -280,7 +280,7 @@ class BlockFunction(object):
             return output
         else:
             return NotImplemented
-
+            
     def __radd__(self, other):
         return self.__add__(other)
 
@@ -294,6 +294,9 @@ class BlockFunction(object):
 
     def __rtruediv__(self, other):
         return NotImplemented
+        
+    def __neg__(self):
+        return -1.*self
 
     def __iadd__(self, other):
         if isinstance(other, BlockFunction):
