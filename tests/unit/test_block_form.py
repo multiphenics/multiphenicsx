@@ -18,10 +18,10 @@
 
 import pytest
 from numpy.linalg import norm
-from dolfin import assemble, div, ds, dx, grad, FunctionSpace, inner, UnitSquareMesh, VectorFunctionSpace
+from dolfin import assemble, assign, div, ds, dx, grad, FunctionSpace, inner, UnitSquareMesh, VectorFunctionSpace
 from dolfin_utils.test import fixture as module_fixture
 from multiphenics import block_adjoint, block_derivative, BlockForm, BlockFunction, BlockFunctionSpace, block_restrict, block_split, BlockTestFunction, BlockTrialFunction
-from test_utils import array_equal
+from test_utils import array_equal, get_list_of_functions_2
 
 # Mesh
 @module_fixture
@@ -361,6 +361,131 @@ def test_case_0g(mesh):
             else:
                 assert array_equal(assemble(At[i, j]).array(), (-1)**(i+j)*assemble(a[i][j]).array())
                 
+# Case 0h: simple forms (no nesting), sum [linear form]
+def test_case_0h_linear(mesh):
+    # Function spaces
+    V = VectorFunctionSpace(mesh, "Lagrange", 2)
+    Q = FunctionSpace(mesh, "Lagrange", 1)
+    W = BlockFunctionSpace([V, Q])
+    # Test functions
+    vq = BlockTestFunction(W)
+    (v, q) = block_split(vq)
+    # Linear form
+    f_0 = [v[0]*dx,
+           q*ds]
+    f_1 = [v[1]*dx,
+           0]
+    f_ex = [v[0]*dx + v[1]*dx,
+            q*ds]
+    F = BlockForm(f_0) + BlockForm(f_1)
+    F_ex = BlockForm(f_ex)
+    # Assert equality for linear form
+    assert F.block_size(0) == F_ex.block_size(0)
+    for i in range(F.block_size(0)):
+        assert array_equal(assemble(F[i]).get_local(), assemble(F_ex[i]).get_local())
+
+# Case 0h: simple forms (no nesting), sum [bilinear form]
+def test_case_0h_bilinear(mesh):
+    # Function spaces
+    V = VectorFunctionSpace(mesh, "Lagrange", 2)
+    Q = FunctionSpace(mesh, "Lagrange", 1)
+    W = BlockFunctionSpace([V, Q])
+    # Test and trial functions
+    vq = BlockTestFunction(W)
+    (v, q) = block_split(vq)
+    up = BlockTrialFunction(W)
+    (u, p) = block_split(up)
+    # Bilinear form
+    a_0 = [[inner(grad(u), grad(v))*dx, 0],
+           [0                         , 0]]
+    a_1 = [[0          , - div(v)*p*dx],
+           [div(u)*q*dx,   0          ]]
+    a_ex = [[inner(grad(u), grad(v))*dx, - div(v)*p*dx],
+            [div(u)*q*dx               ,   0          ]]
+    A = BlockForm(a_0) + BlockForm(a_1)
+    A_ex = BlockForm(a_ex)
+    # Assert equality for bilinear form
+    assert A.block_size(0) == A_ex.block_size(0)
+    assert A.block_size(1) == A_ex.block_size(1)
+    for i in range(A.block_size(0)):
+        for j in range(A.block_size(1)):
+            assert array_equal(assemble(A[i, j]).array(), assemble(A_ex[i, j]).array())
+
+# Case 0i: simple forms (no nesting), sum [linear form]
+def test_case_0i_linear(mesh):
+    # Function spaces
+    V = VectorFunctionSpace(mesh, "Lagrange", 2)
+    Q = FunctionSpace(mesh, "Lagrange", 1)
+    W = BlockFunctionSpace([V, Q])
+    # Test functions
+    vq = BlockTestFunction(W)
+    (v, q) = block_split(vq)
+    # Linear form
+    f_0 = [v[0]*dx + v[1]*dx,
+           q*ds]
+    f_ex = [3.*v[0]*dx + 3.*v[1]*dx,
+            3.*q*ds]
+    F = 3.*BlockForm(f_0)
+    F_ex = BlockForm(f_ex)
+    # Assert equality for linear form
+    assert F.block_size(0) == F_ex.block_size(0)
+    for i in range(F.block_size(0)):
+        assert array_equal(assemble(F[i]).get_local(), assemble(F_ex[i]).get_local())
+
+# Case 0i: simple forms (no nesting), product with scalar [bilinear form]
+def test_case_0i_bilinear(mesh):
+    # Function spaces
+    V = VectorFunctionSpace(mesh, "Lagrange", 2)
+    Q = FunctionSpace(mesh, "Lagrange", 1)
+    W = BlockFunctionSpace([V, Q])
+    # Test and trial functions
+    vq = BlockTestFunction(W)
+    (v, q) = block_split(vq)
+    up = BlockTrialFunction(W)
+    (u, p) = block_split(up)
+    # Bilinear form
+    a_0 = [[inner(grad(u), grad(v))*dx, - div(v)*p*dx],
+           [div(u)*q*dx               ,   0          ]]
+    a_ex = [[-2.*inner(grad(u), grad(v))*dx, 2.*div(v)*p*dx],
+            [-2.*div(u)*q*dx               ,   0          ]]
+    A = -2.*BlockForm(a_0)
+    A_ex = BlockForm(a_ex)
+    # Assert equality for bilinear form
+    assert A.block_size(0) == A_ex.block_size(0)
+    assert A.block_size(1) == A_ex.block_size(1)
+    for i in range(A.block_size(0)):
+        for j in range(A.block_size(1)):
+            assert array_equal(assemble(A[i, j]).array(), assemble(A_ex[i, j]).array())
+
+# Case 0j: simple forms (no nesting), product between bilinear form and solution
+def test_case_0j(mesh):
+    # Function spaces
+    V = VectorFunctionSpace(mesh, "Lagrange", 2)
+    Q = FunctionSpace(mesh, "Lagrange", 1)
+    W = BlockFunctionSpace([V, Q])
+    # Test and trial functions
+    vq = BlockTestFunction(W)
+    (v, q) = block_split(vq)
+    up = BlockTrialFunction(W)
+    (u, p) = block_split(up)
+    # Solutions
+    (U_in, P_in) = get_list_of_functions_2(W)
+    UP = BlockFunction(W)
+    assign(UP.sub(0), U_in)
+    assign(UP.sub(1), P_in)
+    (U, P) = block_split(UP)
+    # Forms
+    a = [[inner(grad(u), grad(v))*dx, - div(v)*p*dx],
+         [div(u)*q*dx               ,   0          ]]
+    f_ex = [inner(grad(U), grad(v))*dx - div(v)*P*dx,
+            div(U)*q*dx]
+    F = BlockForm(a)*UP
+    F_ex = BlockForm(f_ex)
+    # Assert equality for the resulting linear form
+    assert F.block_size(0) == F_ex.block_size(0)
+    for i in range(F.block_size(0)):
+        assert array_equal(assemble(F[i]).get_local(), assemble(F_ex[i]).get_local())
+
 # Case 1a: forms with at most one level of nesting, test nesting on standard forms [linear form]
 def test_case_1a_linear(mesh):
     # Function spaces

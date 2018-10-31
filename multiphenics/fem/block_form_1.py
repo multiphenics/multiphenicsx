@@ -27,6 +27,7 @@ class BlockForm1(BlockForm1_Base):
         # Store UFL form
         self._block_form = block_form
         # Store block function space
+        assert len(block_function_space) is 1
         self._block_function_space = block_function_space
         # Replace UFL form by Dolfin form before passing it to the constructor
         # (note that we assume that block_form has been already preprocessed,
@@ -62,3 +63,35 @@ class BlockForm1(BlockForm1_Base):
         for I in range(self.N):
             vector_of_str[I] = str(self._block_form[I])
         return str(vector_of_str)
+        
+    def __add__(self, other):
+        if isinstance(other, BlockForm1):
+            assert self.N == other.N
+            assert self._block_function_space[0] is other._block_function_space[0]
+            output_block_form = empty((self.N, ), dtype=object)
+            for I in range(self.N):
+                output_block_form[I] = self[I] + other[I]
+            return BlockForm1(output_block_form, self._block_function_space)
+        else:
+            return NotImplemented
+            
+    def __sub__(self, other):
+        return self + (-1.*other)
+        
+    def __radd__(self, other):
+        return self.__add__(other)
+        
+    def __rsub__(self, other):
+        return -1.*self.__sub__(other)
+        
+    def __rmul__(self, other):
+        if isinstance(other, float):
+            output_block_form = empty((self.N, ), dtype=object)
+            for I in range(self.N):
+                output_block_form[I] = other*self[I]
+            return BlockForm1(output_block_form, self._block_function_space)
+        else:
+            return NotImplemented
+    
+    def __neg__(self):
+        return -1.*self

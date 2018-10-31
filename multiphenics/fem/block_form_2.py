@@ -18,6 +18,8 @@
 
 from numpy import empty
 from dolfin.fem.assembling import _create_dolfin_form
+from multiphenics.fem.block_form_1 import BlockForm1
+from multiphenics.function import BlockFunction
 from multiphenics.python import cpp
 
 BlockForm2_Base = cpp.fem.BlockForm2
@@ -27,6 +29,7 @@ class BlockForm2(BlockForm2_Base):
         # Store UFL form
         self._block_form = block_form
         # Store block function space
+        assert len(block_function_space) is 2
         self._block_function_space = block_function_space
         # Replace UFL form by Dolfin form before passing it to the constructor
         # (note that we assume that block_form has been already preprocessed,
@@ -65,3 +68,52 @@ class BlockForm2(BlockForm2_Base):
             for J in range(self.M):
                 matrix_of_str[I, J] = str(self._block_form[I, J])
         return str(matrix_of_str)
+        
+    def __add__(self, other):
+        if isinstance(other, BlockForm2):
+            assert self.N == other.N
+            assert self.M == other.M
+            assert self._block_function_space[0] is other._block_function_space[0]
+            assert self._block_function_space[1] is other._block_function_space[1]
+            output_block_form = empty((self.N, self.M), dtype=object)
+            for I in range(self.N):
+                for J in range(self.M):
+                    output_block_form[I, J] = self[I, J] + other[I, J]
+            return BlockForm2(output_block_form, self._block_function_space)
+        else:
+            return NotImplemented
+            
+    def __mul__(self, other):
+        if isinstance(other, BlockFunction):
+            assert self.M == other._num_sub_spaces
+            assert self._block_function_space[1] is other._block_function_space
+            output_block_form = empty((self.N, ), dtype=object)
+            for I in range(self.N):
+                output_block_form[I] = self[I, 0]*other[0]
+                for J in range(1, self.M):
+                    output_block_form[I] += self[I, J]*other[J]
+            return BlockForm1(output_block_form, [self._block_function_space[0]])
+        else:
+            return NotImplemented
+            
+    def __sub__(self, other):
+        return self + (-1.*other)
+        
+    def __radd__(self, other):
+        return self.__add__(other)
+        
+    def __rsub__(self, other):
+        return -1.*self.__sub__(other)
+        
+    def __rmul__(self, other):
+        if isinstance(other, float):
+            output_block_form = empty((self.N, self.M), dtype=object)
+            for I in range(self.N):
+                for J in range(self.M):
+                    output_block_form[I, J] = other*self[I, J]
+            return BlockForm2(output_block_form, self._block_function_space)
+        else:
+            return NotImplemented
+    
+    def __neg__(self):
+        return -1.*self
