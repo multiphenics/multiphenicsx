@@ -109,6 +109,13 @@ class BlockFunction(object):
                 return output
             sub_function.sub = types.MethodType(sub, sub_function)
             
+            # Furthermore, patch assign function to call block_function's apply
+            original_assign = sub_function.assign
+            def assign(self_, other):
+                original_assign(other)
+                self.apply("from subfunctions", i)
+            sub_function.assign = types.MethodType(assign, sub_function)
+            
         self._num_sub_spaces = self.block_function_space().num_sub_spaces()
         self._sub_functions = list()
         for i in range(self._num_sub_spaces):
