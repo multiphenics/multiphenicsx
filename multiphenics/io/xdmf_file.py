@@ -25,8 +25,17 @@ class MeshRestrictionXDMFFile(object):
     def write(self, content, encoding=None):
         content._write(self.filename, encoding)
             
-def XDMFFile(filename):
-    if filename.endswith(".rtc.xdmf"):
-        return MeshRestrictionXDMFFile(filename)
+def XDMFFile(arg1, arg2=None):
+    if arg2 is None:
+        assert isinstance(arg1, str)
+        filename = arg1
+        if filename.endswith(".rtc.xdmf"):
+            return MeshRestrictionXDMFFile(filename)
+        else:
+            return dolfin.XDMFFile(filename)
     else:
-        return dolfin.XDMFFile(filename)
+        assert isinstance(arg2, str)
+        mpi_comm = arg1
+        filename = arg2
+        assert not filename.endswith(".rtc.xdmf")
+        return dolfin.XDMFFile(mpi_comm, filename)
