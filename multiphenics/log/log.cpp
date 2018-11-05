@@ -28,15 +28,15 @@
 
 #define USE_GDB 1
 
-using namespace dolfin;
-using namespace dolfin::log;
 using namespace multiphenics;
 using namespace multiphenics::log;
 
+using dolfin::log::dolfin_error;
+
 //-----------------------------------------------------------------------------
-void multiphenics::_multiphenics_error(std::string location,
-                                 std::string task,
-                                 std::string reason)
+void multiphenics::log::_multiphenics_error(std::string location,
+                                            std::string task,
+                                            std::string reason)
 {
   #ifdef USE_GDB
   // Run gdb and print backtrace. Adapted from libmesh/src/base/print_trace.C
