@@ -35,7 +35,7 @@ namespace multiphenics
       BlockPETScMatrix();
 
       /// Create empty matrix
-      explicit BlockPETScMatrix(MPI_Comm comm);
+      explicit BlockPETScMatrix(MPI_Comm comm, const SparsityPattern& sparsity_pattern);
 
       /// Create a wrapper around a PETSc Mat pointer. The Mat object
       /// should have been created, e.g. via PETSc MatCreate.
@@ -43,63 +43,42 @@ namespace multiphenics
 
       /// Copy constructor
       BlockPETScMatrix(const BlockPETScMatrix& A);
+      
+      /// Move constructor (falls through to base class move constructor)
+      BlockPETScMatrix(BlockPETScMatrix&& A) = default;
 
       /// Destructor
-      virtual ~BlockPETScMatrix();
+      ~BlockPETScMatrix();
       
-      //--- Implementation of the GenericMatrix interface --
-      
-      /// Return copy of matrix
-      virtual std::shared_ptr<dolfin::GenericMatrix> copy() const;
-      
-      /// Initialize vector z to be compatible with the matrix-vector product
-      /// y = Ax. In the parallel case, both size and layout are
-      /// important.
+      /// Initialize vector to be compatible with the matrix-vector product
+      /// y = Ax. In the parallel case, size and layout are both important.
       ///
-      /// @param z (GenericVector&)
-      ///         Vector to initialise
-      /// @param  dim (std::size_t)
-      ///         The dimension (axis): dim = 0 --> z = y, dim = 1 --> z = x
-      virtual void init_vector(dolfin::GenericVector& z, std::size_t dim) const;
-      
-      /// Multiply matrix by given number
-      virtual const BlockPETScMatrix& operator*= (double a);
+      /// @param      dim (std::size_t) The dimension (axis): dim = 0 --> z
+      ///         = y, dim = 1 --> z = x
+      BlockPETScVector init_vector(std::size_t dim) const;
 
-      /// Divide matrix by given number
-      virtual const BlockPETScMatrix& operator/= (double a);
+      /// Assignment operator (deleted)
+      BlockPETScMatrix& operator=(const BlockPETScMatrix& A) = delete;
 
-      /// Assignment operator
-      virtual const dolfin::GenericMatrix& operator= (const GenericMatrix& A);
-      
-      //--- Special PETSc Functions ---
-      
-      /// Assignment operator
-      const BlockPETScMatrix& operator= (const BlockPETScMatrix& A);
+      /// Move assignment operator
+      BlockPETScMatrix& operator=(BlockPETScMatrix&& A) = default;
       
       //--- Special block functions ---
       
       /// Attach BlockDofMap for submatrix creation
-      virtual void attach_block_dof_map(std::shared_ptr<const BlockDofMap> block_dof_map_0, std::shared_ptr<const BlockDofMap> block_dof_map_1);
+      void attach_block_dof_map(std::shared_ptr<const BlockDofMap> block_dof_map_0, std::shared_ptr<const BlockDofMap> block_dof_map_1);
       
       /// Get BlockDofMap for submatrix creation
-      virtual std::shared_ptr<const BlockDofMap> get_block_dof_map(std::size_t d) const;
+      std::shared_ptr<const BlockDofMap> get_block_dof_map(std::size_t d) const;
       
       /// Check if BlockDofMap for submatrix creation has been attached
-      virtual bool has_block_dof_map(std::size_t d) const;
+      bool has_block_dof_map(std::size_t d) const;
       
       /// Block access
-      virtual std::shared_ptr<dolfin::GenericMatrix> operator()(std::size_t block_i, std::size_t block_j, BlockInsertMode insert_mode) const;
+      std::shared_ptr<dolfin::GenericMatrix> operator()(std::size_t block_i, std::size_t block_j, BlockInsertMode insert_mode) const;
       
     private:
       std::vector<std::shared_ptr<const BlockDofMap>> _block_dof_map;
-      
-      // This map stores:
-      // * as key: the global row index of rows that have been ident_local'ed in at least a submatrix
-      // * as value: the vector of global col indices which should be set to one, instead of zero
-      mutable std::map<dolfin::la_index, std::set<dolfin::la_index>> _ident_global_rows_to_global_cols;
-      
-      // Allow BlockPETScSubMatrix to access _local_zeroed_rows
-      friend class BlockPETScSubMatrix;
     };
   }
 }

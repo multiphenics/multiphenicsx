@@ -61,11 +61,11 @@ namespace multiphenics_wrappers
       .def("has_block_dof_map", &multiphenics::la::BlockPETScMatrix::has_block_dof_map);
       
     // multiphenics::la::BlockPETScSubVector
-    py::class_<multiphenics::la::BlockPETScSubVector, std::shared_ptr<multiphenics::la::BlockPETScSubVector>, dolfin::PETScVector>
+    py::class_<multiphenics::la::BlockPETScSubVector, std::shared_ptr<multiphenics::la::BlockPETScSubVector>, dolfin::la::PETScVector>
       (m, "BlockPETScSubVector", "multiphenics BlockPETScSubVector object");
       
     // multiphenics::la::BlockPETScSubMatrix
-    py::class_<multiphenics::la::BlockPETScSubMatrix, std::shared_ptr<multiphenics::la::BlockPETScSubMatrix>, dolfin::PETScMatrix>
+    py::class_<multiphenics::la::BlockPETScSubMatrix, std::shared_ptr<multiphenics::la::BlockPETScSubMatrix>, dolfin::la::PETScMatrix>
       (m, "BlockPETScSubMatrix", "multiphenics BlockPETScSubMatrix object");
       
     #ifdef HAS_SLEPC

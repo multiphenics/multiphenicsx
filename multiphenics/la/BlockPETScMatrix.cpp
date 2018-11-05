@@ -31,7 +31,7 @@ BlockPETScMatrix::BlockPETScMatrix() : PETScMatrix()
   // Do nothing
 }
 //-----------------------------------------------------------------------------
-BlockPETScMatrix::BlockPETScMatrix(MPI_Comm comm) : PETScMatrix(comm)
+BlockPETScMatrix::BlockPETScMatrix(MPI_Comm comm, const SparsityPattern& sparsity_pattern) : PETScMatrix(comm, sparsity_pattern)
 {
   // Do nothing
 }
@@ -53,44 +53,15 @@ BlockPETScMatrix::~BlockPETScMatrix()
   // Do nothing
 }
 //-----------------------------------------------------------------------------
-std::shared_ptr<GenericMatrix> BlockPETScMatrix::copy() const
-{
-  return std::make_shared<BlockPETScMatrix>(*this);
-}
-//-----------------------------------------------------------------------------
-void BlockPETScMatrix::init_vector(GenericVector& z, std::size_t dim) const
+BlockPETScVector BlockPETScMatrix::init_vector(std::size_t dim) const
 {
   // Call Parent
-  PETScMatrix::init_vector(z, dim);
+  PETScVector z_(PETScMatrix::init_vector(dim));
   
-  // Attach block dof maps
-  BlockPETScVector& _z = as_type<BlockPETScVector>(z);
-  _z.attach_block_dof_map(_block_dof_map[dim]);
-}
-//-----------------------------------------------------------------------------
-const BlockPETScMatrix& BlockPETScMatrix::operator*= (double a)
-{
-  PETScMatrix::operator*=(a);
-  return *this;
-}
-//-----------------------------------------------------------------------------
-const BlockPETScMatrix& BlockPETScMatrix::operator/= (double a)
-{
-  PETScMatrix::operator/=(a);
-  return *this;
-}
-//-----------------------------------------------------------------------------
-const GenericMatrix& BlockPETScMatrix::operator= (const GenericMatrix& A)
-{
-  *this = as_type<const BlockPETScMatrix>(A);
-  return *this;
-}
-//-----------------------------------------------------------------------------
-const BlockPETScMatrix& BlockPETScMatrix::operator= (const BlockPETScMatrix& A)
-{
-  PETScMatrix::operator=(A);
-  attach_block_dof_map(A._block_dof_map[0], A._block_dof_map[1]);
-  return *this;
+  // Convert to block vector and attach block dof maps
+  BlockPETScVector z(z_.vec());
+  z.attach_block_dof_map(_block_dof_map[dim]);
+  return z
 }
 //-----------------------------------------------------------------------------
 void BlockPETScMatrix::attach_block_dof_map(std::shared_ptr<const BlockDofMap> block_dof_map_0, std::shared_ptr<const BlockDofMap> block_dof_map_1) 
