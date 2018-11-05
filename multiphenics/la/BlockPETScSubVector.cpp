@@ -393,13 +393,6 @@ double BlockPETScSubVector::sum(const Array<std::size_t>& rows) const
                      "This method is not available because there is no guarantee that VecSum is implemented by PETSc SubVector");
 }
 //-----------------------------------------------------------------------------
-GenericLinearAlgebraFactory& BlockPETScSubVector::factory() const
-{
-  multiphenics_error("BlockPETScSubVector.cpp",
-                     "generate linear algebra factory from subvector",
-                     "This method is not available because no factory should be generated from a subvector");
-}
-//-----------------------------------------------------------------------------
 void BlockPETScSubVector::set_options_prefix(std::string options_prefix)
 {
   multiphenics_error("BlockPETScSubVector.cpp",

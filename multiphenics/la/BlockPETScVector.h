@@ -89,11 +89,6 @@ namespace multiphenics
       /// Assignment operator
       virtual const BlockPETScVector& operator= (double a);
       
-      //--- Special functions ---
-
-      /// Return linear algebra backend factory
-      virtual dolfin::GenericLinearAlgebraFactory& factory() const;
-      
       //--- Special PETSc functions ---
       
       /// Assignment operator

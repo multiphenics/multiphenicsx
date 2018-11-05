@@ -17,32 +17,26 @@
 #
 
 from multiphenics.la.as_backend_type import as_backend_type
-from multiphenics.la.block_default_factory import BlockDefaultFactory
 from multiphenics.la.block_matlab_export import block_matlab_export
-from multiphenics.la.block_petsc_factory import BlockPETScFactory
 from multiphenics.la.block_petsc_matrix import BlockPETScMatrix
 from multiphenics.la.block_petsc_sub_matrix import BlockPETScSubMatrix
 from multiphenics.la.block_petsc_sub_vector import BlockPETScSubVector
 from multiphenics.la.block_petsc_vector import BlockPETScVector
 from multiphenics.la.block_slepc_eigen_solver import BlockSLEPcEigenSolver
 from multiphenics.la.block_solve import block_solve
-from multiphenics.la.generic_block_linear_algebra_factory import GenericBlockLinearAlgebraFactory
 from multiphenics.la.generic_block_matrix import GenericBlockMatrix
 from multiphenics.la.generic_block_vector import GenericBlockVector
 from multiphenics.la.slepc_eigen_solver import SLEPcEigenSolver
 
 __all__ = [
     'as_backend_type',
-    'BlockDefaultFactory',
     'block_matlab_export',
-    'BlockPETScFactory',
     'BlockPETScMatrix',
     'BlockPETScSubMatrix',
     'BlockPETScSubVector',
     'BlockPETScVector',
     'BlockSLEPcEigenSolver',
     'block_solve',
-    'GenericBlockLinearAlgebraFactory',
     'GenericBlockMatrix',
     'GenericBlockVector',
     'SLEPcEigenSolver'

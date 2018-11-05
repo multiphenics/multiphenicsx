@@ -18,7 +18,6 @@
 
 from dolfin import NonlinearProblem
 from multiphenics.fem import block_assemble
-from multiphenics.la import BlockDefaultFactory
 
 class BlockNonlinearProblem(NonlinearProblem):
     def __init__(self, residual_block_form, block_solution, bcs, jacobian_block_form):
@@ -29,25 +28,20 @@ class BlockNonlinearProblem(NonlinearProblem):
         self.block_solution = block_solution
         self.bcs = bcs
         # Create block backend for wrapping
-        self.block_backend = BlockDefaultFactory()
         self.block_dof_map = self.block_solution.block_function_space().block_dofmap()
         
-    def F(self, fenics_residual, _):
+    def F(self, block_residual, _):
         # Update block solution subfunctions based on the third argument, which has already been
         # stored in self.block_solution.block_vector()
         self.block_solution.apply("to subfunctions")
-        # Wrap FEniCS residual into a block residual
-        block_residual = self.block_backend.wrap_vector(fenics_residual)
         # Assemble the block residual
         block_assemble(self.residual_block_form, block_tensor=block_residual)
         # Apply boundary conditions
         if self.bcs is not None:
             self.bcs.apply(block_residual, self.block_solution.block_vector())
         
-    def J(self, fenics_jacobian, _):
+    def J(self, block_jacobian, _):
         # No need to update block solution subfunctions, this has already been done in the residual
-        # Wrap FEniCS jacobian into a block jacobian
-        block_jacobian = self.block_backend.wrap_matrix(fenics_jacobian)
         # Assemble the block jacobian
         block_assemble(self.jacobian_block_form, block_tensor=block_jacobian, keep_diagonal=self.bcs is not None)
         # Apply boundary conditions

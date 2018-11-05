@@ -18,14 +18,12 @@
 
 #include <memory>
 #include <dolfin/fem/UFC.h>
-#include <dolfin/la/GenericLinearAlgebraFactory.h>
 #include <dolfin/la/GenericMatrix.h>
 #include <dolfin/la/GenericTensor.h>
 #include <dolfin/la/GenericVector.h>
 #include <multiphenics/fem/BlockForm1.h>
 #include <multiphenics/fem/BlockForm2.h>
 #include <multiphenics/fem/BlockAssembler.h>
-#include <multiphenics/la/GenericBlockLinearAlgebraFactory.h>
 
 using namespace dolfin;
 using namespace dolfin::fem;
@@ -46,9 +44,6 @@ void BlockAssembler::assemble(GenericTensor& A, const BlockFormBase& a)
   // Initialize global tensor
   init_global_tensor(A, a);
   
-  // Get the block linear algebra factory to extract sub-blocks
-  GenericBlockLinearAlgebraFactory& block_linear_algebra_factory = dynamic_cast<GenericBlockLinearAlgebraFactory&>(A.factory());
-  
   // Assemble using standard assembler
   Assembler assembler;
   assembler.add_values = add_values;
@@ -62,6 +57,11 @@ void BlockAssembler::assemble(GenericTensor& A, const BlockFormBase& a)
     for (unsigned int i(0); i < a_form2.block_size(0); ++i)
       for (unsigned int j(0); j < a_form2.block_size(1); ++j)
       {
+        if (i == j)
+          assembler.keep_diagonal = keep_diagonal;
+        else
+          assembler.keep_diagonal = false;
+        std::shared_ptr<GenericMatrix> A_ij = A_mat(i, j, BlockInsertMode::ADD_VALUES);
         const Form& a_ij = a_form2(i, j);
         if (a_ij.ufc_form())
         {
@@ -80,6 +80,7 @@ void BlockAssembler::assemble(GenericTensor& A, const BlockFormBase& a)
     const BlockForm1& a_form1 = dynamic_cast<const BlockForm1&>(a);
     for (unsigned int i(0); i < a_form1.block_size(0); ++i)
     {
+      std::shared_ptr<GenericVector> A_i = A_vec(i, BlockInsertMode::ADD_VALUES);
       const Form& a_i = a_form1(i);
       if (a_i.ufc_form())
       {

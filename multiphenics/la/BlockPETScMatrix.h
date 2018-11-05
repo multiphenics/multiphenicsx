@@ -74,11 +74,6 @@ namespace multiphenics
       /// Assignment operator
       virtual const dolfin::GenericMatrix& operator= (const GenericMatrix& A);
       
-      //--- Special functions ---
-
-      /// Return linear algebra backend factory
-      virtual dolfin::GenericLinearAlgebraFactory& factory() const;
-      
       //--- Special PETSc Functions ---
       
       /// Assignment operator

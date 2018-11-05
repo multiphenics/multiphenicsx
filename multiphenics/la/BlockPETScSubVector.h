@@ -141,11 +141,6 @@ namespace multiphenics
       /// Assignment operator
       virtual const dolfin::PETScVector& operator= (double a);
 
-      //--- Special functions ---
-
-      /// Return linear algebra backend factory
-      virtual dolfin::GenericLinearAlgebraFactory& factory() const;
-
       //--- Special PETSc functions ---
 
       /// Sets the prefix used by PETSc when searching the options

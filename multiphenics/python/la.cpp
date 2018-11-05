@@ -78,35 +78,6 @@ namespace multiphenics_wrappers
       (m, "BlockPETScSubMatrix", "multiphenics BlockPETScSubMatrix object");
     #endif
       
-    // multiphenics::la::GenericBlockLinearAlgebraFactory
-    py::class_<multiphenics::la::GenericBlockLinearAlgebraFactory, std::shared_ptr<multiphenics::la::GenericBlockLinearAlgebraFactory>, dolfin::GenericLinearAlgebraFactory>
-      (m, "GenericBlockLinearAlgebraFactory", "multiphenics GenericBlockLinearAlgebraFactory object");
-      
-    // multiphenics::la::BlockDefaultFactory
-    py::class_<multiphenics::la::BlockDefaultFactory, std::shared_ptr<multiphenics::la::BlockDefaultFactory>, multiphenics::la::GenericBlockLinearAlgebraFactory>
-      (m, "BlockDefaultFactory", "multiphenics BlockDefaultFactory object")
-      .def(py::init<>())
-      .def_static("factory", &multiphenics::la::BlockDefaultFactory::factory)
-      .def("create_matrix", [](const multiphenics::la::BlockDefaultFactory &self, const dolfin_wrappers::MPICommWrapper comm)
-        { return self.create_matrix(comm.get()); })
-      .def("create_vector", [](const multiphenics::la::BlockDefaultFactory &self, const dolfin_wrappers::MPICommWrapper comm)
-        { return self.create_vector(comm.get()); })
-      .def("wrap_matrix", &multiphenics::la::BlockDefaultFactory::wrap_matrix)
-      .def("wrap_vector", &multiphenics::la::BlockDefaultFactory::wrap_vector);
-    
-    #ifdef HAS_PETSC
-    // multiphenics::la::BlockPETScFactory
-    py::class_<multiphenics::la::BlockPETScFactory, std::shared_ptr<multiphenics::la::BlockPETScFactory>, multiphenics::la::GenericBlockLinearAlgebraFactory>
-      (m, "BlockPETScFactory", "multiphenics BlockPETScFactory object")
-      .def("instance", &multiphenics::la::BlockPETScFactory::instance)
-      .def("create_matrix", [](const multiphenics::la::BlockPETScFactory &self, const dolfin_wrappers::MPICommWrapper comm)
-        { return self.create_matrix(comm.get()); })
-      .def("create_vector", [](const multiphenics::la::BlockPETScFactory &self, const dolfin_wrappers::MPICommWrapper comm)
-        { return self.create_vector(comm.get()); })
-      .def("wrap_matrix", &multiphenics::la::BlockPETScFactory::wrap_matrix)
-      .def("wrap_vector", &multiphenics::la::BlockPETScFactory::wrap_vector);
-    #endif
-    
     #ifdef HAS_SLEPC
     // dolfin::la::CondensedSLEPcEigenSolver
     py::class_<dolfin::la::CondensedSLEPcEigenSolver, std::shared_ptr<dolfin::la::CondensedSLEPcEigenSolver>, dolfin::SLEPcEigenSolver>

@@ -18,7 +18,6 @@
 
 #include <dolfin/common/Timer.h>
 #include <dolfin/fem/SparsityPatternBuilder.h>
-#include <dolfin/la/GenericLinearAlgebraFactory.h>
 #include <dolfin/la/GenericMatrix.h>
 #include <dolfin/la/GenericTensor.h>
 #include <dolfin/la/TensorLayout.h>
@@ -55,7 +54,7 @@ void BlockAssemblerBase::init_global_tensor(GenericTensor& A, const BlockFormBas
 
     // Create layout for initialising tensor
     std::shared_ptr<TensorLayout> tensor_layout;
-    tensor_layout = A.factory().create_layout(mesh.mpi_comm(), a.rank());
+    tensor_layout = create_layout(mesh.mpi_comm(), a.rank()); // TODO complete rewrite
     dolfin_assert(tensor_layout);
     
     // Get dimensions and mapping across processes for each dimension

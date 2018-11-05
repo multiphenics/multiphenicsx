@@ -18,7 +18,6 @@
 
 #ifdef HAS_PETSC
 
-#include <multiphenics/la/BlockPETScFactory.h>
 #include <multiphenics/la/BlockPETScVector.h>
 #include <multiphenics/la/BlockPETScSubMatrix.h>
 #include <multiphenics/la/BlockPETScMatrix.h>
@@ -94,11 +93,6 @@ const BlockPETScMatrix& BlockPETScMatrix::operator= (const BlockPETScMatrix& A)
   PETScMatrix::operator=(A);
   attach_block_dof_map(A._block_dof_map[0], A._block_dof_map[1]);
   return *this;
-}
-//-----------------------------------------------------------------------------
-GenericLinearAlgebraFactory& BlockPETScMatrix::factory() const
-{
-  return BlockPETScFactory::instance();
 }
 //-----------------------------------------------------------------------------
 void BlockPETScMatrix::attach_block_dof_map(std::shared_ptr<const BlockDofMap> block_dof_map_0, std::shared_ptr<const BlockDofMap> block_dof_map_1) 

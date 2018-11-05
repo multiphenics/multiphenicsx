@@ -18,7 +18,6 @@
 
 #include <dolfin/la/GenericVector.h>
 #include <multiphenics/function/BlockFunction.h>
-#include <multiphenics/la/BlockDefaultFactory.h>
 #include <multiphenics/log/log.h>
 
 using namespace dolfin;
@@ -137,11 +136,9 @@ void BlockFunction::init_block_vector()
   std::shared_ptr<const IndexMap> index_map = dofmap.index_map();
   dolfin_assert(index_map);
 
-  BlockDefaultFactory factory;
-
   // Create layout for initialising tensor
   std::shared_ptr<TensorLayout> tensor_layout;
-  tensor_layout = factory.create_layout(_block_function_space->mesh()->mpi_comm(), 1);
+  tensor_layout = create_layout(_block_function_space->mesh()->mpi_comm(), 1);
   dolfin_assert(tensor_layout);
   dolfin_assert(!tensor_layout->sparsity_pattern());
   dolfin_assert(_block_function_space->mesh());
@@ -149,7 +146,10 @@ void BlockFunction::init_block_vector()
 
   // Create vector of dofs
   if (!_block_vector)
-    _block_vector = factory.create_vector_with_attached_block_dof_map(_block_function_space->mesh()->mpi_comm(), _block_function_space->block_dofmap());
+  {
+    _block_vector = std::make_shared<BlockPETScVector>(_block_function_space->mesh()->mpi_comm());
+    block_vector->attach_block_dof_map(_block_function_space->block_dofmap());
+  }
   dolfin_assert(_block_vector);
   if (!_block_vector->empty())
   {
@@ -195,9 +195,8 @@ void BlockFunction::apply(std::string mode, int only)
     }
     else if (mode == "from subfunctions")
     {
-      GenericBlockLinearAlgebraFactory& block_linear_algebra_factory = dynamic_cast<GenericBlockLinearAlgebraFactory&>(_block_vector->factory());
       std::shared_ptr<GenericVector> sub_block_vector(
-        block_linear_algebra_factory.create_sub_vector(*_block_vector, i, BlockInsertMode::INSERT_VALUES)
+        _block_vector->operator()(i, BlockInsertMode::INSERT_VALUES)
       );
       std::vector<double> local_sub_vector_i;
       _sub_functions[i]->vector()->get_local(local_sub_vector_i);

@@ -451,13 +451,6 @@ bool BlockPETScSubMatrix::is_symmetric(double tol) const
                      "This method is not available because there is no guarantee that MatIsSymmetric is implemented by PETSc LocalSubMatrix");
 }
 //-----------------------------------------------------------------------------
-GenericLinearAlgebraFactory& BlockPETScSubMatrix::factory() const
-{
-  multiphenics_error("BlockPETScSubMatrix.cpp",
-                     "generate linear algebra factory from submatrix",
-                     "This method is not available because no factory should be generated from a submatrix");
-}
-//-----------------------------------------------------------------------------
 void BlockPETScSubMatrix::set_options_prefix(std::string options_prefix)
 {
   multiphenics_error("BlockPETScSubMatrix.cpp",

@@ -16,14 +16,11 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import empty, ndarray as array
-from dolfin.fem.assembling import _create_tensor as _dolfin_create_tensor
+from numpy import ndarray as array
 from multiphenics.fem.block_assembler import BlockAssembler
 from multiphenics.fem.block_form import BlockForm
 from multiphenics.fem.block_form_1 import BlockForm1
 from multiphenics.fem.block_form_2 import BlockForm2
-from multiphenics.fem.block_replace_zero import _is_zero
-from multiphenics.la import as_backend_type, BlockDefaultFactory
 
 def block_assemble(block_form,
                    block_tensor=None,
@@ -54,9 +51,7 @@ def block_assemble(block_form,
     return block_tensor
     
 def _create_block_tensor(comm, block_form, rank, block_tensor):
-    backend = BlockDefaultFactory()
-    block_tensor = _dolfin_create_tensor(comm, block_form, rank, backend, block_tensor)
-    block_tensor = as_backend_type(block_tensor)
+    block_tensor = None # TODO
     
     # Attach block dofmap to tensor
     assert rank in (1, 2)
