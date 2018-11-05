@@ -48,7 +48,7 @@ namespace multiphenics
       ///
       /// @return Mesh
       ///         Shared pointer to the mesh.
-      std::shared_ptr<const dolfin::Mesh> mesh() const;
+      std::shared_ptr<const dolfin::mesh::Mesh> mesh() const;
 
       /// Return function spaces for arguments
       ///

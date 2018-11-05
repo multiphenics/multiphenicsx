@@ -36,7 +36,7 @@ namespace multiphenics
       ///         Matrix of forms.
       /// @param[in] function_spaces (std::vector<_BlockFunctionSpace_>)
       ///         Vector of function spaces, of size 2.
-      BlockForm2(std::vector<std::vector<std::shared_ptr<const dolfin::Form>>> forms,
+      BlockForm2(std::vector<std::vector<std::shared_ptr<const dolfin::fem::Form>>> forms,
                  std::vector<std::shared_ptr<const BlockFunctionSpace>> block_function_spaces);
            
       /// Destructor
@@ -50,7 +50,7 @@ namespace multiphenics
       
       virtual unsigned int block_size(unsigned int d) const;
       
-      const dolfin::Form & operator()(std::size_t i, std::size_t j) const;
+      const dolfin::fem::Form & operator()(std::size_t i, std::size_t j) const;
       
     protected:
     
@@ -60,7 +60,7 @@ namespace multiphenics
       virtual bool has_vertex_integrals() const;
 
       // Block forms
-      std::vector<std::vector<std::shared_ptr<const dolfin::Form>>> _forms;
+      std::vector<std::vector<std::shared_ptr<const dolfin::fem::Form>>> _forms;
       
       std::vector<unsigned int> _block_size;
     };

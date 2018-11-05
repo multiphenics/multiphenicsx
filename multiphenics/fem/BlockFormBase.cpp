@@ -20,6 +20,7 @@
 
 using namespace dolfin;
 using namespace dolfin::fem;
+using dolfin::mesh::Mesh;
 using namespace multiphenics;
 using namespace multiphenics::fem;
 
