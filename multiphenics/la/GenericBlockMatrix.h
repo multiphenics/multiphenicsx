@@ -25,26 +25,28 @@
 
 namespace multiphenics
 {
-  class GenericBlockMatrix
+  namespace la
   {
-  public:
-    virtual ~GenericBlockMatrix();
-    
-    //--- Special block functions ---
-    
-    /// Attach BlockDofMap for submatrix creation
-    virtual void attach_block_dof_map(std::shared_ptr<const BlockDofMap> block_dof_map_0, std::shared_ptr<const BlockDofMap> block_dof_map_1) = 0;
-    
-    /// Get BlockDofMap for submatrix creation
-    virtual std::shared_ptr<const BlockDofMap> get_block_dof_map(std::size_t d) const = 0;
-    
-    /// Check if BlockDofMap for submatrix creation has been attached
-    virtual bool has_block_dof_map(std::size_t d) const = 0;
-    
-    /// Block access
-    virtual std::shared_ptr<dolfin::GenericMatrix> operator()(std::size_t block_i, std::size_t block_j, BlockInsertMode insert_mode) const = 0;
-  };
-  
+    class GenericBlockMatrix
+    {
+    public:
+      virtual ~GenericBlockMatrix();
+      
+      //--- Special block functions ---
+      
+      /// Attach BlockDofMap for submatrix creation
+      virtual void attach_block_dof_map(std::shared_ptr<const BlockDofMap> block_dof_map_0, std::shared_ptr<const BlockDofMap> block_dof_map_1) = 0;
+      
+      /// Get BlockDofMap for submatrix creation
+      virtual std::shared_ptr<const BlockDofMap> get_block_dof_map(std::size_t d) const = 0;
+      
+      /// Check if BlockDofMap for submatrix creation has been attached
+      virtual bool has_block_dof_map(std::size_t d) const = 0;
+      
+      /// Block access
+      virtual std::shared_ptr<dolfin::GenericMatrix> operator()(std::size_t block_i, std::size_t block_j, BlockInsertMode insert_mode) const = 0;
+    };
+  }
 }
 
 #endif

@@ -27,58 +27,59 @@
 
 namespace multiphenics
 {
-
-  /// This class provides an eigenvalue solver for PETSc block matrices. It
-  /// is a wrapper for the SLEPc eigenvalue solver. It also allows to
-  /// constrain degrees of freedom associate to Dirichlet BCs.
-
-  class CondensedBlockSLEPcEigenSolver : public dolfin::CondensedSLEPcEigenSolver
+  namespace la
   {
-  public:
+    /// This class provides an eigenvalue solver for PETSc block matrices. It
+    /// is a wrapper for the SLEPc eigenvalue solver. It also allows to
+    /// constrain degrees of freedom associate to Dirichlet BCs.
 
-    /// Create eigenvalue solver
-    explicit CondensedBlockSLEPcEigenSolver(MPI_Comm comm);
+    class CondensedBlockSLEPcEigenSolver : public dolfin::CondensedSLEPcEigenSolver
+    {
+    public:
 
-    /// Create eigenvalue solver from EPS object
-    explicit CondensedBlockSLEPcEigenSolver(EPS eps);
+      /// Create eigenvalue solver
+      explicit CondensedBlockSLEPcEigenSolver(MPI_Comm comm);
 
-    /// Create eigenvalue solver for Ax = \lambda
-    CondensedBlockSLEPcEigenSolver(std::shared_ptr<const BlockPETScMatrix> A,
-                                   std::shared_ptr<const BlockDirichletBC> block_bcs);
+      /// Create eigenvalue solver from EPS object
+      explicit CondensedBlockSLEPcEigenSolver(EPS eps);
 
-    /// Create eigenvalue solver for Ax = \lambda x
-    CondensedBlockSLEPcEigenSolver(MPI_Comm comm, std::shared_ptr<const BlockPETScMatrix> A,
-                                   std::shared_ptr<const BlockDirichletBC> block_bcs);
+      /// Create eigenvalue solver for Ax = \lambda
+      CondensedBlockSLEPcEigenSolver(std::shared_ptr<const BlockPETScMatrix> A,
+                                     std::shared_ptr<const BlockDirichletBC> block_bcs);
 
-    /// Create eigenvalue solver for Ax = \lambda x on MPI_COMM_WORLD
-    CondensedBlockSLEPcEigenSolver(std::shared_ptr<const BlockPETScMatrix> A,
-                                   std::shared_ptr<const BlockPETScMatrix> B,
-                                   std::shared_ptr<const BlockDirichletBC> block_bcs);
+      /// Create eigenvalue solver for Ax = \lambda x
+      CondensedBlockSLEPcEigenSolver(MPI_Comm comm, std::shared_ptr<const BlockPETScMatrix> A,
+                                     std::shared_ptr<const BlockDirichletBC> block_bcs);
 
-    /// Create eigenvalue solver for Ax = \lambda x
-    CondensedBlockSLEPcEigenSolver(MPI_Comm comm, std::shared_ptr<const BlockPETScMatrix> A,
-                                   std::shared_ptr<const BlockPETScMatrix> B,
-                                   std::shared_ptr<const BlockDirichletBC> block_bcs);
+      /// Create eigenvalue solver for Ax = \lambda x on MPI_COMM_WORLD
+      CondensedBlockSLEPcEigenSolver(std::shared_ptr<const BlockPETScMatrix> A,
+                                     std::shared_ptr<const BlockPETScMatrix> B,
+                                     std::shared_ptr<const BlockDirichletBC> block_bcs);
 
-    /// Destructor
-    ~CondensedBlockSLEPcEigenSolver();
+      /// Create eigenvalue solver for Ax = \lambda x
+      CondensedBlockSLEPcEigenSolver(MPI_Comm comm, std::shared_ptr<const BlockPETScMatrix> A,
+                                     std::shared_ptr<const BlockPETScMatrix> B,
+                                     std::shared_ptr<const BlockDirichletBC> block_bcs);
 
-    /// Set boundary conditions
-    void set_boundary_conditions(std::shared_ptr<const BlockDirichletBC> block_bcs);
+      /// Destructor
+      ~CondensedBlockSLEPcEigenSolver();
+
+      /// Set boundary conditions
+      void set_boundary_conditions(std::shared_ptr<const BlockDirichletBC> block_bcs);
+      
+      /// Get ith eigenpair
+      void get_eigenpair(double& lr, double& lc,
+                         dolfin::GenericVector& r, dolfin::GenericVector& c, std::size_t i) const;
+
+      /// Get ith eigenpair
+      void get_eigenpair(double& lr, double& lc,
+                         dolfin::PETScVector& r, dolfin::PETScVector& c, std::size_t i) const;
     
-    /// Get ith eigenpair
-    void get_eigenpair(double& lr, double& lc,
-                       dolfin::GenericVector& r, dolfin::GenericVector& c, std::size_t i) const;
-
-    /// Get ith eigenpair
-    void get_eigenpair(double& lr, double& lc,
-                       dolfin::PETScVector& r, dolfin::PETScVector& c, std::size_t i) const;
-  
-  private:
-    /// Hide Parent's version of boundary conditions setter
-    using CondensedSLEPcEigenSolver::set_boundary_conditions;
-  };
-
+    private:
+      /// Hide Parent's version of boundary conditions setter
+      using CondensedSLEPcEigenSolver::set_boundary_conditions;
+    };
+  }
 }
 
 #endif

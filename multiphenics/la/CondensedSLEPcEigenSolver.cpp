@@ -26,6 +26,7 @@
 #include <multiphenics/la/CondensedSLEPcEigenSolver.h>
 
 using namespace dolfin;
+using namespace dolfin::la;
 
 //-----------------------------------------------------------------------------
 CondensedSLEPcEigenSolver::CondensedSLEPcEigenSolver(MPI_Comm comm):

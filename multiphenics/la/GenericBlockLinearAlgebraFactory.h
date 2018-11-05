@@ -25,52 +25,53 @@
 
 namespace multiphenics
 {
-
-  /// Default block linear algebra factory based on global parameter "linear_algebra_backend"
-
-  class GenericBlockLinearAlgebraFactory: public dolfin::GenericLinearAlgebraFactory
+  namespace la
   {
+    /// Default block linear algebra factory based on global parameter "linear_algebra_backend"
 
-    public:
+    class GenericBlockLinearAlgebraFactory: public dolfin::GenericLinearAlgebraFactory
+    {
 
-    /// Constructor
-    GenericBlockLinearAlgebraFactory();
+      public:
 
-    /// Destructor
-    virtual ~GenericBlockLinearAlgebraFactory();
-    
-    /// Create empty matrix with attached block_dof_map
-    virtual std::shared_ptr<dolfin::GenericMatrix> create_matrix_with_attached_block_dof_map(
-      MPI_Comm comm, std::shared_ptr<const BlockDofMap> block_dof_map_0, std::shared_ptr<const BlockDofMap> block_dof_map_1
-    ) const = 0;
-    
-    /// Wrap existing non-block matrix
-    virtual std::shared_ptr<dolfin::GenericMatrix> wrap_matrix(
-      const dolfin::GenericMatrix & matrix
-    ) const = 0;
-    
-    /// Create submatrix
-    virtual std::shared_ptr<dolfin::GenericMatrix> create_sub_matrix(
-      const dolfin::GenericMatrix & A, std::size_t block_i, std::size_t block_j, BlockInsertMode insert_mode
-    ) const = 0;
+      /// Constructor
+      GenericBlockLinearAlgebraFactory();
 
-    /// Create empty vector with attached block_dof_map
-    virtual std::shared_ptr<dolfin::GenericVector> create_vector_with_attached_block_dof_map(
-      MPI_Comm comm, std::shared_ptr<const BlockDofMap> block_dof_map
-    ) const = 0;
-    
-    /// Wrap existing non-block vector
-    virtual std::shared_ptr<dolfin::GenericVector> wrap_vector(
-      const dolfin::GenericVector & vector
-    ) const = 0;
-    
-    /// Create subvector
-    virtual std::shared_ptr<dolfin::GenericVector> create_sub_vector(
-      const dolfin::GenericVector & x, std::size_t block_i, BlockInsertMode insert_mode
-    ) const = 0;
+      /// Destructor
+      virtual ~GenericBlockLinearAlgebraFactory();
+      
+      /// Create empty matrix with attached block_dof_map
+      virtual std::shared_ptr<dolfin::GenericMatrix> create_matrix_with_attached_block_dof_map(
+        MPI_Comm comm, std::shared_ptr<const BlockDofMap> block_dof_map_0, std::shared_ptr<const BlockDofMap> block_dof_map_1
+      ) const = 0;
+      
+      /// Wrap existing non-block matrix
+      virtual std::shared_ptr<dolfin::GenericMatrix> wrap_matrix(
+        const dolfin::GenericMatrix & matrix
+      ) const = 0;
+      
+      /// Create submatrix
+      virtual std::shared_ptr<dolfin::GenericMatrix> create_sub_matrix(
+        const dolfin::GenericMatrix & A, std::size_t block_i, std::size_t block_j, BlockInsertMode insert_mode
+      ) const = 0;
 
-  };
+      /// Create empty vector with attached block_dof_map
+      virtual std::shared_ptr<dolfin::GenericVector> create_vector_with_attached_block_dof_map(
+        MPI_Comm comm, std::shared_ptr<const BlockDofMap> block_dof_map
+      ) const = 0;
+      
+      /// Wrap existing non-block vector
+      virtual std::shared_ptr<dolfin::GenericVector> wrap_vector(
+        const dolfin::GenericVector & vector
+      ) const = 0;
+      
+      /// Create subvector
+      virtual std::shared_ptr<dolfin::GenericVector> create_sub_vector(
+        const dolfin::GenericVector & x, std::size_t block_i, BlockInsertMode insert_mode
+      ) const = 0;
 
+    };
+  }
 }
 
 #endif

@@ -22,7 +22,9 @@
 #include <multiphenics/log/log.h>
 
 using namespace dolfin;
+using namespace dolfin::la;
 using namespace multiphenics;
+using namespace multiphenics::la;
 
 //-----------------------------------------------------------------------------
 BlockDefaultFactory::BlockDefaultFactory()

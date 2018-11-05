@@ -19,7 +19,9 @@
 #include <multiphenics/la/GenericBlockMatrix.h>
 
 using namespace dolfin;
+using namespace dolfin::la;
 using namespace multiphenics;
+using namespace multiphenics::la;
 
 //-----------------------------------------------------------------------------
 GenericBlockMatrix::~GenericBlockMatrix()

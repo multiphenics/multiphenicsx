@@ -27,94 +27,96 @@
 
 namespace multiphenics
 {
-  class BlockPETScSubVector;
-  
-  class BlockPETScVector : public dolfin::PETScVector, public GenericBlockVector
+  namespace la
   {
-  public:
-    /// Create empty vector (on MPI_COMM_WORLD)
-    BlockPETScVector();
-
-    /// Create empty vector on an MPI communicator
-    explicit BlockPETScVector(MPI_Comm comm);
-
-    /// Create vector of size N
-    BlockPETScVector(MPI_Comm comm, std::size_t N);
-
-    /// Create vector
-    explicit BlockPETScVector(const dolfin::SparsityPattern& sparsity_pattern);
-
-    /// Copy constructor
-    BlockPETScVector(const BlockPETScVector& x);
-
-    /// Create vector wrapper of PETSc Vec pointer. The reference
-    /// counter of the Vec will be increased, and decreased upon
-    /// destruction of this object.
-    explicit BlockPETScVector(Vec x);
-
-    /// Destructor
-    virtual ~BlockPETScVector();
+    class BlockPETScSubVector;
     
-    //--- Implementation of the GenericVector interface ---
+    class BlockPETScVector : public dolfin::PETScVector, public GenericBlockVector
+    {
+    public:
+      /// Create empty vector (on MPI_COMM_WORLD)
+      BlockPETScVector();
 
-    /// Return copy of vector
-    virtual std::shared_ptr<dolfin::GenericVector> copy() const;
-    
-    /// Multiply vector by given number
-    virtual const BlockPETScVector& operator*= (double a);
+      /// Create empty vector on an MPI communicator
+      explicit BlockPETScVector(MPI_Comm comm);
 
-    /// Multiply vector by another vector pointwise
-    virtual const BlockPETScVector& operator*= (const dolfin::GenericVector& x);
+      /// Create vector of size N
+      BlockPETScVector(MPI_Comm comm, std::size_t N);
 
-    /// Divide vector by given number
-    virtual const BlockPETScVector& operator/= (double a);
+      /// Create vector
+      explicit BlockPETScVector(const dolfin::SparsityPattern& sparsity_pattern);
 
-    /// Add given vector
-    virtual const BlockPETScVector& operator+= (const dolfin::GenericVector& x);
+      /// Copy constructor
+      BlockPETScVector(const BlockPETScVector& x);
 
-    /// Add number to all components of a vector
-    virtual const BlockPETScVector& operator+= (double a);
+      /// Create vector wrapper of PETSc Vec pointer. The reference
+      /// counter of the Vec will be increased, and decreased upon
+      /// destruction of this object.
+      explicit BlockPETScVector(Vec x);
 
-    /// Subtract given vector
-    virtual const BlockPETScVector& operator-= (const dolfin::GenericVector& x);
+      /// Destructor
+      virtual ~BlockPETScVector();
+      
+      //--- Implementation of the GenericVector interface ---
 
-    /// Subtract number from all components of a vector
-    virtual const BlockPETScVector& operator-= (double a);
+      /// Return copy of vector
+      virtual std::shared_ptr<dolfin::GenericVector> copy() const;
+      
+      /// Multiply vector by given number
+      virtual const BlockPETScVector& operator*= (double a);
 
-    /// Assignment operator
-    virtual const BlockPETScVector& operator= (const dolfin::GenericVector& x);
+      /// Multiply vector by another vector pointwise
+      virtual const BlockPETScVector& operator*= (const dolfin::GenericVector& x);
 
-    /// Assignment operator
-    virtual const BlockPETScVector& operator= (double a);
-    
-    //--- Special functions ---
+      /// Divide vector by given number
+      virtual const BlockPETScVector& operator/= (double a);
 
-    /// Return linear algebra backend factory
-    virtual dolfin::GenericLinearAlgebraFactory& factory() const;
-    
-    //--- Special PETSc functions ---
-    
-    /// Assignment operator
-    const BlockPETScVector& operator= (const BlockPETScVector& x);
-    
-    //--- Special block functions ---
-    
-    /// Attach BlockDofMap for subvector creation
-    virtual void attach_block_dof_map(std::shared_ptr<const BlockDofMap> block_dof_map);
-    
-    /// Get BlockDofMap for subvector creation
-    virtual std::shared_ptr<const BlockDofMap> get_block_dof_map() const;
-    
-    /// Check if BlockDofMap for subvector creation has been attached
-    virtual bool has_block_dof_map() const;
-    
-    /// Block access
-    virtual std::shared_ptr<dolfin::GenericVector> operator()(std::size_t block_i, BlockInsertMode insert_mode) const;
-    
-  private:
-    std::shared_ptr<const BlockDofMap> _block_dof_map;
-  };
-  
+      /// Add given vector
+      virtual const BlockPETScVector& operator+= (const dolfin::GenericVector& x);
+
+      /// Add number to all components of a vector
+      virtual const BlockPETScVector& operator+= (double a);
+
+      /// Subtract given vector
+      virtual const BlockPETScVector& operator-= (const dolfin::GenericVector& x);
+
+      /// Subtract number from all components of a vector
+      virtual const BlockPETScVector& operator-= (double a);
+
+      /// Assignment operator
+      virtual const BlockPETScVector& operator= (const dolfin::GenericVector& x);
+
+      /// Assignment operator
+      virtual const BlockPETScVector& operator= (double a);
+      
+      //--- Special functions ---
+
+      /// Return linear algebra backend factory
+      virtual dolfin::GenericLinearAlgebraFactory& factory() const;
+      
+      //--- Special PETSc functions ---
+      
+      /// Assignment operator
+      const BlockPETScVector& operator= (const BlockPETScVector& x);
+      
+      //--- Special block functions ---
+      
+      /// Attach BlockDofMap for subvector creation
+      virtual void attach_block_dof_map(std::shared_ptr<const BlockDofMap> block_dof_map);
+      
+      /// Get BlockDofMap for subvector creation
+      virtual std::shared_ptr<const BlockDofMap> get_block_dof_map() const;
+      
+      /// Check if BlockDofMap for subvector creation has been attached
+      virtual bool has_block_dof_map() const;
+      
+      /// Block access
+      virtual std::shared_ptr<dolfin::GenericVector> operator()(std::size_t block_i, BlockInsertMode insert_mode) const;
+      
+    private:
+      std::shared_ptr<const BlockDofMap> _block_dof_map;
+    };
+  }
 }
 
 #endif

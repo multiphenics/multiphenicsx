@@ -25,26 +25,28 @@
 
 namespace multiphenics
 {
-  class GenericBlockVector
+  namespace la
   {
-  public:
-    virtual ~GenericBlockVector();
-    
-    //--- Special block functions ---
-    
-    /// Attach BlockDofMap for subvector creation
-    virtual void attach_block_dof_map(std::shared_ptr<const BlockDofMap> block_dof_map) = 0;
-    
-    /// Get BlockDofMap for subvector creation
-    virtual std::shared_ptr<const BlockDofMap> get_block_dof_map() const = 0;
-    
-    /// Check if BlockDofMap for subvector creation has been attached
-    virtual bool has_block_dof_map() const = 0;
-    
-    /// Block access
-    virtual std::shared_ptr<dolfin::GenericVector> operator()(std::size_t block_i, BlockInsertMode insert_mode) const = 0;
-  };
-  
+    class GenericBlockVector
+    {
+    public:
+      virtual ~GenericBlockVector();
+      
+      //--- Special block functions ---
+      
+      /// Attach BlockDofMap for subvector creation
+      virtual void attach_block_dof_map(std::shared_ptr<const BlockDofMap> block_dof_map) = 0;
+      
+      /// Get BlockDofMap for subvector creation
+      virtual std::shared_ptr<const BlockDofMap> get_block_dof_map() const = 0;
+      
+      /// Check if BlockDofMap for subvector creation has been attached
+      virtual bool has_block_dof_map() const = 0;
+      
+      /// Block access
+      virtual std::shared_ptr<dolfin::GenericVector> operator()(std::size_t block_i, BlockInsertMode insert_mode) const = 0;
+    };
+  }
 }
 
 #endif

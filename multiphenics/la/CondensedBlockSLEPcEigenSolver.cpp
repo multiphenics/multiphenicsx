@@ -21,7 +21,9 @@
 #include <multiphenics/la/CondensedBlockSLEPcEigenSolver.h>
 
 using namespace dolfin;
+using namespace dolfin::la;
 using namespace multiphenics;
+using namespace multiphenics::la;
 
 //-----------------------------------------------------------------------------
 CondensedBlockSLEPcEigenSolver::CondensedBlockSLEPcEigenSolver(MPI_Comm comm):

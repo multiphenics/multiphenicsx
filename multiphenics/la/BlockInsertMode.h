@@ -21,12 +21,14 @@
 
 namespace multiphenics
 {
-  enum class BlockInsertMode
+  namespace la
   {
-    INSERT_VALUES,
-    ADD_VALUES
-  };
-  
+    enum class BlockInsertMode
+    {
+      INSERT_VALUES,
+      ADD_VALUES
+    };
+  }
 }
 
 #endif

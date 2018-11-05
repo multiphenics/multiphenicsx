@@ -23,7 +23,9 @@
 #include <multiphenics/la/BlockPETScVector.h>
 
 using namespace dolfin;
+using namespace dolfin::la;
 using namespace multiphenics;
+using namespace multiphenics::la;
 
 //-----------------------------------------------------------------------------
 BlockPETScVector::BlockPETScVector() : PETScVector()
