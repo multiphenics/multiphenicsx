@@ -19,8 +19,9 @@
 #include <multiphenics/function/BlockFunctionSpace.h>
 
 using namespace dolfin;
-using namespace dolfin::common;
+using namespace dolfin::function;
 using namespace multiphenics;
+using namespace multiphenics::function;
 
 //-----------------------------------------------------------------------------
 BlockFunctionSpace::BlockFunctionSpace(std::vector<std::shared_ptr<const FunctionSpace>> function_spaces)
@@ -103,7 +104,7 @@ const BlockFunctionSpace& BlockFunctionSpace::operator=(const BlockFunctionSpace
   _component       = V._component;
 
   // Call assignment operator for base class
-  Variable::operator=(V);
+  common::Variable::operator=(V);
 
   return *this;
 }
