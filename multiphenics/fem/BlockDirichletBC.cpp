@@ -28,7 +28,7 @@ using namespace multiphenics;
 //-----------------------------------------------------------------------------
 BlockDirichletBC::BlockDirichletBC(std::vector<std::vector<std::shared_ptr<const DirichletBC>>> bcs,
                                    std::shared_ptr<const BlockFunctionSpace> block_function_space)
-  : Hierarchical<BlockDirichletBC>(*this), _bcs(bcs), _block_function_space(block_function_space)
+  : _bcs(bcs), _block_function_space(block_function_space)
 {
   // Do nothing
 }

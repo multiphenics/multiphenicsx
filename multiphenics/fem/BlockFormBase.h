@@ -19,14 +19,13 @@
 #ifndef __BLOCK_FORM_BASE_H
 #define __BLOCK_FORM_BASE_H
 
-#include <dolfin/common/Hierarchical.h>
 #include <dolfin/mesh/Mesh.h>
 #include <multiphenics/function/BlockFunctionSpace.h>
 
 namespace multiphenics
 {
 
-  class BlockFormBase : public dolfin::Hierarchical<BlockFormBase>
+  class BlockFormBase
   {
   public:
     /// Create form (shared data)

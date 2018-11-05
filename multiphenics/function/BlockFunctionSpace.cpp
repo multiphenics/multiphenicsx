@@ -23,8 +23,7 @@ using namespace multiphenics;
 
 //-----------------------------------------------------------------------------
 BlockFunctionSpace::BlockFunctionSpace(std::vector<std::shared_ptr<const FunctionSpace>> function_spaces)
-  : Hierarchical<BlockFunctionSpace>(*this),
-    _restrictions(function_spaces.size()), _function_spaces(function_spaces), _root_space_id(id())
+  : _restrictions(function_spaces.size()), _function_spaces(function_spaces), _root_space_id(id())
 {
   _init_mesh_and_elements_and_dofmaps_from_function_spaces();
   _init_block_dofmap_from_dofmaps_and_restrictions();
@@ -32,8 +31,7 @@ BlockFunctionSpace::BlockFunctionSpace(std::vector<std::shared_ptr<const Functio
 //-----------------------------------------------------------------------------
 BlockFunctionSpace::BlockFunctionSpace(std::vector<std::shared_ptr<const FunctionSpace>> function_spaces,
                                        std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions)
-  : Hierarchical<BlockFunctionSpace>(*this),
-    _restrictions(restrictions), _function_spaces(function_spaces), _root_space_id(id())
+  : _restrictions(restrictions), _function_spaces(function_spaces), _root_space_id(id())
 {
   _init_mesh_and_elements_and_dofmaps_from_function_spaces();
   _init_block_dofmap_from_dofmaps_and_restrictions();
@@ -42,8 +40,7 @@ BlockFunctionSpace::BlockFunctionSpace(std::vector<std::shared_ptr<const Functio
 BlockFunctionSpace::BlockFunctionSpace(std::shared_ptr<const Mesh> mesh,
                                        std::vector<std::shared_ptr<const FiniteElement>> elements,
                                        std::vector<std::shared_ptr<const GenericDofMap>> dofmaps)
-  : Hierarchical<BlockFunctionSpace>(*this),
-    _mesh(mesh), _elements(elements), _dofmaps(dofmaps), _restrictions(dofmaps.size()), _root_space_id(id())
+  : _mesh(mesh), _elements(elements), _dofmaps(dofmaps), _restrictions(dofmaps.size()), _root_space_id(id())
 {
   _init_function_spaces_from_elements_and_dofmaps();
   _init_block_dofmap_from_dofmaps_and_restrictions();
@@ -53,15 +50,13 @@ BlockFunctionSpace::BlockFunctionSpace(std::shared_ptr<const Mesh> mesh,
                                        std::vector<std::shared_ptr<const FiniteElement>> elements,
                                        std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,
                                        std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions)
-  : Hierarchical<BlockFunctionSpace>(*this),
-    _mesh(mesh), _elements(elements), _dofmaps(dofmaps), _restrictions(restrictions), _root_space_id(id())
+  : _mesh(mesh), _elements(elements), _dofmaps(dofmaps), _restrictions(restrictions), _root_space_id(id())
 {
   _init_function_spaces_from_elements_and_dofmaps();
   _init_block_dofmap_from_dofmaps_and_restrictions();
 }
 //-----------------------------------------------------------------------------
 BlockFunctionSpace::BlockFunctionSpace(const BlockFunctionSpace& V)
-  : Hierarchical<BlockFunctionSpace>(*this)
 {
   // Assign data (will be shared)
   *this = V;
@@ -108,7 +103,6 @@ const BlockFunctionSpace& BlockFunctionSpace::operator=(const BlockFunctionSpace
 
   // Call assignment operator for base class
   Variable::operator=(V);
-  Hierarchical<BlockFunctionSpace>::operator=(V);
 
   return *this;
 }

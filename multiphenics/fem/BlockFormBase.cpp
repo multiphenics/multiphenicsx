@@ -23,7 +23,7 @@ using namespace multiphenics;
 
 //-----------------------------------------------------------------------------
 BlockFormBase::BlockFormBase(std::vector<std::shared_ptr<const BlockFunctionSpace>> block_function_spaces):
-  Hierarchical<BlockFormBase>(*this), _block_function_spaces(block_function_spaces)
+  _block_function_spaces(block_function_spaces)
 {
 }
 //-----------------------------------------------------------------------------

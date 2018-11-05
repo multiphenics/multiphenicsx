@@ -19,7 +19,6 @@
 #ifndef __BLOCK_DIRICHLET_BC_H
 #define __BLOCK_DIRICHLET_BC_H
 
-#include <dolfin/common/Hierarchical.h>
 #include <dolfin/common/Variable.h>
 #include <dolfin/fem/DirichletBC.h>
 #include <multiphenics/function/BlockFunctionSpace.h>
@@ -27,7 +26,7 @@
 namespace multiphenics
 {
 
-  class BlockDirichletBC : public dolfin::Hierarchical<BlockDirichletBC>, public dolfin::Variable
+  class BlockDirichletBC: public dolfin::Variable
   {
   public:
     typedef dolfin::DirichletBC::Map Map;

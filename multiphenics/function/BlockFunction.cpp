@@ -26,7 +26,7 @@ using namespace multiphenics;
 
 //-----------------------------------------------------------------------------
 BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V)
-  : Hierarchical<BlockFunction>(*this), _block_function_space(V), _sub_function_spaces(V->function_spaces())
+  : _block_function_space(V), _sub_function_spaces(V->function_spaces())
 {
   // Initialize block vector
   init_block_vector();
@@ -37,7 +37,7 @@ BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V)
 //-----------------------------------------------------------------------------
 BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
                              std::vector<std::shared_ptr<Function>> sub_functions)
-  : Hierarchical<BlockFunction>(*this), _block_function_space(V), _sub_function_spaces(V->function_spaces()), _sub_functions(sub_functions)
+  : _block_function_space(V), _sub_function_spaces(V->function_spaces()), _sub_functions(sub_functions)
 {
   // Initialize block vector
   init_block_vector();
@@ -48,7 +48,7 @@ BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
 //-----------------------------------------------------------------------------
 BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
                              std::shared_ptr<GenericVector> x)
-  : Hierarchical<BlockFunction>(*this), _block_function_space(V), _block_vector(x), _sub_function_spaces(V->function_spaces())
+  : _block_function_space(V), _block_vector(x), _sub_function_spaces(V->function_spaces())
 {
   // Initialize sub functions
   init_sub_functions();
@@ -60,13 +60,13 @@ BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
 BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
                              std::shared_ptr<GenericVector> x,
                              std::vector<std::shared_ptr<Function>> sub_functions)
-  : Hierarchical<BlockFunction>(*this), _block_function_space(V), _block_vector(x), _sub_function_spaces(V->function_spaces()), _sub_functions(sub_functions)
+  : _block_function_space(V), _block_vector(x), _sub_function_spaces(V->function_spaces()), _sub_functions(sub_functions)
 {
   // Apply to subfunctions
   apply("to subfunctions");
 }
 //-----------------------------------------------------------------------------
-BlockFunction::BlockFunction(const BlockFunction& v) : Hierarchical<BlockFunction>(*this)
+BlockFunction::BlockFunction(const BlockFunction& v)
 {
   // Assign data
   *this = v;
@@ -94,9 +94,6 @@ const BlockFunction& BlockFunction::operator= (const BlockFunction& v)
   {
     _sub_functions.push_back(std::make_shared<Function>(*v_sub_function));
   }
-
-  // Call assignment operator for base class
-  Hierarchical<BlockFunction>::operator=(v);
 
   return *this;
 }
