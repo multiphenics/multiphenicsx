@@ -26,11 +26,11 @@ namespace multiphenics_wrappers
   void fem(py::module& m)
   {
     // multiphenics::fem::BlockDofMap
-    py::class_<multiphenics::fem::BlockDofMap, std::shared_ptr<multiphenics::fem::BlockDofMap>, dolfin::GenericDofMap>
+    py::class_<multiphenics::fem::BlockDofMap, std::shared_ptr<multiphenics::fem::BlockDofMap>, dolfin::fem::GenericDofMap>
       (m, "BlockDofMap", "multiphenics BlockDofMap object")
-      .def(py::init<std::vector<std::shared_ptr<const dolfin::GenericDofMap>>,
-                    std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>>,
-                    const dolfin::Mesh&>())
+      .def(py::init<std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>>,
+                    std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>>,
+                    const dolfin::mesh::Mesh&>())
       .def("dofmaps", &multiphenics::fem::BlockDofMap::dofmaps)
       .def("ownership_range", &multiphenics::fem::BlockDofMap::ownership_range)
       .def("global_dimension", &multiphenics::fem::BlockDofMap::global_dimension)
