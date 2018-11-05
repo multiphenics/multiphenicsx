@@ -16,10 +16,9 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import as_backend_type
 from multiphenics.python import cpp
 
 BlockMATLABExport = cpp.la.BlockMATLABExport
 
 def block_matlab_export(block_tensor, name_tensor):
-    BlockMATLABExport.export_(as_backend_type(block_tensor), name_tensor)
+    BlockMATLABExport.export_(block_tensor, name_tensor)

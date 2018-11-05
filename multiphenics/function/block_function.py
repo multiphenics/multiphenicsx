@@ -21,7 +21,6 @@ import dolfin
 from dolfin import Function
 from multiphenics.python import cpp
 from multiphenics.function.block_function_space import BlockFunctionSpace
-from multiphenics.la.as_backend_type import as_backend_type
 from multiphenics.la.block_petsc_vector import BlockPETScVector
 
 def unwrap_sub_functions(sub_functions):
@@ -176,7 +175,6 @@ class BlockFunction(object):
             block_vector.block_function = types.MethodType(block_function, block_vector)
             
         block_vector = self._cpp_object.block_vector()
-        block_vector = as_backend_type(block_vector)
         extend_block_vector(block_vector)
         
         return block_vector
