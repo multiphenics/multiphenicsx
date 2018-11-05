@@ -5,7 +5,7 @@
 **multiphenics** is a python library that aims at providing tools in FEniCS for an easy prototyping of multiphysics problems on conforming meshes. In particular, it facilitates the definition of subdomain/boundary restricted variables and enables the definition of the problem by means of a block structure.
 
 ### 1. Prerequisites
-**multiphenics** requires **FEniCS** (>= 2018.1.0, python 3) with PETSc and SLEPc.
+**multiphenics** requires **FEniCS-X**.
 
 Support for **FEniCS-X** is available in the [fenicsx branch](https://gitlab.com/multiphenics/multiphenics/tree/fenicsx).
 
