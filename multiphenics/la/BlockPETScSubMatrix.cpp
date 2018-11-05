@@ -16,8 +16,6 @@
 // along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifdef HAS_PETSC
-
 #include <multiphenics/la/BlockPETScSubMatrix.h>
 #include <multiphenics/log/log.h>
 
@@ -579,5 +577,3 @@ void BlockPETScSubMatrix::to_restricted_submatrix_indices_and_values(
   dolfin_assert(unrestricted_value_iterator == block_unrestricted_submatrix_values.size());
   dolfin_assert(block_restricted_submatrix_values.size() == block_restricted_submatrix_row_indices.size()*block_restricted_submatrix_col_indices.size());
 }
-
-#endif

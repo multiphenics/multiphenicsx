@@ -19,8 +19,6 @@
 #ifndef __BLOCK_PETSC_VECTOR_H
 #define __BLOCK_PETSC_VECTOR_H
 
-#ifdef HAS_PETSC
-
 #include <dolfin/la/PETScVector.h>
 #include <multiphenics/fem/BlockDofMap.h>
 
@@ -112,7 +110,5 @@ namespace multiphenics
     };
   }
 }
-
-#endif
 
 #endif

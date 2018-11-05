@@ -19,8 +19,6 @@
 #ifndef __BLOCK_PETSC_SUB_MATRIX_H
 #define __BLOCK_PETSC_SUB_MATRIX_H
 
-#ifdef HAS_PETSC
-
 #include <dolfin/la/PETScMatrix.h>
 #include <multiphenics/la/BlockInsertMode.h>
 #include <multiphenics/la/BlockPETScMatrix.h>
@@ -203,7 +201,5 @@ namespace multiphenics
     };
   }
 }
-
-#endif
 
 #endif

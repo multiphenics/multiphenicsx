@@ -21,7 +21,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#ifdef HAS_PETSC
 #include <petscmat.h>
 #include <petscvec.h>
 
@@ -101,5 +100,4 @@ namespace pybind11
 
 #undef PETSC_CASTER_MACRO
 
-#endif
 #endif

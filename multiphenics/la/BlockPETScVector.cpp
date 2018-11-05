@@ -16,8 +16,6 @@
 // along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifdef HAS_PETSC
-
 #include <multiphenics/la/BlockPETScSubVector.h>
 #include <multiphenics/la/BlockPETScVector.h>
 
@@ -159,5 +157,3 @@ std::shared_ptr<GenericVector> BlockPETScVector::operator()(std::size_t block_i,
     insert_mode
   );
 }
-
-#endif

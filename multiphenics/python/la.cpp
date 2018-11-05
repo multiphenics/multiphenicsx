@@ -42,7 +42,6 @@ namespace multiphenics_wrappers
       .value("INSERT_VALUES", multiphenics::la::BlockInsertMode::INSERT_VALUES)
       .value("ADD_VALUES", multiphenics::la::BlockInsertMode::ADD_VALUES);
       
-    #ifdef HAS_PETSC
     // multiphenics::la::BlockPETScVector
     py::class_<multiphenics::la::BlockPETScVector, std::shared_ptr<multiphenics::la::BlockPETScVector>, dolfin::PETScVector>
       (m, "BlockPETScVector", "multiphenics BlockPETScVector object")
@@ -68,7 +67,6 @@ namespace multiphenics_wrappers
     // multiphenics::la::BlockPETScSubMatrix
     py::class_<multiphenics::la::BlockPETScSubMatrix, std::shared_ptr<multiphenics::la::BlockPETScSubMatrix>, dolfin::PETScMatrix>
       (m, "BlockPETScSubMatrix", "multiphenics BlockPETScSubMatrix object");
-    #endif
       
     #ifdef HAS_SLEPC
     // dolfin::la::CondensedSLEPcEigenSolver

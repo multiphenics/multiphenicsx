@@ -16,8 +16,6 @@
 // along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifdef HAS_PETSC
-
 #include <multiphenics/la/BlockPETScVector.h>
 #include <multiphenics/la/BlockPETScSubMatrix.h>
 #include <multiphenics/la/BlockPETScMatrix.h>
@@ -132,5 +130,3 @@ std::shared_ptr<GenericMatrix> BlockPETScMatrix::operator()(std::size_t block_i,
     insert_mode
   );
 }
-
-#endif
