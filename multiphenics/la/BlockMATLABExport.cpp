@@ -16,13 +16,14 @@
 // along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <dolfin/la/PETScObject.h>
 #include <multiphenics/la/BlockMATLABExport.h>
 
-using namespace dolfin;
-using namespace dolfin::la;
 using namespace multiphenics;
 using namespace multiphenics::la;
+
+using dolfin::la::petsc_error;
+using dolfin::la::PETScMatrix;
+using dolfin::la::PETScVector;
 
 //-----------------------------------------------------------------------------
 void BlockMATLABExport::export_(const PETScMatrix & A, std::string A_filename)
@@ -30,19 +31,19 @@ void BlockMATLABExport::export_(const PETScMatrix & A, std::string A_filename)
   PetscErrorCode ierr;
   PetscViewer view_out;
   ierr = PetscViewerASCIIOpen(A.mpi_comm(), (A_filename + ".m").c_str(), &view_out);
-  if (ierr != 0) PETScObject::petsc_error(ierr, __FILE__, "PetscViewerASCIIOpen");
+  if (ierr != 0) petsc_error(ierr, __FILE__, "PetscViewerASCIIOpen");
   
   ierr = PetscViewerPushFormat(view_out, PETSC_VIEWER_ASCII_MATLAB);
-  if (ierr != 0) PETScObject::petsc_error(ierr, __FILE__, "PetscViewerPushFormat");
+  if (ierr != 0) petsc_error(ierr, __FILE__, "PetscViewerPushFormat");
 
   ierr = MatView(A.mat(), view_out);
-  if (ierr != 0) PETScObject::petsc_error(ierr, __FILE__, "MatView");
+  if (ierr != 0) petsc_error(ierr, __FILE__, "MatView");
   
   ierr = PetscViewerPopFormat(view_out);
-  if (ierr != 0) PETScObject::petsc_error(ierr, __FILE__, "PetscViewerPopFormat");
+  if (ierr != 0) petsc_error(ierr, __FILE__, "PetscViewerPopFormat");
 
   ierr = PetscViewerDestroy(&view_out);
-  if (ierr != 0) PETScObject::petsc_error(ierr, __FILE__, "PetscViewerDestroy");
+  if (ierr != 0) petsc_error(ierr, __FILE__, "PetscViewerDestroy");
 }
 //-----------------------------------------------------------------------------
 void BlockMATLABExport::export_(const PETScVector & b, std::string b_filename)
@@ -50,18 +51,18 @@ void BlockMATLABExport::export_(const PETScVector & b, std::string b_filename)
   PetscErrorCode ierr;
   PetscViewer view_out;
   ierr = PetscViewerASCIIOpen(b.mpi_comm(), (b_filename + ".m").c_str(), &view_out);
-  if (ierr != 0) PETScObject::petsc_error(ierr, __FILE__, "PetscViewerASCIIOpen");
+  if (ierr != 0) petsc_error(ierr, __FILE__, "PetscViewerASCIIOpen");
   
   ierr = PetscViewerPushFormat(view_out, PETSC_VIEWER_ASCII_MATLAB);
-  if (ierr != 0) PETScObject::petsc_error(ierr, __FILE__, "PetscViewerPushFormat");
+  if (ierr != 0) petsc_error(ierr, __FILE__, "PetscViewerPushFormat");
 
   ierr = VecView(b.vec(), view_out);
-  if (ierr != 0) PETScObject::petsc_error(ierr, __FILE__, "VecView");
+  if (ierr != 0) petsc_error(ierr, __FILE__, "VecView");
   
   ierr = PetscViewerPopFormat(view_out);
-  if (ierr != 0) PETScObject::petsc_error(ierr, __FILE__, "PetscViewerPopFormat");
+  if (ierr != 0) petsc_error(ierr, __FILE__, "PetscViewerPopFormat");
 
   ierr = PetscViewerDestroy(&view_out);
-  if (ierr != 0) PETScObject::petsc_error(ierr, __FILE__, "PetscViewerDestroy");
+  if (ierr != 0) petsc_error(ierr, __FILE__, "PetscViewerDestroy");
 }
 //-----------------------------------------------------------------------------

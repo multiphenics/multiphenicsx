@@ -30,10 +30,10 @@ namespace multiphenics
     {
     public:
       /// Export matrix
-      static void export_(const dolfin::PETScMatrix & A, std::string A_filename);
+      static void export_(const dolfin::la::PETScMatrix & A, std::string A_filename);
       
       /// Export vector
-      static void export_(const dolfin::PETScVector & b, std::string b_filename);
+      static void export_(const dolfin::la::PETScVector & b, std::string b_filename);
     };
   }
 }

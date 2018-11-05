@@ -31,9 +31,9 @@ namespace multiphenics_wrappers
     // multiphenics::la::BlockMATLABExport
     py::class_<multiphenics::la::BlockMATLABExport>
       (m, "BlockMATLABExport", "multiphenics BlockMATLABExport object")
-      .def_static("export_", (void (*)(const dolfin::PETScMatrix&, std::string))
+      .def_static("export_", (void (*)(const dolfin::la::PETScMatrix&, std::string))
                   &multiphenics::la::BlockMATLABExport::export_)
-      .def_static("export_", (void (*)(const dolfin::PETScVector&, std::string))
+      .def_static("export_", (void (*)(const dolfin::la::PETScVector&, std::string))
                   &multiphenics::la::BlockMATLABExport::export_);
       
     // multiphenics::la::BlockInsertMode
