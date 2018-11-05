@@ -52,20 +52,18 @@ namespace multiphenics_wrappers
            &multiphenics::function::BlockFunctionSpace::sub)
       .def("extract_block_sub_space", &multiphenics::function::BlockFunctionSpace::extract_block_sub_space)
       .def("tabulate_dof_coordinates", &multiphenics::function::BlockFunctionSpace::tabulate_dof_coordinates);
-    
+      
     // multiphenics::function::BlockFunction
     py::class_<multiphenics::function::BlockFunction, std::shared_ptr<multiphenics::function::BlockFunction>>
       (m, "BlockFunction", "A finite element block function")
       .def(py::init<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>>(), "Create a function on the given block function space")
-      .def(py::init<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>, std::vector<std::shared_ptr<Function>>>())
-      .def(py::init<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>, std::shared_ptr<dolfin::GenericVector>>())
-      .def(py::init<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>, std::shared_ptr<dolfin::GenericVector>,
+      .def(py::init<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>, std::vector<std::shared_ptr<dolfin::function::Function>>>())
+      .def(py::init<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>, std::shared_ptr<dolfin::la::PETScVector>>())
+      .def(py::init<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>, std::shared_ptr<dolfin::la::PETScVector>,
                     std::vector<std::shared_ptr<Function>>>())
       .def(py::init<multiphenics::function::BlockFunction&>())
-      .def("_assign", (const multiphenics::function::BlockFunction& (multiphenics::function::BlockFunction::*)(const multiphenics::function::BlockFunction&))
-           &multiphenics::function::BlockFunction::operator=)
       .def("sub", &multiphenics::function::BlockFunction::operator[])
-      .def("block_vector", (std::shared_ptr<const dolfin::GenericVector> (multiphenics::function::BlockFunction::*)() const)
+      .def("block_vector", (std::shared_ptr<const dolfin::la::PETScVector> (multiphenics::function::BlockFunction::*)() const)
            &multiphenics::function::BlockFunction::block_vector, "Return the block vector associated with the finite element BlockFunction")
       .def("apply", &multiphenics::function::BlockFunction::apply);
   }
