@@ -16,12 +16,20 @@
 // along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <dolfin/common/IndexMap.h>
 #include <multiphenics/function/BlockFunctionSpace.h>
 
-using namespace dolfin;
-using namespace dolfin::function;
 using namespace multiphenics;
 using namespace multiphenics::function;
+
+using dolfin::EigenRowArrayXXd;
+using dolfin::common::Variable;
+using dolfin::fem::FiniteElement;
+using dolfin::fem::GenericDofMap;
+using dolfin::function::FunctionSpace;
+using dolfin::mesh::Mesh;
+using dolfin::mesh::MeshFunction;
+using multiphenics::fem::BlockDofMap;
 
 //-----------------------------------------------------------------------------
 BlockFunctionSpace::BlockFunctionSpace(std::vector<std::shared_ptr<const FunctionSpace>> function_spaces)
@@ -73,14 +81,14 @@ void BlockFunctionSpace::_init_mesh_and_elements_and_dofmaps_from_function_space
   _mesh = _function_spaces[0]->mesh();
   for (auto& function_space : _function_spaces) 
   {
-    dolfin_assert(_mesh == function_space->mesh());
+    assert(_mesh == function_space->mesh());
     _elements.push_back(function_space->element());
     _dofmaps.push_back(function_space->dofmap());
   }
 }
 //-----------------------------------------------------------------------------
 void BlockFunctionSpace::_init_function_spaces_from_elements_and_dofmaps() {
-  dolfin_assert(_elements.size() == _dofmaps.size());
+  assert(_elements.size() == _dofmaps.size());
   for (unsigned int i(0); i < _elements.size(); ++i) 
   {
     std::shared_ptr<const FunctionSpace> function_space_i(new FunctionSpace(_mesh, _elements[i], _dofmaps[i]));
@@ -104,7 +112,7 @@ const BlockFunctionSpace& BlockFunctionSpace::operator=(const BlockFunctionSpace
   _component       = V._component;
 
   // Call assignment operator for base class
-  common::Variable::operator=(V);
+  Variable::operator=(V);
 
   return *this;
 }
@@ -179,9 +187,9 @@ std::vector<std::shared_ptr<const FunctionSpace>> BlockFunctionSpace::function_s
   return _function_spaces;
 }
 //-----------------------------------------------------------------------------
-std::size_t BlockFunctionSpace::dim() const
+std::int64_t BlockFunctionSpace::dim() const
 {
-  dolfin_assert(_block_dofmap);
+  assert(_block_dofmap);
   return _block_dofmap->global_dimension();
 }
 //-----------------------------------------------------------------------------
@@ -198,7 +206,7 @@ std::shared_ptr<const FunctionSpace> BlockFunctionSpace::sub(std::size_t i) cons
 std::shared_ptr<BlockFunctionSpace>
 BlockFunctionSpace::extract_block_sub_space(const std::vector<std::size_t>& component, bool with_restrictions) const
 {
-  dolfin_assert(_mesh);
+  assert(_mesh);
 
   // Check if sub space is already in the cache
   BlockSubpsacesType* block_subspaces;
@@ -289,18 +297,18 @@ bool BlockFunctionSpace::contains(const BlockFunctionSpace& V) const
   return true;
 }
 //-----------------------------------------------------------------------------
-std::vector<double> BlockFunctionSpace::tabulate_dof_coordinates() const
+EigenRowArrayXXd BlockFunctionSpace::tabulate_dof_coordinates() const
 {
   // Geometric dimension
-  dolfin_assert(_mesh);
+  assert(_mesh);
   const std::size_t gdim = _mesh->geometry().dim();
   
   // Get local size
-  dolfin_assert(_block_dofmap);
-  std::size_t local_size = _block_dofmap->index_map()->size(IndexMap::MapSize::OWNED);
+  assert(_block_dofmap);
+  std::size_t local_size = _block_dofmap->index_map()->size_local();
   
   // Vector to hold coordinates and return
-  std::vector<double> dof_coordinates(gdim*local_size);
+  EigenRowArrayXXd dof_coordinates(local_size, gdim);
   
   // Loop over subspaces
   for (unsigned int i(0); i < _function_spaces.size(); ++i)
@@ -314,14 +322,11 @@ std::vector<double> BlockFunctionSpace::tabulate_dof_coordinates() const
     auto original_to_block = _block_dofmap->original_to_block(i);
     
     // Loop over all original dofs
-    for (unsigned int d(0); d < sub_dof_coordinates.size()/gdim; ++d)
+    for (unsigned int d(0); d < sub_dof_coordinates.rows(); ++d)
     {
       if (original_to_block.count(d) > 0) // skip all dofs which have been removed by restriction
       {
-        for (std::size_t c(0); c < gdim; ++c)
-        {
-          dof_coordinates[gdim*original_to_block.at(d) + c] = sub_dof_coordinates[gdim*d + c];
-        }
+        dof_coordinates.row(original_to_block.at(d)) = sub_dof_coordinates.row(d);
       }
     }
   }

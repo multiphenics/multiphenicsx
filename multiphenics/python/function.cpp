@@ -17,6 +17,7 @@
 //
 
 #include <pybind11/pybind11.h>
+#include <pybind11/eigen.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 
@@ -29,16 +30,16 @@ namespace multiphenics_wrappers
     // multiphenics::function::BlockFunctionSpace
     py::class_<multiphenics::function::BlockFunctionSpace, std::shared_ptr<multiphenics::function::BlockFunctionSpace>, dolfin::common::Variable>
       (m, "BlockFunctionSpace", "A finite element block function space", py::dynamic_attr())
-      .def(py::init<std::vector<std::shared_ptr<const dolfin::FunctionSpace>>>())
-      .def(py::init<std::vector<std::shared_ptr<const dolfin::FunctionSpace>>,
-                    std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>>>())
-      .def(py::init<std::shared_ptr<const dolfin::Mesh>,
-                    std::vector<std::shared_ptr<const dolfin::FiniteElement>>,
-                    std::vector<std::shared_ptr<const dolfin::GenericDofMap>>>())
-      .def(py::init<std::shared_ptr<const dolfin::Mesh>,
-                    std::vector<std::shared_ptr<const dolfin::FiniteElement>>,
-                    std::vector<std::shared_ptr<const dolfin::GenericDofMap>>,
-                    std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>>>())
+      .def(py::init<std::vector<std::shared_ptr<const dolfin::function::FunctionSpace>>>())
+      .def(py::init<std::vector<std::shared_ptr<const dolfin::function::FunctionSpace>>,
+                    std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>>>())
+      .def(py::init<std::shared_ptr<const dolfin::mesh::Mesh>,
+                    std::vector<std::shared_ptr<const dolfin::fem::FiniteElement>>,
+                    std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>>>())
+      .def(py::init<std::shared_ptr<const dolfin::mesh::Mesh>,
+                    std::vector<std::shared_ptr<const dolfin::fem::FiniteElement>>,
+                    std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>>,
+                    std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>>>())
       .def(py::init<const multiphenics::function::BlockFunctionSpace&>())
       .def("__eq__", &multiphenics::function::BlockFunctionSpace::operator==)
       .def("dim", &multiphenics::function::BlockFunctionSpace::dim)
@@ -47,19 +48,11 @@ namespace multiphenics_wrappers
       .def("mesh", &multiphenics::function::BlockFunctionSpace::mesh)
       .def("dofmaps", &multiphenics::function::BlockFunctionSpace::dofmaps)
       .def("block_dofmap", &multiphenics::function::BlockFunctionSpace::block_dofmap)
-      .def("sub", (std::shared_ptr<dolfin::FunctionSpace> (multiphenics::function::BlockFunctionSpace::*)(std::size_t) const)
+      .def("sub", (std::shared_ptr<dolfin::function::FunctionSpace> (multiphenics::function::BlockFunctionSpace::*)(std::size_t) const)
            &multiphenics::function::BlockFunctionSpace::sub)
       .def("extract_block_sub_space", &multiphenics::function::BlockFunctionSpace::extract_block_sub_space)
-      .def("tabulate_dof_coordinates", [](const multiphenics::function::BlockFunctionSpace& self)
-           {
-             const std::size_t gdim = self.mesh()->geometry().dim();
-             std::vector<double> coords = self.tabulate_dof_coordinates();
-             assert(coords.size() % gdim  == 0);
-
-             py::array_t<double> c({coords.size()/gdim, gdim}, coords.data() );
-             return c;
-           });
-           
+      .def("tabulate_dof_coordinates", &multiphenics::function::BlockFunctionSpace::tabulate_dof_coordinates);
+    
     // multiphenics::function::BlockFunction
     py::class_<multiphenics::function::BlockFunction, std::shared_ptr<multiphenics::function::BlockFunction>>
       (m, "BlockFunction", "A finite element block function")
