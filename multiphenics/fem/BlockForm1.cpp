@@ -19,7 +19,9 @@
 #include <multiphenics/fem/BlockForm1.h>
 
 using namespace dolfin;
+using namespace dolfin::fem;
 using namespace multiphenics;
+using namespace multiphenics::fem;
 
 //-----------------------------------------------------------------------------
 BlockForm1::BlockForm1(std::vector<std::shared_ptr<const Form>> forms,

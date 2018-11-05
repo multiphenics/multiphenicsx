@@ -24,33 +24,35 @@
 
 namespace multiphenics
 {
-  /// Class for block assembly
-  class BlockAssembler : public BlockAssemblerBase
+  namespace fem
   {
-  public:
+    /// Class for block assembly
+    class BlockAssembler : public BlockAssemblerBase
+    {
+    public:
 
-    /// Constructor
-    BlockAssembler();
+      /// Constructor
+      BlockAssembler();
 
-    /// Assemble block tensor from given block form
-    ///
-    /// @param[out] A (GenericTensor)
-    ///         The block tensor to assemble.
-    /// @param[in]  a (BlockFormBase&)
-    ///         The block form to assemble.
-    void assemble(dolfin::GenericTensor& A, const BlockFormBase& a);
-    
-  protected:
-    /// Assemble subtensor from given form
-    ///
-    /// @param[out] A (GenericTensor)
-    ///         The tensor to assemble.
-    /// @param[in]  a (Form&)
-    ///         The form to assemble.
-    void sub_assemble(dolfin::GenericTensor& A, const dolfin::Form& a, dolfin::Assembler& assembler);
+      /// Assemble block tensor from given block form
+      ///
+      /// @param[out] A (GenericTensor)
+      ///         The block tensor to assemble.
+      /// @param[in]  a (BlockFormBase&)
+      ///         The block form to assemble.
+      void assemble(dolfin::GenericTensor& A, const BlockFormBase& a);
+      
+    protected:
+      /// Assemble subtensor from given form
+      ///
+      /// @param[out] A (GenericTensor)
+      ///         The tensor to assemble.
+      /// @param[in]  a (Form&)
+      ///         The form to assemble.
+      void sub_assemble(dolfin::GenericTensor& A, const dolfin::Form& a, dolfin::Assembler& assembler);
 
-  };
-
+    };
+  }
 }
 
 #endif

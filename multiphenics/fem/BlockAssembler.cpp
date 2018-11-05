@@ -28,7 +28,9 @@
 #include <multiphenics/la/GenericBlockLinearAlgebraFactory.h>
 
 using namespace dolfin;
+using namespace dolfin::fem;
 using namespace multiphenics;
+using namespace multiphenics::fem;
 
 //-----------------------------------------------------------------------------
 BlockAssembler::BlockAssembler()

@@ -23,7 +23,9 @@
 #include <multiphenics/log/log.h>
 
 using namespace dolfin;
+using namespace dolfin::fem;
 using namespace multiphenics;
+using namespace multiphenics::fem;
 
 //-----------------------------------------------------------------------------
 BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,

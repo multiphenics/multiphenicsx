@@ -24,47 +24,52 @@
 
 namespace multiphenics
 {
-
-  class BlockFormBase
+  namespace fem
   {
-  public:
-    /// Create form (shared data)
-    ///
-    /// @param[in] function_spaces (std::vector<_BlockFunctionSpace_>)
-    ///         Vector of function spaces.
-    BlockFormBase(std::vector<std::shared_ptr<const BlockFunctionSpace>> block_function_spaces);
-         
-    /// Destructor
-    virtual ~BlockFormBase();
-    
-    /// Return rank of form (bilinear form = 2, linear form = 1)
-    ///
-    /// @return std::size_t
-    ///         The rank of the form.
-    virtual std::size_t rank() const = 0;
-    
-    /// Extract common mesh from form
-    ///
-    /// @return Mesh
-    ///         Shared pointer to the mesh.
-    std::shared_ptr<const dolfin::Mesh> mesh() const;
+    class BlockFormBase
+    {
+    public:
+      /// Create form (shared data)
+      ///
+      /// @param[in] function_spaces (std::vector<_BlockFunctionSpace_>)
+      ///         Vector of function spaces.
+      BlockFormBase(std::vector<std::shared_ptr<const BlockFunctionSpace>> block_function_spaces);
+           
+      /// Destructor
+      virtual ~BlockFormBase();
+      
+      /// Return rank of form (bilinear form = 2, linear form = 1)
+      ///
+      /// @return std::size_t
+      ///         The rank of the form.
+      virtual std::size_t rank() const = 0;
+      
+      /// Extract common mesh from form
+      ///
+      /// @return Mesh
+      ///         Shared pointer to the mesh.
+      std::shared_ptr<const dolfin::Mesh> mesh() const;
 
-    /// Return function spaces for arguments
-    ///
-    /// @return    std::vector<_FunctionSpace_>
-    ///         Vector of function space shared pointers.
-    std::vector<std::shared_ptr<const BlockFunctionSpace>> block_function_spaces() const;
+      /// Return function spaces for arguments
+      ///
+      /// @return    std::vector<_FunctionSpace_>
+      ///         Vector of function space shared pointers.
+      std::vector<std::shared_ptr<const BlockFunctionSpace>> block_function_spaces() const;
+      
+      virtual unsigned int block_size(unsigned int d) const = 0;
+      
+    protected:
     
-    virtual unsigned int block_size(unsigned int d) const = 0;
-    
-  protected:
-  
-    friend class BlockAssemblerBase;
+      virtual bool has_cell_integrals() const = 0;
+      virtual bool has_interior_facet_integrals() const = 0;
+      virtual bool has_exterior_facet_integrals() const = 0;
+      virtual bool has_vertex_integrals() const = 0;
+      friend class BlockAssemblerBase;
 
-    // Block function spaces (one for each argument)
-    std::vector<std::shared_ptr<const BlockFunctionSpace>> _block_function_spaces;
-  };
-  
+      // Block function spaces (one for each argument)
+      std::vector<std::shared_ptr<const BlockFunctionSpace>> _block_function_spaces;
+    };
+  }
 }
 
 #endif

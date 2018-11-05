@@ -25,40 +25,46 @@
 
 namespace multiphenics
 {
-
-  class BlockForm1 : public BlockFormBase
+  namespace fem
   {
-  public:
-    /// Create form (shared data)
-    ///
-    /// @param[in] forms (std::vector<_Form_>)
-    ///         Vector of forms.
-    /// @param[in] function_spaces (std::vector<_BlockFunctionSpace_>)
-    ///         Vector of function spaces, of size 1.
-    BlockForm1(std::vector<std::shared_ptr<const dolfin::Form>> forms,
-               std::vector<std::shared_ptr<const BlockFunctionSpace>> block_function_spaces);
-         
-    /// Destructor
-    virtual ~BlockForm1();
+    class BlockForm1 : public BlockFormBase
+    {
+    public:
+      /// Create form (shared data)
+      ///
+      /// @param[in] forms (std::vector<_Form_>)
+      ///         Vector of forms.
+      /// @param[in] function_spaces (std::vector<_BlockFunctionSpace_>)
+      ///         Vector of function spaces, of size 1.
+      BlockForm1(std::vector<std::shared_ptr<const dolfin::Form>> forms,
+                 std::vector<std::shared_ptr<const BlockFunctionSpace>> block_function_spaces);
+           
+      /// Destructor
+      virtual ~BlockForm1();
 
-    /// Return rank of form (linear form = 1)
-    ///
-    /// @return std::size_t
-    ///         The rank of the form.
-    virtual std::size_t rank() const;
-    
-    virtual unsigned int block_size(unsigned int d) const;
-    
-    const dolfin::Form & operator()(std::size_t i) const;
-    
-  protected:
+      /// Return rank of form (linear form = 1)
+      ///
+      /// @return std::size_t
+      ///         The rank of the form.
+      virtual std::size_t rank() const;
+      
+      virtual unsigned int block_size(unsigned int d) const;
+      
+      const dolfin::Form & operator()(std::size_t i) const;
+      
+    protected:
+      
+      virtual bool has_cell_integrals() const;
+      virtual bool has_interior_facet_integrals() const;
+      virtual bool has_exterior_facet_integrals() const;
+      virtual bool has_vertex_integrals() const;
 
-    // Block forms
-    std::vector<std::shared_ptr<const dolfin::Form>> _forms;
-    
-    unsigned int _block_size;
-  };
-  
+      // Block forms
+      std::vector<std::shared_ptr<const dolfin::Form>> _forms;
+      
+      unsigned int _block_size;
+    };
+  }
 }
 
 #endif

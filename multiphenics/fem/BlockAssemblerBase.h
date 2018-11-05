@@ -24,43 +24,45 @@
 
 namespace multiphenics
 {
-  /// Provide some common functions used in assembler classes.
-  class BlockAssemblerBase
+  namespace fem
   {
-  public:
+    /// Provide some common functions used in assembler classes.
+    class BlockAssemblerBase
+    {
+    public:
 
-    /// Constructor
-    BlockAssemblerBase();
+      /// Constructor
+      BlockAssemblerBase();
 
-    /// add_values (bool)
-    ///     Default value is false.
-    ///     This controls whether values are added to the given
-    ///     tensor or if it is zeroed prior to assembly.
-    bool add_values;
+      /// add_values (bool)
+      ///     Default value is false.
+      ///     This controls whether values are added to the given
+      ///     tensor or if it is zeroed prior to assembly.
+      bool add_values;
 
-    /// finalize_tensor (bool)
-    ///     Default value is true.
-    ///     This controls whether the assembler finalizes the
-    ///     given tensor after assembly is completed by calling
-    ///     A.apply().
-    bool finalize_tensor;
+      /// finalize_tensor (bool)
+      ///     Default value is true.
+      ///     This controls whether the assembler finalizes the
+      ///     given tensor after assembly is completed by calling
+      ///     A.apply().
+      bool finalize_tensor;
 
-    /// keep_diagonal (bool)
-    ///     Default value is false.
-    ///     This controls whether the assembler enures that a diagonal
-    ///     entry exists in an assembled matrix. It may be removed
-    ///     if the matrix is finalised.
-    bool keep_diagonal;
+      /// keep_diagonal (bool)
+      ///     Default value is false.
+      ///     This controls whether the assembler enures that a diagonal
+      ///     entry exists in an assembled matrix. It may be removed
+      ///     if the matrix is finalised.
+      bool keep_diagonal;
 
-    /// Initialize global tensor
-    /// @param[out] A (GenericTensor&)
-    ///  GenericTensor to assemble into
-    /// @param[in] a (Form&)
-    ///  Form to assemble from
-    void init_global_tensor(dolfin::GenericTensor& A, const BlockFormBase& a);
+      /// Initialize global tensor
+      /// @param[out] A (GenericTensor&)
+      ///  GenericTensor to assemble into
+      /// @param[in] a (Form&)
+      ///  Form to assemble from
+      void init_global_tensor(dolfin::GenericTensor& A, const BlockFormBase& a);
 
-  };
-
+    };
+  }
 }
 
 #endif
