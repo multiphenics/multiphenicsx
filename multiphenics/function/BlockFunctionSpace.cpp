@@ -19,6 +19,7 @@
 #include <multiphenics/function/BlockFunctionSpace.h>
 
 using namespace dolfin;
+using namespace dolfin::common;
 using namespace multiphenics;
 
 //-----------------------------------------------------------------------------

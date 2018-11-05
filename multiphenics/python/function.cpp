@@ -27,7 +27,7 @@ namespace multiphenics_wrappers
   void function(py::module& m)
   {
     // multiphenics::BlockFunctionSpace
-    py::class_<multiphenics::BlockFunctionSpace, std::shared_ptr<multiphenics::BlockFunctionSpace>, dolfin::Variable>
+    py::class_<multiphenics::BlockFunctionSpace, std::shared_ptr<multiphenics::BlockFunctionSpace>, dolfin::common::Variable>
       (m, "BlockFunctionSpace", "A finite element block function space", py::dynamic_attr())
       .def(py::init<std::vector<std::shared_ptr<const dolfin::FunctionSpace>>>())
       .def(py::init<std::vector<std::shared_ptr<const dolfin::FunctionSpace>>,

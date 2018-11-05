@@ -26,7 +26,7 @@
 namespace multiphenics
 {
 
-  class BlockDirichletBC: public dolfin::Variable
+  class BlockDirichletBC: public dolfin::common::Variable
   {
   public:
     typedef dolfin::DirichletBC::Map Map;

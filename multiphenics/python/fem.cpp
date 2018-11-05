@@ -75,7 +75,7 @@ namespace multiphenics_wrappers
       .def("assemble", &multiphenics::BlockAssembler::assemble);
       
     // multiphenics::BlockDirichletBC
-    py::class_<multiphenics::BlockDirichletBC, std::shared_ptr<multiphenics::BlockDirichletBC>, dolfin::Variable>
+    py::class_<multiphenics::BlockDirichletBC, std::shared_ptr<multiphenics::BlockDirichletBC>, dolfin::common::Variable>
       (m, "BlockDirichletBC", "multiphenics BlockDirichletBC object")
       .def(py::init<std::vector<std::vector<std::shared_ptr<const DirichletBC>>>,
                     std::shared_ptr<const BlockFunctionSpace>>())
