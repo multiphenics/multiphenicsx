@@ -30,55 +30,55 @@ namespace multiphenics
     /// function spaces, also considering possible restrictions to 
     /// subdomains
 
-    class BlockDofMap : public dolfin::GenericDofMap
+    class BlockDofMap : public dolfin::fem::GenericDofMap
     {
     public:
 
       /// Constructor
-      BlockDofMap(std::vector<std::shared_ptr<const dolfin::GenericDofMap>> dofmaps,
-                  std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>> restrictions,
-                  const dolfin::Mesh& mesh);
+      BlockDofMap(std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> dofmaps,
+                  std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>> restrictions,
+                  const dolfin::mesh::Mesh& mesh);
 
     protected:
       
       /// Helper functions for constructor
-      BlockDofMap(std::vector<std::shared_ptr<const dolfin::GenericDofMap>> dofmaps,
-                  std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>> restrictions);
-      BlockDofMap(std::vector<std::shared_ptr<const dolfin::GenericDofMap>> dofmaps,
-                  std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>> restrictions,
-                  std::vector<std::shared_ptr<const dolfin::Mesh>> meshes);
+      BlockDofMap(std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> dofmaps,
+                  std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>> restrictions);
+      BlockDofMap(std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> dofmaps,
+                  std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>> restrictions,
+                  std::vector<std::shared_ptr<const dolfin::mesh::Mesh>> meshes);
       void _extract_dofs_from_original_dofmaps(
-        std::vector<std::shared_ptr<const dolfin::GenericDofMap>> dofmaps,
-        std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>> restrictions,
+        std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> dofmaps,
+        std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>> restrictions,
         std::vector<std::shared_ptr<const dolfin::Mesh>> meshes,
-        std::vector<std::set<dolfin::la_index>>& owned_dofs,
-        std::vector<std::map<dolfin::la_index, bool>>& owned_dofs__to__in_restriction,
-        std::vector<std::map<dolfin::la_index, std::set<dolfin::la_index>>>& owned_dofs__to__cell_indices,
-        std::vector<std::set<dolfin::la_index>>& unowned_dofs_in_restriction,
-        std::vector<std::map<dolfin::la_index, dolfin::la_index>>& unowned_dofs_in_restriction__local_to_global,
-        std::vector<std::map<dolfin::la_index, std::set<dolfin::la_index>>>& unowned_dofs_in_restriction__to__cell_indices,
+        std::vector<std::set<PetscInt>>& owned_dofs,
+        std::vector<std::map<PetscInt, bool>>& owned_dofs__to__in_restriction,
+        std::vector<std::map<PetscInt, std::set<std::size_t>>>& owned_dofs__to__cell_indices,
+        std::vector<std::set<PetscInt>>& unowned_dofs_in_restriction,
+        std::vector<std::map<PetscInt, PetscInt>>& unowned_dofs_in_restriction__local_to_global,
+        std::vector<std::map<PetscInt, std::set<std::size_t>>>& unowned_dofs_in_restriction__to__cell_indices,
         std::vector<std::set<std::size_t>>& real_dofs
       ) const;
       void _assign_owned_dofs_to_block_dofmap(
-        std::vector<std::shared_ptr<const dolfin::GenericDofMap>> dofmaps,
+        std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> dofmaps,
         std::vector<std::shared_ptr<const dolfin::Mesh>> meshes,
-        const std::vector<std::set<dolfin::la_index>>& owned_dofs,
-        const std::vector<std::map<dolfin::la_index, bool>>& owned_dofs__to__in_restriction,
-        const std::vector<std::map<dolfin::la_index, std::set<dolfin::la_index>>>& owned_dofs__to__cell_indices,
-        dolfin::la_index& block_dofmap_local_size,
-        std::vector<dolfin::la_index>& sub_block_dofmap_local_size
+        const std::vector<std::set<PetscInt>>& owned_dofs,
+        const std::vector<std::map<PetscInt, bool>>& owned_dofs__to__in_restriction,
+        const std::vector<std::map<PetscInt, std::set<std::size_t>>>& owned_dofs__to__cell_indices,
+        std::int64_t& block_dofmap_local_size,
+        std::vector<std::int64_t>& sub_block_dofmap_local_size
       );
       void _prepare_local_to_global_for_unowned_dofs(
-        std::vector<std::shared_ptr<const dolfin::GenericDofMap>> dofmaps,
+        std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> dofmaps,
         MPI_Comm comm,
-        const std::vector<std::set<dolfin::la_index>>& unowned_dofs_in_restriction,
-        const std::vector<std::map<dolfin::la_index, dolfin::la_index>>& unowned_dofs_in_restriction__local_to_global,
-        const std::vector<std::map<dolfin::la_index, std::set<dolfin::la_index>>>& unowned_dofs_in_restriction__to__cell_indices,
-        dolfin::la_index block_dofmap_local_size,
-        const std::vector<dolfin::la_index>& sub_block_dofmap_local_size
+        const std::vector<std::set<PetscInt>>& unowned_dofs_in_restriction,
+        const std::vector<std::map<PetscInt, PetscInt>>& unowned_dofs_in_restriction__local_to_global,
+        const std::vector<std::map<PetscInt, std::set<std::size_t>>>& unowned_dofs_in_restriction__to__cell_indices,
+        std::int64_t block_dofmap_local_size,
+        const std::vector<std::int64_t>& sub_block_dofmap_local_size
       );
       void _store_real_dofs(
-        const std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,
+        const std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> dofmaps,
         const std::vector<std::set<std::size_t>>& real_dofs
       );
       
@@ -95,7 +95,7 @@ namespace multiphenics
       /// *Returns*
       ///     vector of _GenericDofMap_
       ///         The vector of dofmaps *neglecting* restrictions
-      std::vector<std::shared_ptr<const dolfin::GenericDofMap>> dofmaps() const;
+      std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> dofmaps() const;
       
       /// True if dof map is a view into another map (is a sub-dofmap).
       /// BlockDofMap does not allow views, so the value will always be False.
@@ -191,9 +191,9 @@ namespace multiphenics
       /// @param     cell_index (std::size_t)
       ///         The cell index.
       ///
-      /// @return     ArrayView<const dolfin::la_index>
+      /// @return     ArrayView<const PetscInt>
       ///         Local-to-global mapping of dofs.
-      Eigen::Map<const Eigen::Array<dolfin::la_index, Eigen::Dynamic, 1>>
+      Eigen::Map<const Eigen::Array<PetscInt, Eigen::Dynamic, 1>>
        cell_dofs(std::size_t cell_index) const;
       
       /// Return the dof indices associated with entities of given dimension and entity indices
@@ -201,12 +201,12 @@ namespace multiphenics
       /// *Arguments*
       ///     entity_dim (std::size_t)
       ///         Entity dimension.
-      ///     entity_indices (std::vector<dolfin::la_index>&)
+      ///     entity_indices (std::vector<std::size_t>&)
       ///         Entity indices to get dofs for.
       /// *Returns*
-      ///     std::vector<dolfin::la_index>
+      ///     std::vector<PetscInt>
       ///         Dof indices associated with selected entities.
-      std::vector<dolfin::la_index>
+      std::vector<PetscInt>
         entity_dofs(const dolfin::Mesh& mesh, std::size_t entity_dim,
                     const std::vector<std::size_t> & entity_indices) const;
 
@@ -216,9 +216,9 @@ namespace multiphenics
       ///     entity_dim (std::size_t)
       ///         Entity dimension.
       /// *Returns*
-      ///     std::vector<dolfin::la_index>
+      ///     std::vector<PetscInt>
       ///         Dof indices associated with selected entities.
-      std::vector<dolfin::la_index>
+      std::vector<PetscInt>
         entity_dofs(const dolfin::Mesh& mesh, std::size_t entity_dim) const;
 
       /// Return the dof indices associated with the closure of entities of
@@ -227,12 +227,12 @@ namespace multiphenics
       /// *Arguments*
       ///     entity_dim (std::size_t)
       ///         Entity dimension.
-      ///     entity_indices (std::vector<dolfin::la_index>&)
+      ///     entity_indices (std::vector<std::size_t>&)
       ///         Entity indices to get dofs for.
       /// *Returns*
-      ///     std::vector<dolfin::la_index>
+      ///     std::vector<PetscInt>
       ///         Dof indices associated with selected entities and their closure.
-      std::vector<dolfin::la_index>
+      std::vector<PetscInt>
         entity_closure_dofs(const dolfin::Mesh& mesh, std::size_t entity_dim,
                             const std::vector<std::size_t> & entity_indices) const;
 
@@ -243,9 +243,9 @@ namespace multiphenics
       ///         Mesh
       /// @param  entity_dim (std::size_t)
       ///         Entity dimension.
-      /// @return  std::vector<dolfin::la_index>
+      /// @return  std::vector<PetscInt>
       ///         Dof indices associated with selected entities and their closure.
-      std::vector<dolfin::la_index>
+      std::vector<PetscInt>
         entity_closure_dofs(const dolfin::Mesh& mesh, std::size_t entity_dim) const;
         
       /// Tabulate local-local facet dofs
@@ -289,7 +289,7 @@ namespace multiphenics
       ///
       /// @return     DofMap
       ///         The Dofmap copy.
-      std::shared_ptr<dolfin::GenericDofMap> copy() const;
+      std::shared_ptr<dolfin::fem::GenericDofMap> copy() const;
 
       /// Create a copy of the dof map on a new mesh
       ///
@@ -298,7 +298,7 @@ namespace multiphenics
       ///
       ///  @return    DofMap
       ///         The new Dofmap copy.
-      std::shared_ptr<dolfin::GenericDofMap> create(const dolfin::Mesh& new_mesh) const;
+      std::shared_ptr<dolfin::fem::GenericDofMap> create(const dolfin::Mesh& new_mesh) const;
 
       /// Extract subdofmap component
       ///
@@ -309,7 +309,7 @@ namespace multiphenics
       ///
       /// @return     DofMap
       ///         The subdofmap component.
-      std::shared_ptr<dolfin::GenericDofMap>
+      std::shared_ptr<dolfin::fem::GenericDofMap>
         extract_sub_dofmap(const std::vector<std::size_t>& component,
                            const dolfin::Mesh& mesh) const;
 
@@ -322,16 +322,16 @@ namespace multiphenics
       ///
       /// @return    DofMap
       ///         The collapsed dofmap.
-      std::shared_ptr<dolfin::GenericDofMap>
+      std::shared_ptr<dolfin::fem::GenericDofMap>
         collapse(std::unordered_map<std::size_t, std::size_t>&
                  collapsed_map, const dolfin::Mesh& mesh) const;
 
       /// Return list of dof indices on this process that belong to mesh
       /// entities of dimension dim
-      std::vector<dolfin::la_index> dofs(const dolfin::Mesh& mesh,
+      std::vector<PetscInt> dofs(const dolfin::Mesh& mesh,
                                          std::size_t dim) const;
 
-      std::vector<dolfin::la_index> dofs() const;
+      std::vector<PetscInt> dofs() const;
 
       /// Set dof entries in vector to a specified value. Parallel layout
       /// of vector must be consistent with dof map range. This
@@ -377,24 +377,24 @@ namespace multiphenics
       std::string str(bool verbose) const;
       
       /// Accessors
-      const std::vector<dolfin::la_index> & block_owned_dofs__local_numbering(std::size_t b) const;
-      const std::vector<dolfin::la_index> & block_unowned_dofs__local_numbering(std::size_t b) const;
-      const std::vector<dolfin::la_index> & block_owned_dofs__global_numbering(std::size_t b) const;
-      const std::vector<dolfin::la_index> & block_unowned_dofs__global_numbering(std::size_t b) const;
-      const std::map<dolfin::la_index, dolfin::la_index> & original_to_block(std::size_t b) const;
-      const std::map<dolfin::la_index, dolfin::la_index> & block_to_original(std::size_t b) const;
-      const std::map<dolfin::la_index, dolfin::la_index> & original_to_sub_block(std::size_t b) const;
-      const std::map<dolfin::la_index, dolfin::la_index> & sub_block_to_original(std::size_t b) const;
+      const std::vector<PetscInt> & block_owned_dofs__local_numbering(std::size_t b) const;
+      const std::vector<PetscInt> & block_unowned_dofs__local_numbering(std::size_t b) const;
+      const std::vector<PetscInt> & block_owned_dofs__global_numbering(std::size_t b) const;
+      const std::vector<PetscInt> & block_unowned_dofs__global_numbering(std::size_t b) const;
+      const std::map<PetscInt, PetscInt> & original_to_block(std::size_t b) const;
+      const std::map<PetscInt, PetscInt> & block_to_original(std::size_t b) const;
+      const std::map<PetscInt, PetscInt> & original_to_sub_block(std::size_t b) const;
+      const std::map<PetscInt, PetscInt> & sub_block_to_original(std::size_t b) const;
 
     protected:
       
       // Constructor arguments
-      std::vector<std::shared_ptr<const dolfin::GenericDofMap>> _constructor_dofmaps;
-      std::vector<std::vector<std::shared_ptr<const dolfin::MeshFunction<bool>>>> _constructor_restrictions;
+      std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> _constructor_dofmaps;
+      std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>> _constructor_restrictions;
 
       // Cell-local-to-dof map
-      std::map<dolfin::la_index, std::vector<dolfin::la_index>> _dofmap;
-      std::vector<dolfin::la_index> _empty_vector;
+      std::map<PetscInt, std::vector<PetscInt>> _dofmap;
+      std::vector<PetscInt> _empty_vector;
       
       // Maximum number of elements associated to a cell in _dofmap
       std::size_t _max_element_dofs;
@@ -418,24 +418,24 @@ namespace multiphenics
       std::vector<std::shared_ptr<dolfin::IndexMap>> _sub_index_map;
       
       // List of block dofs, for each component, with local numbering
-      std::vector<std::vector<dolfin::la_index>> _block_owned_dofs__local;
-      std::vector<std::vector<dolfin::la_index>> _block_unowned_dofs__local;
+      std::vector<std::vector<PetscInt>> _block_owned_dofs__local;
+      std::vector<std::vector<PetscInt>> _block_unowned_dofs__local;
       
       // List of block dofs, for each component, with global numbering
-      std::vector<std::vector<dolfin::la_index>> _block_owned_dofs__global;
-      std::vector<std::vector<dolfin::la_index>> _block_unowned_dofs__global;
+      std::vector<std::vector<PetscInt>> _block_owned_dofs__global;
+      std::vector<std::vector<PetscInt>> _block_unowned_dofs__global;
       
       // Local to local (owned and unowned) map from original dofs to block dofs, for each component
-      std::vector<std::map<dolfin::la_index, dolfin::la_index>> _original_to_block__local_to_local;
+      std::vector<std::map<PetscInt, PetscInt>> _original_to_block__local_to_local;
       
       // Local to local (owned and unowned) map from block dofs to original dofs (pair of component and local dof)
-      std::vector<std::map<dolfin::la_index, dolfin::la_index>> _block_to_original__local_to_local;
+      std::vector<std::map<PetscInt, PetscInt>> _block_to_original__local_to_local;
       
       // Local to local (owned and unowned) map from original dofs to block sub dofs, for each component
-      std::vector<std::map<dolfin::la_index, dolfin::la_index>> _original_to_sub_block__local_to_local;
+      std::vector<std::map<PetscInt, PetscInt>> _original_to_sub_block__local_to_local;
       
       // Local to local (owned and unowned) map from block sub dofs to original dofs, for each component
-      std::vector<std::map<dolfin::la_index, dolfin::la_index>> _sub_block_to_original__local_to_local;
+      std::vector<std::map<PetscInt, PetscInt>> _sub_block_to_original__local_to_local;
     };
   }
 }

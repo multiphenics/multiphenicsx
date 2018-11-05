@@ -24,6 +24,7 @@
 
 using namespace dolfin;
 using namespace dolfin::fem;
+using namespace dolfin::mesh;
 using namespace multiphenics;
 using namespace multiphenics::fem;
 
@@ -59,12 +60,12 @@ BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const GenericDofMap>> dofma
   BlockDofMap(dofmaps, restrictions)
 {
   // A. EXTRACT DOFS FROM ORIGINAL DOFMAPS
-  std::vector<std::set<dolfin::la_index>> owned_dofs(dofmaps.size());
-  std::vector<std::map<dolfin::la_index, bool>> owned_dofs__to__in_restriction(dofmaps.size());
-  std::vector<std::map<dolfin::la_index, std::set<dolfin::la_index>>> owned_dofs__to__cell_indices(dofmaps.size());
-  std::vector<std::set<dolfin::la_index>> unowned_dofs_in_restriction(dofmaps.size());
-  std::vector<std::map<dolfin::la_index, dolfin::la_index>> unowned_dofs_in_restriction__local_to_global(dofmaps.size());
-  std::vector<std::map<dolfin::la_index, std::set<dolfin::la_index>>> unowned_dofs_in_restriction__to__cell_indices(dofmaps.size());
+  std::vector<std::set<PetscInt>> owned_dofs(dofmaps.size());
+  std::vector<std::map<PetscInt, bool>> owned_dofs__to__in_restriction(dofmaps.size());
+  std::vector<std::map<PetscInt, std::set<std::size_t>>> owned_dofs__to__cell_indices(dofmaps.size());
+  std::vector<std::set<PetscInt>> unowned_dofs_in_restriction(dofmaps.size());
+  std::vector<std::map<PetscInt, PetscInt>> unowned_dofs_in_restriction__local_to_global(dofmaps.size());
+  std::vector<std::map<PetscInt, std::set<std::size_t>>> unowned_dofs_in_restriction__to__cell_indices(dofmaps.size());
   std::vector<std::set<std::size_t>> real_dofs(dofmaps.size());
   _extract_dofs_from_original_dofmaps(
     dofmaps, restrictions, meshes,
@@ -74,8 +75,8 @@ BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const GenericDofMap>> dofma
   );
   
   // B. ASSIGN OWNED DOFS TO BLOCK DOF MAP
-  dolfin::la_index block_dofmap_local_size = 0;
-  std::vector<dolfin::la_index> sub_block_dofmap_local_size;
+  std::size_t block_dofmap_local_size = 0;
+  std::vector<std::size_t> sub_block_dofmap_local_size;
   _assign_owned_dofs_to_block_dofmap(
     dofmaps, meshes,
     owned_dofs, owned_dofs__to__in_restriction, owned_dofs__to__cell_indices,
@@ -101,12 +102,12 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
   std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,
   std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions,
   std::vector<std::shared_ptr<const dolfin::Mesh>> meshes,
-  std::vector<std::set<dolfin::la_index>>& owned_dofs,
-  std::vector<std::map<dolfin::la_index, bool>>& owned_dofs__to__in_restriction,
-  std::vector<std::map<dolfin::la_index, std::set<dolfin::la_index>>>& owned_dofs__to__cell_indices,
-  std::vector<std::set<dolfin::la_index>>& unowned_dofs_in_restriction,
-  std::vector<std::map<dolfin::la_index, dolfin::la_index>>& unowned_dofs_in_restriction__local_to_global,
-  std::vector<std::map<dolfin::la_index, std::set<dolfin::la_index>>>& unowned_dofs_in_restriction__to__cell_indices,
+  std::vector<std::set<PetscInt>>& owned_dofs,
+  std::vector<std::map<PetscInt, bool>>& owned_dofs__to__in_restriction,
+  std::vector<std::map<PetscInt, std::set<std::size_t>>>& owned_dofs__to__cell_indices,
+  std::vector<std::set<PetscInt>>& unowned_dofs_in_restriction,
+  std::vector<std::map<PetscInt, PetscInt>>& unowned_dofs_in_restriction__local_to_global,
+  std::vector<std::map<PetscInt, std::set<std::size_t>>>& unowned_dofs_in_restriction__to__cell_indices,
   std::vector<std::set<std::size_t>>& real_dofs
 ) const
 {
@@ -140,7 +141,7 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
     Array<double> _x(x.size(), x.data());
     
     // Local size
-    const dolfin::la_index dofmap_local_size = dofmap->ownership_range().second - dofmap->ownership_range().first;
+    const std::int64_t dofmap_local_size = dofmap->ownership_range().second - dofmap->ownership_range().first;
     
     // Retrieve Real dofs on the current dofmap
     std::vector<std::size_t> real_dofs_i;
@@ -186,10 +187,10 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
           
           // Get ids of all cells connected to the entity
           dolfin_assert(e->num_entities(D) > 0);
-          std::set<dolfin::la_index> cell_indices;
+          std::set<std::size_t> cell_indices;
           for (std::size_t c(0); c < e->num_entities(D); ++c)
           {
-            dolfin::la_index cell_index = e->entities(D)[c];
+            std::size_t cell_index = e->entities(D)[c];
             cell_indices.insert(cell_index);
           }
                     
@@ -217,7 +218,7 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
           // Fill local dofs for the entity
           for (std::size_t local_dof = 0; local_dof < dofs_per_entity; ++local_dof)
           {
-            dolfin::la_index cell_dof = cell_dof_list[local_to_local_map[local_dof]];
+            PetscInt cell_dof = cell_dof_list[local_to_local_map[local_dof]];
             if (real_dofs[i].count(cell_dof) == 0)
             {
               if (cell_dof < dofmap_local_size) 
@@ -277,17 +278,17 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
 void BlockDofMap::_assign_owned_dofs_to_block_dofmap(
   std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,
       std::vector<std::shared_ptr<const dolfin::Mesh>> meshes,
-  const std::vector<std::set<dolfin::la_index>>& owned_dofs,
-  const std::vector<std::map<dolfin::la_index, bool>>& owned_dofs__to__in_restriction,
-  const std::vector<std::map<dolfin::la_index, std::set<dolfin::la_index>>>& owned_dofs__to__cell_indices,
-  dolfin::la_index& block_dofmap_local_size,
-  std::vector<dolfin::la_index>& sub_block_dofmap_local_size
+  const std::vector<std::set<PetscInt>>& owned_dofs,
+  const std::vector<std::map<PetscInt, bool>>& owned_dofs__to__in_restriction,
+  const std::vector<std::map<PetscInt, std::set<std::size_t>>>& owned_dofs__to__cell_indices,
+  std::int64_t& block_dofmap_local_size,
+  std::vector<std::int64_t>& sub_block_dofmap_local_size
 )
 {
   // Fill in private attributes related to local indices of owned dofs
   for (unsigned int i = 0; i < dofmaps.size(); ++i) 
   {
-    dolfin::la_index block_i_local_size = 0;
+    std::int64_t block_i_local_size = 0;
     for (auto original_dof : owned_dofs[i])
     {
       bool in_restriction = owned_dofs__to__in_restriction[i].at(original_dof);
@@ -298,7 +299,7 @@ void BlockDofMap::_assign_owned_dofs_to_block_dofmap(
         _block_to_original__local_to_local[i][block_dofmap_local_size] = original_dof;
         _original_to_sub_block__local_to_local[i][original_dof] = block_i_local_size;
         _sub_block_to_original__local_to_local[i][block_i_local_size] = original_dof;
-        for (dolfin::la_index cell_index : owned_dofs__to__cell_indices[i].at(original_dof))
+        for (std::size_t cell_index : owned_dofs__to__cell_indices[i].at(original_dof))
           _dofmap[cell_index].push_back(block_dofmap_local_size);
         // Increment counters
         block_dofmap_local_size++;
@@ -355,11 +356,11 @@ void BlockDofMap::_assign_owned_dofs_to_block_dofmap(
 void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
   std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,
   MPI_Comm comm,
-  const std::vector<std::set<dolfin::la_index>>& unowned_dofs_in_restriction,
-  const std::vector<std::map<dolfin::la_index, dolfin::la_index>>& unowned_dofs_in_restriction__local_to_global,
-  const std::vector<std::map<dolfin::la_index, std::set<dolfin::la_index>>>& unowned_dofs_in_restriction__to__cell_indices,
-  dolfin::la_index block_dofmap_local_size,
-  const std::vector<dolfin::la_index>& sub_block_dofmap_local_size
+  const std::vector<std::set<PetscInt>>& unowned_dofs_in_restriction,
+  const std::vector<std::map<PetscInt, PetscInt>>& unowned_dofs_in_restriction__local_to_global,
+  const std::vector<std::map<PetscInt, std::set<PetscInt>>>& unowned_dofs_in_restriction__to__cell_indices,
+  std::int64_t block_dofmap_local_size,
+  const std::vector<std::int64_t>& sub_block_dofmap_local_size
 )
 {
   // Parts of this code have been adapted from
@@ -368,10 +369,10 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
   
   // Now that we know the block_dofmap_local_size, assign local numbering greater than this size
   // to unowned dofs
-  dolfin::la_index block_dofmap_unowned_size = 0;
-  std::vector<dolfin::la_index> sub_block_dofmap_unowned_size(dofmaps.size());
-  std::vector<std::map<dolfin::la_index, dolfin::la_index>> original_to_block__unowned_to_unowned(dofmaps.size());
-  std::vector<std::map<dolfin::la_index, dolfin::la_index>> original_to_sub_block__unowned_to_unowned(dofmaps.size());
+  std::int64_t block_dofmap_unowned_size = 0;
+  std::vector<std::int64_t> sub_block_dofmap_unowned_size(dofmaps.size());
+  std::vector<std::map<PetscInt, PetscInt>> original_to_block__unowned_to_unowned(dofmaps.size());
+  std::vector<std::map<PetscInt, PetscInt>> original_to_sub_block__unowned_to_unowned(dofmaps.size());
   for (unsigned int i = 0; i < dofmaps.size(); ++i) 
   {
     sub_block_dofmap_unowned_size[i] = 0;
@@ -385,7 +386,7 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
       _original_to_sub_block__local_to_local[i][original_local_dof] = sub_block_dofmap_local_size[i] + sub_block_dofmap_unowned_size[i];
       original_to_sub_block__unowned_to_unowned[i][original_global_dof] = sub_block_dofmap_unowned_size[i];
       _sub_block_to_original__local_to_local[i][sub_block_dofmap_local_size[i] + sub_block_dofmap_unowned_size[i]] = original_local_dof;
-      for (dolfin::la_index cell_index : unowned_dofs_in_restriction__to__cell_indices[i].at(original_local_dof))
+      for (std::size_t cell_index : unowned_dofs_in_restriction__to__cell_indices[i].at(original_local_dof))
         _dofmap[cell_index].push_back(block_dofmap_local_size + block_dofmap_unowned_size);
         // Increment counter
       block_dofmap_unowned_size++;
@@ -455,8 +456,8 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
         const std::size_t sender_rank = *(q + 1);
 
         const std::size_t original_local_dof = original_global_dof - dofmap->ownership_range().first;
-        dolfin::la_index block_local_dof = _original_to_block__local_to_local[i].at(original_local_dof);
-        dolfin::la_index sub_block_local_dof = _original_to_sub_block__local_to_local[i].at(original_local_dof);
+        PetscInt block_local_dof = _original_to_block__local_to_local[i].at(original_local_dof);
+        PetscInt sub_block_local_dof = _original_to_sub_block__local_to_local[i].at(original_local_dof);
         send_buffer[sender_rank].push_back(_index_map->local_to_global(block_local_dof));
         send_buffer[sender_rank].push_back(_sub_index_map[i]->local_to_global(sub_block_local_dof));
         send_buffer[sender_rank].push_back(original_global_dof);
@@ -668,21 +669,21 @@ void BlockDofMap::clear_sub_map_data()
   // Nothing to be done, there are no submaps.
 }
 //-----------------------------------------------------------------------------
-Eigen::Map<const Eigen::Array<dolfin::la_index, Eigen::Dynamic, 1>>
+Eigen::Map<const Eigen::Array<PetscInt, Eigen::Dynamic, 1>>
 BlockDofMap::cell_dofs(std::size_t cell_index) const
 {
   if (_dofmap.count(cell_index) > 0)
   {
     const auto & dofmap_cell(_dofmap.at(cell_index)); 
-    return Eigen::Map<const Eigen::Array<dolfin::la_index, Eigen::Dynamic, 1>>(dofmap_cell.data(), dofmap_cell.size());
+    return Eigen::Map<const Eigen::Array<PetscInt, Eigen::Dynamic, 1>>(dofmap_cell.data(), dofmap_cell.size());
   }
   else
   {
-    return Eigen::Map<const Eigen::Array<dolfin::la_index, Eigen::Dynamic, 1>>(_empty_vector.data(), 0);
+    return Eigen::Map<const Eigen::Array<PetscInt, Eigen::Dynamic, 1>>(_empty_vector.data(), 0);
   }
 }
 //-----------------------------------------------------------------------------
-std::vector<dolfin::la_index> BlockDofMap::entity_dofs(
+std::vector<PetscInt> BlockDofMap::entity_dofs(
     const Mesh& mesh,
     std::size_t entity_dim,
     const std::vector<std::size_t> & entity_indices) const
@@ -692,7 +693,7 @@ std::vector<dolfin::la_index> BlockDofMap::entity_dofs(
                      "This method was supposedly never used by block interface, and its implementation requires some more work");
 }
 //-----------------------------------------------------------------------------
-std::vector<dolfin::la_index> BlockDofMap::entity_dofs(
+std::vector<PetscInt> BlockDofMap::entity_dofs(
     const Mesh& mesh,
     std::size_t entity_dim) const
 {
@@ -701,7 +702,7 @@ std::vector<dolfin::la_index> BlockDofMap::entity_dofs(
                      "This method was supposedly never used by block interface, and its implementation requires some more work");
 }
 //-----------------------------------------------------------------------------
-std::vector<dolfin::la_index> BlockDofMap::entity_closure_dofs(
+std::vector<PetscInt> BlockDofMap::entity_closure_dofs(
     const Mesh& mesh,
     std::size_t entity_dim,
     const std::vector<std::size_t> & entity_indices) const
@@ -711,7 +712,7 @@ std::vector<dolfin::la_index> BlockDofMap::entity_closure_dofs(
                      "This method was supposedly never used by block interface, and its implementation requires some more work");
 }
 //-----------------------------------------------------------------------------
-std::vector<dolfin::la_index> BlockDofMap::entity_closure_dofs(
+std::vector<PetscInt> BlockDofMap::entity_closure_dofs(
     const Mesh& mesh,
     std::size_t entity_dim) const
 {
@@ -787,7 +788,7 @@ std::shared_ptr<GenericDofMap>
                      "This method was supposedly never used by block interface, and its implementation requires some more work");
 }
 //-----------------------------------------------------------------------------
-std::vector<dolfin::la_index> BlockDofMap::dofs(const Mesh& mesh,
+std::vector<PetscInt> BlockDofMap::dofs(const Mesh& mesh,
                                            std::size_t dim) const
 {
   multiphenics_error("BlockDofMap.cpp",
@@ -795,7 +796,7 @@ std::vector<dolfin::la_index> BlockDofMap::dofs(const Mesh& mesh,
                      "This method was supposedly never used by block interface, and its implementation requires some more work");
 }
 //-----------------------------------------------------------------------------
-std::vector<dolfin::la_index> BlockDofMap::dofs() const
+std::vector<PetscInt> BlockDofMap::dofs() const
 {
   multiphenics_error("BlockDofMap.cpp",
                      "obtain list of dofs",
@@ -871,42 +872,42 @@ std::string BlockDofMap::str(bool verbose) const
   return s.str();
 }
 //-----------------------------------------------------------------------------
-const std::vector<dolfin::la_index> & BlockDofMap::block_owned_dofs__local_numbering(std::size_t b) const
+const std::vector<PetscInt> & BlockDofMap::block_owned_dofs__local_numbering(std::size_t b) const
 {
   return _block_owned_dofs__local[b];
 }
 //-----------------------------------------------------------------------------
-const std::vector<dolfin::la_index> & BlockDofMap::block_unowned_dofs__local_numbering(std::size_t b) const
+const std::vector<PetscInt> & BlockDofMap::block_unowned_dofs__local_numbering(std::size_t b) const
 {
   return _block_unowned_dofs__local[b];
 }
 //-----------------------------------------------------------------------------
-const std::vector<dolfin::la_index> & BlockDofMap::block_owned_dofs__global_numbering(std::size_t b) const
+const std::vector<PetscInt> & BlockDofMap::block_owned_dofs__global_numbering(std::size_t b) const
 {
   return _block_owned_dofs__global[b];
 }
 //-----------------------------------------------------------------------------
-const std::vector<dolfin::la_index> & BlockDofMap::block_unowned_dofs__global_numbering(std::size_t b) const
+const std::vector<PetscInt> & BlockDofMap::block_unowned_dofs__global_numbering(std::size_t b) const
 {
   return _block_unowned_dofs__global[b];
 }
 //-----------------------------------------------------------------------------
-const std::map<dolfin::la_index, dolfin::la_index> & BlockDofMap::original_to_block(std::size_t b) const
+const std::map<PetscInt, PetscInt> & BlockDofMap::original_to_block(std::size_t b) const
 {
   return _original_to_block__local_to_local[b];
 }
 //-----------------------------------------------------------------------------
-const std::map<dolfin::la_index, dolfin::la_index> & BlockDofMap::block_to_original(std::size_t b) const
+const std::map<PetscInt, PetscInt> & BlockDofMap::block_to_original(std::size_t b) const
 {
   return _block_to_original__local_to_local[b];
 }
 //-----------------------------------------------------------------------------
-const std::map<dolfin::la_index, dolfin::la_index> & BlockDofMap::original_to_sub_block(std::size_t b) const
+const std::map<PetscInt, PetscInt> & BlockDofMap::original_to_sub_block(std::size_t b) const
 {
   return _original_to_sub_block__local_to_local[b];
 }
 //-----------------------------------------------------------------------------
-const std::map<dolfin::la_index, dolfin::la_index> & BlockDofMap::sub_block_to_original(std::size_t b) const
+const std::map<PetscInt, PetscInt> & BlockDofMap::sub_block_to_original(std::size_t b) const
 {
   return _sub_block_to_original__local_to_local[b];
 }
