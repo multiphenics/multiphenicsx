@@ -30,26 +30,31 @@ BlockPETScVector::BlockPETScVector() : PETScVector()
   // Do nothing
 }
 //-----------------------------------------------------------------------------
-BlockPETScVector::BlockPETScVector(MPI_Comm comm) : PETScVector(comm)
+BlockPETScVector::BlockPETScVector(const common::IndexMap& map)
+    : BlockPETScVector(map)
 {
   // Do nothing
 }
 //-----------------------------------------------------------------------------
-BlockPETScVector::BlockPETScVector(MPI_Comm comm, std::size_t N) : PETScVector(comm, N)
+BlockPETScVector::BlockPETScVector(
+    MPI_Comm comm, std::array<std::int64_t, 2> range,
+    const Eigen::Array<PetscInt, Eigen::Dynamic, 1>& ghost_indices,
+    int block_size)
+    : PETScVector(comm, range, ghost_indices, block_size)
 {
-  // Do nothing
-}
-//-----------------------------------------------------------------------------
-BlockPETScVector::BlockPETScVector(const SparsityPattern& sparsity_pattern) : PETScVector(sparsity_pattern)
-{
-  // Do nothing
-}
 //-----------------------------------------------------------------------------
 BlockPETScVector::BlockPETScVector(const BlockPETScVector& x): 
   PETScVector(x),
   _block_dof_map(x._block_dof_map)
 {
   // Do nothing
+}
+//-----------------------------------------------------------------------------
+BlockPETScVector::BlockPETScVector(BlockPETScVector&& x):
+  PETScVector(x),
+  _block_dof_map(x._block_dof_map)
+{
+  x._block_dof_map = nullptr;
 }
 //-----------------------------------------------------------------------------
 BlockPETScVector::BlockPETScVector(Vec x) : PETScVector(x)
@@ -62,69 +67,11 @@ BlockPETScVector::~BlockPETScVector()
   // Do nothing
 }
 //-----------------------------------------------------------------------------
-std::shared_ptr<GenericVector> BlockPETScVector::copy() const
-{
-  return std::make_shared<BlockPETScVector>(*this);
-}
-//-----------------------------------------------------------------------------
-const BlockPETScVector& BlockPETScVector::operator*= (double a)
-{ 
-  PETScVector::operator*=(a);
-  return *this;
-}
-//-----------------------------------------------------------------------------
-const BlockPETScVector& BlockPETScVector::operator*= (const GenericVector& x)
-{
-  PETScVector::operator*=(x);
-  return *this;
-}
-//-----------------------------------------------------------------------------
-const BlockPETScVector& BlockPETScVector::operator/= (double a)
-{
-  PETScVector::operator/=(a);
-  return *this;
-}
-//-----------------------------------------------------------------------------
-const BlockPETScVector& BlockPETScVector::operator+= (const GenericVector& x)
-{
-  PETScVector::operator+=(x);
-  return *this;
-}
-//-----------------------------------------------------------------------------
-const BlockPETScVector& BlockPETScVector::operator+= (double a)
-{
-  PETScVector::operator+=(a);
-  return *this;
-}
-//-----------------------------------------------------------------------------
-const BlockPETScVector& BlockPETScVector::operator-= (const GenericVector& x)
-{
-  PETScVector::operator-=(x);
-  return *this;
-}
-//-----------------------------------------------------------------------------
-const BlockPETScVector& BlockPETScVector::operator-= (double a)
-{
-  PETScVector::operator-=(a);
-  return *this;
-}
-//-----------------------------------------------------------------------------
-const BlockPETScVector& BlockPETScVector::operator= (const GenericVector& x)
-{
-  *this = as_type<const BlockPETScVector>(x);
-  return *this;
-}
-//-----------------------------------------------------------------------------
-const BlockPETScVector& BlockPETScVector::operator= (double a)
-{
-  PETScVector::operator=(a);
-  return *this;
-}
-//-----------------------------------------------------------------------------
-const BlockPETScVector& BlockPETScVector::operator= (const BlockPETScVector& x)
+const BlockPETScVector& BlockPETScVector::operator= (BlockPETScVector&& x)
 {
   PETScVector::operator=(x);
   attach_block_dof_map(x._block_dof_map);
+  x._block_dof_map = nullptr;
   return *this;
 }
 //-----------------------------------------------------------------------------
