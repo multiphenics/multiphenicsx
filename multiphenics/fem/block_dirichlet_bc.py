@@ -17,7 +17,7 @@
 #
 
 import collections
-from dolfin.cpp.la import GenericMatrix, GenericVector
+from dolfin.cpp.la import PETScMatrix, PETScVector
 from multiphenics.python import cpp
 
 BlockDirichletBC_Base = cpp.fem.BlockDirichletBC
@@ -92,22 +92,22 @@ class BlockDirichletBC(BlockDirichletBC_Base):
         assert len(args) in (1, 2, 3)
         if len(args) == 1:
             arg0 = args[0]
-            assert isinstance(arg0, (GenericMatrix, GenericVector))
-            if isinstance(arg0, GenericMatrix):
+            assert isinstance(arg0, (PETScMatrix, PETScVector))
+            if isinstance(arg0, PETScMatrix):
                 assert hasattr(arg0, "_bcs_zero_off_block_diagonal")
                 BlockDirichletBC_Base.apply(self, arg0, arg0._bcs_zero_off_block_diagonal)
-            elif isinstance(arg0, GenericVector):
+            elif isinstance(arg0, PETScVector):
                 BlockDirichletBC_Base.apply(self, arg0)
             else:
                 raise ValueError("Invalid arguments")
         elif len(args) == 2:
             arg0 = args[0]
             arg1 = args[1]
-            assert isinstance(arg0, (GenericMatrix, GenericVector))
-            assert isinstance(arg1, GenericVector)
-            if isinstance(arg0, GenericMatrix):
+            assert isinstance(arg0, (PETScMatrix, PETScVector))
+            assert isinstance(arg1, PETScVector)
+            if isinstance(arg0, PETScMatrix):
                 BlockDirichletBC_Base.apply(self, arg0, arg1, arg0._bcs_zero_off_block_diagonal)
-            elif isinstance(arg0, GenericVector):
+            elif isinstance(arg0, PETScVector):
                 BlockDirichletBC_Base.apply(self, arg0, arg1)
             else:
                 raise ValueError("Invalid arguments")
@@ -115,9 +115,9 @@ class BlockDirichletBC(BlockDirichletBC_Base):
             arg0 = args[0]
             arg1 = args[1]
             arg2 = args[1]
-            assert isinstance(arg0, GenericMatrix)
-            assert isinstance(arg1, GenericVector)
-            assert isinstance(arg2, GenericVector)
+            assert isinstance(arg0, PETScMatrix)
+            assert isinstance(arg1, PETScVector)
+            assert isinstance(arg2, PETScVector)
             BlockDirichletBC_Base.apply(self, arg0, arg1, arg2, arg0._bcs_zero_off_block_diagonal)
         else:
             raise ValueError("Invalid arguments")
@@ -126,5 +126,5 @@ class BlockDirichletBC(BlockDirichletBC_Base):
     def zero(self, *args):
         assert len(args) == 1
         arg0 = args[0]
-        assert isinstance(arg0, GenericMatrix)
+        assert isinstance(arg0, PETScMatrix)
         BlockDirichletBC_Base.zero(self, arg0, arg0._bcs_zero_off_block_diagonal)

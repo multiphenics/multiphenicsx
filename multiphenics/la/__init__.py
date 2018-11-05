@@ -24,8 +24,6 @@ from multiphenics.la.block_petsc_sub_vector import BlockPETScSubVector
 from multiphenics.la.block_petsc_vector import BlockPETScVector
 from multiphenics.la.block_slepc_eigen_solver import BlockSLEPcEigenSolver
 from multiphenics.la.block_solve import block_solve
-from multiphenics.la.generic_block_matrix import GenericBlockMatrix
-from multiphenics.la.generic_block_vector import GenericBlockVector
 from multiphenics.la.slepc_eigen_solver import SLEPcEigenSolver
 
 __all__ = [
@@ -37,7 +35,5 @@ __all__ = [
     'BlockPETScVector',
     'BlockSLEPcEigenSolver',
     'block_solve',
-    'GenericBlockMatrix',
-    'GenericBlockVector',
     'SLEPcEigenSolver'
 ]

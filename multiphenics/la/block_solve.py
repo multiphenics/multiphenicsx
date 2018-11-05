@@ -17,13 +17,13 @@
 #
 
 from dolfin import PETScLUSolver
-from multiphenics.la.generic_block_matrix import GenericBlockMatrix
-from multiphenics.la.generic_block_vector import GenericBlockVector
+from multiphenics.la.block_petsc_matrix import BlockPETScMatrix
+from multiphenics.la.block_petsc_vector import BlockPETScVector
 
 def block_solve(block_A, block_x, block_b, linear_solver="default"):
-    assert isinstance(block_A, GenericBlockMatrix)
-    assert isinstance(block_x, GenericBlockVector)
-    assert isinstance(block_b, GenericBlockVector)
+    assert isinstance(block_A, BlockPETScMatrix)
+    assert isinstance(block_x, BlockPETScVector)
+    assert isinstance(block_b, BlockPETScVector)
     # Solve
     solver = PETScLUSolver(linear_solver)
     solver.solve(block_A, block_x, block_b)

@@ -23,7 +23,6 @@
 
 #include <dolfin/la/PETScVector.h>
 #include <multiphenics/fem/BlockDofMap.h>
-#include <multiphenics/la/GenericBlockVector.h>
 
 namespace multiphenics
 {
@@ -31,7 +30,7 @@ namespace multiphenics
   {
     class BlockPETScSubVector;
     
-    class BlockPETScVector : public dolfin::PETScVector, public GenericBlockVector
+    class BlockPETScVector : public dolfin::PETScVector
     {
     public:
       /// Create empty vector (on MPI_COMM_WORLD)

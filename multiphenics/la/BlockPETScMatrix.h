@@ -23,7 +23,6 @@
 
 #include <dolfin/la/PETScMatrix.h>
 #include <multiphenics/fem/BlockDofMap.h>
-#include <multiphenics/la/GenericBlockMatrix.h>
 
 namespace multiphenics
 {
@@ -31,7 +30,7 @@ namespace multiphenics
   {
     class BlockPETScSubMatrix;
     
-    class BlockPETScMatrix : public dolfin::PETScMatrix, public GenericBlockMatrix
+    class BlockPETScMatrix : public dolfin::PETScMatrix
     {
     public:
       /// Create empty matrix (on MPI_COMM_WORLD)

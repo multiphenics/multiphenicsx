@@ -42,32 +42,24 @@ namespace multiphenics_wrappers
       .value("INSERT_VALUES", multiphenics::la::BlockInsertMode::INSERT_VALUES)
       .value("ADD_VALUES", multiphenics::la::BlockInsertMode::ADD_VALUES);
       
-    // multiphenics::la::GenericBlockVector
-    py::class_<multiphenics::la::GenericBlockVector, std::shared_ptr<multiphenics::la::GenericBlockVector>>
-      (m, "GenericBlockVector", "multiphenics GenericBlockVector object", py::dynamic_attr())
-      .def("attach_block_dof_map", &multiphenics::la::GenericBlockVector::attach_block_dof_map)
-      .def("get_block_dof_map", &multiphenics::la::GenericBlockVector::get_block_dof_map)
-      .def("has_block_dof_map", &multiphenics::la::GenericBlockVector::has_block_dof_map);
-      
-    // multiphenics::la::GenericBlockMatrix
-    py::class_<multiphenics::la::GenericBlockMatrix, std::shared_ptr<multiphenics::la::GenericBlockMatrix>>
-      (m, "GenericBlockMatrix", "multiphenics GenericBlockMatrix object")
-      .def("attach_block_dof_map", &multiphenics::la::GenericBlockMatrix::attach_block_dof_map)
-      .def("get_block_dof_map", &multiphenics::la::GenericBlockMatrix::get_block_dof_map)
-      .def("has_block_dof_map", &multiphenics::la::GenericBlockMatrix::has_block_dof_map);
-      
     #ifdef HAS_PETSC
     // multiphenics::la::BlockPETScVector
-    py::class_<multiphenics::la::BlockPETScVector, std::shared_ptr<multiphenics::la::BlockPETScVector>, multiphenics::la::GenericBlockVector, dolfin::PETScVector>
+    py::class_<multiphenics::la::BlockPETScVector, std::shared_ptr<multiphenics::la::BlockPETScVector>, dolfin::PETScVector>
       (m, "BlockPETScVector", "multiphenics BlockPETScVector object")
       .def(py::init<>())
-      .def(py::init<Vec>());
+      .def(py::init<Vec>())
+      .def("attach_block_dof_map", &multiphenics::la::BlockPETScVector::attach_block_dof_map)
+      .def("get_block_dof_map", &multiphenics::la::BlockPETScVector::get_block_dof_map)
+      .def("has_block_dof_map", &multiphenics::la::BlockPETScVector::has_block_dof_map);
       
     // multiphenics::la::BlockPETScMatrix
-    py::class_<multiphenics::la::BlockPETScMatrix, std::shared_ptr<multiphenics::la::BlockPETScMatrix>, multiphenics::la::GenericBlockMatrix, dolfin::PETScMatrix>
+    py::class_<multiphenics::la::BlockPETScMatrix, std::shared_ptr<multiphenics::la::BlockPETScMatrix>, dolfin::PETScMatrix>
       (m, "BlockPETScMatrix", "multiphenics BlockPETScMatrix object")
       .def(py::init<>())
-      .def(py::init<Mat>());
+      .def(py::init<Mat>())
+      .def("attach_block_dof_map", &multiphenics::la::BlockPETScMatrix::attach_block_dof_map)
+      .def("get_block_dof_map", &multiphenics::la::BlockPETScMatrix::get_block_dof_map)
+      .def("has_block_dof_map", &multiphenics::la::BlockPETScMatrix::has_block_dof_map);
       
     // multiphenics::la::BlockPETScSubVector
     py::class_<multiphenics::la::BlockPETScSubVector, std::shared_ptr<multiphenics::la::BlockPETScSubVector>, dolfin::PETScVector>
