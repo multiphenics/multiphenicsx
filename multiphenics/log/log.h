@@ -23,25 +23,26 @@
 
 namespace multiphenics
 {
-
-  /// Print error message. Prefer this to the above generic error message.
-  ///
-  /// *Arguments*
-  ///     location (std::string)
-  ///         Name of the file from which the error message was generated.
-  ///     task (std::string)
-  ///         Name of the task that failed.
-  ///         Note that this string should begin with lowercase.
-  ///         Note that this string should not be punctuated.
-  ///     reason (std::string)
-  ///         A format string explaining the reason for the failure.
-  ///         Note that this string should begin with uppercase.
-  ///         Note that this string should not be punctuated.
-  ///
-  void _multiphenics_error(std::string location,
-                           std::string task,
-                           std::string reason);
-                       
+  namespace log
+  {
+    /// Print error message. Prefer this to the above generic error message.
+    ///
+    /// *Arguments*
+    ///     location (std::string)
+    ///         Name of the file from which the error message was generated.
+    ///     task (std::string)
+    ///         Name of the task that failed.
+    ///         Note that this string should begin with lowercase.
+    ///         Note that this string should not be punctuated.
+    ///     reason (std::string)
+    ///         A format string explaining the reason for the failure.
+    ///         Note that this string should begin with uppercase.
+    ///         Note that this string should not be punctuated.
+    ///
+    void _multiphenics_error(std::string location,
+                             std::string task,
+                             std::string reason);
+  }
 }
 
 #define multiphenics_error(location, task, reason) \

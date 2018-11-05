@@ -29,7 +29,9 @@
 #define USE_GDB 1
 
 using namespace dolfin;
+using namespace dolfin::log;
 using namespace multiphenics;
+using namespace multiphenics::log;
 
 //-----------------------------------------------------------------------------
 void multiphenics::_multiphenics_error(std::string location,
