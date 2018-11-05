@@ -19,4 +19,4 @@
 #include <multiphenics/la/BlockInsertMode.h>
 
 using namespace multiphenics;
-
+using namespace multiphenics::la;
