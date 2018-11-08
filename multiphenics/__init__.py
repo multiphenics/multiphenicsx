@@ -18,7 +18,7 @@
 
 from multiphenics.fem import block_adjoint, block_assemble, block_derivative, BlockDirichletBC, BlockForm, block_restrict, DirichletBC
 from multiphenics.function import assign, block_assign, BlockElement, BlockFunction, BlockFunctionSpace, block_split, BlockTestFunction, BlockTrialFunction, split, TestFunction, TrialFunction
-from multiphenics.io import File, plot, XDMFFile
+from multiphenics.io import File, plot
 from multiphenics.la import block_matlab_export, BlockSLEPcEigenSolver, block_solve, SLEPcEigenSolver
 from multiphenics.mesh import MeshRestriction
 from multiphenics.nls import BlockNonlinearProblem, BlockPETScSNESSolver
@@ -50,6 +50,5 @@ __all__ = [
     'SLEPcEigenSolver',
     'split',
     'TestFunction',
-    'TrialFunction',
-    'XDMFFile'
+    'TrialFunction'
 ]

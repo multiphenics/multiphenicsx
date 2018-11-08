@@ -23,7 +23,7 @@ from multiphenics import *
 def generate_subdomain_restriction(mesh, subdomains, subdomain_id):
     D = mesh.topology().dim()
     # Initialize empty restriction
-    restriction = MeshRestriction(mesh, None)
+    restriction = MeshRestriction(mesh)
     for d in range(D + 1):
         mesh_function_d = MeshFunction("bool", mesh, d)
         mesh_function_d.set_all(False)
@@ -44,7 +44,7 @@ def generate_interface_restriction(mesh, subdomains, subdomain_ids):
     assert len(subdomain_ids) == 2
     D = mesh.topology().dim()
     # Initialize empty restriction
-    restriction = MeshRestriction(mesh, None)
+    restriction = MeshRestriction(mesh)
     for d in range(D + 1):
         mesh_function_d = MeshFunction("bool", mesh, d)
         mesh_function_d.set_all(False)

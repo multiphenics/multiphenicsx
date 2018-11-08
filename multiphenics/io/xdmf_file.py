@@ -16,26 +16,44 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import dolfin
+import os
+from dolfin.io import XDMFFile as dolfin_XDMFFile
+from multiphenics.mesh import MeshRestriction
 
 class MeshRestrictionXDMFFile(object):
-    def __init__(self, filename):
+    def __init__(self, mpi_comm, filename, encoding):
         self.filename = filename
+        self.encoding = encoding
     
-    def write(self, content, encoding=None):
-        content._write(self.filename, encoding)
+    def read_mesh_restriction(self, mesh):
+        # Create empty MeshRestriction
+        content = MeshRestriction(mesh)
+        # Read in MeshFunctions
+        D = mesh.topology.dim
+        for d in range(D + 1):
+            mesh_function_d_filename = self.filename + "/mesh_function_" + str(d) + ".xdmf"
+            xdmf_file = XDMFFile(mesh.mpi_comm(), mesh_function_d_filename, self.encoding)
+            mesh_function_d = xdmf_file.read_mf_bool(mesh)
+            assert mesh_function_d.dim is d
+            content.append(mesh_function_d)
+        # Return
+        return content
+    
+    def write(self, content):
+        # Create output folder
+        try:
+            os.makedirs(self.filename)
+        except OSError:
+            if not os.path.isdir(self.filename):
+                raise
+        # Write out MeshFunctions
+        for (d, mesh_function_d) in enumerate(content):
+            mesh_function_d_filename = self.filename + "/mesh_function_" + str(d) + ".xdmf"
+            xdmf_file = XDMFFile(mesh_function_d.mesh().mpi_comm(), mesh_function_d_filename, self.encoding)
+            xdmf_file.write(mesh_function_d)
             
-def XDMFFile(arg1, arg2=None):
-    if arg2 is None:
-        assert isinstance(arg1, str)
-        filename = arg1
-        if filename.endswith(".rtc.xdmf"):
-            return MeshRestrictionXDMFFile(filename)
-        else:
-            return dolfin.XDMFFile(filename)
+def XDMFFile(mpi_comm, filename, encoding=dolfin_XDMFFile.Encoding.HDF5):
+    if filename.endswith(".rtc.xdmf"):
+        return MeshRestrictionXDMFFile(mpi_comm, filename, encoding)
     else:
-        assert isinstance(arg2, str)
-        mpi_comm = arg1
-        filename = arg2
-        assert not filename.endswith(".rtc.xdmf")
-        return dolfin.XDMFFile(mpi_comm, filename)
+        return dolfin_XDMFFile(mpi_comm, filename, encoding)
