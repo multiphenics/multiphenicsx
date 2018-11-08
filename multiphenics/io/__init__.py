@@ -17,11 +17,9 @@
 #
 
 from multiphenics.io.file import File
-from multiphenics.io.plot import plot
 from multiphenics.io.xdmf_file import XDMFFile
 
 __all__ = [
     'File',
-    'plot',
     'XDMFFile'
 ]
