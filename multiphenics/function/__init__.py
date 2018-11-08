@@ -16,7 +16,6 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from multiphenics.function.assign import assign
 from multiphenics.function.block_assign import block_assign
 from multiphenics.function.block_element import BlockElement
 from multiphenics.function.block_function import BlockFunction
@@ -29,7 +28,6 @@ from multiphenics.function.test_function import TestFunction
 from multiphenics.function.trial_function import TrialFunction
 
 __all__ = [
-    'assign',
     'block_assign',
     'BlockElement',
     'BlockFunction',
