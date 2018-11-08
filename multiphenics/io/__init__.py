@@ -16,10 +16,8 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from multiphenics.io.file import File
 from multiphenics.io.xdmf_file import XDMFFile
 
 __all__ = [
-    'File',
     'XDMFFile'
 ]
