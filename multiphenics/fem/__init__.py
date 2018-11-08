@@ -25,7 +25,6 @@ from multiphenics.fem.block_flatten_nested import block_flatten_nested
 from multiphenics.fem.block_form import BlockForm
 from multiphenics.fem.block_form_1 import BlockForm1
 from multiphenics.fem.block_form_2 import BlockForm2
-from multiphenics.fem.block_form_base import BlockFormBase
 from multiphenics.fem.block_replace_zero import block_replace_zero
 from multiphenics.fem.block_restrict import block_restrict
 from multiphenics.fem.dirichlet_bc import DirichletBC
@@ -40,7 +39,6 @@ __all__ = [
     'BlockForm',
     'BlockForm1',
     'BlockForm2',
-    'BlockFormBase',
     'block_replace_zero',
     'block_restrict',
     'DirichletBC'

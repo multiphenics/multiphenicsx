@@ -27,7 +27,6 @@ cpp = compile_package(
     "log/log.cpp",
     "fem/BlockDofMap.cpp",
     "function/BlockFunctionSpace.cpp",
-    "fem/BlockFormBase.cpp",
     "fem/BlockForm1.cpp",
     "fem/BlockForm2.cpp",
     "la/BlockMATLABExport.cpp",

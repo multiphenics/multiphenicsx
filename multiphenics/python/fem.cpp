@@ -38,24 +38,21 @@ namespace multiphenics_wrappers
       .def("block_to_original", &multiphenics::fem::BlockDofMap::block_to_original)
       .def("sub_index_map", &multiphenics::fem::BlockDofMap::sub_index_map);
       
-    // multiphenics::fem::BlockFormBase
-    py::class_<multiphenics::fem::BlockFormBase, std::shared_ptr<multiphenics::fem::BlockFormBase>>
-      (m, "BlockFormBase", "multiphenics BlockFormBase object")
-      .def("rank", &multiphenics::fem::BlockFormBase::rank)
-      .def("mesh", &multiphenics::fem::BlockFormBase::mesh)
-      .def("block_size", &multiphenics::fem::BlockFormBase::block_size);
-      
     // multiphenics::fem::BlockForm1
-    py::class_<multiphenics::fem::BlockForm1, std::shared_ptr<multiphenics::fem::BlockForm1>, multiphenics::fem::BlockFormBase>
+    py::class_<multiphenics::fem::BlockForm1, std::shared_ptr<multiphenics::fem::BlockForm1>>
       (m, "BlockForm1", "multiphenics BlockForm1 object")
-      .def(py::init<std::vector<std::shared_ptr<const dolfin::Form>>,
-                    std::vector<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>>>());
+      .def(py::init<std::vector<std::shared_ptr<const dolfin::fem::Form>>,
+                    std::vector<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>>>())
+      .def("mesh", &multiphenics::fem::BlockForm1::mesh)
+      .def("block_size", &multiphenics::fem::BlockForm1::block_size);
                     
     // multiphenics::fem::BlockForm2
-    py::class_<multiphenics::fem::BlockForm2, std::shared_ptr<multiphenics::fem::BlockForm2>, multiphenics::fem::BlockFormBase>
+    py::class_<multiphenics::fem::BlockForm2, std::shared_ptr<multiphenics::fem::BlockForm2>>
       (m, "BlockForm2", "multiphenics BlockForm2 object")
-      .def(py::init<std::vector<std::vector<std::shared_ptr<const dolfin::Form>>>,
-                    std::vector<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>>>());
+      .def(py::init<std::vector<std::vector<std::shared_ptr<const dolfin::fem::Form>>>,
+                    std::vector<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>>>())
+      .def("mesh", &multiphenics::fem::BlockForm2::mesh)
+      .def("block_size", &multiphenics::fem::BlockForm2::block_size);
     
     // multiphenics::fem::block_assemble
     m.def("block_assemble",

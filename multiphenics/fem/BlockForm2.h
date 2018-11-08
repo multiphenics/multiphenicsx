@@ -21,47 +21,49 @@
 
 #include <vector>
 #include <dolfin/fem/Form.h>
-#include <multiphenics/fem/BlockFormBase.h>
+#include <multiphenics/function/BlockFunctionSpace.h>
 
 namespace multiphenics
 {
   namespace fem
   {
-    class BlockForm2 : public BlockFormBase
+    class BlockForm2
     {
     public:
       /// Create form (shared data)
       ///
       /// @param[in] forms (std::vector<std::vector<_Form_>>)
       ///         Matrix of forms.
-      /// @param[in] function_spaces (std::vector<_BlockFunctionSpace_>)
+      /// @param[in] function_spaces (std::vector<_multiphenics::function::BlockFunctionSpace_>)
       ///         Vector of function spaces, of size 2.
       BlockForm2(std::vector<std::vector<std::shared_ptr<const dolfin::fem::Form>>> forms,
-                 std::vector<std::shared_ptr<const BlockFunctionSpace>> block_function_spaces);
+                 std::vector<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>> block_function_spaces);
            
       /// Destructor
-      virtual ~BlockForm2();
-
-      /// Return rank of form (bilinear form = 2)
-      ///
-      /// @return std::size_t
-      ///         The rank of the form.
-      virtual std::size_t rank() const;
+      ~BlockForm2();
       
-      virtual unsigned int block_size(unsigned int d) const;
+      /// Extract common mesh from form
+      ///
+      /// @return Mesh
+      ///         Shared pointer to the mesh.
+      std::shared_ptr<const dolfin::mesh::Mesh> mesh() const;
+
+      /// Return function spaces for arguments
+      ///
+      /// @return    std::vector<_FunctionSpace_>
+      ///         Vector of function space shared pointers.
+      std::vector<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>> block_function_spaces() const;
+            
+      unsigned int block_size(unsigned int d) const;
       
       const dolfin::fem::Form & operator()(std::size_t i, std::size_t j) const;
       
     protected:
-    
-      virtual bool has_cell_integrals() const;
-      virtual bool has_interior_facet_integrals() const;
-      virtual bool has_exterior_facet_integrals() const;
-      virtual bool has_vertex_integrals() const;
-
       // Block forms
       std::vector<std::vector<std::shared_ptr<const dolfin::fem::Form>>> _forms;
-      
+      // Block function spaces (one for each argument)
+      std::vector<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>> _block_function_spaces;
+      // Number of block forms
       std::vector<unsigned int> _block_size;
     };
   }

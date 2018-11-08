@@ -18,15 +18,17 @@
 
 #include <multiphenics/fem/BlockForm1.h>
 
-using namespace dolfin;
-using namespace dolfin::fem;
 using namespace multiphenics;
 using namespace multiphenics::fem;
+
+using dolfin::fem::Form;
+using dolfin::mesh::Mesh;
+using multiphenics::function::BlockFunctionSpace;
 
 //-----------------------------------------------------------------------------
 BlockForm1::BlockForm1(std::vector<std::shared_ptr<const Form>> forms,
                        std::vector<std::shared_ptr<const BlockFunctionSpace>> block_function_spaces):
-  BlockFormBase(block_function_spaces), _forms(forms), _block_size(forms.size())
+  _forms(forms), _block_function_spaces(block_function_spaces), _block_size(forms.size())
 {
 }
 //-----------------------------------------------------------------------------
@@ -35,9 +37,14 @@ BlockForm1::~BlockForm1()
   // Do nothing
 }
 //-----------------------------------------------------------------------------
-std::size_t BlockForm1::rank() const
+std::vector<std::shared_ptr<const BlockFunctionSpace>> BlockForm1::block_function_spaces() const
 {
-  return 1;
+  return _block_function_spaces;
+}
+//-----------------------------------------------------------------------------
+std::shared_ptr<const Mesh> BlockForm1::mesh() const
+{
+  return _block_function_spaces[0]->mesh();
 }
 //-----------------------------------------------------------------------------
 unsigned int BlockForm1::block_size(unsigned int d) const
