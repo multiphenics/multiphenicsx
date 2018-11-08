@@ -25,6 +25,13 @@
 
 namespace multiphenics
 {
+  namespace fem
+  {
+    // Forward declaration for friend function
+    class BlockForm1;
+    void block_assemble(dolfin::la::PETScVector&, const multiphenics::fem::BlockForm1&);
+  }
+  
   namespace la
   {
     
@@ -171,6 +178,9 @@ namespace multiphenics
       using PETScVector::gather;
       using PETScVector::axpy;
       using PETScVector::dot;
+      
+      // Allow block_assemble to access to_restricted_vector_indices
+      friend void multiphenics::fem::block_assemble(dolfin::la::PETScVector&, const multiphenics::fem::BlockForm1&);
       
       void to_restricted_subvector_indices(
         const std::vector<PetscInt> & block_unrestricted_subvector_indices, std::vector<PetscInt> & block_restricted_subvector_indices,

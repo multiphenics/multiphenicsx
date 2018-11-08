@@ -17,18 +17,14 @@
 #
 
 from numpy import ndarray as array
-from multiphenics.fem.block_assembler import BlockAssembler
 from multiphenics.fem.block_form import BlockForm
 from multiphenics.fem.block_form_1 import BlockForm1
 from multiphenics.fem.block_form_2 import BlockForm2
+from multiphenics.python import cpp
 
 def block_assemble(block_form,
                    block_tensor=None,
-                   form_compiler_parameters=None,
-                   add_values=False,
-                   finalize_tensor=True,
-                   keep_diagonal=False,
-                   backend=None):
+                   form_compiler_parameters=None):
 
     # Create a block form, the provided one is a list of Forms
     if isinstance(block_form, (array, list)):
@@ -36,21 +32,9 @@ def block_assemble(block_form,
     else:
         assert isinstance(block_form, (BlockForm1, BlockForm2))
 
-    # Create tensor
-    comm = block_form.mesh().mpi_comm()
-    block_tensor = _create_block_tensor(comm, block_form, block_form.rank(), block_tensor)
-        
     # Call C++ assemble function
-    block_assembler = BlockAssembler()
-    block_assembler.add_values = add_values
-    block_assembler.finalize_tensor = finalize_tensor
-    block_assembler.keep_diagonal = keep_diagonal
-    block_assembler.assemble(block_tensor, block_form)
-
-    # Return value
-    return block_tensor
-    
-def _create_block_tensor(comm, block_form, rank, block_tensor):
-    block_tensor = None # TODO not required anymore? Just call the standard dolfin one?
-    
-    return block_tensor
+    if block_tensor is None:
+        return cpp.fem.block_assemble(block_form)
+    else:
+        cpp.fem.block_assemble(block_tensor, block_form)
+        return block_tensor

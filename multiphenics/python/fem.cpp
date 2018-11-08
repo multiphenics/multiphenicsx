@@ -57,19 +57,28 @@ namespace multiphenics_wrappers
       .def(py::init<std::vector<std::vector<std::shared_ptr<const dolfin::Form>>>,
                     std::vector<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>>>());
     
-    // multiphenics::fem::BlockAssemblerBase
-    py::class_<multiphenics::fem::BlockAssemblerBase, std::shared_ptr<multiphenics::fem::BlockAssemblerBase>>
-      (m, "BlockAssemblerBase", "multiphenics BlockAssemblerBase object")
-      .def_readwrite("add_values", &multiphenics::fem::BlockAssemblerBase::add_values)
-      .def_readwrite("keep_diagonal", &multiphenics::fem::BlockAssemblerBase::keep_diagonal)
-      .def_readwrite("finalize_tensor", &multiphenics::fem::BlockAssemblerBase::finalize_tensor);
-
-    // multiphenics::fem::BlockAssembler
-    py::class_<multiphenics::fem::BlockAssembler, std::shared_ptr<multiphenics::fem::BlockAssembler>, multiphenics::fem::BlockAssemblerBase>
-      (m, "BlockAssembler", "multiphenics BlockAssembler object")
-      .def(py::init<>())
-      .def("assemble", &multiphenics::fem::BlockAssembler::assemble);
-      
+    // multiphenics::fem::block_assemble
+    m.def("block_assemble",
+      py::overload_cast<
+        const multiphenics::fem::BlockForm1&
+      >(&multiphenics::fem::block_assemble),
+      py::arg("L"));
+    m.def("block_assemble",
+      py::overload_cast<
+        dolfin::la::PETScVector&, const multiphenics::fem::BlockForm1&
+      >(&multiphenics::fem::block_assemble),
+      py::arg("b"), py::arg("L"));
+    m.def("block_assemble",
+      py::overload_cast<
+        const multiphenics::fem::BlockForm2&
+      >(&multiphenics::fem::block_assemble),
+      py::arg("a"));
+    m.def("block_assemble",
+      py::overload_cast<
+        dolfin::la::PETScMatrix&, const multiphenics::fem::BlockForm2&
+      >(&multiphenics::fem::block_assemble),
+      py::arg("A"), py::arg("a"));
+              
     // multiphenics::fem::BlockDirichletBC
     py::class_<multiphenics::fem::BlockDirichletBC, std::shared_ptr<multiphenics::fem::BlockDirichletBC>, dolfin::common::Variable>
       (m, "BlockDirichletBC", "multiphenics BlockDirichletBC object")

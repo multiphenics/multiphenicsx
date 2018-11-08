@@ -18,8 +18,6 @@
 
 from multiphenics.fem.block_adjoint import block_adjoint
 from multiphenics.fem.block_assemble import block_assemble
-from multiphenics.fem.block_assembler import BlockAssembler
-from multiphenics.fem.block_assembler_base import BlockAssemblerBase
 from multiphenics.fem.block_derivative import block_derivative
 from multiphenics.fem.block_dirichlet_bc import BlockDirichletBC
 from multiphenics.fem.block_dof_map import BlockDofMap
@@ -35,8 +33,6 @@ from multiphenics.fem.dirichlet_bc import DirichletBC
 __all__ = [
     'block_adjoint',
     'block_assemble',
-    'BlockAssembler',
-    'BlockAssemblerBase',
     'block_derivative',
     'BlockDirichletBC',
     'BlockDofMap',
