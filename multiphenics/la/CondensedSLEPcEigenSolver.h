@@ -42,41 +42,19 @@ namespace dolfin
       /// Create eigenvalue solver from EPS object
       explicit CondensedSLEPcEigenSolver(EPS eps);
 
-      /// Create eigenvalue solver for Ax = \lambda
-      CondensedSLEPcEigenSolver(std::shared_ptr<const PETScMatrix> A,
-                                std::vector<std::shared_ptr<const DirichletBC>> bcs);
-
-      /// Create eigenvalue solver for Ax = \lambda x
-      CondensedSLEPcEigenSolver(MPI_Comm comm, std::shared_ptr<const PETScMatrix> A,
-                                std::vector<std::shared_ptr<const DirichletBC>> bcs);
-
-      /// Create eigenvalue solver for Ax = \lambda x on MPI_COMM_WORLD
-      CondensedSLEPcEigenSolver(std::shared_ptr<const PETScMatrix> A,
-                                std::shared_ptr<const PETScMatrix> B,
-                                std::vector<std::shared_ptr<const DirichletBC>> bcs);
-
-      /// Create eigenvalue solver for Ax = \lambda x
-      CondensedSLEPcEigenSolver(MPI_Comm comm, std::shared_ptr<const PETScMatrix> A,
-                                std::shared_ptr<const PETScMatrix> B,
-                                std::vector<std::shared_ptr<const DirichletBC>> bcs);
-
       /// Destructor
       ~CondensedSLEPcEigenSolver();
       
-      /// Set opeartors (B may be nullptr for regular eigenvalues
+      /// Set operators (B may be nullptr for regular eigenvalues
       /// problems)
       void set_operators(std::shared_ptr<const PETScMatrix> A,
                          std::shared_ptr<const PETScMatrix> B);
       
-      /// Set boundary conditions
-      void set_boundary_conditions(std::vector<std::shared_ptr<const DirichletBC>> bcs);
+      /// Set boundary conditions. This method must be called *before* setting operators.
+      void set_boundary_conditions(std::vector<std::shared_ptr<const fem::DirichletBC>> bcs);
 
       /// Get ith eigenpair
-      void get_eigenpair(double& lr, double& lc,
-                         GenericVector& r, GenericVector& c, std::size_t i) const;
-
-      /// Get ith eigenpair
-      void get_eigenpair(double& lr, double& lc,
+      void get_eigenpair(PetscScalar& lr, PetscScalar& lc,
                          PETScVector& r, PETScVector& c, std::size_t i) const;
       
     protected:

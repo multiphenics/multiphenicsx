@@ -25,8 +25,9 @@
 #include <multiphenics/log/log.h>
 #include <multiphenics/la/CondensedSLEPcEigenSolver.h>
 
-using namespace dolfin;
-using namespace dolfin::la;
+using dolfin::fem::DirichletBC;
+using dolfin::la::CondensedSLEPcEigenSolver;
+using dolfin::la::petsc_error;
 
 //-----------------------------------------------------------------------------
 CondensedSLEPcEigenSolver::CondensedSLEPcEigenSolver(MPI_Comm comm):
@@ -37,39 +38,6 @@ CondensedSLEPcEigenSolver::CondensedSLEPcEigenSolver(MPI_Comm comm):
 CondensedSLEPcEigenSolver::CondensedSLEPcEigenSolver(EPS eps) :
   SLEPcEigenSolver(eps)
 {
-}
-//-----------------------------------------------------------------------------
-CondensedSLEPcEigenSolver::CondensedSLEPcEigenSolver(std::shared_ptr<const PETScMatrix> A,
-                                                     std::vector<std::shared_ptr<const DirichletBC>> bcs)
-  : CondensedSLEPcEigenSolver(A, nullptr, bcs)
-{
-  // Do nothing (handled by other constructor)
-}
-//-----------------------------------------------------------------------------
-CondensedSLEPcEigenSolver::CondensedSLEPcEigenSolver(MPI_Comm comm, std::shared_ptr<const PETScMatrix> A,
-                                                     std::vector<std::shared_ptr<const DirichletBC>> bcs)
-  : CondensedSLEPcEigenSolver(comm, A, nullptr, bcs)
-{
-  // Do nothing (handled by other constructor)
-}
-//-----------------------------------------------------------------------------
-CondensedSLEPcEigenSolver::CondensedSLEPcEigenSolver(std::shared_ptr<const PETScMatrix> A,
-                                                     std::shared_ptr<const PETScMatrix> B,
-                                                     std::vector<std::shared_ptr<const DirichletBC>> bcs)
-  : SLEPcEigenSolver(A->mpi_comm())
-{
-  set_boundary_conditions(bcs);
-  set_operators(A, B);
-}
-//-----------------------------------------------------------------------------
-CondensedSLEPcEigenSolver::CondensedSLEPcEigenSolver(MPI_Comm comm,
-                                                     std::shared_ptr<const PETScMatrix> A,
-                                                     std::shared_ptr<const PETScMatrix> B,
-                                                     std::vector<std::shared_ptr<const DirichletBC>> bcs)
-  : SLEPcEigenSolver(comm)
-{
-  set_boundary_conditions(bcs);
-  set_operators(A, B);
 }
 //-----------------------------------------------------------------------------
 CondensedSLEPcEigenSolver::~CondensedSLEPcEigenSolver()
@@ -102,21 +70,24 @@ void CondensedSLEPcEigenSolver::set_boundary_conditions(std::vector<std::shared_
   }
   #endif
   auto local_range = dofmap->ownership_range();
+  int dofmap_block_size = dofmap->index_map()->block_size();
   
   // List all constrained local dofs
-  std::set<la_index> constrained_local_dofs;
+  std::set<PetscInt> constrained_local_dofs;
   for (auto & bc : bcs)
   {
     DirichletBC::Map bc_local_indices_to_values;
     bc->get_boundary_values(bc_local_indices_to_values);
     for (auto & bc_local_index_to_value : bc_local_indices_to_values)
-      constrained_local_dofs.insert(dofmap->local_to_global_index(bc_local_index_to_value.first));
+    {
+      constrained_local_dofs.insert(dofmap->index_map()->local_to_global(bc_local_index_to_value.first/dofmap_block_size)*dofmap_block_size + (bc_local_index_to_value.first%dofmap_block_size));
+    }
   }
   
   // List all unconstrained dofs
-  std::vector<la_index> local_dofs(local_range.second - local_range.first);
-  std::iota(local_dofs.begin(), local_dofs.end(), local_range.first);
-  std::vector<la_index> unconstrained_local_dofs;
+  std::vector<PetscInt> local_dofs(dofmap_block_size*(local_range[1] - local_range[0]));
+  std::iota(local_dofs.begin(), local_dofs.end(), dofmap_block_size*local_range[0]);
+  std::vector<PetscInt> unconstrained_local_dofs;
   std::set_difference(local_dofs.begin(), local_dofs.end(), 
                       constrained_local_dofs.begin(), constrained_local_dofs.end(), 
                       std::inserter(unconstrained_local_dofs, unconstrained_local_dofs.begin()));
@@ -162,15 +133,6 @@ Mat CondensedSLEPcEigenSolver::_condense_matrix(std::shared_ptr<const PETScMatri
 }
 //-----------------------------------------------------------------------------
 void CondensedSLEPcEigenSolver::get_eigenpair(double& lr, double& lc,
-                                              GenericVector& r, GenericVector& c,
-                                              std::size_t i) const
-{
-  PETScVector& _r = as_type<PETScVector>(r);
-  PETScVector& _c = as_type<PETScVector>(c);
-  get_eigenpair(lr, lc, _r, _c, i);
-}
-//-----------------------------------------------------------------------------
-void CondensedSLEPcEigenSolver::get_eigenpair(double& lr, double& lc,
                                               PETScVector& r, PETScVector& c,
                                               std::size_t i) const
 {
@@ -185,8 +147,8 @@ void CondensedSLEPcEigenSolver::get_eigenpair(double& lr, double& lc,
     PetscErrorCode ierr;
     
     // Initialize input vectors, if needed
-    _A->init_vector(r, 0);
-    _A->init_vector(c, 0);
+    r = _A->init_vector(0);
+    c = _A->init_vector(0);
     
     // Condense input vectors
     Vec condensed_r_vec;
