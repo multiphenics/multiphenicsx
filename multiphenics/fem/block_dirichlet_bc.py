@@ -53,12 +53,6 @@ class BlockDirichletBC(BlockDirichletBC_Base):
             else:
                 assert bc_block_function_space == block_function_space
             self.bcs[bc_block_index].append(bc)
-        # We disable the check on dof map range which is carried out by DirichletBC::check_arguments,
-        # because BCs are defined on unrestricted function spaces, while sub tensors to which BCs
-        # will be applied may be restricted
-        for bc in self.bcs:
-            for bc_I in bc:
-                bc_I.parameters["check_dofmap_range"] = False
         # Call Parent
         BlockDirichletBC_Base.__init__(self, self.bcs, self._block_function_space.cpp_object())
         
