@@ -27,23 +27,34 @@ class BlockNonlinearProblem(NonlinearProblem):
         self.jacobian_block_form = jacobian_block_form
         self.block_solution = block_solution
         self.bcs = bcs
-        # Create block backend for wrapping
-        self.block_dof_map = self.block_solution.block_function_space().block_dofmap()
+        # Storage for residual/jacobian tensors
+        self.residual_block_vector = None
+        self.jacobian_block_matrix = None
         
-    def F(self, block_residual, _):
-        # Update block solution subfunctions based on the third argument, which has already been
+    def F(self, _):
+        # Update block solution subfunctions based on the last argument, which has already been
         # stored in self.block_solution.block_vector()
         self.block_solution.apply("to subfunctions")
         # Assemble the block residual
-        block_assemble(self.residual_block_form, block_tensor=block_residual)
+        if self.residual_block_vector is None:
+            self.residual_block_vector = block_assemble(self.residual_block_form)
+        else:
+            block_assemble(self.residual_block_form, block_tensor=self.residual_block_vector)
         # Apply boundary conditions
         if self.bcs is not None:
             self.bcs.apply(block_residual, self.block_solution.block_vector())
+        # Return
+        return self.residual_block_vector
         
-    def J(self, block_jacobian, _):
+    def J(self, _):
         # No need to update block solution subfunctions, this has already been done in the residual
         # Assemble the block jacobian
-        block_assemble(self.jacobian_block_form, block_tensor=block_jacobian, keep_diagonal=self.bcs is not None)
+        if self.jacobian_block_matrix is None:
+            self.jacobian_block_matrix = block_assemble(self.jacobian_block_form)
+        else:
+            block_assemble(self.jacobian_block_form, block_tensor=self.jacobian_block_matrix)
         # Apply boundary conditions
         if self.bcs is not None:
             self.bcs.apply(block_jacobian)
+        # Return
+        return self.jacobian_block_matrix
