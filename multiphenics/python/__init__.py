@@ -35,7 +35,9 @@ cpp = compile_package(
     "la/BlockPETScSubVector.cpp",
     "function/BlockFunction.cpp",
     "fem/block_assemble.cpp",
+    "fem/DirichletBCLegacy.cpp",
     "fem/BlockDirichletBC.cpp",
+    "fem/BlockDirichletBCLegacy.cpp",
     "la/CondensedSLEPcEigenSolver.cpp",
     "la/CondensedBlockSLEPcEigenSolver.cpp",
 )

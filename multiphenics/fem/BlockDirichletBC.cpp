@@ -23,6 +23,8 @@ using namespace dolfin::fem;
 using namespace multiphenics;
 using namespace multiphenics::fem;
 
+using multiphenics::function::BlockFunctionSpace;
+
 //-----------------------------------------------------------------------------
 BlockDirichletBC::BlockDirichletBC(std::vector<std::vector<std::shared_ptr<const DirichletBC>>> bcs,
                                    std::shared_ptr<const BlockFunctionSpace> block_function_space)
@@ -80,5 +82,15 @@ void BlockDirichletBC::_original_to_block_boundary_values(Map& boundary_values, 
 std::shared_ptr<const BlockFunctionSpace> BlockDirichletBC::block_function_space() const
 {
   return _block_function_space;
+}
+//-----------------------------------------------------------------------------
+std::size_t BlockDirichletBC::size() const
+{
+  return _bcs.size();
+}
+//-----------------------------------------------------------------------------
+std::vector<std::shared_ptr<const DirichletBC>> BlockDirichletBC::operator[](std::size_t I) const
+{
+  return _bcs[I];
 }
 //-----------------------------------------------------------------------------

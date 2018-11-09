@@ -88,5 +88,43 @@ namespace multiphenics_wrappers
              instance.get_boundary_values(map);
              return map;
            });
+           
+    // dolfin::fem::DirichletBCLegacy
+    py::class_<dolfin::fem::DirichletBCLegacy, std::shared_ptr<dolfin::fem::DirichletBCLegacy>>
+      (m, "DirichletBCLegacy", "dolfin DirichletBCLegacy object")
+      .def_static("apply",
+        py::overload_cast<
+          std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>, dolfin::la::PETScMatrix&, PetscScalar
+        >(&dolfin::fem::DirichletBCLegacy::apply),
+        py::arg("bcs"), py::arg("A"), py::arg("diag"))
+      .def_static("apply",
+        py::overload_cast<
+          std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>, dolfin::la::PETScVector&
+        >(&dolfin::fem::DirichletBCLegacy::apply),
+        py::arg("bcs"), py::arg("b"))
+      .def_static("apply",
+        py::overload_cast<
+          std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>, dolfin::la::PETScVector&, const dolfin::la::PETScVector&
+        >(&dolfin::fem::DirichletBCLegacy::apply),
+        py::arg("bcs"), py::arg("b"), py::arg("x"));
+    
+    // multiphenics::fem::BlockDirichletBCLegacy
+    py::class_<multiphenics::fem::BlockDirichletBCLegacy, std::shared_ptr<multiphenics::fem::BlockDirichletBCLegacy>>
+      (m, "BlockDirichletBCLegacy", "multiphenics BlockDirichletBCLegacy object")
+      .def_static("apply",
+        py::overload_cast<
+          const multiphenics::fem::BlockDirichletBC&, dolfin::la::PETScMatrix&, PetscScalar
+        >(&multiphenics::fem::BlockDirichletBCLegacy::apply),
+        py::arg("bcs"), py::arg("A"), py::arg("diag"))
+      .def_static("apply",
+        py::overload_cast<
+          const multiphenics::fem::BlockDirichletBC&, dolfin::la::PETScVector&
+        >(&multiphenics::fem::BlockDirichletBCLegacy::apply),
+        py::arg("bcs"), py::arg("b"))
+      .def_static("apply",
+        py::overload_cast<
+          const multiphenics::fem::BlockDirichletBC&, dolfin::la::PETScVector&, const dolfin::la::PETScVector&
+        >(&multiphenics::fem::BlockDirichletBCLegacy::apply),
+        py::arg("bcs"), py::arg("b"), py::arg("x"));
   }
 }

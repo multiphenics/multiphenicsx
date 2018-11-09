@@ -20,6 +20,7 @@ from multiphenics.fem.block_adjoint import block_adjoint
 from multiphenics.fem.block_assemble import block_assemble
 from multiphenics.fem.block_derivative import block_derivative
 from multiphenics.fem.block_dirichlet_bc import BlockDirichletBC
+from multiphenics.fem.block_dirichlet_bc_legacy import BlockDirichletBCLegacy
 from multiphenics.fem.block_dof_map import BlockDofMap
 from multiphenics.fem.block_flatten_nested import block_flatten_nested
 from multiphenics.fem.block_form import BlockForm
@@ -28,12 +29,14 @@ from multiphenics.fem.block_form_2 import BlockForm2
 from multiphenics.fem.block_replace_zero import block_replace_zero
 from multiphenics.fem.block_restrict import block_restrict
 from multiphenics.fem.dirichlet_bc import DirichletBC
+from multiphenics.fem.dirichlet_bc_legacy import DirichletBCLegacy
 
 __all__ = [
     'block_adjoint',
     'block_assemble',
     'block_derivative',
     'BlockDirichletBC',
+    'BlockDirichletBCLegacy',
     'BlockDofMap',
     'block_flatten_nested',
     'BlockForm',
@@ -41,5 +44,6 @@ __all__ = [
     'BlockForm2',
     'block_replace_zero',
     'block_restrict',
-    'DirichletBC'
+    'DirichletBC',
+    'DirichletBCLegacy'
 ]

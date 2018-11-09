@@ -26,6 +26,12 @@
 
 namespace multiphenics
 {
+  namespace fem
+  {
+    // Forward declaration for friend class
+    class BlockDirichletBCLegacy;
+  }
+  
   namespace la
   {
     /// This is an extension of PETScMatrix to be used while assemblying block forms, that
@@ -131,7 +137,7 @@ namespace multiphenics
     private:
       // Hide operations with PETScVector arguments
       using PETScMatrix::mult;
-    
+      
       void to_restricted_submatrix_row_indices(
         const std::vector<PetscInt> & block_unrestricted_submatrix_row_indices, std::vector<PetscInt> & block_restricted_submatrix_row_indices,
         std::vector<bool> * is_row_in_restriction = NULL
@@ -145,6 +151,9 @@ namespace multiphenics
         const std::vector<PetscInt> & block_unrestricted_submatrix_col_indices, std::vector<PetscInt> & block_restricted_submatrix_col_indices,
         const std::vector<PetscScalar> & block_unrestricted_submatrix_values, std::vector<PetscScalar> & block_restricted_submatrix_values
       );
+      
+      // Allow BlockDirichletBCLegacy to access to_restricted_submatrix_row_indices
+      friend class multiphenics::fem::BlockDirichletBCLegacy;
       
       const PETScMatrix & _global_matrix;
       const std::map<PetscInt, PetscInt> & _original_to_sub_block_0;

@@ -30,14 +30,14 @@ namespace multiphenics
     class BlockDirichletBC: public dolfin::common::Variable
     {
     public:
-      typedef dolfin::DirichletBC::Map Map;
+      typedef dolfin::fem::DirichletBC::Map Map;
       
       /// Create boundary condition for subdomain
       ///
       /// @param    bcs (list of list _DirichletBC_)
       ///         List (over blocks) of list (due to possible multiple BCs for each block) of DirichletBC objects
-      BlockDirichletBC(std::vector<std::vector<std::shared_ptr<const dolfin::DirichletBC>>> bcs,
-                       std::shared_ptr<const BlockFunctionSpace> block_function_space);
+      BlockDirichletBC(std::vector<std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>> bcs,
+                       std::shared_ptr<const multiphenics::function::BlockFunctionSpace> block_function_space);
 
       /// Destructor
       ~BlockDirichletBC();
@@ -62,15 +62,18 @@ namespace multiphenics
             
       /// Return the block function space
       ///
-      /// @return BlockFunctionSpace
+      /// @return multiphenics::function::BlockFunctionSpace
       ///         The block function space to which boundary conditions are applied.
-      std::shared_ptr<const BlockFunctionSpace> block_function_space() const;
+      std::shared_ptr<const multiphenics::function::BlockFunctionSpace> block_function_space() const;
+      
+      std::size_t size() const;
+      std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>> operator[](std::size_t I) const;
 
     private:
       void _original_to_block_boundary_values(Map& boundary_values, const Map& boundary_values_I, std::size_t I) const;
 
-      std::vector<std::vector<std::shared_ptr<const dolfin::DirichletBC>>> _bcs;
-      std::shared_ptr<const BlockFunctionSpace> _block_function_space;
+      std::vector<std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>> _bcs;
+      std::shared_ptr<const multiphenics::function::BlockFunctionSpace> _block_function_space;
 
     };
   }
