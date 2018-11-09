@@ -16,8 +16,6 @@
 // along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <dolfin/la/GenericMatrix.h>
-#include <dolfin/la/GenericVector.h>
 #include <multiphenics/fem/BlockDirichletBC.h>
 
 using namespace dolfin;
@@ -36,83 +34,6 @@ BlockDirichletBC::BlockDirichletBC(std::vector<std::vector<std::shared_ptr<const
 BlockDirichletBC::~BlockDirichletBC()
 {
   // Do nothing
-}
-//-----------------------------------------------------------------------------
-void BlockDirichletBC::apply(GenericMatrix& A,
-                             std::vector<std::vector<bool>> zero_off_block_diagonal) const
-{
-  for (std::size_t I(0); I < _bcs.size(); ++I)
-    for (std::size_t J(0); J < _bcs.size(); ++J)
-    {
-      std::shared_ptr<GenericMatrix> A_IJ = std::make_shared<BlockPETScSubMatrix>(A, I, J, _block_function_space->block_dofmap(), _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
-      for (auto & bc_I: _bcs[I])
-        if (I == J)
-          bc_I->apply(*A_IJ);
-        else if (zero_off_block_diagonal[I][J])
-          bc_I->zero(*A_IJ);
-    }
-}
-//-----------------------------------------------------------------------------
-void BlockDirichletBC::apply(GenericVector& b) const
-{
-  for (std::size_t I(0); I < _bcs.size(); ++I)
-  {
-    std::shared_ptr<GenericVector> b_I = std::make_shared<BlockPETScSubVector>(b, I, _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
-    for (auto & bc_I: _bcs[I])
-      bc_I->apply(*b_I);
-  }
-}
-//-----------------------------------------------------------------------------
-void BlockDirichletBC::apply(GenericMatrix& A,
-                             GenericVector& b,
-                             std::vector<std::vector<bool>> zero_off_block_diagonal) const
-{
-  for (std::size_t I(0); I < _bcs.size(); ++I)
-  {
-    std::shared_ptr<GenericVector> b_I = std::make_shared<BlockPETScSubVector>(b, I, _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
-    for (std::size_t J(0); J < _bcs.size(); ++J)
-    {
-      std::shared_ptr<GenericMatrix> A_IJ = std::make_shared<BlockPETScSubMatrix>(A, I, J, _block_function_space->block_dofmap(), _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
-      for (auto & bc_I: _bcs[I])
-        if (I == J)
-          bc_I->apply(*A_IJ, *b_I);
-        else if (zero_off_block_diagonal[I][J])
-          bc_I->zero(*A_IJ);
-    }
-  }
-}
-//-----------------------------------------------------------------------------
-void BlockDirichletBC::apply(GenericVector& b,
-                             const GenericVector& x) const
-{
-  for (std::size_t I(0); I < _bcs.size(); ++I)
-  {
-    std::shared_ptr<GenericVector> b_I = std::make_shared<BlockPETScSubVector>(b, I, _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
-    std::shared_ptr<GenericVector> x_I = std::make_shared<BlockPETScSubVector>(x, I, _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
-    for (auto & bc_I: _bcs[I])
-      bc_I->apply(*b_I, *x_I);
-  }
-}
-//-----------------------------------------------------------------------------
-void BlockDirichletBC::apply(GenericMatrix& A,
-                             GenericVector& b,
-                             const GenericVector& x,
-                             std::vector<std::vector<bool>> zero_off_block_diagonal) const
-{
-  for (std::size_t I(0); I < _bcs.size(); ++I)
-  {
-    std::shared_ptr<GenericVector> b_I = std::make_shared<BlockPETScSubVector>(b, I, _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
-    std::shared_ptr<GenericVector> x_I = std::make_shared<BlockPETScSubVector>(x, I, _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
-    for (std::size_t J(0); J < _bcs.size(); ++J)
-    {
-      std::shared_ptr<GenericMatrix> A_IJ = std::make_shared<BlockPETScSubMatrix>(A, I, J, _block_function_space->block_dofmap(), _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
-      for (auto & bc_I: _bcs[I])
-        if (I == J)
-          bc_I->apply(*A_IJ, *b_I, *x_I);
-        else if (zero_off_block_diagonal[I][J])
-          bc_I->zero(*A_IJ);
-    }
-  }
 }
 //-----------------------------------------------------------------------------
 void BlockDirichletBC::get_boundary_values(Map& boundary_values) const
@@ -139,19 +60,6 @@ void BlockDirichletBC::gather(Map& boundary_values) const
     }
     _original_to_block_boundary_values(boundary_values, boundary_values_I, I);
   }
-}
-//-----------------------------------------------------------------------------
-void BlockDirichletBC::zero(GenericMatrix& A,
-                            std::vector<std::vector<bool>> zero_off_block_diagonal) const
-{
-  for (std::size_t I(0); I < _bcs.size(); ++I)
-    for (std::size_t J(0); J < _bcs.size(); ++J)
-    {
-      std::shared_ptr<GenericMatrix> A_IJ = std::make_shared<BlockPETScSubMatrix>(A, I, J, _block_function_space->block_dofmap(), _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
-      for (auto & bc_I: _bcs[I])
-        if (I == J || zero_off_block_diagonal[I][J])
-          bc_I->zero(*A_IJ);
-    }
 }
 //-----------------------------------------------------------------------------
 void BlockDirichletBC::_original_to_block_boundary_values(Map& boundary_values, const Map& boundary_values_I, std::size_t I) const

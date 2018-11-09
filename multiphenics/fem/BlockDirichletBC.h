@@ -40,50 +40,8 @@ namespace multiphenics
                        std::shared_ptr<const BlockFunctionSpace> block_function_space);
 
       /// Destructor
-      virtual ~BlockDirichletBC();
-
-      /// Apply boundary condition to a matrix
-      ///
-      /// @param     A (_GenericMatrix_)
-      ///         The matrix to apply boundary condition to.
-      void apply(dolfin::GenericMatrix& A) const;
-
-      /// Apply boundary condition to a vector
-      ///
-      /// @param     b (_GenericVector_)
-      ///         The vector to apply boundary condition to.
-      void apply(dolfin::GenericVector& b) const;
-
-      /// Apply boundary condition to a linear system
-      ///
-      /// @param     A (_GenericMatrix_)
-      ///         The matrix to apply boundary condition to.
-      /// @param     b (_GenericVector_)
-      ///         The vector to apply boundary condition to.
-      void apply(dolfin::GenericMatrix& A,
-                 dolfin::GenericVector& b) const;
-
-      /// Apply boundary condition to vectors for a nonlinear problem
-      ///
-      /// @param    b (_GenericVector_)
-      ///         The vector to apply boundary conditions to.
-      /// @param     x (_GenericVector_)
-      ///         Another vector (nonlinear problem).
-      void apply(dolfin::GenericVector& b,
-                 const dolfin::GenericVector& x) const;
-
-      /// Apply boundary condition to a linear system for a nonlinear problem
-      ///
-      /// @param     A (_GenericMatrix_)
-      ///         The matrix to apply boundary conditions to.
-      /// @param     b (_GenericVector_)
-      ///         The vector to apply boundary conditions to.
-      /// @param     x (_GenericVector_)
-      ///         Another vector (nonlinear problem).
-      void apply(dolfin::GenericMatrix& A,
-                 dolfin::GenericVector& b,
-                 const dolfin::GenericVector& x) const;
-                 
+      ~BlockDirichletBC();
+      
       /// Get Dirichlet dofs and values. If a method other than 'pointwise' is
       /// used in parallel, the map may not be complete for local vertices since
       /// a vertex can have a bc applied, but the partition might not have a
@@ -101,14 +59,7 @@ namespace multiphenics
       /// @param[in,out] boundary_values (Map&)
       ///         Map from dof to boundary value.
       void gather(Map& boundary_values) const;
-                 
-      /// Make rows of matrix associated with boundary condition zero,
-      /// useful for non-diagonal matrices in a block matrix.
-      ///
-      /// @param[in,out] A (GenericMatrix&)
-      ///         The matrix
-      void zero(dolfin::GenericMatrix& A) const;
-      
+            
       /// Return the block function space
       ///
       /// @return BlockFunctionSpace

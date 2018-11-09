@@ -82,22 +82,11 @@ namespace multiphenics_wrappers
       .def(py::init<std::vector<std::vector<std::shared_ptr<const DirichletBC>>>,
                     std::shared_ptr<const BlockFunctionSpace>>())
       .def("block_function_space", &multiphenics::fem::BlockDirichletBC::block_function_space)
-      .def("zero", &multiphenics::fem::BlockDirichletBC::zero)
       .def("get_boundary_values", [](const multiphenics::fem::BlockDirichletBC& instance)
            {
              multiphenics::fem::BlockDirichletBC::Map map;
              instance.get_boundary_values(map);
              return map;
-           })
-      .def("apply", (void (multiphenics::fem::BlockDirichletBC::*)(dolfin::GenericVector&) const)
-           &multiphenics::fem::BlockDirichletBC::apply)
-      .def("apply", (void (multiphenics::fem::BlockDirichletBC::*)(dolfin::GenericMatrix&) const)
-           &multiphenics::fem::BlockDirichletBC::apply)
-      .def("apply", (void (multiphenics::fem::BlockDirichletBC::*)(dolfin::GenericMatrix&, dolfin::GenericVector&) const)
-           &multiphenics::fem::BlockDirichletBC::apply)
-      .def("apply", (void (multiphenics::fem::BlockDirichletBC::*)(dolfin::GenericVector&, const dolfin::GenericVector&) const)
-           &multiphenics::fem::BlockDirichletBC::apply)
-      .def("apply", (void (multiphenics::fem::BlockDirichletBC::*)(dolfin::GenericMatrix&, dolfin::GenericVector&, const dolfin::GenericVector&) const)
-           &multiphenics::fem::BlockDirichletBC::apply);
+           });
   }
 }
