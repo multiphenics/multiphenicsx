@@ -16,9 +16,9 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import isclose
+from numpy import isclose, logical_and
 from dolfin import *
-import matplotlib.pyplot as plt
+from dolfin.fem import assemble
 from multiphenics import *
 
 """
@@ -47,18 +47,17 @@ to the one provided by standard FEniCS.
 """
 
 # Mesh generation
-mesh = UnitIntervalMesh(32)
+mesh = UnitIntervalMesh(MPI.comm_world, 32)
 
 class Left(SubDomain):
     def inside(self, x, on_boundary):
-        return on_boundary and abs(x[0] - 0.) < DOLFIN_EPS
+        return logical_and(abs(x[:, 0] - 0.) < DOLFIN_EPS, on_boundary)
 
 class Right(SubDomain):
     def inside(self, x, on_boundary):
-        return on_boundary and abs(x[0] - 1.) < DOLFIN_EPS
+        return logical_and(abs(x[:, 0] - 1.) < DOLFIN_EPS, on_boundary)
         
-boundaries = MeshFunction("size_t", mesh, mesh.topology().dim() - 1)
-boundaries.set_all(0)
+boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
 left = Left()
 left.mark(boundaries, 1)
 right = Right()
@@ -66,87 +65,70 @@ right.mark(boundaries, 1)
 
 x0 = SpatialCoordinate(mesh)[0]
 
+# Solver parameters
+solver_parameters = {"ksp_type": "preonly", "pc_type": "lu", "pc_factor_mat_solver_type": "mumps"}
+
 def run_standard():
     # Define a function space
-    V = FunctionSpace(mesh, "Lagrange", 2)
+    V = FunctionSpace(mesh, ("Lagrange", 2))
     u = TrialFunction(V)
     v = TestFunction(V)
 
-    # Create the matrix for the LHS
+    # Define problems forms
     a = inner(grad(u), grad(v))*dx + u*v*dx
-    A = assemble(a)
-
-    # Create the vector for the RHS
     f = 100*sin(20*x0)*v*dx
-    F = assemble(f)
 
-    # Apply boundary conditions
-    bc = DirichletBC(V, Constant(0.), boundaries, 1)
-    bc.apply(A)
-    bc.apply(F)
-
+    # Define boundary conditions
+    zero = Function(V)
+    zero.vector().set(0.0)
+    bc = DirichletBC(V, zero, (boundaries, 1))
+    
     # Solve the linear system
-    U = Function(V)
-    solve(A, U.vector(), F)
+    u = Function(V)
+    solve(a == f, u, bc, petsc_options=solver_parameters)
     
     # Return the solution
-    return U
+    return u
     
-U = run_standard()
+u = run_standard()
 
 def run_block():
     # Define a block function space
-    V = FunctionSpace(mesh, "Lagrange", 2)
+    V = FunctionSpace(mesh, ("Lagrange", 2))
     VV = BlockFunctionSpace([V, V])
     uu = BlockTrialFunction(VV)
     vv = BlockTestFunction(VV)
     (u1, u2) = block_split(uu)
     (v1, v2) = block_split(vv)
 
-    # Create the block matrix for the block LHS
+    # Define problem block forms
     aa = [[1*inner(grad(u1), grad(v1))*dx + 1*u1*v1*dx, 2*inner(grad(u2), grad(v1))*dx + 2*u2*v1*dx],
           [3*inner(grad(u1), grad(v2))*dx + 3*u1*v2*dx, 4*inner(grad(u2), grad(v2))*dx + 4*u2*v2*dx]]
-    AA = block_assemble(aa)
-    
-    # Create the block vector for the block RHS
     ff = [300*sin(20*x0)*v1*dx,
           700*sin(20*x0)*v2*dx]
-    FF = block_assemble(ff)
     
-    # Apply block boundary conditions
-    bc1 = DirichletBC(VV.sub(0), Constant(0.), boundaries, 1)
-    bc2 = DirichletBC(VV.sub(1), Constant(0.), boundaries, 1)
+    # Define block boundary conditions
+    zero = Function(V)
+    zero.vector().set(0.0)
+    bc1 = DirichletBC(VV.sub(0), zero, (boundaries, 1))
+    bc2 = DirichletBC(VV.sub(1), zero, (boundaries, 1))
     bcs = BlockDirichletBC([bc1,
                             bc2])
-    bcs.apply(AA)
-    bcs.apply(FF)
     
     # Solve the block linear system
-    UU = BlockFunction(VV)
-    block_solve(AA, UU.block_vector(), FF)
-    UU1, UU2 = UU
+    uu = BlockFunction(VV)
+    block_solve(aa, uu.block_vector(), ff, bcs, petsc_options=solver_parameters)
+    uu1, uu2 = uu
     
     # Return the block solution
-    return UU1, UU2
+    return uu1, uu2
     
-UU1, UU2 = run_block()
+uu1, uu2 = run_block()
 
-# plt.figure()
-# plot(U, title="0")
-# plt.figure()
-# plot(UU1, title="1")
-# plt.figure()
-# plot(UU2, title="2")
-plt.figure()
-plot(U - UU1, title="e1")
-plt.figure()
-plot(U - UU2, title="e2")
-plt.show()
-
-U_norm = sqrt(assemble(inner(grad(U), grad(U))*dx))
-err_1_norm = sqrt(assemble(inner(grad(U - UU1), grad(U - UU1))*dx))
-err_2_norm = sqrt(assemble(inner(grad(U - UU2), grad(U - UU2))*dx))
-print("Relative error for first component is equal to", err_1_norm/U_norm)
-print("Relative error for second component is equal to", err_2_norm/U_norm)
-assert isclose(err_1_norm/U_norm, 0., atol=1.e-10)
-assert isclose(err_2_norm/U_norm, 0., atol=1.e-10)
+u_norm = sqrt(assemble(inner(grad(u), grad(u))*dx))
+err_1_norm = sqrt(assemble(inner(grad(u - uu1), grad(u - uu1))*dx))
+err_2_norm = sqrt(assemble(inner(grad(u - uu2), grad(u - uu2))*dx))
+print("Relative error for first component is equal to", err_1_norm/u_norm)
+print("Relative error for second component is equal to", err_2_norm/u_norm)
+assert isclose(err_1_norm/u_norm, 0., atol=1.e-10)
+assert isclose(err_2_norm/u_norm, 0., atol=1.e-10)
