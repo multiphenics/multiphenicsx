@@ -17,20 +17,16 @@
 #
 
 from multiphenics.la.block_matlab_export import block_matlab_export
-from multiphenics.la.block_petsc_matrix import BlockPETScMatrix
 from multiphenics.la.block_petsc_sub_matrix import BlockPETScSubMatrix
 from multiphenics.la.block_petsc_sub_vector import BlockPETScSubVector
-from multiphenics.la.block_petsc_vector import BlockPETScVector
 from multiphenics.la.block_slepc_eigen_solver import BlockSLEPcEigenSolver
 from multiphenics.la.block_solve import block_solve
 from multiphenics.la.slepc_eigen_solver import SLEPcEigenSolver
 
 __all__ = [
     'block_matlab_export',
-    'BlockPETScMatrix',
     'BlockPETScSubMatrix',
     'BlockPETScSubVector',
-    'BlockPETScVector',
     'BlockSLEPcEigenSolver',
     'block_solve',
     'SLEPcEigenSolver'

@@ -20,6 +20,7 @@
 #define __BLOCK_PETSC_SUB_MATRIX_H
 
 #include <dolfin/la/PETScMatrix.h>
+#include <multiphenics/fem/BlockDofMap.h>
 #include <multiphenics/la/BlockInsertMode.h>
 #include <multiphenics/la/BlockPETScSubVector.h>
 
@@ -27,8 +28,6 @@ namespace multiphenics
 {
   namespace la
   {
-    class BlockPETScMatrix;
-    
     /// This is an extension of PETScMatrix to be used while assemblying block forms, that
     /// a) carries out the extraction of a sub matrix
     /// b) in case of restrictions, overrides get/set/add methods to convert original index without restriction to index with restriction
@@ -45,10 +44,16 @@ namespace multiphenics
       /// Destructor
       ~BlockPETScSubMatrix();
       
+      /// Copy constructor (deleted)
+      BlockPETScSubMatrix(const BlockPETScSubMatrix& A) = delete;
+
+      /// Move constructor (deleted)
+      BlockPETScSubMatrix(BlockPETScSubMatrix&& A) = delete;
+      
       /// Assignment operator (deleted)
       BlockPETScSubMatrix& operator=(const BlockPETScSubMatrix& A) = delete;
 
-      /// Move assignment operator (deleted, because submatrices cannot be assigned)
+      /// Move assignment operator (deleted)
       BlockPETScSubMatrix& operator=(BlockPETScSubMatrix&& A) = delete;
       
       /// Return number of rows and columns (num_rows, num_cols).
@@ -141,7 +146,7 @@ namespace multiphenics
         const std::vector<PetscScalar> & block_unrestricted_submatrix_values, std::vector<PetscScalar> & block_restricted_submatrix_values
       );
       
-      const BlockPETScMatrix & _global_matrix;
+      const PETScMatrix & _global_matrix;
       const std::map<PetscInt, PetscInt> & _original_to_sub_block_0;
       const std::map<PetscInt, PetscInt> & _original_to_sub_block_1;
       /*PETSc*/ InsertMode _insert_mode;

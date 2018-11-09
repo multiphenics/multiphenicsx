@@ -22,13 +22,11 @@
 #include <dolfin/la/PETScVector.h>
 #include <multiphenics/fem/BlockDofMap.h>
 #include <multiphenics/la/BlockInsertMode.h>
-#include <multiphenics/la/BlockPETScVector.h>
 
 namespace multiphenics
 {
   namespace la
   {
-    class BlockPETScVector;
     
     /// This is an extension of PETScVector to be used while assemblying block forms, that
     /// a) carries out the extraction of a sub vector
@@ -45,11 +43,17 @@ namespace multiphenics
       /// Destructor
       virtual ~BlockPETScSubVector();
       
-      // Assignment operator (disabled)
+      /// Copy constructor (deleted)
+      BlockPETScSubVector(const BlockPETScSubVector& A) = delete;
+
+      /// Move constructor (deleted)
+      BlockPETScSubVector(BlockPETScSubVector&& A) = delete;
+      
+      // Assignment operator (deleted)
       BlockPETScSubVector& operator=(const BlockPETScSubVector& x) = delete;
 
-      /// Move Assignment operator (disabled, because subvectors cannot be assigned)
-      BlockPETScSubVector& operator=(BlockPETScSubVector&& x);
+      /// Move assignment operator (deleted)
+      BlockPETScSubVector& operator=(BlockPETScSubVector&& x) = delete;
       
       /// Return size of vector.
       std::int64_t size() const;
@@ -66,7 +70,7 @@ namespace multiphenics
       void scale(PetscScalar a);
 
       /// Multiply vector by vector x pointwise
-      void mult(const BlockPETScVector& x);
+      void mult(const BlockPETScSubVector& x);
 
       /// Finalize assembly of vector. Communicates off-process entries
       /// added or set on this process to the owner, and receives from other

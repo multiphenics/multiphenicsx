@@ -95,13 +95,13 @@ namespace multiphenics
       ///
       /// @returns  _dolfin::la::PETScVector_
       ///         The vector of expansion coefficients.
-      std::shared_ptr<BlockPETScVector> block_vector();
+      std::shared_ptr<dolfin::la::PETScVector> block_vector();
 
       /// Return vector of expansion coefficients (const version)
       ///
       /// @returns  _dolfin::la::PETScVector_
       ///         The vector of expansion coefficients.
-      std::shared_ptr<const BlockPETScVector> block_vector() const;
+      std::shared_ptr<const dolfin::la::PETScVector> block_vector() const;
       
       /// Sync block vector and sub functions
       void apply(std::string mode, int only = -1);
@@ -118,7 +118,7 @@ namespace multiphenics
       std::shared_ptr<const BlockFunctionSpace> _block_function_space;
 
       // The vector of expansion coefficients (local)
-      std::shared_ptr<BlockPETScVector> _block_vector;
+      std::shared_ptr<dolfin::la::PETScVector> _block_vector;
       
       // Sub functions
       std::vector<std::shared_ptr<const dolfin::function::FunctionSpace>> _sub_function_spaces;

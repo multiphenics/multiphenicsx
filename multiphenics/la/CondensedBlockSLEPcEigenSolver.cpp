@@ -36,22 +36,22 @@ CondensedBlockSLEPcEigenSolver::CondensedBlockSLEPcEigenSolver(EPS eps) :
 {
 }
 //-----------------------------------------------------------------------------
-CondensedBlockSLEPcEigenSolver::CondensedBlockSLEPcEigenSolver(std::shared_ptr<const BlockPETScMatrix> A,
+CondensedBlockSLEPcEigenSolver::CondensedBlockSLEPcEigenSolver(std::shared_ptr<const PETScMatrix> A,
                                                                std::shared_ptr<const BlockDirichletBC> block_bcs)
   : CondensedBlockSLEPcEigenSolver(A, nullptr, block_bcs)
 {
   // Do nothing (handled by other constructor)
 }
 //-----------------------------------------------------------------------------
-CondensedBlockSLEPcEigenSolver::CondensedBlockSLEPcEigenSolver(MPI_Comm comm, std::shared_ptr<const BlockPETScMatrix> A,
+CondensedBlockSLEPcEigenSolver::CondensedBlockSLEPcEigenSolver(MPI_Comm comm, std::shared_ptr<const PETScMatrix> A,
                                                                std::shared_ptr<const BlockDirichletBC> block_bcs)
   : CondensedBlockSLEPcEigenSolver(comm, A, nullptr, block_bcs)
 {
   // Do nothing (handled by other constructor)
 }
 //-----------------------------------------------------------------------------
-CondensedBlockSLEPcEigenSolver::CondensedBlockSLEPcEigenSolver(std::shared_ptr<const BlockPETScMatrix> A,
-                                                               std::shared_ptr<const BlockPETScMatrix> B,
+CondensedBlockSLEPcEigenSolver::CondensedBlockSLEPcEigenSolver(std::shared_ptr<const PETScMatrix> A,
+                                                               std::shared_ptr<const PETScMatrix> B,
                                                                std::shared_ptr<const BlockDirichletBC> block_bcs)
   : CondensedSLEPcEigenSolver(A->mpi_comm())
 {
@@ -60,8 +60,8 @@ CondensedBlockSLEPcEigenSolver::CondensedBlockSLEPcEigenSolver(std::shared_ptr<c
 }
 //-----------------------------------------------------------------------------
 CondensedBlockSLEPcEigenSolver::CondensedBlockSLEPcEigenSolver(MPI_Comm comm,
-                                                               std::shared_ptr<const BlockPETScMatrix> A,
-                                                               std::shared_ptr<const BlockPETScMatrix> B,
+                                                               std::shared_ptr<const PETScMatrix> A,
+                                                               std::shared_ptr<const PETScMatrix> B,
                                                                std::shared_ptr<const BlockDirichletBC> block_bcs)
   : CondensedSLEPcEigenSolver(comm)
 {

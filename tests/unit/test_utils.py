@@ -21,7 +21,7 @@ import pytest
 from _pytest.mark import ParameterSet
 from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, hstack, hstack as bvec, sort, unique, vstack
 from dolfin import assemble, Constant, DOLFIN_EPS, dx, Expression, FiniteElement, Function, FunctionSpace, inner, MixedElement, project, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
-from dolfin.cpp.la import GenericMatrix, GenericVector
+from dolfin.cpp.la import PETScMatrix, PETScVector
 from multiphenics import assign, block_assemble, block_assign, BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
 
 # ================ PYTEST HELPER ================ #
@@ -633,7 +633,7 @@ def get_list_of_functions_2(block_V):
 # ================ PARALLEL SUPPORT ================ #
 # Gather matrices, vector and dicts on zero-th process
 def allgather(obj, comm, **kwargs):
-    assert isinstance(obj, (dict, tuple, GenericMatrix, GenericVector))
+    assert isinstance(obj, (dict, tuple, PETScMatrix, PETScVector))
     if isinstance(obj, (dict, tuple)):
         assert "block_dofmap" in kwargs
         assert "dofmap" in kwargs
@@ -683,9 +683,9 @@ def allgather(obj, comm, **kwargs):
                     if original1 < all_ownership_ranges1[r][1] - all_ownership_ranges1[r][0]:
                         output[block1 + block_base_index1[r]] = original1 + base_index1[r]
             return output
-    elif isinstance(obj, GenericMatrix):
+    elif isinstance(obj, PETScMatrix):
         return vstack(comm.allgather(obj.array()))
-    elif isinstance(obj, GenericVector):
+    elif isinstance(obj, PETScVector):
         return hstack(comm.allgather(obj.get_local()))
     else:
         raise AssertionError("Invalid arguments to allgather")

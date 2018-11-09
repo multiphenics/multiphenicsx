@@ -51,32 +51,6 @@ def block_assemble(block_form,
     return block_tensor
     
 def _create_block_tensor(comm, block_form, rank, block_tensor):
-    block_tensor = None # TODO
-    
-    # Attach block dofmap to tensor
-    assert rank in (1, 2)
-    if rank == 2:
-        block_dofmap_0 = block_form.block_function_spaces()[0].block_dofmap()
-        block_dofmap_1 = block_form.block_function_spaces()[1].block_dofmap()
-        assert block_tensor.has_block_dof_map(0) == block_tensor.has_block_dof_map(1)
-        if not block_tensor.has_block_dof_map(0):
-            block_tensor.attach_block_dof_map(block_dofmap_0, block_dofmap_1)
-        else:
-            assert block_dofmap_0 == block_tensor.get_block_dof_map(0)
-            assert block_dofmap_1 == block_tensor.get_block_dof_map(1)
-    elif rank == 1:
-        block_dofmap = block_form.block_function_spaces()[0].block_dofmap()
-        if not block_tensor.has_block_dof_map():
-            block_tensor.attach_block_dof_map(block_dofmap)
-        else:
-            assert block_dofmap == block_tensor.get_block_dof_map()
-            
-    # Store private attribute for BlockDirichletBC application to off diagonal blocks
-    if rank == 2:
-        bcs_zero_off_block_diagonal = empty(block_form.shape, dtype=bool)
-        for I in range(block_form.shape[0]):
-            for J in range(block_form.shape[1]):
-                bcs_zero_off_block_diagonal[I, J] = not _is_zero(block_form[I, J])
-        block_tensor._bcs_zero_off_block_diagonal = bcs_zero_off_block_diagonal.tolist()
+    block_tensor = None # TODO not required anymore? Just call the standard dolfin one?
     
     return block_tensor

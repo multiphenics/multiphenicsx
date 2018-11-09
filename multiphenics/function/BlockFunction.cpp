@@ -108,13 +108,13 @@ std::shared_ptr<const BlockFunctionSpace> BlockFunction::block_function_space() 
   return _block_function_space;
 }
 //-----------------------------------------------------------------------------
-std::shared_ptr<BlockPETScVector> BlockFunction::block_vector()
+std::shared_ptr<PETScVector> BlockFunction::block_vector()
 {
   assert(_block_vector);
   return _block_vector;
 }
 //-----------------------------------------------------------------------------
-std::shared_ptr<const BlockPETScVector> BlockFunction::block_vector() const
+std::shared_ptr<const PETScVector> BlockFunction::block_vector() const
 {
   assert(_block_vector);
   return _block_vector;

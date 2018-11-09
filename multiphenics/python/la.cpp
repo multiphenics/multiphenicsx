@@ -42,24 +42,6 @@ namespace multiphenics_wrappers
       .value("INSERT_VALUES", multiphenics::la::BlockInsertMode::INSERT_VALUES)
       .value("ADD_VALUES", multiphenics::la::BlockInsertMode::ADD_VALUES);
       
-    // multiphenics::la::BlockPETScVector
-    py::class_<multiphenics::la::BlockPETScVector, std::shared_ptr<multiphenics::la::BlockPETScVector>, dolfin::PETScVector>
-      (m, "BlockPETScVector", "multiphenics BlockPETScVector object")
-      .def(py::init<>())
-      .def(py::init<Vec>())
-      .def("attach_block_dof_map", &multiphenics::la::BlockPETScVector::attach_block_dof_map)
-      .def("get_block_dof_map", &multiphenics::la::BlockPETScVector::get_block_dof_map)
-      .def("has_block_dof_map", &multiphenics::la::BlockPETScVector::has_block_dof_map);
-      
-    // multiphenics::la::BlockPETScMatrix
-    py::class_<multiphenics::la::BlockPETScMatrix, std::shared_ptr<multiphenics::la::BlockPETScMatrix>, dolfin::PETScMatrix>
-      (m, "BlockPETScMatrix", "multiphenics BlockPETScMatrix object")
-      .def(py::init<>())
-      .def(py::init<Mat>())
-      .def("attach_block_dof_map", &multiphenics::la::BlockPETScMatrix::attach_block_dof_map)
-      .def("get_block_dof_map", &multiphenics::la::BlockPETScMatrix::get_block_dof_map)
-      .def("has_block_dof_map", &multiphenics::la::BlockPETScMatrix::has_block_dof_map);
-      
     // multiphenics::la::BlockPETScSubVector
     py::class_<multiphenics::la::BlockPETScSubVector, std::shared_ptr<multiphenics::la::BlockPETScSubVector>, dolfin::la::PETScVector>
       (m, "BlockPETScSubVector", "multiphenics BlockPETScSubVector object");
@@ -102,7 +84,7 @@ namespace multiphenics_wrappers
       .def("get_eigenpair", [](multiphenics::la::CondensedBlockSLEPcEigenSolver& self, multiphenics::function::BlockFunction& r_fun, multiphenics::function::BlockFunction& c_fun, std::size_t i)
            {
              double lr, lc;
-             multiphenics::la::BlockPETScVector r, c; // cannot use r_fun and c_fun block vectors due to different ghosting
+             dolfina::la::PETScVector r, c; // cannot use r_fun and c_fun block vectors due to different ghosting
              self.get_eigenpair(lr, lc, r, c, i);
              std::vector<double> r_local;
              r.get_local(r_local);

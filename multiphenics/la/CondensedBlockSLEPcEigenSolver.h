@@ -22,7 +22,6 @@
 #ifdef HAS_SLEPC
 
 #include <multiphenics/fem/BlockDirichletBC.h>
-#include <multiphenics/la/BlockPETScMatrix.h>
 #include <multiphenics/la/CondensedSLEPcEigenSolver.h>
 
 namespace multiphenics
@@ -44,21 +43,21 @@ namespace multiphenics
       explicit CondensedBlockSLEPcEigenSolver(EPS eps);
 
       /// Create eigenvalue solver for Ax = \lambda
-      CondensedBlockSLEPcEigenSolver(std::shared_ptr<const BlockPETScMatrix> A,
+      CondensedBlockSLEPcEigenSolver(std::shared_ptr<const dolfin::la::PETScMatrix> A,
                                      std::shared_ptr<const BlockDirichletBC> block_bcs);
 
       /// Create eigenvalue solver for Ax = \lambda x
-      CondensedBlockSLEPcEigenSolver(MPI_Comm comm, std::shared_ptr<const BlockPETScMatrix> A,
+      CondensedBlockSLEPcEigenSolver(MPI_Comm comm, std::shared_ptr<const dolfin::la::PETScMatrix> A,
                                      std::shared_ptr<const BlockDirichletBC> block_bcs);
 
       /// Create eigenvalue solver for Ax = \lambda x on MPI_COMM_WORLD
-      CondensedBlockSLEPcEigenSolver(std::shared_ptr<const BlockPETScMatrix> A,
-                                     std::shared_ptr<const BlockPETScMatrix> B,
+      CondensedBlockSLEPcEigenSolver(std::shared_ptr<const dolfin::la::PETScMatrix> A,
+                                     std::shared_ptr<const dolfin::la::PETScMatrix> B,
                                      std::shared_ptr<const BlockDirichletBC> block_bcs);
 
       /// Create eigenvalue solver for Ax = \lambda x
-      CondensedBlockSLEPcEigenSolver(MPI_Comm comm, std::shared_ptr<const BlockPETScMatrix> A,
-                                     std::shared_ptr<const BlockPETScMatrix> B,
+      CondensedBlockSLEPcEigenSolver(MPI_Comm comm, std::shared_ptr<const dolfin::la::PETScMatrix> A,
+                                     std::shared_ptr<const dolfin::la::PETScMatrix> B,
                                      std::shared_ptr<const BlockDirichletBC> block_bcs);
 
       /// Destructor

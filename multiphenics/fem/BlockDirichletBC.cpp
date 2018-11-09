@@ -44,7 +44,7 @@ void BlockDirichletBC::apply(GenericMatrix& A,
   for (std::size_t I(0); I < _bcs.size(); ++I)
     for (std::size_t J(0); J < _bcs.size(); ++J)
     {
-      std::shared_ptr<GenericMatrix> A_IJ = A(I, J, BlockInsertMode::INSERT_VALUES);
+      std::shared_ptr<GenericMatrix> A_IJ = std::make_shared<BlockPETScSubMatrix>(A, I, J, _block_function_space->block_dofmap(), _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
       for (auto & bc_I: _bcs[I])
         if (I == J)
           bc_I->apply(*A_IJ);
@@ -57,7 +57,7 @@ void BlockDirichletBC::apply(GenericVector& b) const
 {
   for (std::size_t I(0); I < _bcs.size(); ++I)
   {
-    std::shared_ptr<GenericVector> b_I = b(I, BlockInsertMode::INSERT_VALUES);
+    std::shared_ptr<GenericVector> b_I = std::make_shared<BlockPETScSubVector>(b, I, _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
     for (auto & bc_I: _bcs[I])
       bc_I->apply(*b_I);
   }
@@ -69,10 +69,10 @@ void BlockDirichletBC::apply(GenericMatrix& A,
 {
   for (std::size_t I(0); I < _bcs.size(); ++I)
   {
-    std::shared_ptr<GenericVector> b_I = b(I, BlockInsertMode::INSERT_VALUES);
+    std::shared_ptr<GenericVector> b_I = std::make_shared<BlockPETScSubVector>(b, I, _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
     for (std::size_t J(0); J < _bcs.size(); ++J)
     {
-      std::shared_ptr<GenericMatrix> A_IJ = A(I, J, BlockInsertMode::INSERT_VALUES);
+      std::shared_ptr<GenericMatrix> A_IJ = std::make_shared<BlockPETScSubMatrix>(A, I, J, _block_function_space->block_dofmap(), _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
       for (auto & bc_I: _bcs[I])
         if (I == J)
           bc_I->apply(*A_IJ, *b_I);
@@ -87,8 +87,8 @@ void BlockDirichletBC::apply(GenericVector& b,
 {
   for (std::size_t I(0); I < _bcs.size(); ++I)
   {
-    std::shared_ptr<GenericVector> b_I = b(I, BlockInsertMode::INSERT_VALUES);
-    std::shared_ptr<GenericVector> x_I = x(I, BlockInsertMode::INSERT_VALUES);
+    std::shared_ptr<GenericVector> b_I = std::make_shared<BlockPETScSubVector>(b, I, _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
+    std::shared_ptr<GenericVector> x_I = std::make_shared<BlockPETScSubVector>(x, I, _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
     for (auto & bc_I: _bcs[I])
       bc_I->apply(*b_I, *x_I);
   }
@@ -101,11 +101,11 @@ void BlockDirichletBC::apply(GenericMatrix& A,
 {
   for (std::size_t I(0); I < _bcs.size(); ++I)
   {
-    std::shared_ptr<GenericVector> b_I = b(I, BlockInsertMode::INSERT_VALUES);
-    std::shared_ptr<GenericVector> x_I = x(I, BlockInsertMode::INSERT_VALUES);
+    std::shared_ptr<GenericVector> b_I = std::make_shared<BlockPETScSubVector>(b, I, _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
+    std::shared_ptr<GenericVector> x_I = std::make_shared<BlockPETScSubVector>(x, I, _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
     for (std::size_t J(0); J < _bcs.size(); ++J)
     {
-      std::shared_ptr<GenericMatrix> A_IJ = A(I, J, BlockInsertMode::INSERT_VALUES);
+      std::shared_ptr<GenericMatrix> A_IJ = std::make_shared<BlockPETScSubMatrix>(A, I, J, _block_function_space->block_dofmap(), _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
       for (auto & bc_I: _bcs[I])
         if (I == J)
           bc_I->apply(*A_IJ, *b_I, *x_I);
@@ -147,7 +147,7 @@ void BlockDirichletBC::zero(GenericMatrix& A,
   for (std::size_t I(0); I < _bcs.size(); ++I)
     for (std::size_t J(0); J < _bcs.size(); ++J)
     {
-      std::shared_ptr<GenericMatrix> A_IJ = A(I, J, BlockInsertMode::INSERT_VALUES);
+      std::shared_ptr<GenericMatrix> A_IJ = std::make_shared<BlockPETScSubMatrix>(A, I, J, _block_function_space->block_dofmap(), _block_function_space->block_dofmap(), BlockInsertMode::INSERT_VALUES);
       for (auto & bc_I: _bcs[I])
         if (I == J || zero_off_block_diagonal[I][J])
           bc_I->zero(*A_IJ);

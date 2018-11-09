@@ -61,7 +61,7 @@ void BlockAssembler::assemble(GenericTensor& A, const BlockFormBase& a)
           assembler.keep_diagonal = keep_diagonal;
         else
           assembler.keep_diagonal = false;
-        std::shared_ptr<GenericMatrix> A_ij = A_mat(i, j, BlockInsertMode::ADD_VALUES);
+        std::shared_ptr<GenericMatrix> A_ij = std::make_shared<BlockPETScSubMatrix>(A_mat, i, j, a.block_function_spaces()[0]->block_dofmap(), a.block_function_space()[1]->block_dofmap(), BlockInsertMode::ADD_VALUES);
         const Form& a_ij = a_form2(i, j);
         if (a_ij.ufc_form())
         {
@@ -80,7 +80,7 @@ void BlockAssembler::assemble(GenericTensor& A, const BlockFormBase& a)
     const BlockForm1& a_form1 = dynamic_cast<const BlockForm1&>(a);
     for (unsigned int i(0); i < a_form1.block_size(0); ++i)
     {
-      std::shared_ptr<GenericVector> A_i = A_vec(i, BlockInsertMode::ADD_VALUES);
+      std::shared_ptr<GenericVector> A_i = std::make_shared<BlockPETScSubVector>(A_vec, i, a.block_function_spaces()[0]->block_dofmap(), BlockInsertMode::ADD_VALUES);
       const Form& a_i = a_form1(i);
       if (a_i.ufc_form())
       {
