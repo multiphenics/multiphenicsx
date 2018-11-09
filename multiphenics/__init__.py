@@ -20,7 +20,7 @@ from multiphenics.fem import block_adjoint, block_assemble, block_derivative, Bl
 from multiphenics.function import block_assign, BlockElement, BlockFunction, BlockFunctionSpace, block_split, BlockTestFunction, BlockTrialFunction, split, TestFunction, TrialFunction
 from multiphenics.la import block_matlab_export, BlockSLEPcEigenSolver, block_solve, SLEPcEigenSolver
 from multiphenics.mesh import MeshRestriction
-from multiphenics.nls import BlockNonlinearProblem, BlockPETScSNESSolver
+from multiphenics.nls import BlockNewtonSolver, BlockNonlinearProblem
 
 __all__ = [
     'block_adjoint',
@@ -33,8 +33,8 @@ __all__ = [
     'BlockFunction',
     'BlockFunctionSpace',
     'block_matlab_export',
+    'BlockNewtonSolver',
     'BlockNonlinearProblem',
-    'BlockPETScSNESSolver',
     'block_restrict',
     'BlockSLEPcEigenSolver',
     'block_solve',

@@ -16,14 +16,10 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import PETScSNESSolver
+from dolfin import NewtonSolver
 
-class BlockPETScSNESSolver(PETScSNESSolver):
-    def __init__(self, problem):
-        PETScSNESSolver.__init__(self)
-        self.problem = problem
-    
-    def solve(self):
-        PETScSNESSolver.solve(self, self.problem, self.problem.block_solution.block_vector())
+class BlockNewtonSolver(NewtonSolver):
+    def solve(self, problem, block_solution_vector):
+        NewtonSolver.solve(self, problem, block_solution_vector)
         # Keep subfunctions up to date
-        self.problem.block_solution.apply("to subfunctions")
+        block_solution_vector.block_solution().apply("to subfunctions")

@@ -16,10 +16,10 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from multiphenics.nls.block_newton_solver import BlockNewtonSolver
 from multiphenics.nls.block_nonlinear_problem import BlockNonlinearProblem
-from multiphenics.nls.block_petsc_snes_solver import BlockPETScSNESSolver
 
 __all__ = [
-    'BlockNonlinearProblem',
-    'BlockPETScSNESSolver'
+    'BlockNewtonSolver',
+    'BlockNonlinearProblem'
 ]
