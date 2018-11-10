@@ -20,8 +20,8 @@ import os
 import glob
 import mpi4py
 import petsc4py
-import dolfin
-from dolfin import compile_cpp_code
+import dolfin.jit
+from dolfin import compile_cpp_code as dolfin_compile_cpp_code
 
 def compile_package(package_name, package_root, *args, **kwargs):
     # Remove extension from files
@@ -75,34 +75,34 @@ def compile_package(package_name, package_root, *args, **kwargs):
             package_code_includes += line + "\n"
         else:
             package_code_rest += line + "\n"
-    package_code = package_code_includes + package_code_rest
+    package_code = package_code_includes + "\n\n" + package_code_rest
     
-    # Patch dijitso
+    # Require C++14 # TODO will this be fixed in djitso when dolfinx is released?
+    cxxflags = ["-std=c++14"]
+    
+    # Setup include directories for compilation
     include_dirs = list()
     include_dirs.append(package_root)
+    include_dirs.append(mpi4py.get_include())
+    include_dirs.append(petsc4py.get_include())
     if "include_dirs" in kwargs:
         include_dirs.extend(kwargs["include_dirs"])
-    patch_dijitso(package_name, include_dirs)
+    
+    # Compile C++ module and return
+    return compile_cpp_code(package_name, package_code, cxxflags=cxxflags, include_dirs=include_dirs)
+    
+def compile_cpp_code(package_name, package_code, **kwargs):
+    # Patch dijitso to generate package with a custom prefix
+    original_dijitso_jit = dolfin.jit.dijitso_jit
+    def dijitso_jit(jitable, name, params, generate=None, send=None, receive=None, wait=None):
+        return original_dijitso_jit(jitable, name.replace("dolfin", package_name), params, generate, send, receive, wait)
+    dolfin.jit.dijitso_jit = dijitso_jit
     
     # Call DOLFIN's compile_cpp_code
-    cpp = compile_cpp_code(package_code)
+    cpp = dolfin_compile_cpp_code(package_code, **kwargs)
     
-    # Restore original dijitso configuration
-    undo_patch_dijitso()
+    # Undo dijitso patch
+    dolfin.jit.dijitso_jit = original_dijitso_jit
     
     # Return compiled module
     return cpp
-    
-original_dijitso_jit = dolfin.jit.pybind11jit.dijitso_jit
-
-def patch_dijitso(package_name, include_dirs):
-    def dijitso_jit(jitable, name, params, generate=None, send=None, receive=None, wait=None):
-        name = name.replace("dolfin", package_name)
-        params["build"]["include_dirs"].append(mpi4py.get_include())
-        params["build"]["include_dirs"].append(petsc4py.get_include())
-        params["build"]["include_dirs"].extend(include_dirs)
-        return original_dijitso_jit(jitable, name, params, generate, send, receive, wait)
-    dolfin.jit.pybind11jit.dijitso_jit = dijitso_jit
-    
-def undo_patch_dijitso():
-    dolfin.jit.pybind11jit.dijitso_jit = original_dijitso_jit
