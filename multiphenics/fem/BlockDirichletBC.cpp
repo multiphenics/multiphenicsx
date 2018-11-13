@@ -18,11 +18,10 @@
 
 #include <multiphenics/fem/BlockDirichletBC.h>
 
-using namespace dolfin;
-using namespace dolfin::fem;
 using namespace multiphenics;
 using namespace multiphenics::fem;
 
+using dolfin::fem::DirichletBC;
 using multiphenics::function::BlockFunctionSpace;
 
 //-----------------------------------------------------------------------------

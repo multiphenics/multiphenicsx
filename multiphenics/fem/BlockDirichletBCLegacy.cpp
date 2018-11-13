@@ -22,13 +22,14 @@
 #include <multiphenics/la/BlockPETScSubMatrix.h>
 #include <multiphenics/la/BlockPETScSubVector.h>
 
-using namespace dolfin;
-using namespace dolfin::fem;
 using namespace multiphenics;
 using namespace multiphenics::fem;
 
+using dolfin::fem::DirichletBC;
+using dolfin::la::petsc_error;
 using dolfin::la::PETScMatrix;
 using dolfin::la::PETScVector;
+using dolfin::MPI;
 using multiphenics::la::BlockInsertMode;
 using multiphenics::la::BlockPETScSubMatrix;
 using multiphenics::la::BlockPETScSubVector;

@@ -21,9 +21,7 @@
 #include <multiphenics/la/BlockPETScSubMatrix.h>
 #include <multiphenics/la/BlockPETScSubVector.h>
 
-using namespace dolfin;
-using namespace dolfin::fem;
-
+using dolfin::fem::DirichletBCLegacy;
 using dolfin::la::PETScMatrix;
 using dolfin::la::PETScVector;
 
