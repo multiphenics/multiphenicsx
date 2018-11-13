@@ -18,7 +18,7 @@
 
 import pytest
 from numpy import concatenate
-from dolfin import cells, FunctionSpace, UnitSquareMesh
+from dolfin import Cells, FunctionSpace, UnitSquareMesh
 from dolfin_utils.test import fixture as module_fixture
 from multiphenics import BlockElement, BlockFunctionSpace
 from test_utils import assert_global_dofs, assert_owned_local_dofs, assert_tabulated_dof_coordinates, array_sorted_equal, assert_unowned_local_dofs, get_elements_1, get_elements_2, get_function_spaces_1, get_function_spaces_2, get_restrictions_1, get_restrictions_2, unique
@@ -40,7 +40,7 @@ def assert_dof_map_single_block_no_restriction(V, block_V):
     block_V_local_to_global_unowned = block_V.block_dofmap().local_to_global_unowned()
     block_V_local_to_global_unowned = unique([b//V.dofmap().index_map().block_size() for b in block_V_local_to_global_unowned])
     assert array_sorted_equal(V_local_to_global_unowned, block_V_local_to_global_unowned)
-    for c in cells(block_V.mesh()):
+    for c in Cells(block_V.mesh()):
         V_cell_dofs = V.dofmap().cell_dofs(c.index())
         V_cell_owned_local_dofs = [a for a in V_cell_dofs if a < local_dimension]
         V_cell_unowned_local_dofs = [a for a in V_cell_dofs if a >= local_dimension]
@@ -82,7 +82,7 @@ def assert_dof_map_two_blocks_no_restriction(V1, V2, block_V):
     global_dimension2 = V2.dofmap().global_dimension()
     block_global_dimension = block_V.block_dofmap().global_dimension()
     assert global_dimension1 + global_dimension2 == block_global_dimension
-    for c in cells(block_V.mesh()):
+    for c in Cells(block_V.mesh()):
         V1_cell_dofs = V1.dofmap().cell_dofs(c.index())
         V1_cell_owned_local_dofs = [a for a in V1_cell_dofs if a < local_dimension1]
         V1_cell_unowned_local_dofs = [a for a in V1_cell_dofs if a >= local_dimension1]
@@ -129,7 +129,7 @@ def assert_dof_map_single_block_with_restriction(V, block_V):
     map_block_to_original = block_V.block_dofmap().block_to_original(0)
     kept_dofs = map_block_to_original.values()
     # Assert equality
-    for c in cells(block_V.mesh()):
+    for c in Cells(block_V.mesh()):
         V_cell_dofs = V.dofmap().cell_dofs(c.index())
         V_cell_owned_local_dofs = [a for a in V_cell_dofs if a in kept_dofs and a < local_dimension]
         V_cell_unowned_local_dofs = [a for a in V_cell_dofs if a in kept_dofs and a >= local_dimension]
@@ -173,7 +173,7 @@ def assert_dof_map_test_two_blocks_with_restriction(V1, V2, block_V):
     for (b2, a2) in map_block_to_original2.items():
         map_block_to_original[b2] = a2 + local_dimension1
     # Assert equality
-    for c in cells(block_V.mesh()):
+    for c in Cells(block_V.mesh()):
         V1_cell_dofs = V1.dofmap().cell_dofs(c.index())
         V1_cell_owned_local_dofs = [a1 for a1 in V1_cell_dofs if a1 in kept_dofs1 and a1 < local_dimension1]
         V1_cell_unowned_local_dofs = [a1 for a1 in V1_cell_dofs if a1 in kept_dofs1 and a1 >= local_dimension1]

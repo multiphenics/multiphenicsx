@@ -29,7 +29,7 @@ def generate_subdomain_restriction(mesh, subdomains, subdomain_id):
         mesh_function_d.set_all(False)
         restriction.append(mesh_function_d)
     # Mark restriction mesh functions based on subdomain id
-    for c in cells(mesh):
+    for c in Cells(mesh):
         if subdomains[c] == subdomain_id:
             restriction[D][c] = True
             for d in range(D):
@@ -51,7 +51,7 @@ def generate_interface_restriction(mesh, subdomains, subdomain_ids):
         restriction.append(mesh_function_d)
     # Mark restriction mesh functions based on subdomain ids (except the mesh function corresponding to dimension D, as it is trivially false)
     for f in facets(mesh):
-        subdomains_ids_f = set(subdomains[c] for c in cells(f))
+        subdomains_ids_f = set(subdomains[c] for c in Cells(f))
         assert len(subdomains_ids_f) in (1, 2)
         if subdomains_ids_f == subdomain_ids:
             restriction[D - 1][f] = True
