@@ -35,7 +35,7 @@ def BlockSLEPcEigenSolver(A, B=None, bcs=None):
     from multiphenics.fem import BlockDirichletBC # avoid recursive imports
     
     if bcs is None:
-        EigenSolver = DecorateGetEigenPair(dolfin.SLEPcEigenSolver) # applicable also to block matrices, because block la inherits from standard la
+        EigenSolver = DecorateGetEigenPair(dolfin.SLEPcEigenSolver)
         return EigenSolver(A, B)
     else:
         assert isinstance(bcs, BlockDirichletBC)
