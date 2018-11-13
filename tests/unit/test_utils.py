@@ -22,7 +22,7 @@ from _pytest.mark import ParameterSet
 from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, hstack, hstack as bvec, sort, unique, vstack
 from dolfin import assemble, Constant, DOLFIN_EPS, dx, Expression, FiniteElement, Function, FunctionSpace, inner, MixedElement, project, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
 from dolfin.cpp.la import PETScMatrix, PETScVector
-from multiphenics import assign, block_assemble, block_assign, BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
+from multiphenics import block_assemble, BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
 
 # ================ PYTEST HELPER ================ #
 def pytest_mark_slow(item):
@@ -156,15 +156,25 @@ def assert_functions_manipulations(functions, block_V):
     # a) Convert from a list of Functions to a BlockFunction
     block_function_a = BlockFunction(block_V)
     for (index, function) in enumerate(functions):
-        assign(block_function_a.sub(index), function)
+        function.vector().vec().copy(result=block_function_a.sub(index).vector().vec())
+        block_function_a.sub(index).vector().apply()
+    block_function_a.apply("from subfunctions")
     # Block vector should have received the data stored in the list of Functions
     if n_blocks == 1:
         assert_block_functions_equal(functions[0], block_function_a, block_V)
     else:
         assert_block_functions_equal((functions[0], functions[1]), block_function_a, block_V)
-    # b) Test block_assign
+    # Clean up non-zero values in the restriction by clearing subfunctions and reassigning
+    # their values (only on restrictions) from the block_vector. This is not needed in general,
+    # but it is required in order to simplify the test b).
+    for index in range(n_blocks):
+        block_function_a.sub(index).vector().set(0.)
+    block_function_a.apply("to subfunctions")
+    # b) Test assignment of BlockFunctions
     block_function_b = BlockFunction(block_V)
-    block_assign(block_function_b, block_function_a)
+    block_function_a.block_vector().vec().copy(result=block_function_b.block_vector().vec())
+    block_function_b.block_vector().apply()
+    block_function_b.apply("to subfunctions")
     # Each sub function should now contain the same data as the original block function
     for index in range(n_blocks):
         assert array_equal(block_function_b.sub(index).vector().get_local(), block_function_a.sub(index).vector().get_local())

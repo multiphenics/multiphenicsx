@@ -17,7 +17,8 @@
 #
 
 import pytest
-from dolfin import assemble, assign, div, ds, dx, grad, FunctionSpace, inner, UnitSquareMesh, VectorFunctionSpace
+from numpy.linalg import norm
+from dolfin import assemble, div, ds, dx, grad, FunctionSpace, inner, UnitSquareMesh, VectorFunctionSpace
 from dolfin_utils.test import fixture as module_fixture
 from multiphenics import block_adjoint, block_derivative, BlockForm, BlockFunction, BlockFunctionSpace, block_restrict, block_split, BlockTestFunction, BlockTrialFunction
 from test_utils import array_equal, get_list_of_functions_2
@@ -611,8 +612,11 @@ def test_case_0j(mesh):
     # Solutions
     (U_in, P_in) = get_list_of_functions_2(W)
     UP = BlockFunction(W)
-    assign(UP.sub(0), U_in)
-    assign(UP.sub(1), P_in)
+    U_in.vector().vec().copy(result=UP.sub(0).vector().vec())
+    U_in.vector().apply()
+    P_in.vector().vec().copy(result=UP.sub(1).vector().vec())
+    P_in.vector().apply()
+    UP.apply("from subfunctions")
     (U, P) = block_split(UP)
     # Forms
     a = [[inner(grad(u), grad(v))*dx, - div(v)*p*dx],
