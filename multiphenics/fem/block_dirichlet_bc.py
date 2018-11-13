@@ -54,7 +54,7 @@ class BlockDirichletBC(BlockDirichletBC_Base):
                 assert bc_block_function_space == block_function_space
             self.bcs[bc_block_index].append(bc)
         # Call Parent
-        BlockDirichletBC_Base.__init__(self, self.bcs, self._block_function_space.cpp_object())
+        BlockDirichletBC_Base.__init__(self, self.bcs, self._block_function_space._cpp_object)
         
     def __getitem__(self, key):
         return self.bcs[key]

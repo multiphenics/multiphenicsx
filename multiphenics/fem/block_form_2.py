@@ -47,20 +47,11 @@ class BlockForm2(BlockForm2_Base):
         replaced_block_form = empty((N, M), dtype=object)
         for I in range(N):
             for J in range(M):
-                if isinstance(block_form[I, J], Form) and has_exact_type(block_form[I, J], CoefficientDerivative):
-                    block_form[I, J] = expand_derivatives(block_form[I, J])
-                replaced_block_form[I, J] = block_replace_zero(block_form, (I, J), block_function_space)
-                assert isinstance(replaced_block_form[I, J], Form) or _is_zero(replaced_block_form[I, J])
-                if isinstance(replaced_block_form[I, J], Form):
-                    replaced_block_form[I, J] = _create_dolfin_form(
-                        form=replaced_block_form[I, J],
-                        form_compiler_parameters=form_compiler_parameters
-                    )
-                elif _is_zero(replaced_block_form[I, J]):
-                    assert isinstance(replaced_block_form[I, J], cpp_Form)
-                else:
-                    raise TypeError("Invalid form")
-        BlockForm2_Base.__init__(self, replaced_block_form.tolist(), [block_function_space_.cpp_object() for block_function_space_ in block_function_space])
+                replaced_block_form[I, J] = _create_dolfin_form(
+                    form=block_form[I, J],
+                    form_compiler_parameters=form_compiler_parameters
+                )
+        BlockForm2_Base.__init__(self, replaced_block_form.tolist(), [block_function_space_._cpp_object for block_function_space_ in block_function_space])
         # Store sizes for shape method
         self.N = N
         self.M = M

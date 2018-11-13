@@ -56,12 +56,12 @@ class BlockFunction(object):
             raise TypeError("Too many arguments")
 
     def _init_from_block_function_space(self, block_V):
-        self._cpp_object = BlockFunction_Base(block_V.cpp_object())
+        self._cpp_object = BlockFunction_Base(block_V._cpp_object)
         self._block_function_space = block_V
         self._init_sub_functions()
 
     def _init_from_block_function_space_and_block_vector(self, block_V, block_vec):
-        self._cpp_object = BlockFunction_Base(block_V.cpp_object(), block_vec)
+        self._cpp_object = BlockFunction_Base(block_V._cpp_object, block_vec)
         self._block_function_space = block_V
         self._init_sub_functions()
         
@@ -71,14 +71,14 @@ class BlockFunction(object):
         self._init_sub_functions()
         
     def _init_from_block_function_space_and_sub_functions(self, block_V, sub_functions):
-        self._cpp_object = BlockFunction_Base(block_V.cpp_object(), [sub_function._cpp_object for sub_function in sub_functions])
+        self._cpp_object = BlockFunction_Base(block_V._cpp_object, [sub_function._cpp_object for sub_function in sub_functions])
         self._block_function_space = block_V
         self._num_sub_spaces = block_V.num_sub_spaces()
         assert len(sub_functions) == self._num_sub_spaces
         self._sub_functions = sub_functions
         
     def _init_from_block_function_space_and_block_vector_and_sub_functions(self, block_V, block_vec, sub_functions):
-        self._cpp_object = BlockFunction_Base(block_V.cpp_object(), block_vec, [sub_function._cpp_object for sub_function in sub_functions])
+        self._cpp_object = BlockFunction_Base(block_V._cpp_object, block_vec, [sub_function._cpp_object for sub_function in sub_functions])
         self._block_function_space = block_V
         self._num_sub_spaces = block_V.num_sub_spaces()
         assert len(sub_functions) == self._num_sub_spaces
