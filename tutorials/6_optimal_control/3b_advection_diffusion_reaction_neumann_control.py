@@ -60,12 +60,14 @@ Q = Y
 W = BlockFunctionSpace([Y, U, Q], restrict=[None, control_boundary, None])
 
 # PROBLEM DATA #
-alpha = Constant(0.07)
-y_d = Constant(2.5)
-epsilon = Constant(1./12.)
+alpha = 0.07
+y_d = 2.5
+epsilon = 1./12.
 beta = Expression(("x[1]*(1-x[1])", "0"), element=VectorElement(Y.ufl_element()))
-sigma = Constant(0.)
-f = Constant(0.)
+sigma = 0.
+f = 0.
+bc0 = Expression("0.", element=W.sub(0).ufl_element())
+bc1 = Expression("1.", element=W.sub(0).ufl_element())
 
 # TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)
@@ -86,9 +88,9 @@ a = [[y*z*dx(3)     , 0              , adjoint_operator],
 f =  [y_d*z*dx(3),
       0          ,
       f*q*dx      ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant(1.), boundaries, 1)],
+bc = BlockDirichletBC([[DirichletBC(W.sub(0), bc1, boundaries, 1)],
                        [],
-                       [DirichletBC(W.sub(2), Constant(0.), boundaries, 1)]])
+                       [DirichletBC(W.sub(2), bc0, boundaries, 1)]])
 
 # SOLUTION #
 yup = BlockFunction(W)

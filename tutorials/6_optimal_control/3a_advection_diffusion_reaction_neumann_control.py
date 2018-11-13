@@ -17,6 +17,7 @@
 #
 
 from numpy import isclose
+import ufl
 from dolfin import *
 import matplotlib.pyplot as plt
 from multiphenics import *
@@ -60,12 +61,13 @@ Q = Y
 W = BlockFunctionSpace([Y, U, Q], restrict=[None, left, None])
 
 # PROBLEM DATA #
-alpha = Constant(1.e-5)
-y_d = Constant(1.)
-epsilon = Constant(1.e-1)
-beta = Constant((-1., -2.))
-sigma = Constant(1.)
-f = Constant(1.)
+alpha = 1.e-5
+y_d = 1.
+epsilon = 1.e-1
+beta = ufl.as_vector((-1., -2.))
+sigma = 1.
+f = 1.
+bc0 = Expression("0.", element=W.sub(0).ufl_element())
 
 # TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)
@@ -85,9 +87,9 @@ a = [[y*z*dx        , 0              , adjoint_operator],
 f =  [y_d*z*dx,
       0       ,
       f*q*dx   ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant(0.), boundaries, 4)],
+bc = BlockDirichletBC([[DirichletBC(W.sub(0), bc0, boundaries, 4)],
                        [],
-                       [DirichletBC(W.sub(2), Constant(0.), boundaries, 4)]])
+                       [DirichletBC(W.sub(2), bc0, boundaries, 4)]])
 
 # SOLUTION #
 yup = BlockFunction(W)

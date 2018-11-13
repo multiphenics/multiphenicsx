@@ -21,7 +21,7 @@ import pytest
 from _pytest.mark import ParameterSet
 from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, hstack, hstack as bvec, sort, unique, vstack
 from scipy.sparse import csr_matrix
-from dolfin import Constant, DOLFIN_EPS, dx, Expression, FiniteElement, Function, FunctionSpace, inner, MixedElement, project, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
+from dolfin import DOLFIN_EPS, dx, Expression, FiniteElement, Function, FunctionSpace, inner, MeshFunction, MixedElement, project, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
 from dolfin.cpp.la import PETScMatrix, PETScVector
 from multiphenics import block_assemble, BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
 
@@ -34,15 +34,15 @@ def pytest_mark_slow_for_cartesian_product(generator_1, generator_2):
         for j in generator_2():
             slow = False
             if isinstance(i, ParameterSet):
-                assert len(i.marks) == 1
+                assert len(i.marks) is 1
                 assert i.marks[0].name == "slow"
-                assert len(i.values) == 1
+                assert len(i.values) is 1
                 i = i.values[0]
                 slow = True
             if isinstance(j, ParameterSet):
-                assert len(j.marks) == 1
+                assert len(j.marks) is 1
                 assert j.marks[0].name == "slow"
-                assert len(j.values) == 1
+                assert len(j.values) is 1
                 j = j.values[0]
                 slow = True
             assert not isinstance(i, ParameterSet)
@@ -262,7 +262,7 @@ def UnitSquareInterface(X=None, Y=None, on_boundary=False):
         class CustomSubDomain(SubDomain):
             def inside(self, x, on_boundary_):
                 return x[1] >= Y - DOLFIN_EPS and x[1] <= Y + DOLFIN_EPS
-    elif on_boundary:
+    elif on_boundary is True:
         class CustomSubDomain(SubDomain):
             def inside(self, x, on_boundary_):
                 return on_boundary_
@@ -309,52 +309,61 @@ def get_restrictions_2():
 # Computation of block bcs for single block
 def get_block_bcs_1():
     def _get_bc_1(block_V):
-        on_boundary = OnBoundary()
-        shape_1 = block_V[0].ufl_element().value_shape()
-        if len(shape_1) == 0:
-            bc1_fun = Constant(1.)
-        elif len(shape_1) == 1 and shape_1[0] == 2:
-            bc1_fun = Constant((1., 2.))
-        elif len(shape_1) == 1 and shape_1[0] == 3:
-            bc1_fun = Constant((1., 2., 3.))
-        elif len(shape_1) == 2:
-            bc1_fun = Constant(((1., 2.),
-                                (3., 4.)))
-        return DirichletBC(block_V.sub(0), bc1_fun, on_boundary)
+        mesh = block_V.mesh()
+        boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
+        OnBoundary().mark(boundaries, 1)
+        num_sub_elements = block_V[0].ufl_element().num_sub_elements()
+        if num_sub_elements is 0:
+            bc1_fun = Function(block_V[0])
+            bc1_fun.vector().set(1.)
+            return [DirichletBC(block_V[0], bc1_fun, (boundaries, 1))]
+        else:
+            bc1 = list()
+            for i in range(num_sub_elements):
+                bc1_fun = Function(block_V[0].sub(i).collapse())
+                bc1_fun.vector().set(i + 1.)
+                bc1.append(DirichletBC(block_V[0].sub(i), bc1_fun, (boundaries, 1)))
+            return bc1
     return (
         lambda block_V: None,
         pytest_mark_slow(lambda block_V: BlockDirichletBC([None], block_function_space=block_V)),
-        lambda block_V: BlockDirichletBC([_get_bc_1(block_V)])
+        lambda block_V: BlockDirichletBC(_get_bc_1(block_V))
     )
     
 # Computation of block bcs for two blocks
 def get_block_bcs_2():
     def _get_bc_1(block_V):
-        on_boundary = OnBoundary()
-        shape_1 = block_V[0].ufl_element().value_shape()
-        if len(shape_1) == 0:
-            bc1_fun = Constant(1.)
-        elif len(shape_1) == 1 and shape_1[0] == 2:
-            bc1_fun = Constant((1., 2.))
-        elif len(shape_1) == 1 and shape_1[0] == 3:
-            bc1_fun = Constant((1., 2., 3.))
-        elif len(shape_1) == 2:
-            bc1_fun = Constant(((1., 2.),
-                                (3., 4.)))
-        return DirichletBC(block_V.sub(0), bc1_fun, on_boundary)
+        mesh = block_V.mesh()
+        boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
+        OnBoundary().mark(boundaries, 1)
+        num_sub_elements = block_V[0].ufl_element().num_sub_elements()
+        if num_sub_elements is 0:
+            bc1_fun = Function(block_V[0])
+            bc1_fun.vector().set(1.)
+            return [DirichletBC(block_V[0], bc1_fun, (boundaries, 1))]
+        else:
+            bc1 = list()
+            for i in range(num_sub_elements):
+                bc1_fun = Function(block_V[0].sub(i).collapse())
+                bc1_fun.vector().set(i + 1.)
+                bc1.append(DirichletBC(block_V[0].sub(i), bc1_fun, (boundaries, 1)))
+            return bc1
     def _get_bc_2(block_V):
-        on_boundary = OnBoundary()
-        shape_2 = block_V[1].ufl_element().value_shape()
-        if len(shape_2) == 0:
-            bc2_fun = Constant(11.)
-        elif len(shape_2) == 1 and shape_2[0] == 2:
-            bc2_fun = Constant((11., 12.))
-        elif len(shape_2) == 1 and shape_2[0] == 3:
-            bc2_fun = Constant((11., 12., 13.))
-        elif len(shape_2) == 2:
-            bc2_fun = Constant(((11., 12.),
-                                (13., 14.)))
-        return DirichletBC(block_V.sub(1), bc2_fun, on_boundary)
+        mesh = block_V.mesh()
+        boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
+        OnBoundary().mark(boundaries, 1)
+        num_sub_elements = block_V[1].ufl_element().num_sub_elements()
+        if num_sub_elements is 0:
+            bc2_fun = Function(block_V[1])
+            bc2_fun.vector().set(11.)
+            return [DirichletBC(block_V[1], bc2_fun, (boundaries, 1))]
+        else:
+            bc2 = list()
+            for i in range(num_sub_elements):
+                bc2_fun = Function(block_V[1].sub(i).collapse())
+                bc2_fun.vector().set(i + 11.)
+                bc2.append(DirichletBC(block_V[1].sub(i), bc2_fun, (boundaries, 1)))
+            return bc2
     return (
         lambda block_V: None,
         pytest_mark_slow(lambda block_V: BlockDirichletBC([None, None], block_function_space=block_V)),
@@ -369,16 +378,16 @@ def get_rhs_block_form_1(block_V):
     block_v = BlockTestFunction(block_V)
     (v, ) = block_split(block_v)
     shape_1 = block_V[0].ufl_element().value_shape()
-    if len(shape_1) == 0:
+    if len(shape_1) is 0:
         f = Expression("2*x[0] + 4*x[1]*x[1]", degree=2)
         block_form = [f*v*dx]
-    elif len(shape_1) == 1 and shape_1[0] == 2:
+    elif len(shape_1) is 1 and shape_1[0] is 2:
         f = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"), degree=2)
         block_form = [inner(f, v)*dx]
-    elif len(shape_1) == 1 and shape_1[0] == 3:
+    elif len(shape_1) is 1 and shape_1[0] is 3:
         f = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]", "7*x[0] + 11*x[1]*x[1]"), degree=2)
         block_form = [inner(f, v)*dx]
-    elif len(shape_1) == 2:
+    elif len(shape_1) is 2:
         f = Expression((("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"),
                         ("7*x[0] + 11*x[1]*x[1]", "13*x[0] + 17*x[1]*x[1]")), degree=2)
         block_form = [inner(f, v)*dx]
@@ -390,30 +399,30 @@ def get_rhs_block_form_2(block_V):
     (v1, v2) = block_split(block_v)
     block_form = [None, None]
     shape_1 = block_V[0].ufl_element().value_shape()
-    if len(shape_1) == 0:
+    if len(shape_1) is 0:
         f1 = Expression("2*x[0] + 4*x[1]*x[1]", degree=2)
         block_form[0] = f1*v1*dx
-    elif len(shape_1) == 1 and shape_1[0] == 2:
+    elif len(shape_1) is 1 and shape_1[0] is 2:
         f1 = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"), degree=2)
         block_form[0] = inner(f1, v1)*dx
-    elif len(shape_1) == 1 and shape_1[0] == 3:
+    elif len(shape_1) is 1 and shape_1[0] is 3:
         f1 = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]", "7*x[0] + 11*x[1]*x[1]"), degree=2)
         block_form[0] = inner(f1, v1)*dx
-    elif len(shape_1) == 2:
+    elif len(shape_1) is 2:
         f1 = Expression((("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"),
                          ("7*x[0] + 11*x[1]*x[1]", "13*x[0] + 17*x[1]*x[1]")), degree=2)
         block_form[0] = inner(f1, v1)*dx
     shape_2 = block_V[1].ufl_element().value_shape()
-    if len(shape_2) == 0:
+    if len(shape_2) is 0:
         f2 = Expression("2*x[1] + 4*x[0]*x[0]", degree=2)
         block_form[1] = f2*v2*dx
-    elif len(shape_2) == 1 and shape_2[0] == 2:
+    elif len(shape_2) is 1 and shape_2[0] is 2:
         f2 = Expression(("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]"), degree=2)
         block_form[1] = inner(f2, v2)*dx
-    elif len(shape_2) == 1 and shape_2[0] == 3:
+    elif len(shape_2) is 1 and shape_2[0] is 3:
         f2 = Expression(("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]", "7*x[1] + 11*x[0]*x[0]"), degree=2)
         block_form[1] = inner(f2, v2)*dx
-    elif len(shape_2) == 2:
+    elif len(shape_2) is 2:
         f2 = Expression((("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]"),
                          ("7*x[1] + 11*x[0]*x[0]", "13*x[1] + 17*x[0]*x[0]")), degree=2)
         block_form[1] = inner(f2, v2)*dx
@@ -427,16 +436,16 @@ def get_lhs_block_form_1(block_V):
     (u, ) = block_split(block_u)
     (v, ) = block_split(block_v)
     shape_1 = block_V[0].ufl_element().value_shape()
-    if len(shape_1) == 0:
+    if len(shape_1) is 0:
         f = Expression("2*x[0] + 4*x[1]*x[1]", degree=2)
         block_form = [[f*u*v*dx]]
-    elif len(shape_1) == 1 and shape_1[0] == 2:
+    elif len(shape_1) is 1 and shape_1[0] is 2:
         f = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"), degree=2)
         block_form = [[(f[0]*u[0]*v[0] + f[1]*u[1].dx(1)*v[1])*dx]]
-    elif len(shape_1) == 1 and shape_1[0] == 3:
+    elif len(shape_1) is 1 and shape_1[0] is 3:
         f = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]", "7*x[0] + 11*x[1]*x[1]"), degree=2)
         block_form = [[(f[0]*u[0]*v[0] + f[1]*u[1].dx(1)*v[1] + f[2]*u[2].dx(0)*v[2].dx(1))*dx]]
-    elif len(shape_1) == 2:
+    elif len(shape_1) is 2:
         f = Expression((("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"),
                         ("7*x[0] + 11*x[1]*x[1]", "13*x[0] + 17*x[1]*x[1]")), degree=2)
         block_form = [[(f[0, 0]*u[0, 0]*v[0, 0] + f[0, 1]*u[0, 1].dx(1)*v[0, 1] + f[1, 0]*u[1, 0].dx(0)*v[1, 0].dx(1) + f[1, 1]*u[1, 1].dx(0)*v[1, 1])*dx]]
@@ -451,85 +460,85 @@ def get_lhs_block_form_2(block_V):
     block_form = [[None, None], [None, None]]
     # (1, 1) block
     shape_1 = block_V[0].ufl_element().value_shape()
-    if len(shape_1) == 0:
+    if len(shape_1) is 0:
         f1 = Expression("2*x[0] + 4*x[1]*x[1]", degree=2)
         block_form[0][0] = f1*u1*v1*dx
-    elif len(shape_1) == 1 and shape_1[0] == 2:
+    elif len(shape_1) is 1 and shape_1[0] is 2:
         f1 = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"), degree=2)
         block_form[0][0] = (f1[0]*u1[0]*v1[0] + f1[1]*u1[1].dx(1)*v1[1])*dx
-    elif len(shape_1) == 1 and shape_1[0] == 3:
+    elif len(shape_1) is 1 and shape_1[0] is 3:
         f1 = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]", "7*x[0] + 11*x[1]*x[1]"), degree=2)
         block_form[0][0] = (f1[0]*u1[0]*v1[0] + f1[1]*u1[1].dx(1)*v1[1] + f1[2]*u1[2].dx(0)*v1[2].dx(1))*dx
-    elif len(shape_1) == 2:
+    elif len(shape_1) is 2:
         f1 = Expression((("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"),
                          ("7*x[0] + 11*x[1]*x[1]", "13*x[0] + 17*x[1]*x[1]")), degree=2)
         block_form[0][0] = (f1[0, 0]*u1[0, 0]*v1[0, 0] + f1[0, 1]*u1[0, 1].dx(1)*v1[0, 1] + f1[1, 0]*u1[1, 0].dx(0)*v1[1, 0].dx(1) + f1[1, 1]*u1[1, 1].dx(0)*v1[1, 1])*dx
     # (2, 2) block
     shape_2 = block_V[1].ufl_element().value_shape()
-    if len(shape_2) == 0:
+    if len(shape_2) is 0:
         f2 = Expression("2*x[1] + 4*x[0]*x[0]", degree=2)
         block_form[1][1] = f2*u2*v2*dx
-    elif len(shape_2) == 1 and shape_2[0] == 2:
+    elif len(shape_2) is 1 and shape_2[0] is 2:
         f2 = Expression(("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]"), degree=2)
         block_form[1][1] = (f2[0]*u2[0]*v2[0] + f2[1]*u2[1].dx(1)*v2[1])*dx
-    elif len(shape_2) == 1 and shape_2[0] == 3:
+    elif len(shape_2) is 1 and shape_2[0] is 3:
         f2 = Expression(("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]", "7*x[1] + 11*x[0]*x[0]"), degree=2)
         block_form[1][1] = (f2[0]*u2[0]*v2[0] + f2[1]*u2[1].dx(1)*v2[1] + f2[2]*u2[2].dx(0)*v2[2].dx(1))*dx
-    elif len(shape_2) == 2:
+    elif len(shape_2) is 2:
         f2 = Expression((("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]"),
                          ("7*x[1] + 11*x[0]*x[0]", "13*x[1] + 17*x[0]*x[0]")), degree=2)
         block_form[1][1] = (f2[0, 0]*u2[0, 0]*v2[0, 0] + f2[0, 1]*u2[0, 1].dx(1)*v2[0, 1] + f2[1, 0]*u2[1, 0].dx(0)*v2[1, 0].dx(1) + f2[1, 1]*u2[1, 1].dx(0)*v2[1, 1])*dx
     # (1, 2) and (2, 1) blocks
-    if len(shape_1) == 0:
-        if len(shape_2) == 0:
+    if len(shape_1) is 0:
+        if len(shape_2) is 0:
             block_form[0][1] = f1*u2*v1*dx
             block_form[1][0] = f2*u1*v2*dx
-        elif len(shape_2) == 1 and shape_2[0] == 2:
+        elif len(shape_2) is 1 and shape_2[0] is 2:
             block_form[0][1] = f1*u2[0]*v1*dx + f1*u2[1]*v1.dx(1)*dx
             block_form[1][0] = (f2[0]*u1*v2[0] + f2[1]*u1.dx(1)*v2[1])*dx
-        elif len(shape_2) == 1 and shape_2[0] == 3:
+        elif len(shape_2) is 1 and shape_2[0] is 3:
             block_form[0][1] = f1*u2[0]*v1*dx + f1*u2[1]*v1.dx(1)*dx + f1*u2[2]*v1*dx
             block_form[1][0] = (f2[0]*u1*v2[0] + f2[1]*u1.dx(1)*v2[1] + f2[2]*u1.dx(0)*v2[2].dx(1))*dx
-        elif len(shape_2) == 2:
+        elif len(shape_2) is 2:
             block_form[0][1] = f1*u2[0, 0]*v1*dx + f1*u2[1, 1]*v1.dx(0)*dx
             block_form[1][0] = (f2[0, 0]*u1*v2[0, 0] + f2[0, 1]*u1.dx(1)*v2[0, 1] + f2[1, 0]*u1.dx(0)*v2[1, 0].dx(1) + f2[1, 1]*u1.dx(0)*v2[1, 1])*dx
-    elif len(shape_1) == 1 and shape_1[0] == 2:
-        if len(shape_2) == 0:
+    elif len(shape_1) is 1 and shape_1[0] is 2:
+        if len(shape_2) is 0:
             block_form[0][1] = (f1[0]*u2*v1[0] + f1[1]*u2.dx(1)*v1[1])*dx
             block_form[1][0] = f2*u1[0]*v2*dx + f2*u1[1]*v2.dx(0)*dx
-        elif len(shape_2) == 1 and shape_2[0] == 2:
+        elif len(shape_2) is 1 and shape_2[0] is 2:
             block_form[0][1] = (f1[0]*u2[0]*v1[0] + f1[1]*u2[1].dx(1)*v1[1])*dx
             block_form[1][0] = (f2[0]*u1[0]*v2[0] + f2[1]*u1[1].dx(1)*v2[1])*dx
-        elif len(shape_2) == 1 and shape_2[0] == 3:
+        elif len(shape_2) is 1 and shape_2[0] is 3:
             block_form[0][1] = (f1[0]*u2[0]*v1[0] + f1[1]*u2[1].dx(1)*v1[1] + f1[0]*u2[2]*v1[0])*dx
             block_form[1][0] = (f2[0]*u1[0]*v2[0] + f2[1]*u1[1].dx(1)*v2[1] + f2[2]*u1[0].dx(0)*v2[2].dx(1))*dx
-        elif len(shape_2) == 2:
+        elif len(shape_2) is 2:
             block_form[0][1] = (f1[0]*u2[0, 0]*v1[0] + f1[1]*u2[1, 1].dx(1)*v1[1])*dx
             block_form[1][0] = (f2[0, 0]*u1[0]*v2[0, 0] + f2[0, 1]*u1[0].dx(1)*v2[0, 1] + f2[1, 0]*u1[1].dx(0)*v2[1, 0].dx(1) + f2[1, 1]*u1[0].dx(0)*v2[1, 1])*dx
-    elif len(shape_1) == 1 and shape_1[0] == 3:
-        if len(shape_2) == 0:
+    elif len(shape_1) is 1 and shape_1[0] is 3:
+        if len(shape_2) is 0:
             block_form[0][1] = (f1[0]*u2*v1[0] + f1[1]*u2.dx(1)*v1[1] + f1[2]*u2.dx(0)*v1[2].dx(1))*dx
             block_form[1][0] = f2*u1[0]*v2*dx + f2*u1[1]*v2.dx(1)*dx + f2*u1[2]*v2*dx
-        elif len(shape_2) == 1 and shape_2[0] == 2:
+        elif len(shape_2) is 1 and shape_2[0] is 2:
             block_form[0][1] = (f1[0]*u2[0]*v1[0] + f1[1]*u2[1].dx(1)*v1[1] + f1[2]*u2[0].dx(0)*v1[2].dx(1))*dx
             block_form[1][0] = (f2[0]*u1[0]*v2[0] + f2[1]*u1[1].dx(1)*v2[1] + f2[1]*u1[2].dx(1)*v2[1])*dx
-        elif len(shape_2) == 1 and shape_2[0] == 3:
+        elif len(shape_2) is 1 and shape_2[0] is 3:
             block_form[0][1] = (f1[0]*u2[0]*v1[0] + f1[1]*u2[1].dx(1)*v1[1] + f1[2]*u2[2].dx(0)*v1[2].dx(1))*dx
             block_form[1][0] = (f2[0]*u1[0]*v2[0] + f2[1]*u1[1].dx(1)*v2[1] + f2[2]*u1[2].dx(0)*v2[2].dx(1))*dx
-        elif len(shape_2) == 2:
+        elif len(shape_2) is 2:
             block_form[0][1] = (f1[0]*u2[0, 0]*v1[0] + f1[1]*u2[1, 0].dx(1)*v1[1] + f1[2]*u2[0, 1].dx(0)*v1[2].dx(1) + f1[0]*u2[1, 1]*v1[0].dx(1))*dx
             block_form[1][0] = (f2[0, 0]*u1[0]*v2[0, 0] + f2[0, 1]*u1[1].dx(1)*v2[0, 1] + f2[1, 0]*u1[2].dx(0)*v2[1, 0].dx(1) + f2[1, 1]*u1[0].dx(0)*v2[1, 1])*dx
-    elif len(shape_1) == 2:
-        if len(shape_2) == 0:
+    elif len(shape_1) is 2:
+        if len(shape_2) is 0:
             block_form[0][1] = (f1[0, 0]*u2*v1[0, 0] + f1[0, 1]*u2.dx(1)*v1[0, 1] + f1[1, 0]*u2.dx(0)*v1[1, 0].dx(1) + f1[1, 1]*u2.dx(0)*v1[1, 1])*dx
             block_form[1][0] = f2*u1[0, 0]*v2*dx + f2*u1[1, 1]*v2.dx(1)*dx
-        elif len(shape_2) == 1 and shape_2[0] == 2:
+        elif len(shape_2) is 1 and shape_2[0] is 2:
             block_form[0][1] = (f1[0, 0]*u2[0]*v1[0, 0] + f1[0, 1]*u2[0].dx(1)*v1[0, 1] + f1[1, 0]*u2[1].dx(0)*v1[1, 0].dx(1) + f1[1, 1]*u2[1].dx(0)*v1[1, 1])*dx
             block_form[1][0] = (f2[0]*u1[0, 0]*v2[0] + f2[1]*u1[1, 1].dx(1)*v2[1])*dx
-        elif len(shape_2) == 1 and shape_2[0] == 3:
+        elif len(shape_2) is 1 and shape_2[0] is 3:
             block_form[0][1] = (f1[0, 0]*u2[0]*v1[0, 0] + f1[0, 1]*u2[1].dx(1)*v1[0, 1] + f1[1, 0]*u2[2].dx(0)*v1[1, 0].dx(1) + f1[1, 1]*u2[0].dx(0)*v1[1, 1])*dx
             block_form[1][0] = (f2[0]*u1[0, 0]*v2[0] + f2[1]*u1[1, 0].dx(1)*v2[1] + f2[2]*u1[0, 1].dx(0)*v2[2].dx(1) + f2[0]*u1[1, 1]*v2[0].dx(1))*dx
-        elif len(shape_2) == 2:
+        elif len(shape_2) is 2:
             block_form[0][1] = (f1[0, 0]*u2[0, 0]*v1[0, 0] + f1[0, 1]*u2[0, 1].dx(1)*v1[0, 1] + f1[1, 0]*u2[1, 0].dx(0)*v1[1, 0].dx(1) + f1[1, 1]*u2[1, 1].dx(0)*v1[1, 1])*dx
             block_form[1][0] = (f2[0, 0]*u1[0, 0]*v2[0, 0] + f2[0, 1]*u1[0, 1].dx(1)*v2[0, 1] + f2[1, 0]*u1[1, 0].dx(0)*v2[1, 0].dx(1) + f2[1, 1]*u1[1, 1].dx(0)*v2[1, 1])*dx
     return block_form
@@ -606,13 +615,13 @@ def apply_bc_and_block_bc_matrix(lhs, block_lhs, block_bcs):
 # Computation of block function for single block
 def get_list_of_functions_1(block_V):
     shape_1 = block_V[0].ufl_element().value_shape()
-    if len(shape_1) == 0:
+    if len(shape_1) is 0:
         f = Expression("2*x[0] + 4*x[1]*x[1]", degree=2)
-    elif len(shape_1) == 1 and shape_1[0] == 2:
+    elif len(shape_1) is 1 and shape_1[0] is 2:
         f = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"), degree=2)
-    elif len(shape_1) == 1 and shape_1[0] == 3:
+    elif len(shape_1) is 1 and shape_1[0] is 3:
         f = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]", "7*x[0] + 11*x[1]*x[1]"), degree=2)
-    elif len(shape_1) == 2:
+    elif len(shape_1) is 2:
         f = Expression((("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"),
                         ("7*x[0] + 11*x[1]*x[1]", "13*x[0] + 17*x[1]*x[1]")), degree=2)
     return [project(f, block_V[0])]
@@ -620,23 +629,23 @@ def get_list_of_functions_1(block_V):
 # Computation of block function for two blocks
 def get_list_of_functions_2(block_V):
     shape_1 = block_V[0].ufl_element().value_shape()
-    if len(shape_1) == 0:
+    if len(shape_1) is 0:
         f1 = Expression("2*x[0] + 4*x[1]*x[1]", degree=2)
-    elif len(shape_1) == 1 and shape_1[0] == 2:
+    elif len(shape_1) is 1 and shape_1[0] is 2:
         f1 = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"), degree=2)
-    elif len(shape_1) == 1 and shape_1[0] == 3:
+    elif len(shape_1) is 1 and shape_1[0] is 3:
         f1 = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]", "7*x[0] + 11*x[1]*x[1]"), degree=2)
-    elif len(shape_1) == 2:
+    elif len(shape_1) is 2:
         f1 = Expression((("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"),
                          ("7*x[0] + 11*x[1]*x[1]", "13*x[0] + 17*x[1]*x[1]")), degree=2)
     shape_2 = block_V[1].ufl_element().value_shape()
-    if len(shape_2) == 0:
+    if len(shape_2) is 0:
         f2 = Expression("2*x[1] + 4*x[0]*x[0]", degree=2)
-    elif len(shape_2) == 1 and shape_2[0] == 2:
+    elif len(shape_2) is 1 and shape_2[0] is 2:
         f2 = Expression(("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]"), degree=2)
-    elif len(shape_2) == 1 and shape_2[0] == 3:
+    elif len(shape_2) is 1 and shape_2[0] is 3:
         f2 = Expression(("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]", "7*x[1] + 11*x[0]*x[0]"), degree=2)
-    elif len(shape_2) == 2:
+    elif len(shape_2) is 2:
         f2 = Expression((("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]"),
                          ("7*x[1] + 11*x[0]*x[0]", "13*x[1] + 17*x[0]*x[0]")), degree=2)
     return [project(f1, block_V[0]), project(f2, block_V[1])]

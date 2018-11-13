@@ -17,6 +17,7 @@
 #
 
 from numpy import isclose
+import ufl
 from dolfin import *
 import matplotlib.pyplot as plt
 from multiphenics import *
@@ -70,9 +71,12 @@ W_el = BlockElement(Y_velocity, Y_pressure, U, L, Q_velocity, Q_pressure)
 W = BlockFunctionSpace(mesh, W_el, restrict=[None, None, control_boundary, control_boundary, None, None])
 
 # PROBLEM DATA #
-nu = Constant(1.)
-alpha = Constant(1.e-2)
-f = Constant((0., 0.))
+nu = 1.
+alpha = 1.e-2
+f = ufl.as_vector((0., 0.))
+bc0 = Expression(("0.", "0."), element=W.sub(0).ufl_element())
+bc0_component = Expression("0.", element=W.sub(0).ufl_element())
+bc1 = Expression(("2.5", "0."), element=W.sub(0).ufl_element())
 
 # TRIAL/TEST FUNCTIONS #
 trial = BlockTrialFunction(W)
@@ -102,19 +106,19 @@ f =  [0,
       inner(f, s)*dx  ,
       0                ]
 bc = BlockDirichletBC([[
-                            DirichletBC(W.sub(0), Constant((2.5, 0.0)), boundaries, 1),
-                            DirichletBC(W.sub(0).sub(1), Constant(0.0), boundaries, 2),
-                            DirichletBC(W.sub(0).sub(0), Constant(0.0), boundaries, 4),
-                            DirichletBC(W.sub(0), Constant((0.0, 0.0)), boundaries, 5),
+                            DirichletBC(W.sub(0), bc1, boundaries, 1),
+                            DirichletBC(W.sub(0).sub(1), bc0_component, boundaries, 2),
+                            DirichletBC(W.sub(0).sub(0), bc0_component, boundaries, 4),
+                            DirichletBC(W.sub(0), bc0, boundaries, 5),
                         ],
                        [],
                        [],
                        [],
                        [
-                            DirichletBC(W.sub(4), Constant((0.0, 0.0)), boundaries, 1),
-                            DirichletBC(W.sub(4).sub(1), Constant(0.0), boundaries, 2),
-                            DirichletBC(W.sub(4), Constant((0.0, 0.0)), boundaries, 4),
-                            DirichletBC(W.sub(4), Constant((0.0, 0.0)), boundaries, 5),
+                            DirichletBC(W.sub(4), bc0, boundaries, 1),
+                            DirichletBC(W.sub(4).sub(1), bc0_component, boundaries, 2),
+                            DirichletBC(W.sub(4), bc0, boundaries, 4),
+                            DirichletBC(W.sub(4), bc0, boundaries, 5),
                         ],
                        []])
 
@@ -133,10 +137,10 @@ A_state = block_assemble(a_state)
 f_state = block_restrict(f, W_state_test)
 F_state = block_assemble(f_state)
 bc_state = BlockDirichletBC([[
-                                  DirichletBC(W_state_trial.sub(0), Constant((2.5, 0.0)), boundaries, 1),
-                                  DirichletBC(W_state_trial.sub(0).sub(1), Constant(0.0), boundaries, 2),
-                                  DirichletBC(W_state_trial.sub(0), Constant((0.0, 0.0)), boundaries, 4),
-                                  DirichletBC(W_state_trial.sub(0), Constant((0.0, 0.0)), boundaries, 5),
+                                  DirichletBC(W_state_trial.sub(0), bc1, boundaries, 1),
+                                  DirichletBC(W_state_trial.sub(0).sub(1), bc0_component, boundaries, 2),
+                                  DirichletBC(W_state_trial.sub(0), bc0, boundaries, 4),
+                                  DirichletBC(W_state_trial.sub(0), bc0, boundaries, 5),
                               ],
                              []])
 bc_state.apply(A_state)

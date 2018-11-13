@@ -55,10 +55,12 @@ W_el = BlockElement(Y, U, Q)
 W = BlockFunctionSpace(mesh, W_el)
 
 # PROBLEM DATA #
-alpha = Constant(0.01)
-y_d_1 = Constant(1.0)
-y_d_2 = Constant(0.6)
-f = Constant(0.)
+alpha = 0.01
+y_d_1 = 1.0
+y_d_2 = 0.6
+f = 0.
+bc0 = Expression("0.", element=W.sub(0).ufl_element())
+bc1 = Expression("1.", element=W.sub(0).ufl_element())
 
 # TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)
@@ -76,9 +78,9 @@ a = [[y*z*dx                    , 0           , inner(grad(p), grad(z))*dx],
 f =  [y_d_1*z*dx(1) + y_d_2*z*dx(2),
       0                            ,
       f*q*dx                        ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant(1.), boundaries, 1)],
+bc = BlockDirichletBC([[DirichletBC(W.sub(0), bc1, boundaries, 1)],
                        [],
-                       [DirichletBC(W.sub(2), Constant(0.), boundaries, 1)]])
+                       [DirichletBC(W.sub(2), bc0, boundaries, 1)]])
 
 # SOLUTION #
 yup = BlockFunction(W)

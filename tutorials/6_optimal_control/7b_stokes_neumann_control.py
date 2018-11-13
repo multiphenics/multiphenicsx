@@ -17,6 +17,7 @@
 #
 
 from numpy import isclose
+import ufl
 from dolfin import *
 import matplotlib.pyplot as plt
 from multiphenics import *
@@ -68,12 +69,13 @@ W_el = BlockElement(Y_velocity, Y_pressure, U, Q_velocity, Q_pressure)
 W = BlockFunctionSpace(mesh, W_el, restrict=[None, None, control_boundary, None, None])
 
 # PROBLEM DATA #
-nu = Constant(0.04)
-alpha_1 = Constant(0.001)
+nu = 0.04
+alpha_1 = 0.001
 alpha_2 = 0.1*alpha_1
-g = Expression(("10.0*a*(x[1] + 1.0)*(1.0 - x[1])", "0.0"), a=1.0, element=W.sub(0).ufl_element())
 v_d = Expression(("a*(b*10.0*(pow(x[1], 3) - pow(x[1], 2) - x[1] + 1.0)) + ((1.0-b)*10.0*(-pow(x[1], 3) - pow(x[1], 2) + x[1] + 1.0))", "0.0"), a=1.0, b=0.8, element=W.sub(0).ufl_element())
-f = Constant((0., 0.))
+f = ufl.as_vector((0., 0.))
+g = Expression(("10.0*a*(x[1] + 1.0)*(1.0 - x[1])", "0.0"), a=1.0, element=W.sub(0).ufl_element())
+bc0 = Expression(("0.0", "0.0"), element=W.sub(0).ufl_element())
 
 # TRIAL/TEST FUNCTIONS #
 trial = BlockTrialFunction(W)
@@ -101,10 +103,10 @@ f =  [tracking(v_d, w)*dS(4),
       0                     ,
       inner(f, s)*dx        ,
       0                      ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), g, boundaries, 1), DirichletBC(W.sub(0), Constant((0.0, 0.0)), boundaries, 2)],
+bc = BlockDirichletBC([[DirichletBC(W.sub(0), g, boundaries, 1), DirichletBC(W.sub(0), bc0, boundaries, 2)],
                        [],
                        [],
-                       [DirichletBC(W.sub(3), Constant((0.0, 0.0)), boundaries, idx) for idx in (1, 2)],
+                       [DirichletBC(W.sub(3), bc0, boundaries, idx) for idx in (1, 2)],
                        []])
 
 # SOLUTION #

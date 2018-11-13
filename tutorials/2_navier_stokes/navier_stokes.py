@@ -17,8 +17,8 @@
 #
 
 from numpy import isclose
+import ufl
 from dolfin import *
-# import matplotlib.pyplot as plt
 from multiphenics import *
 
 """
@@ -28,9 +28,9 @@ MixedElement class) and multiphenics code.
 """
 
 # Constitutive parameters
-nu = Constant(0.01)
-u_in = Constant((1., 0.))
-u_wall = Constant((0., 0.))
+nu = 0.01
+u_in = ufl.as_vector((1., 0.))
+u_wall = ufl.as_vector((0., 0.))
 
 # Solver parameters
 snes_solver_parameters = {"nonlinear_solver": "snes",

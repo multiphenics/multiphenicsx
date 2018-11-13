@@ -17,6 +17,7 @@
 #
 
 from numpy import isclose
+import ufl
 from dolfin import *
 import matplotlib.pyplot as plt
 from multiphenics import *
@@ -63,12 +64,13 @@ Q_pressure = Y_pressure
 W = BlockFunctionSpace([Y_velocity, Y_pressure, U, Q_velocity, Q_pressure], restrict=[None, None, left, None, None])
 
 # PROBLEM DATA #
-alpha = Constant(1.e-5)
+alpha = 1.e-5
 x, y = symbols("x[0], x[1]")
 psi_d = 10*(1-cos(0.8*pi*x))*(1-cos(0.8*pi*y))*(1-x)**2*(1-y)**2
 v_d = Expression((ccode(psi_d.diff(y, 1)), ccode(-psi_d.diff(x, 1))), element=W.sub(0).ufl_element())
-nu = Constant(0.1)
-f = Constant((0., 0.))
+nu = 0.1
+f = ufl.as_vector((0., 0.))
+bc0 = Expression(("0.", "0."), element=W.sub(0).ufl_element())
 
 # NONLINEAR SOLVER PARAMETERS #
 snes_solver_parameters = {"nonlinear_solver": "snes",
@@ -94,10 +96,10 @@ r =  [nu*inner(grad(z), grad(w))*dx + inner(grad(w)*v, z)*dx + inner(grad(v)*w, 
       nu*inner(grad(v), grad(s))*dx + inner(grad(v)*v, s)*dx - p*div(s)*dx - inner(f, s)*dx - inner(u, s)*ds(2)           ,
       - d*div(v)*dx                                                                                                        ]
 dr = block_derivative(r, solution, trial)
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant((0., 0.)), boundaries, idx) for idx in (1, 3, 4)],
+bc = BlockDirichletBC([[DirichletBC(W.sub(0), bc0, boundaries, idx) for idx in (1, 3, 4)],
                        [],
                        [],
-                       [DirichletBC(W.sub(3), Constant((0., 0.)), boundaries, idx) for idx in (1, 3, 4)],
+                       [DirichletBC(W.sub(3), bc0, boundaries, idx) for idx in (1, 3, 4)],
                        []])
 
 

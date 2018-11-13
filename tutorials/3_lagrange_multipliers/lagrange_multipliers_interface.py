@@ -77,8 +77,9 @@ a = [[inner(grad(u1), grad(v1))*dx(1), 0                              ,   l("-")
      [m("-")*u1("-")*dS              , - m("+")*u2("+")*dS            , 0                   ]]
 f =  [v1*dx(1)                       , v2*dx(2)                       , 0                   ]
 
-bc1 = DirichletBC(W.sub(0), Constant(0.), boundaries, 1)
-bc2 = DirichletBC(W.sub(1), Constant(0.), boundaries, 1)
+zero = Expression("0.", element=W.sub(0).ufl_element())
+bc1 = DirichletBC(W.sub(0), zero, boundaries, 1)
+bc2 = DirichletBC(W.sub(1), zero, boundaries, 1)
 bcs = BlockDirichletBC([bc1,
                         bc2,
                         None])
@@ -105,7 +106,7 @@ u = TrialFunction(V)
 v = TestFunction(V)
 A_ex = assemble(inner(grad(u), grad(v))*dx)
 F_ex = assemble(v*dx)
-bc_ex = DirichletBC(V, Constant(0.), boundaries, 1)
+bc_ex = DirichletBC(V, zero, boundaries, 1)
 bc_ex.apply(A_ex)
 bc_ex.apply(F_ex)
 U_ex = Function(V)

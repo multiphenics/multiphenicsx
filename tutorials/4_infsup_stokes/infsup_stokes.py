@@ -73,7 +73,8 @@ def run_monolithic():
     rhs = - inner(p, q)*dx
 
     # Boundary conditions
-    bc = DirichletBC(W.sub(0), Constant((0., 0.)), boundaries, 1)
+    zero = Expression(("0.", "0."), element=W.sub(0).ufl_element())
+    bc = [DirichletBC(W.sub(0), zero, boundaries, 1)]
 
     # Assemble lhs and rhs matrices
     LHS = assemble(lhs)
@@ -131,7 +132,8 @@ def run_block():
            [0                         , - p*q*dx     ]]
 
     # Boundary conditions
-    wallc = DirichletBC(W.sub(0), Constant((0., 0.)), boundaries, 1)
+    zero = Expression(("0.", "0."), element=W.sub(0).ufl_element())
+    wallc = [DirichletBC(W.sub(0), zero, boundaries, 1)]
     bc = BlockDirichletBC([[wallc], []])
 
     # Assemble lhs and rhs matrices

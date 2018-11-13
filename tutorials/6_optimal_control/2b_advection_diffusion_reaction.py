@@ -57,13 +57,15 @@ W_el = BlockElement(Y, U, Q)
 W = BlockFunctionSpace(mesh, W_el)
 
 # PROBLEM DATA #
-alpha = Constant(0.01)
-y_d_1 = Constant(0.6)
-y_d_2 = Constant(1.8)
-epsilon = Constant(1./15.)
+alpha = 0.01
+y_d_1 = 0.6
+y_d_2 = 1.8
+epsilon = 1./15.
 beta = Expression(("x[1]*(1-x[1])", "0"), element=VectorElement(Y))
-sigma = Constant(0.)
-f = Constant(0.)
+sigma = 0.
+f = 0.
+def bc_generator(val):
+    return Expression(str(val), element=W.sub(0).ufl_element())
 
 # TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)
@@ -83,9 +85,9 @@ a = [[y*z*(dx(1) + dx(2)), 0           , adjoint_operator],
 f =  [y_d_1*z*dx(1) + y_d_2*z*dx(2),
       0                            ,
       f*q*dx                        ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant(idx), boundaries, idx) for idx in (1, 2)],
+bc = BlockDirichletBC([[DirichletBC(W.sub(0), bc_generator(idx), boundaries, idx) for idx in (1, 2)],
                        [],
-                       [DirichletBC(W.sub(2), Constant(0. ), boundaries, idx) for idx in (1, 2)]])
+                       [DirichletBC(W.sub(2), bc_generator(0.), boundaries, idx) for idx in (1, 2)]])
 
 # SOLUTION #
 yup = BlockFunction(W)

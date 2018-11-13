@@ -59,9 +59,10 @@ Q = Y
 W = BlockFunctionSpace([Y, U, Q], restrict=[None, left, None])
 
 # PROBLEM DATA #
-alpha = Constant(1.e-5)
-y_d = Constant(1.)
+alpha = 1.e-5
+y_d = 1.
 f = Expression("10*sin(2*pi*x[0])*sin(2*pi*x[1])", element=W.sub(0).ufl_element())
+bc0 = Expression("0.", element=W.sub(0).ufl_element())
 
 # TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)
@@ -79,9 +80,9 @@ a = [[y*z*ds(2)                 , 0              , inner(grad(p), grad(z))*dx],
 f =  [y_d*z*ds(2),
       0          ,
       f*q*dx      ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant(0.), boundaries, 4)],
+bc = BlockDirichletBC([[DirichletBC(W.sub(0), bc0, boundaries, 4)],
                        [],
-                       [DirichletBC(W.sub(2), Constant(0.), boundaries, 4)]])
+                       [DirichletBC(W.sub(2), bc0, boundaries, 4)]])
 
 # SOLUTION #
 yup = BlockFunction(W)

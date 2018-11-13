@@ -59,12 +59,13 @@ Q = Y
 W = BlockFunctionSpace([Y, U, U, U, L, Q], restrict=[None, None, None, None, left, None])
 
 # PROBLEM DATA #
-alpha = Constant(1.e-5)
-y_d = Constant(1.)
+alpha = 1.e-5
+y_d = 1.
 f = Expression("10*sin(2*pi*x[0])*sin(2*pi*x[1])", element=W.sub(0).ufl_element())
-l1 = Constant(1.)
+l1 = 1.
 l2 = Expression("sin(2*pi*x[1])", element=W.sub(0).ufl_element())
 l3 = Expression("cos(2*pi*x[1])", element=W.sub(0).ufl_element())
+bc0 = Expression("0.", element=W.sub(0).ufl_element())
 
 # TRIAL/TEST FUNCTIONS #
 yulp = BlockTrialFunction(W)
@@ -91,12 +92,12 @@ f =  [y_d*z*dx,
       0       ,
       0       ,
       f*q*dx   ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), Constant(0.), boundaries, 4)],
+bc = BlockDirichletBC([[DirichletBC(W.sub(0), bc0, boundaries, 4)],
                        [],
                        [],
                        [],
                        [],
-                       [DirichletBC(W.sub(5), Constant(0.), boundaries, idx) for idx in (2, 4)]])
+                       [DirichletBC(W.sub(5), bc0, boundaries, idx) for idx in (2, 4)]])
 
 # SOLUTION #
 yulp = BlockFunction(W)
@@ -108,7 +109,7 @@ J = 0.5*inner(y - y_d, y - y_d)*dx + 0.5*alpha*inner(u1, u1)*ds(2) + 0.5*alpha*i
 # UNCONTROLLED FUNCTIONAL VALUE #
 A_state = assemble(a[3][0])
 F_state = assemble(f[3])
-bc_state = [DirichletBC(W.sub(0), Constant(0.), boundaries, idx) for idx in (2, 4)]
+bc_state = [DirichletBC(W.sub(0), bc0, boundaries, idx) for idx in (2, 4)]
 [bc_state_.apply(A_state) for bc_state_ in bc_state]
 [bc_state_.apply(F_state) for bc_state_ in bc_state]
 solve(A_state, y.vector(), F_state)
