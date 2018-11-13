@@ -17,7 +17,7 @@
 #
 
 from dolfin import NonlinearProblem
-from multiphenics.fem import block_assemble
+from multiphenics.fem import block_assemble, BlockDirichletBCLegacy
 
 class BlockNonlinearProblem(NonlinearProblem):
     def __init__(self, residual_block_form, block_solution, bcs, jacobian_block_form):
@@ -42,7 +42,7 @@ class BlockNonlinearProblem(NonlinearProblem):
             block_assemble(self.residual_block_form, block_tensor=self.residual_block_vector)
         # Apply boundary conditions
         if self.bcs is not None:
-            self.bcs.apply(block_residual, self.block_solution.block_vector())
+            BlockDirichletBCLegacy.apply(self.bcs, self.residual_block_vector, self.block_solution.block_vector())
         # Return
         return self.residual_block_vector
         
@@ -55,6 +55,6 @@ class BlockNonlinearProblem(NonlinearProblem):
             block_assemble(self.jacobian_block_form, block_tensor=self.jacobian_block_matrix)
         # Apply boundary conditions
         if self.bcs is not None:
-            self.bcs.apply(block_jacobian)
+            BlockDirichletBCLegacy.apply(self.bcs, self.jacobian_block_matrix, 1.)
         # Return
         return self.jacobian_block_matrix
