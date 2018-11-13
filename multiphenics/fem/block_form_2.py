@@ -17,7 +17,12 @@
 #
 
 from numpy import empty
+from ufl import Form
+from ufl.algorithms import expand_derivatives
+from ufl.algorithms.analysis import has_exact_type
+from ufl.classes import CoefficientDerivative
 from dolfin.fem.assembling import _create_cpp_form
+from dolfin.cpp.fem import Form as cpp_Form
 from multiphenics.fem.block_form_1 import BlockForm1
 from multiphenics.fem.block_replace_zero import block_replace_zero, _is_zero
 from multiphenics.function import BlockFunction
@@ -42,10 +47,19 @@ class BlockForm2(BlockForm2_Base):
         replaced_block_form = empty((N, M), dtype=object)
         for I in range(N):
             for J in range(M):
-                replaced_block_form[I, J] = _create_cpp_form(
-                    form=block_form[I, J],
-                    form_compiler_parameters=form_compiler_parameters
-                )
+                if isinstance(block_form[I, J], Form) and has_exact_type(block_form[I, J], CoefficientDerivative):
+                    block_form[I, J] = expand_derivatives(block_form[I, J])
+                replaced_block_form[I, J] = block_replace_zero(block_form, (I, J), block_function_space)
+                assert isinstance(replaced_block_form[I, J], Form) or _is_zero(replaced_block_form[I, J])
+                if isinstance(replaced_block_form[I, J], Form):
+                    replaced_block_form[I, J] = _create_cpp_form(
+                        form=replaced_block_form[I, J],
+                        form_compiler_parameters=form_compiler_parameters
+                    )
+                elif _is_zero(replaced_block_form[I, J]):
+                    assert isinstance(replaced_block_form[I, J], cpp_Form)
+                else:
+                    raise TypeError("Invalid form")
         BlockForm2_Base.__init__(self, replaced_block_form.tolist(), [block_function_space_._cpp_object for block_function_space_ in block_function_space])
         # Store sizes for shape method
         self.N = N

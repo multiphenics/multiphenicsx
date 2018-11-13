@@ -16,6 +16,7 @@
 // along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <dolfin/common/IndexMap.h>
 #include <dolfin/common/Timer.h>
 #include <dolfin/fem/assemble_matrix_impl.h>
 #include <dolfin/fem/assemble_vector_impl.h>
@@ -26,13 +27,15 @@
 #include <multiphenics/la/BlockPETScSubMatrix.h>
 #include <multiphenics/la/BlockPETScSubVector.h>
 
-using namespace dolfin;
-using namespace dolfin::fem;
 using namespace multiphenics;
 using namespace multiphenics::fem;
 
 using dolfin::common::IndexMap;
 using dolfin::common::Timer;
+using dolfin::fem::Form;
+using dolfin::fem::GenericDofMap;
+using dolfin::fem::impl::assemble_eigen;
+using dolfin::fem::SparsityPatternBuilder;
 using dolfin::la::SparsityPattern;
 using dolfin::la::PETScMatrix;
 using dolfin::la::PETScVector;
@@ -67,32 +70,44 @@ void multiphenics::fem::block_assemble(PETScVector& b, const BlockForm1& L)
   // Assemble using standard assembler
   for (unsigned int i(0); i < L.block_size(0); ++i)
   {
-    // Note that we cannot call either
-    // * dolfin::fem::assemble_ghosted because PETSc sub vectors (i) are not ghosted, and (ii) trying to call VecGetSize on them
-    //   results in segmentation fault, nor
-    // * dolfin::fem::assemble_local because that function calls native VecGetArray/VecRestoreArray rather than the PETScVector interface,
-    //   which we have patched to handle the restriction of subvectors.
-    // We thus call directly dolfin::fem::assemble_eigen on a temporarily allocated Eigen::Array. Note that this might be less efficient
-    // than the implementation in dolfin::fem::assemble_local, which reuses PETSc storage. Unfortunately, vector sizes (due to restriction)
-    // may not match.
-    const auto index_map_i = L.block_function_spaces()[0]->operator[](i)->dofmap()->index_map();
-    std::size_t unrestricted_ghosted_size = index_map_i->block_size()*(index_map_i->size_local() + index_map_i->num_ghosts());
-    std::vector<PetscScalar> unrestricted_ghosted_values(unrestricted_ghosted_size);
-    Eigen::Map<Eigen::Array<PetscScalar, Eigen::Dynamic, 1>> unrestricted_ghosted_values_eigen(unrestricted_ghosted_values.data(), unrestricted_ghosted_values.size());
-    assemble_eigen(unrestricted_ghosted_values_eigen, L(i), {}, {});
-    // Exploit a temporary BlockPETScSubVector to handle restrictions
-    std::shared_ptr<BlockPETScSubVector> b_i = std::make_shared<BlockPETScSubVector>(b, i, L.block_function_spaces()[0]->block_dofmap(), BlockInsertMode::ADD_VALUES);
-    std::vector<PetscInt> unrestricted_ghosted_rows(unrestricted_ghosted_size);
-    std::iota(unrestricted_ghosted_rows.begin(), unrestricted_ghosted_rows.end(), 0);
-    std::vector<PetscInt> restricted_ghosted_rows__global_vector;
-    std::vector<bool> is_in_restriction;
-    b_i->to_restricted_vector_indices(unrestricted_ghosted_rows, restricted_ghosted_rows__global_vector, &is_in_restriction);
-    for (std::size_t k_value = 0, k_global_row = 0; k_value < unrestricted_ghosted_size; ++k_value)
+    const Form & L_i(L(i));
+    if (
+      L_i.integrals().num_cell_integrals() > 0
+          ||
+      L_i.integrals().num_interior_facet_integrals() > 0
+          ||
+      L_i.integrals().num_exterior_facet_integrals() > 0
+          ||
+      L_i.integrals().num_vertex_integrals() > 0
+    )
     {
-      if (is_in_restriction[k_value])
+      // Note that we cannot call either
+      // * dolfin::fem::assemble_ghosted because PETSc sub vectors (i) are not ghosted, and (ii) trying to call VecGetSize on them
+      //   results in segmentation fault, nor
+      // * dolfin::fem::assemble_local because that function calls native VecGetArray/VecRestoreArray rather than the PETScVector interface,
+      //   which we have patched to handle the restriction of subvectors.
+      // We thus call directly dolfin::fem::assemble_eigen on a temporarily allocated Eigen::Array. Note that this might be less efficient
+      // than the implementation in dolfin::fem::assemble_local, which reuses PETSc storage. Unfortunately, vector sizes (due to restriction)
+      // may not match.
+      const auto index_map_i = L.block_function_spaces()[0]->operator[](i)->dofmap()->index_map();
+      std::size_t unrestricted_ghosted_size = index_map_i->block_size()*(index_map_i->size_local() + index_map_i->num_ghosts());
+      std::vector<PetscScalar> unrestricted_ghosted_values(unrestricted_ghosted_size);
+      Eigen::Map<Eigen::Array<PetscScalar, Eigen::Dynamic, 1>> unrestricted_ghosted_values_eigen(unrestricted_ghosted_values.data(), unrestricted_ghosted_values.size());
+      assemble_eigen(unrestricted_ghosted_values_eigen, L_i);
+      // Exploit a temporary BlockPETScSubVector to handle restrictions
+      std::shared_ptr<BlockPETScSubVector> b_i = std::make_shared<BlockPETScSubVector>(b, i, L.block_function_spaces()[0]->block_dofmap(), BlockInsertMode::ADD_VALUES);
+      std::vector<PetscInt> unrestricted_ghosted_rows(unrestricted_ghosted_size);
+      std::iota(unrestricted_ghosted_rows.begin(), unrestricted_ghosted_rows.end(), 0);
+      std::vector<PetscInt> restricted_ghosted_rows__global_vector;
+      std::vector<bool> is_in_restriction;
+      b_i->to_restricted_vector_indices(unrestricted_ghosted_rows, restricted_ghosted_rows__global_vector, &is_in_restriction);
+      for (std::size_t k_value = 0, k_global_row = 0; k_value < unrestricted_ghosted_size; ++k_value)
       {
-        b_ghosted_eigen[restricted_ghosted_rows__global_vector[k_global_row]] = unrestricted_ghosted_values[k_value];
-        k_global_row++;
+        if (is_in_restriction[k_value])
+        {
+          b_ghosted_eigen[restricted_ghosted_rows__global_vector[k_global_row]] = unrestricted_ghosted_values[k_value];
+          k_global_row++;
+        }
       }
     }
   }
@@ -121,8 +136,20 @@ void multiphenics::fem::block_assemble(PETScMatrix& A, const BlockForm2& a)
   {
     for (unsigned int j(0); j < a.block_size(1); ++j)
     {
-      std::shared_ptr<PETScMatrix> A_ij = std::make_shared<BlockPETScSubMatrix>(A, i, j, a.block_function_spaces()[0]->block_dofmap(), a.block_function_spaces()[1]->block_dofmap(), BlockInsertMode::ADD_VALUES);
-      assemble_matrix(*A_ij, a(i, j), {}, {});
+      const Form & a_ij(a(i, j));
+      if (
+        a_ij.integrals().num_cell_integrals() > 0
+            ||
+        a_ij.integrals().num_interior_facet_integrals() > 0
+            ||
+        a_ij.integrals().num_exterior_facet_integrals() > 0
+            ||
+        a_ij.integrals().num_vertex_integrals() > 0
+      )
+      {
+        std::shared_ptr<PETScMatrix> A_ij = std::make_shared<BlockPETScSubMatrix>(A, i, j, a.block_function_spaces()[0]->block_dofmap(), a.block_function_spaces()[1]->block_dofmap(), BlockInsertMode::ADD_VALUES);
+        assemble_matrix(*A_ij, a(i, j), {}, {});
+      }
     }
   }
 

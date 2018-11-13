@@ -62,9 +62,17 @@ def _is_zero(form_or_block_form):
             #include <dolfin/fem/Form.h>
             #include <pybind11/pybind11.h>
             
-            bool is_zero_form(std::shared_ptr<dolfin::Form> form)
+            bool is_zero_form(std::shared_ptr<dolfin::fem::Form> form)
             {
-              return !form->ufc_form();
+              return (
+                form->integrals().num_cell_integrals() == 0
+                    &&
+                form->integrals().num_interior_facet_integrals() == 0
+                    &&
+                form->integrals().num_exterior_facet_integrals() == 0
+                    &&
+                form->integrals().num_vertex_integrals() == 0
+              );
             }
             
             PYBIND11_MODULE(SIGNATURE, m)
@@ -122,4 +130,8 @@ def _get_block_form_rank(form_or_block_form):
         raise AssertionError("Invalid case in _get_block_form_rank")
     
 def _get_zero_form(block_function_space, index):
-    return cpp_Form(len(index), 0)
+    assert len(index) in (1, 2)
+    if len(index) == 2:
+        return cpp_Form([block_function_space[0][index[0]]._cpp_object, block_function_space[1][index[1]]._cpp_object])
+    else:
+        return cpp_Form([block_function_space[0][index[0]]._cpp_object])
