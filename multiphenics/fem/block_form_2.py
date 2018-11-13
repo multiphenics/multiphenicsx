@@ -17,12 +17,7 @@
 #
 
 from numpy import empty
-from ufl import Form
-from ufl.algorithms import expand_derivatives
-from ufl.algorithms.analysis import has_exact_type
-from ufl.classes import CoefficientDerivative
-from dolfin.fem.assembling import _create_dolfin_form
-from dolfin.cpp.fem import Form as cpp_Form
+from dolfin.fem.assembling import _create_cpp_form
 from multiphenics.fem.block_form_1 import BlockForm1
 from multiphenics.fem.block_replace_zero import block_replace_zero, _is_zero
 from multiphenics.function import BlockFunction
@@ -47,7 +42,7 @@ class BlockForm2(BlockForm2_Base):
         replaced_block_form = empty((N, M), dtype=object)
         for I in range(N):
             for J in range(M):
-                replaced_block_form[I, J] = _create_dolfin_form(
+                replaced_block_form[I, J] = _create_cpp_form(
                     form=block_form[I, J],
                     form_compiler_parameters=form_compiler_parameters
                 )

@@ -17,10 +17,7 @@
 #
 
 from numpy import empty
-from ufl import Form
-from dolfin.cpp.fem import Form as cpp_Form
-from dolfin.fem.assembling import _create_dolfin_form
-from multiphenics.fem.block_replace_zero import block_replace_zero, _is_zero
+from dolfin.fem.assembling import _create_cpp_form
 from multiphenics.python import cpp
 
 BlockForm1_Base = cpp.fem.BlockForm1
@@ -39,7 +36,7 @@ class BlockForm1(BlockForm1_Base):
         N = len(block_form)
         replaced_block_form = empty((N, ), dtype=object)
         for I in range(N):
-            replaced_block_form[I] = _create_dolfin_form(
+            replaced_block_form[I] = _create_cpp_form(
                 form=block_form[I],
                 form_compiler_parameters=form_compiler_parameters
             )
