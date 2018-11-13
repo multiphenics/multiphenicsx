@@ -17,14 +17,11 @@
 #
 
 import types
-import dolfin
-from dolfin import Function, PETScVector
+from dolfin import Function
+from dolfin.cpp.la import PETScVector
 from multiphenics.python import cpp
 from multiphenics.function.block_function_space import BlockFunctionSpace
 
-def unwrap_sub_functions(sub_functions):
-    return [sub_function._cpp_object for sub_function in sub_functions]
-    
 BlockFunction_Base = cpp.function.BlockFunction
 
 class BlockFunction(object):
@@ -74,14 +71,14 @@ class BlockFunction(object):
         self._init_sub_functions()
         
     def _init_from_block_function_space_and_sub_functions(self, block_V, sub_functions):
-        self._cpp_object = BlockFunction_Base(block_V.cpp_object(), unwrap_sub_functions(sub_functions))
+        self._cpp_object = BlockFunction_Base(block_V.cpp_object(), [sub_function._cpp_object for sub_function in sub_functions])
         self._block_function_space = block_V
         self._num_sub_spaces = block_V.num_sub_spaces()
         assert len(sub_functions) == self._num_sub_spaces
         self._sub_functions = sub_functions
         
     def _init_from_block_function_space_and_block_vector_and_sub_functions(self, block_V, block_vec, sub_functions):
-        self._cpp_object = BlockFunction_Base(block_V.cpp_object(), block_vec, unwrap_sub_functions(sub_functions))
+        self._cpp_object = BlockFunction_Base(block_V.cpp_object(), block_vec, [sub_function._cpp_object for sub_function in sub_functions])
         self._block_function_space = block_V
         self._num_sub_spaces = block_V.num_sub_spaces()
         assert len(sub_functions) == self._num_sub_spaces
@@ -101,8 +98,8 @@ class BlockFunction(object):
             
             # ... and that these methods are preserved by sub_function.sub()
             original_sub = sub_function.sub
-            def sub(self_, j, deepcopy=False):
-                output = original_sub(j, deepcopy)
+            def sub(self_, j):
+                output = original_sub(j)
                 extend_sub_function(output, i)
                 return output
             sub_function.sub = types.MethodType(sub, sub_function)
@@ -118,7 +115,7 @@ class BlockFunction(object):
         self._sub_functions = list()
         for i in range(self._num_sub_spaces):
             # Extend with the python layer of dolfin's Function
-            sub_function = dolfin.Function(self._cpp_object.sub(i))
+            sub_function = Function(self.block_function_space().sub(i), self._cpp_object.sub(i).vector())
             
             # Extend with block function and block index methods
             extend_sub_function(sub_function, i)
@@ -181,7 +178,7 @@ class BlockFunction(object):
     def ufl_element(self):
         return self._block_function_space.ufl_element()
 
-    def sub(self, i, deepcopy=False):
+    def sub(self, i):
         """
         Return a sub function, *neglecting* restrictions.
 
@@ -191,48 +188,30 @@ class BlockFunction(object):
         *Arguments*
             i : int
                 The number of the sub function
-
         """
-        if not isinstance(i, int):
-            raise TypeError("expects an 'int' as first argument")
-        if i >= self._num_sub_spaces:
-            raise RuntimeError("Can only extract subfunctions with i = 0..%d"
-                               % (self._num_sub_spaces - 1))
-
-        assert deepcopy is False # no usage envisioned for the other case
-        
         return self._sub_functions[i]
 
-    def block_split(self, deepcopy=False):
+    def block_split(self):
         """
-        Extract any sub functions.
+        Extract any sub functions, *neglecting* restrictions.
 
         A sub function can be extracted from a discrete function that
         is in a mixed, vector, or tensor FunctionSpace. The sub
         function resides in the subspace of the mixed space.
-
-        *Arguments*
-            deepcopy
-                Copy sub function vector instead of sharing
-
         """
 
-        return tuple(self.sub(i, deepcopy) for i in range(self._num_sub_spaces))
+        return tuple(self.sub(i) for i in range(self._num_sub_spaces))
         
     def __iter__(self):
         return self._sub_functions.__iter__()
         
-    def copy(self, deepcopy=False):
+    def copy(self):
         """
         Return a copy of itself
-        *Arguments*
-            deepcopy (bool)
-                If false (default) the dof vector is shared.
         *Returns*
              _BlockFunction_
                  The BlockFunction
         """
-        assert deepcopy is True # no usage envisioned for the other case
         return BlockFunction(self.block_function_space(), self.block_vector().copy())
         
     def __str__(self):
@@ -245,7 +224,7 @@ class BlockFunction(object):
 
     def __add__(self, other):
         if isinstance(other, BlockFunction):
-            output = self.copy(deepcopy=True)
+            output = self.copy()
             for (block_fun_output, block_fun_other) in zip(output, other):
                 block_fun_output.vector().add_local(block_fun_other.vector().get_local())
                 block_fun_output.vector().apply("add")
@@ -256,7 +235,7 @@ class BlockFunction(object):
 
     def __sub__(self, other):
         if isinstance(other, BlockFunction):
-            output = self.copy(deepcopy=True)
+            output = self.copy()
             for (block_fun_output, block_fun_other) in zip(output, other):
                 block_fun_output.vector().add_local(- block_fun_other.vector().get_local())
                 block_fun_output.vector().apply("add")
@@ -267,7 +246,7 @@ class BlockFunction(object):
 
     def __mul__(self, other):
         if isinstance(other, float):
-            output = self.copy(deepcopy=True)
+            output = self.copy()
             for block_fun_output in output:
                 block_fun_output.vector()[:] *= other
             output.apply("from subfunctions")
@@ -277,7 +256,7 @@ class BlockFunction(object):
 
     def __truediv__(self, other):
         if isinstance(other, float):
-            output = self.copy(deepcopy=True)
+            output = self.copy()
             for block_fun_output in output:
                 block_fun_output.vector()[:] /= other
             output.apply("from subfunctions")
