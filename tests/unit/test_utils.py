@@ -23,7 +23,9 @@ from numpy import allclose as float_array_equal, array_equal as integer_array_eq
 from scipy.sparse import csr_matrix
 from dolfin import DOLFIN_EPS, dx, Expression, FiniteElement, Function, FunctionSpace, inner, MeshFunction, MixedElement, project, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
 from dolfin.cpp.la import PETScMatrix, PETScVector
-from multiphenics import block_assemble, BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
+from dolfin.fem import assemble
+from multiphenics import BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
+from multiphenics.fem import block_assemble
 
 # ================ PYTEST HELPER ================ #
 def pytest_mark_slow(item):
