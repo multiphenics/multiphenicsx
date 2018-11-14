@@ -20,7 +20,8 @@ import numbers
 import pytest
 from _pytest.mark import ParameterSet
 from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, hstack, hstack as bvec, sort, unique, vstack
-from dolfin import assemble, Constant, DOLFIN_EPS, dx, Expression, FiniteElement, Function, FunctionSpace, inner, MixedElement, project, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
+from scipy.sparse import csr_matrix
+from dolfin import Constant, DOLFIN_EPS, dx, Expression, FiniteElement, Function, FunctionSpace, inner, MixedElement, project, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
 from dolfin.cpp.la import PETScMatrix, PETScVector
 from multiphenics import block_assemble, BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
 
@@ -694,8 +695,17 @@ def allgather(obj, comm, **kwargs):
                         output[block1 + block_base_index1[r]] = original1 + base_index1[r]
             return output
     elif isinstance(obj, PETScMatrix):
-        return vstack(comm.allgather(obj.array()))
+        return vstack(comm.allgather(to_dense(obj)))
     elif isinstance(obj, PETScVector):
-        return hstack(comm.allgather(obj.get_local()))
+        return hstack(comm.allgather(to_dense(obj)))
     else:
         raise AssertionError("Invalid arguments to allgather")
+        
+# Get dense representation of local part of tensor
+def to_dense(obj):
+    assert isinstance(obj, (PETScMatrix, PETScVector))
+    if isinstance(obj, PETScMatrix):
+        ai, aj, av = obj.mat().getValuesCSR()
+        return csr_matrix((av, aj, ai), shape=(obj.mat().getLocalSize()[0], obj.mat().getSize()[1])).todense().A
+    elif isinstance(obj, PETScVector):
+        return obj.get_local()
