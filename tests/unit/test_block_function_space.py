@@ -18,7 +18,7 @@
 
 import pytest
 from numpy import concatenate
-from dolfin import Cells, FunctionSpace, UnitSquareMesh
+from dolfin import Cells, FunctionSpace, MPI, UnitSquareMesh
 from dolfin_utils.test.fixtures import fixture as module_fixture
 from multiphenics import BlockElement, BlockFunctionSpace
 from test_utils import assert_global_dofs, assert_owned_local_dofs, assert_tabulated_dof_coordinates, array_sorted_equal, assert_unowned_local_dofs, get_elements_1, get_elements_2, get_function_spaces_1, get_function_spaces_2, get_restrictions_1, get_restrictions_2, unique
@@ -26,7 +26,7 @@ from test_utils import assert_global_dofs, assert_owned_local_dofs, assert_tabul
 # Mesh
 @module_fixture
 def mesh():
-    return UnitSquareMesh(4, 4)
+    return UnitSquareMesh(MPI.comm_world, 4, 4)
 
 # Assert for single block, no restriction
 def assert_dof_map_single_block_no_restriction(V, block_V):
