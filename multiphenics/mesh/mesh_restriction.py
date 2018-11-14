@@ -33,7 +33,7 @@ class MeshRestriction(list):
         if arg is None:
             pass # leave the list empty
         elif isinstance(arg, (list, SubDomain)):
-            D = mesh.topology().dim()
+            D = mesh.topology.dim
             for d in range(D + 1):
                 mesh_function_d = MeshFunction("bool", mesh, d)
                 mesh_function_d.set_all(False)
