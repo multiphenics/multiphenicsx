@@ -35,8 +35,7 @@ class MeshRestriction(list):
         elif isinstance(arg, (list, SubDomain)):
             D = mesh.topology.dim
             for d in range(D + 1):
-                mesh_function_d = MeshFunction("bool", mesh, d)
-                mesh_function_d.set_all(False)
+                mesh_function_d = MeshFunction("bool", mesh, d, False)
                 if isinstance(arg, SubDomain):
                     arg.mark(mesh_function_d, True)
                 else:
