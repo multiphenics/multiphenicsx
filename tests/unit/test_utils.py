@@ -19,7 +19,7 @@
 import numbers
 import pytest
 from _pytest.mark import ParameterSet
-from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, hstack, hstack as bvec, sort, unique, vstack
+from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, full, hstack, hstack as bvec, logical_and, sort, unique, vstack
 from scipy.sparse import csr_matrix
 from dolfin import DOLFIN_EPS, dx, Expression, FiniteElement, Function, FunctionSpace, inner, MeshFunction, MixedElement, project, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
 from dolfin.cpp.la import PETScMatrix, PETScVector
@@ -245,7 +245,7 @@ def get_elements_2():
 def UnitSquareSubDomain(X, Y):
     class CustomSubDomain(SubDomain):
         def inside(self, x, on_boundary):
-            return x[0] <= X and x[1] <= Y
+            return logical_and(x[:, 0] <= X, x[:, 1] <= Y)
     return CustomSubDomain()
 
 def UnitSquareInterface(X=None, Y=None, on_boundary=False):
@@ -259,15 +259,15 @@ def UnitSquareInterface(X=None, Y=None, on_boundary=False):
     if X is not None:
         class CustomSubDomain(SubDomain):
             def inside(self, x, on_boundary_):
-                return x[0] >= X - DOLFIN_EPS and x[0] <= X + DOLFIN_EPS
+                return logical_and(x[:, 0] >= X - DOLFIN_EPS, x[:, 0] <= X + DOLFIN_EPS)
     elif Y is not None:
         class CustomSubDomain(SubDomain):
             def inside(self, x, on_boundary_):
-                return x[1] >= Y - DOLFIN_EPS and x[1] <= Y + DOLFIN_EPS
+                return logical_and(x[:, 1] >= Y - DOLFIN_EPS, x[:, 1] <= Y + DOLFIN_EPS)
     elif on_boundary is True:
         class CustomSubDomain(SubDomain):
             def inside(self, x, on_boundary_):
-                return on_boundary_
+                return full(x.shape[0], on_boundary_)
     return CustomSubDomain()
     
 def OnBoundary():
