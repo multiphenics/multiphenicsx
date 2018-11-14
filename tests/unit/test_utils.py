@@ -185,8 +185,8 @@ def assert_functions_manipulations(functions, block_V):
     assert array_equal(block_function_b.block_vector().get_local(), block_function_a.block_vector().get_local())
     
 # ================ FUNCTION SPACES GENERATOR ================ #
-def StokesFunctionSpace(mesh, family, degree):
-    stokes_element = StokesElement(family, mesh.ufl_cell(), degree)
+def StokesFunctionSpace(mesh, family_degree):
+    stokes_element = StokesElement(family_degree[0], mesh.ufl_cell(), family_degree[1])
     return FunctionSpace(mesh, stokes_element)
 
 def StokesElement(family, cell, degree):
@@ -194,8 +194,8 @@ def StokesElement(family, cell, degree):
     Q_element = FiniteElement(family, cell, degree)
     return MixedElement(V_element, Q_element)
     
-def FunctionAndRealSpace(mesh, family, degree):
-    function_and_real_element = FunctionAndRealElement(family, mesh.ufl_cell(), degree)
+def FunctionAndRealSpace(mesh, family_degree):
+    function_and_real_element = FunctionAndRealElement(family_degree[0], mesh.ufl_cell(), family_degree[1])
     return FunctionSpace(mesh, function_and_real_element)
 
 def FunctionAndRealElement(family, cell, degree):
@@ -205,18 +205,18 @@ def FunctionAndRealElement(family, cell, degree):
     
 def get_function_spaces_1():
     return (
-        lambda mesh: FunctionSpace(mesh, "Lagrange", 1),
-        pytest_mark_slow(lambda mesh: FunctionSpace(mesh, "Lagrange", 2)),
-        lambda mesh: VectorFunctionSpace(mesh, "Lagrange", 1),
-        pytest_mark_slow(lambda mesh: VectorFunctionSpace(mesh, "Lagrange", 2)),
-        pytest_mark_slow(lambda mesh: TensorFunctionSpace(mesh, "Lagrange", 1)),
-        pytest_mark_slow(lambda mesh: TensorFunctionSpace(mesh, "Lagrange", 2)),
-        lambda mesh: StokesFunctionSpace(mesh, "Lagrange", 1),
-        pytest_mark_slow(lambda mesh: StokesFunctionSpace(mesh, "Lagrange", 2)),
-        lambda mesh: FunctionSpace(mesh, "Real", 0),
-        pytest_mark_slow(lambda mesh: VectorFunctionSpace(mesh, "Real", 0)),
-        pytest_mark_slow(lambda mesh: FunctionAndRealSpace(mesh, "Lagrange", 1)),
-        pytest_mark_slow(lambda mesh: FunctionAndRealSpace(mesh, "Lagrange", 2))
+        lambda mesh: FunctionSpace(mesh, ("Lagrange", 1)),
+        pytest_mark_slow(lambda mesh: FunctionSpace(mesh, ("Lagrange", 2))),
+        lambda mesh: VectorFunctionSpace(mesh, ("Lagrange", 1)),
+        pytest_mark_slow(lambda mesh: VectorFunctionSpace(mesh, ("Lagrange", 2))),
+        pytest_mark_slow(lambda mesh: TensorFunctionSpace(mesh, ("Lagrange", 1))),
+        pytest_mark_slow(lambda mesh: TensorFunctionSpace(mesh, ("Lagrange", 2))),
+        lambda mesh: StokesFunctionSpace(mesh, ("Lagrange", 1)),
+        pytest_mark_slow(lambda mesh: StokesFunctionSpace(mesh, ("Lagrange", 2))),
+        lambda mesh: FunctionSpace(mesh, ("Real", 0)),
+        pytest_mark_slow(lambda mesh: VectorFunctionSpace(mesh, ("Real", 0))),
+        pytest_mark_slow(lambda mesh: FunctionAndRealSpace(mesh, ("Lagrange", 1))),
+        pytest_mark_slow(lambda mesh: FunctionAndRealSpace(mesh, ("Lagrange", 2)))
     )
     
 def get_function_spaces_2():
