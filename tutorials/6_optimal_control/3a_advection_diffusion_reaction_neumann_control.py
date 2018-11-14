@@ -17,8 +17,8 @@
 #
 
 from numpy import isclose
-import ufl
 from dolfin import *
+from dolfin import function
 import matplotlib.pyplot as plt
 from multiphenics import *
 
@@ -64,10 +64,13 @@ W = BlockFunctionSpace([Y, U, Q], restrict=[None, left, None])
 alpha = 1.e-5
 y_d = 1.
 epsilon = 1.e-1
-beta = ufl.as_vector((-1., -2.))
+beta = as_vector((-1., -2.))
 sigma = 1.
 f = 1.
-bc0 = Expression("0.", element=W.sub(0).ufl_element())
+@function.expression.numba_eval
+def zero_eval(values, x, cell):
+    values[:] = 0.0
+bc0 = interpolate(Expression(zero_eval), W.sub(0))
 
 # TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)

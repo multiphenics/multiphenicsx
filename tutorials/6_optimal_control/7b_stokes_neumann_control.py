@@ -17,8 +17,8 @@
 #
 
 from numpy import isclose
-import ufl
 from dolfin import *
+from dolfin import function
 import matplotlib.pyplot as plt
 from multiphenics import *
 parameters["ghost_mode"] = "shared_facet" # required by dS
@@ -72,10 +72,17 @@ W = BlockFunctionSpace(mesh, W_el, restrict=[None, None, control_boundary, None,
 nu = 0.04
 alpha_1 = 0.001
 alpha_2 = 0.1*alpha_1
-v_d = Expression(("a*(b*10.0*(pow(x[1], 3) - pow(x[1], 2) - x[1] + 1.0)) + ((1.0-b)*10.0*(-pow(x[1], 3) - pow(x[1], 2) + x[1] + 1.0))", "0.0"), a=1.0, b=0.8, element=W.sub(0).ufl_element())
-f = ufl.as_vector((0., 0.))
-g = Expression(("10.0*a*(x[1] + 1.0)*(1.0 - x[1])", "0.0"), a=1.0, element=W.sub(0).ufl_element())
-bc0 = Expression(("0.0", "0.0"), element=W.sub(0).ufl_element())
+x = SpatialCoordinate(mesh)
+a = 1.0
+b = 0.8
+v_d = as_vector((a*(b*10.0*(pow(x[1], 3) - pow(x[1], 2) - x[1] + 1.0)) + ((1.0-b)*10.0*(-pow(x[1], 3) - pow(x[1], 2) + x[1] + 1.0)), 0.0))
+f = as_vector((0., 0.))
+g = interpolate(as_vector((10.0*a*(x[1] + 1.0)*(1.0 - x[1]), 0.0)), W.sub(0))
+@function.expression.numba_eval
+def zero_eval(values, x, cell):
+    values[:, 0] = 0.0
+    values[:, 1] = 0.0
+bc0 = interpolate(Expression(zero_eval, shape=(2,)), W.sub(0))
 
 # TRIAL/TEST FUNCTIONS #
 trial = BlockTrialFunction(W)

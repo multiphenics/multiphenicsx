@@ -64,7 +64,8 @@ dx = Measure("dx")(subdomain_data=subdomains)
 ds = Measure("ds")(subdomain_data=boundaries)
 
 # ASSEMBLE #
-g = Expression("sin(3*x[0] + 1)*sin(3*x[1] + 1)", element=V.ufl_element())
+x = SpatialCoordinate(mesh)
+g = sin(3*x[0] + 1)*sin(3*x[1] + 1)
 F = [inner((1+u**2)*grad(u), grad(v))*dx + u*v*inner(grad(u), grad(u))*dx + l*v*ds - v*dx,
      u*m*ds - g*m*ds]
 J = block_derivative(F, ul, dul)

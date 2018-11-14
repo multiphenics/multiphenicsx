@@ -17,8 +17,8 @@
 #
 
 from numpy import isclose
-import ufl
 from dolfin import *
+from dolfin import function
 import matplotlib.pyplot as plt
 from multiphenics import *
 
@@ -73,10 +73,21 @@ W = BlockFunctionSpace(mesh, W_el, restrict=[None, None, control_boundary, contr
 # PROBLEM DATA #
 nu = 1.
 alpha = 1.e-2
-f = ufl.as_vector((0., 0.))
-bc0 = Expression(("0.", "0."), element=W.sub(0).ufl_element())
-bc0_component = Expression("0.", element=W.sub(0).ufl_element())
-bc1 = Expression(("2.5", "0."), element=W.sub(0).ufl_element())
+f = as_vector((0., 0.))
+@function.expression.numba_eval
+def zero_eval(values, x, cell):
+    values[:, 0] = 0.0
+    values[:, 1] = 0.0
+bc0 = interpolate(Expression(zero_eval, shape=(2,)), W.sub(0))
+@function.expression.numba_eval
+def zero_component_eval(values, x, cell):
+    values[:] = 0.0
+bc0_component = interpolate(Expression(zero_eval), W.sub(0).sub(0))
+@function.expression.numba_eval
+def non_zero_eval(values, x, cell):
+    values[:, 0] = 2.5
+    values[:, 1] = 0.0
+bc1 = interpolate(Expression(non_zero_eval, shape=(2,)), W.sub(0))
 
 # TRIAL/TEST FUNCTIONS #
 trial = BlockTrialFunction(W)

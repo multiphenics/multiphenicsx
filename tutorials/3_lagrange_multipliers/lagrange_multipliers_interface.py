@@ -18,6 +18,7 @@
 
 from numpy import isclose
 from dolfin import *
+from dolfin import function
 # import matplotlib.pyplot as plt
 from multiphenics import *
 parameters["ghost_mode"] = "shared_facet" # required by dS
@@ -77,7 +78,10 @@ a = [[inner(grad(u1), grad(v1))*dx(1), 0                              ,   l("-")
      [m("-")*u1("-")*dS              , - m("+")*u2("+")*dS            , 0                   ]]
 f =  [v1*dx(1)                       , v2*dx(2)                       , 0                   ]
 
-zero = Expression("0.", element=W.sub(0).ufl_element())
+@function.expression.numba_eval
+def zero_eval(values, x, cell):
+    values[:] = 0.0
+zero = interpolate(Expression(zero_eval), V)
 bc1 = DirichletBC(W.sub(0), zero, boundaries, 1)
 bc2 = DirichletBC(W.sub(1), zero, boundaries, 1)
 bcs = BlockDirichletBC([bc1,

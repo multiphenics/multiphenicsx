@@ -62,8 +62,9 @@ dx = Measure("dx")(subdomain_data=subdomains)
 dS = Measure("dS")(subdomain_data=boundaries)
 
 # ASSEMBLE #
-f = Expression("27*sin(3*x[0])*sin(3*x[1])*sin(3*x[2])", element=V.ufl_element())
-g = Expression("sin(3*x[0])*sin(3*x[1])*sin(3*x[2])", element=V.ufl_element())
+x = SpatialCoordinate(mesh)
+f = 27*sin(3*x[0])*sin(3*x[1])*sin(3*x[2])
+g = sin(3*x[0])*sin(3*x[1])*sin(3*x[2])
 a = [[inner(grad(u), grad(v))*dx(2), l("+")*v("+")*dS(1)],
      [u("+")*m("+")*dS(1)          , 0                  ]]
 f =  [f*v*dx(2)                    , g("+")*m("+")*dS(1)]

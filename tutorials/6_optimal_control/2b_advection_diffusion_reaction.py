@@ -18,6 +18,7 @@
 
 from numpy import isclose
 from dolfin import *
+from dolfin import function
 import matplotlib.pyplot as plt
 from multiphenics import *
 
@@ -61,11 +62,15 @@ alpha = 0.01
 y_d_1 = 0.6
 y_d_2 = 1.8
 epsilon = 1./15.
-beta = Expression(("x[1]*(1-x[1])", "0"), element=VectorElement(Y))
+x = SpatialCoordinate(mesh)
+beta = as_vector((x[1]*(1-x[1]), 0))
 sigma = 0.
 f = 0.
 def bc_generator(val):
-    return Expression(str(val), element=W.sub(0).ufl_element())
+    @function.expression.numba_eval
+    def eval_val(values, x, cell):
+        values[:] = val
+    return interpolate(Expression(eval_val), W.sub(0))
 
 # TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)

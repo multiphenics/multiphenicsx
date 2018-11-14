@@ -21,7 +21,7 @@ import pytest
 from _pytest.mark import ParameterSet
 from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, full, hstack, hstack as bvec, logical_and, sort, unique, vstack
 from scipy.sparse import csr_matrix
-from dolfin import DOLFIN_EPS, dx, Expression, FiniteElement, Function, FunctionSpace, inner, MeshFunction, MixedElement, project, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
+from dolfin import as_matrix, as_tensor, as_vector, DOLFIN_EPS, dx, FiniteElement, Function, FunctionSpace, inner, MeshFunction, MixedElement, project, SpatialCoordinate, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
 from dolfin.cpp.la import PETScMatrix, PETScVector
 from dolfin.fem import assemble
 from multiphenics import BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
@@ -379,19 +379,20 @@ def get_block_bcs_2():
 def get_rhs_block_form_1(block_V):
     block_v = BlockTestFunction(block_V)
     (v, ) = block_split(block_v)
+    x = SpatialCoordinate(block_V.mesh())
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) is 0:
-        f = Expression("2*x[0] + 4*x[1]*x[1]", degree=2)
+        f = 2*x[0] + 4*x[1]*x[1]
         block_form = [f*v*dx]
     elif len(shape_1) is 1 and shape_1[0] is 2:
-        f = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"), degree=2)
+        f = as_vector((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]))
         block_form = [inner(f, v)*dx]
     elif len(shape_1) is 1 and shape_1[0] is 3:
-        f = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]", "7*x[0] + 11*x[1]*x[1]"), degree=2)
+        f = as_vector((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1], 7*x[0] + 11*x[1]*x[1]))
         block_form = [inner(f, v)*dx]
     elif len(shape_1) is 2:
-        f = Expression((("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"),
-                        ("7*x[0] + 11*x[1]*x[1]", "13*x[0] + 17*x[1]*x[1]")), degree=2)
+        f = as_matrix(((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]),
+                       (7*x[0] + 11*x[1]*x[1], 13*x[0] + 17*x[1]*x[1])))
         block_form = [inner(f, v)*dx]
     return block_form
     
@@ -399,34 +400,35 @@ def get_rhs_block_form_1(block_V):
 def get_rhs_block_form_2(block_V):
     block_v = BlockTestFunction(block_V)
     (v1, v2) = block_split(block_v)
+    x = SpatialCoordinate(block_V.mesh())
     block_form = [None, None]
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) is 0:
-        f1 = Expression("2*x[0] + 4*x[1]*x[1]", degree=2)
+        f1 = 2*x[0] + 4*x[1]*x[1]
         block_form[0] = f1*v1*dx
     elif len(shape_1) is 1 and shape_1[0] is 2:
-        f1 = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"), degree=2)
+        f1 = as_vector((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]))
         block_form[0] = inner(f1, v1)*dx
     elif len(shape_1) is 1 and shape_1[0] is 3:
-        f1 = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]", "7*x[0] + 11*x[1]*x[1]"), degree=2)
+        f1 = as_vector((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1], 7*x[0] + 11*x[1]*x[1]))
         block_form[0] = inner(f1, v1)*dx
     elif len(shape_1) is 2:
-        f1 = Expression((("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"),
-                         ("7*x[0] + 11*x[1]*x[1]", "13*x[0] + 17*x[1]*x[1]")), degree=2)
+        f1 = as_matrix(((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]),
+                        (7*x[0] + 11*x[1]*x[1], 13*x[0] + 17*x[1]*x[1])))
         block_form[0] = inner(f1, v1)*dx
     shape_2 = block_V[1].ufl_element().value_shape()
     if len(shape_2) is 0:
-        f2 = Expression("2*x[1] + 4*x[0]*x[0]", degree=2)
+        f2 = 2*x[1] + 4*x[0]*x[0]
         block_form[1] = f2*v2*dx
     elif len(shape_2) is 1 and shape_2[0] is 2:
-        f2 = Expression(("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]"), degree=2)
+        f2 = as_vector((2*x[1] + 4*x[0]*x[0], 3*x[1] + 5*x[0]*x[0]))
         block_form[1] = inner(f2, v2)*dx
     elif len(shape_2) is 1 and shape_2[0] is 3:
-        f2 = Expression(("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]", "7*x[1] + 11*x[0]*x[0]"), degree=2)
+        f2 = as_vector((2*x[1] + 4*x[0]*x[0], 3*x[1] + 5*x[0]*x[0], 7*x[1] + 11*x[0]*x[0]))
         block_form[1] = inner(f2, v2)*dx
     elif len(shape_2) is 2:
-        f2 = Expression((("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]"),
-                         ("7*x[1] + 11*x[0]*x[0]", "13*x[1] + 17*x[0]*x[0]")), degree=2)
+        f2 = as_matrix(((2*x[1] + 4*x[0]*x[0], 3*x[1] + 5*x[0]*x[0]),
+                        (7*x[1] + 11*x[0]*x[0], 13*x[1] + 17*x[0]*x[0])))
         block_form[1] = inner(f2, v2)*dx
     return block_form
     
@@ -437,19 +439,20 @@ def get_lhs_block_form_1(block_V):
     block_v = BlockTestFunction(block_V)
     (u, ) = block_split(block_u)
     (v, ) = block_split(block_v)
+    x = SpatialCoordinate(block_V.mesh())
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) is 0:
-        f = Expression("2*x[0] + 4*x[1]*x[1]", degree=2)
+        f = 2*x[0] + 4*x[1]*x[1]
         block_form = [[f*u*v*dx]]
     elif len(shape_1) is 1 and shape_1[0] is 2:
-        f = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"), degree=2)
+        f = as_vector((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]))
         block_form = [[(f[0]*u[0]*v[0] + f[1]*u[1].dx(1)*v[1])*dx]]
     elif len(shape_1) is 1 and shape_1[0] is 3:
-        f = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]", "7*x[0] + 11*x[1]*x[1]"), degree=2)
+        f = as_vector((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1], 7*x[0] + 11*x[1]*x[1]))
         block_form = [[(f[0]*u[0]*v[0] + f[1]*u[1].dx(1)*v[1] + f[2]*u[2].dx(0)*v[2].dx(1))*dx]]
     elif len(shape_1) is 2:
-        f = Expression((("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"),
-                        ("7*x[0] + 11*x[1]*x[1]", "13*x[0] + 17*x[1]*x[1]")), degree=2)
+        f = as_tensor(((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]),
+                       (7*x[0] + 11*x[1]*x[1], 13*x[0] + 17*x[1]*x[1])))
         block_form = [[(f[0, 0]*u[0, 0]*v[0, 0] + f[0, 1]*u[0, 1].dx(1)*v[0, 1] + f[1, 0]*u[1, 0].dx(0)*v[1, 0].dx(1) + f[1, 1]*u[1, 1].dx(0)*v[1, 1])*dx]]
     return block_form
     
@@ -459,36 +462,37 @@ def get_lhs_block_form_2(block_V):
     block_v = BlockTestFunction(block_V)
     (u1, u2) = block_split(block_u)
     (v1, v2) = block_split(block_v)
+    x = SpatialCoordinate(block_V.mesh())
     block_form = [[None, None], [None, None]]
     # (1, 1) block
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) is 0:
-        f1 = Expression("2*x[0] + 4*x[1]*x[1]", degree=2)
+        f1 = 2*x[0] + 4*x[1]*x[1]
         block_form[0][0] = f1*u1*v1*dx
     elif len(shape_1) is 1 and shape_1[0] is 2:
-        f1 = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"), degree=2)
+        f1 = as_vector((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]))
         block_form[0][0] = (f1[0]*u1[0]*v1[0] + f1[1]*u1[1].dx(1)*v1[1])*dx
     elif len(shape_1) is 1 and shape_1[0] is 3:
-        f1 = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]", "7*x[0] + 11*x[1]*x[1]"), degree=2)
+        f1 = as_vector((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1], 7*x[0] + 11*x[1]*x[1]))
         block_form[0][0] = (f1[0]*u1[0]*v1[0] + f1[1]*u1[1].dx(1)*v1[1] + f1[2]*u1[2].dx(0)*v1[2].dx(1))*dx
     elif len(shape_1) is 2:
-        f1 = Expression((("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"),
-                         ("7*x[0] + 11*x[1]*x[1]", "13*x[0] + 17*x[1]*x[1]")), degree=2)
+        f1 = as_matrix(((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]),
+                        (7*x[0] + 11*x[1]*x[1], 13*x[0] + 17*x[1]*x[1])))
         block_form[0][0] = (f1[0, 0]*u1[0, 0]*v1[0, 0] + f1[0, 1]*u1[0, 1].dx(1)*v1[0, 1] + f1[1, 0]*u1[1, 0].dx(0)*v1[1, 0].dx(1) + f1[1, 1]*u1[1, 1].dx(0)*v1[1, 1])*dx
     # (2, 2) block
     shape_2 = block_V[1].ufl_element().value_shape()
     if len(shape_2) is 0:
-        f2 = Expression("2*x[1] + 4*x[0]*x[0]", degree=2)
+        f2 = 2*x[1] + 4*x[0]*x[0]
         block_form[1][1] = f2*u2*v2*dx
     elif len(shape_2) is 1 and shape_2[0] is 2:
-        f2 = Expression(("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]"), degree=2)
+        f2 = as_vector((2*x[1] + 4*x[0]*x[0], 3*x[1] + 5*x[0]*x[0]))
         block_form[1][1] = (f2[0]*u2[0]*v2[0] + f2[1]*u2[1].dx(1)*v2[1])*dx
     elif len(shape_2) is 1 and shape_2[0] is 3:
-        f2 = Expression(("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]", "7*x[1] + 11*x[0]*x[0]"), degree=2)
+        f2 = as_vector((2*x[1] + 4*x[0]*x[0], 3*x[1] + 5*x[0]*x[0], 7*x[1] + 11*x[0]*x[0]))
         block_form[1][1] = (f2[0]*u2[0]*v2[0] + f2[1]*u2[1].dx(1)*v2[1] + f2[2]*u2[2].dx(0)*v2[2].dx(1))*dx
     elif len(shape_2) is 2:
-        f2 = Expression((("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]"),
-                         ("7*x[1] + 11*x[0]*x[0]", "13*x[1] + 17*x[0]*x[0]")), degree=2)
+        f2 = as_matrix(((2*x[1] + 4*x[0]*x[0], 3*x[1] + 5*x[0]*x[0]),
+                        (7*x[1] + 11*x[0]*x[0], 13*x[1] + 17*x[0]*x[0])))
         block_form[1][1] = (f2[0, 0]*u2[0, 0]*v2[0, 0] + f2[0, 1]*u2[0, 1].dx(1)*v2[0, 1] + f2[1, 0]*u2[1, 0].dx(0)*v2[1, 0].dx(1) + f2[1, 1]*u2[1, 1].dx(0)*v2[1, 1])*dx
     # (1, 2) and (2, 1) blocks
     if len(shape_1) is 0:
@@ -616,40 +620,42 @@ def apply_bc_and_block_bc_matrix(lhs, block_lhs, block_bcs):
 # ================ BLOCK FUNCTIONS GENERATOR ================ #
 # Computation of block function for single block
 def get_list_of_functions_1(block_V):
+    x = SpatialCoordinate(block_V.mesh())
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) is 0:
-        f = Expression("2*x[0] + 4*x[1]*x[1]", degree=2)
+        f = 2*x[0] + 4*x[1]*x[1]
     elif len(shape_1) is 1 and shape_1[0] is 2:
-        f = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"), degree=2)
+        f = as_vector((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]))
     elif len(shape_1) is 1 and shape_1[0] is 3:
-        f = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]", "7*x[0] + 11*x[1]*x[1]"), degree=2)
+        f = as_vector((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1], 7*x[0] + 11*x[1]*x[1]))
     elif len(shape_1) is 2:
-        f = Expression((("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"),
-                        ("7*x[0] + 11*x[1]*x[1]", "13*x[0] + 17*x[1]*x[1]")), degree=2)
+        f = as_matrix(((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]),
+                       (7*x[0] + 11*x[1]*x[1], 13*x[0] + 17*x[1]*x[1])))
     return [project(f, block_V[0])]
     
 # Computation of block function for two blocks
 def get_list_of_functions_2(block_V):
+    x = SpatialCoordinate(block_V.mesh())
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) is 0:
-        f1 = Expression("2*x[0] + 4*x[1]*x[1]", degree=2)
+        f1 = 2*x[0] + 4*x[1]*x[1]
     elif len(shape_1) is 1 and shape_1[0] is 2:
-        f1 = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"), degree=2)
+        f1 = as_vector((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]))
     elif len(shape_1) is 1 and shape_1[0] is 3:
-        f1 = Expression(("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]", "7*x[0] + 11*x[1]*x[1]"), degree=2)
+        f1 = as_vector((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1], 7*x[0] + 11*x[1]*x[1]))
     elif len(shape_1) is 2:
-        f1 = Expression((("2*x[0] + 4*x[1]*x[1]", "3*x[0] + 5*x[1]*x[1]"),
-                         ("7*x[0] + 11*x[1]*x[1]", "13*x[0] + 17*x[1]*x[1]")), degree=2)
+        f1 = as_matrix(((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]),
+                        (7*x[0] + 11*x[1]*x[1], 13*x[0] + 17*x[1]*x[1])))
     shape_2 = block_V[1].ufl_element().value_shape()
     if len(shape_2) is 0:
-        f2 = Expression("2*x[1] + 4*x[0]*x[0]", degree=2)
+        f2 = 2*x[1] + 4*x[0]*x[0]
     elif len(shape_2) is 1 and shape_2[0] is 2:
-        f2 = Expression(("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]"), degree=2)
+        f2 = as_vector((2*x[1] + 4*x[0]*x[0], 3*x[1] + 5*x[0]*x[0]))
     elif len(shape_2) is 1 and shape_2[0] is 3:
-        f2 = Expression(("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]", "7*x[1] + 11*x[0]*x[0]"), degree=2)
+        f2 = as_vector((2*x[1] + 4*x[0]*x[0], 3*x[1] + 5*x[0]*x[0], 7*x[1] + 11*x[0]*x[0]))
     elif len(shape_2) is 2:
-        f2 = Expression((("2*x[1] + 4*x[0]*x[0]", "3*x[1] + 5*x[0]*x[0]"),
-                         ("7*x[1] + 11*x[0]*x[0]", "13*x[1] + 17*x[0]*x[0]")), degree=2)
+        f2 = as_matrix(((2*x[1] + 4*x[0]*x[0], 3*x[1] + 5*x[0]*x[0]),
+                        (7*x[1] + 11*x[0]*x[0], 13*x[1] + 17*x[0]*x[0])))
     return [project(f1, block_V[0]), project(f2, block_V[1])]
     
 # ================ PARALLEL SUPPORT ================ #

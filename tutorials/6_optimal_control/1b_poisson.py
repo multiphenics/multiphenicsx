@@ -18,6 +18,7 @@
 
 from numpy import isclose
 from dolfin import *
+from dolfin import function
 import matplotlib.pyplot as plt
 from multiphenics import *
 
@@ -59,8 +60,14 @@ alpha = 0.01
 y_d_1 = 1.0
 y_d_2 = 0.6
 f = 0.
-bc0 = Expression("0.", element=W.sub(0).ufl_element())
-bc1 = Expression("1.", element=W.sub(0).ufl_element())
+@function.expression.numba_eval
+def zero_eval(values, x, cell):
+    values[:] = 0.0
+bc0 = interpolate(Expression(zero_eval), W.sub(0))
+@function.expression.numba_eval
+def one_eval(values, x, cell):
+    values[:] = 0.0
+bc1 = interpolate(Expression(one_eval), W.sub(0))
 
 # TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)

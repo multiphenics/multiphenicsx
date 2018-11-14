@@ -17,7 +17,6 @@
 #
 
 from numpy import isclose
-import ufl
 from dolfin import *
 from multiphenics import *
 
@@ -29,8 +28,14 @@ MixedElement class) and multiphenics code.
 
 # Constitutive parameters
 nu = 0.01
-u_in = ufl.as_vector((1., 0.))
-u_wall = ufl.as_vector((0., 0.))
+@function.expression.numba_eval
+def u_in_eval(values, x, cell):
+    values[:, 0] = 1.0
+    values[:, 1] = 0.0
+@function.expression.numba_eval
+def u_wall_eval(values, x, cell):
+    values[:, 0] = 0.0
+    values[:, 1] = 0.0
 
 # Solver parameters
 snes_solver_parameters = {"nonlinear_solver": "snes",
@@ -73,6 +78,8 @@ def run_monolithic():
     J = derivative(F, up, dup)
 
     # Boundary conditions
+    u_in = interpolate(Expression(u_in_eval, shape=(2,)), W.sub(0).collapse())
+    u_wall = interpolate(Expression(u_wall_eval, shape=(2,)), W.sub(0).collapse())
     inlet_bc = DirichletBC(W.sub(0), u_in, boundaries, 1)
     wall_bc = DirichletBC(W.sub(0), u_wall, boundaries, 2)
     bc = [inlet_bc, wall_bc]
@@ -116,6 +123,8 @@ def run_block():
     J = block_derivative(F, up, dup)
 
     # Boundary conditions
+    u_in = interpolate(Expression(u_in_eval, shape=(2,)), W.sub(0))
+    u_wall = interpolate(Expression(u_wall_eval, shape=(2,)), W.sub(0))
     inlet_bc = DirichletBC(W.sub(0), u_in, boundaries, 1)
     wall_bc = DirichletBC(W.sub(0), u_wall, boundaries, 2)
     bc = BlockDirichletBC([[inlet_bc, wall_bc], []])

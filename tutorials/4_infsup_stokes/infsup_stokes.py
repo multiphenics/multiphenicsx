@@ -18,6 +18,7 @@
 
 from numpy import isclose
 from dolfin import *
+from dolfin import function
 # import matplotlib.pyplot as plt
 from multiphenics import *
 
@@ -46,6 +47,11 @@ wall.mark(boundaries, 1)
 V_element = VectorElement("Lagrange", mesh.ufl_cell(), 2)
 Q_element = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 
+@function.expression.numba_eval
+def zero_eval(values, x, cell):
+    values[:, 0] = 0.0
+    values[:, 1] = 0.0
+
 def normalize(u1, u2, p):
     u1.vector()[:] /= assemble(inner(grad(u1), grad(u1))*dx)
     u1.vector().apply("insert")
@@ -73,7 +79,7 @@ def run_monolithic():
     rhs = - inner(p, q)*dx
 
     # Boundary conditions
-    zero = Expression(("0.", "0."), element=W.sub(0).ufl_element())
+    zero = interpolate(Expression(zero_eval, shape=(2,)), W.sub(0).collapse())
     bc = [DirichletBC(W.sub(0), zero, boundaries, 1)]
 
     # Assemble lhs and rhs matrices
@@ -132,7 +138,7 @@ def run_block():
            [0                         , - p*q*dx     ]]
 
     # Boundary conditions
-    zero = Expression(("0.", "0."), element=W.sub(0).ufl_element())
+    zero = interpolate(Expression(zero_eval, shape=(2,)), W.sub(0))
     wallc = [DirichletBC(W.sub(0), zero, boundaries, 1)]
     bc = BlockDirichletBC([[wallc], []])
 

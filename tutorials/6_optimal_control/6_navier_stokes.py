@@ -17,8 +17,8 @@
 #
 
 from numpy import isclose
-import ufl
 from dolfin import *
+from dolfin import function
 import matplotlib.pyplot as plt
 from multiphenics import *
 from sympy import ccode, cos, symbols
@@ -65,8 +65,12 @@ x, y = symbols("x[0], x[1]")
 psi_d = 10*(1-cos(0.8*pi*x))*(1-cos(0.8*pi*y))*(1-x)**2*(1-y)**2
 v_d = Expression((ccode(psi_d.diff(y, 1)), ccode(-psi_d.diff(x, 1))), element=W.sub(0).ufl_element())
 nu = 0.01
-f = ufl.as_vector((0., 0.))
-bc0 = Expression(("0.", "0."), element=W.sub(0).ufl_element())
+f = as_vector((0., 0.))
+@function.expression.numba_eval
+def zero_eval(values, x, cell):
+    values[:, 0] = 0.0
+    values[:, 1] = 0.0
+bc0 = interpolate(Expression(zero_eval, shape=(2,)), W.sub(0))
 
 # NONLINEAR SOLVER PARAMETERS #
 snes_solver_parameters = {"nonlinear_solver": "snes",

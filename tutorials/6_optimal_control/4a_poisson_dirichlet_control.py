@@ -18,6 +18,7 @@
 
 from numpy import isclose
 from dolfin import *
+from dolfin import function
 import matplotlib.pyplot as plt
 from multiphenics import *
 
@@ -62,8 +63,12 @@ W = BlockFunctionSpace([Y, U, L, Q], restrict=[None, left, left, None])
 # PROBLEM DATA #
 alpha = 1.e-5
 y_d = 1.
-f = Expression("10*sin(2*pi*x[0])*sin(2*pi*x[1])", element=W.sub(0).ufl_element())
-bc0 = Expression("0.", element=W.sub(0).ufl_element())
+x = SpatialCoordinate(mesh)
+f = 10*sin(2*pi*x[0])*sin(2*pi*x[1])
+@function.expression.numba_eval
+def zero_eval(values, x, cell):
+    values[:] = 0.0
+bc0 = interpolate(Expression(zero_eval), W.sub(0))
 
 # TRIAL/TEST FUNCTIONS #
 yulp = BlockTrialFunction(W)
