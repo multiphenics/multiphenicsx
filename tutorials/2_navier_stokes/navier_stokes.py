@@ -18,7 +18,11 @@
 
 from numpy import isclose
 from dolfin import *
+from dolfin.cpp.mesh import GhostMode
+from dolfin.fem import assemble
+from dolfin.io import XDMFFile
 from multiphenics import *
+from multiphenics.fem import DirichletBCLegacy
 
 """
 In this tutorial we compare the formulation and solution
@@ -38,16 +42,13 @@ def u_wall_eval(values, x, cell):
     values[:, 1] = 0.0
 
 # Solver parameters
-snes_solver_parameters = {"nonlinear_solver": "snes",
-                          "snes_solver": {"linear_solver": "mumps",
-                                          "maximum_iterations": 20,
-                                          "report": True,
-                                          "error_on_nonconvergence": True}}
+def set_solver_parameters(solver):
+    solver.max_it = 20
                                           
 # Mesh
-mesh = Mesh("data/backward_facing_step.xml")
-subdomains = MeshFunction("size_t", mesh, "data/backward_facing_step_physical_region.xml")
-boundaries = MeshFunction("size_t", mesh, "data/backward_facing_step_facet_region.xml")
+mesh = XDMFFile(MPI.comm_world, "data/backward_facing_step.xdmf").read_mesh(MPI.comm_world, GhostMode.none)
+subdomains = XDMFFile(MPI.comm_world, "data/backward_facing_step_physical_region.xdmf").read_mf_size_t(mesh)
+boundaries = XDMFFile(MPI.comm_world, "data/backward_facing_step_facet_region.xdmf").read_mf_size_t(mesh)
 
 # Function spaces
 V_element = VectorElement("Lagrange", mesh.ufl_cell(), 2)
@@ -80,27 +81,47 @@ def run_monolithic():
     # Boundary conditions
     u_in = interpolate(Expression(u_in_eval, shape=(2,)), W.sub(0).collapse())
     u_wall = interpolate(Expression(u_wall_eval, shape=(2,)), W.sub(0).collapse())
-    inlet_bc = DirichletBC(W.sub(0), u_in, boundaries, 1)
-    wall_bc = DirichletBC(W.sub(0), u_wall, boundaries, 2)
+    inlet_bc = DirichletBC(W.sub(0), u_in, (boundaries, 1))
+    wall_bc = DirichletBC(W.sub(0), u_wall, (boundaries, 2))
     bc = [inlet_bc, wall_bc]
+    
+    # Class for interfacing with the Newton solver
+    class NavierStokesProblem(NonlinearProblem):
+        def __init__(self, F, up, bc, J):
+            NonlinearProblem.__init__(self)
+            self._F = F
+            self._up = up
+            self._bc = bc
+            self._J = J
+            self._F_vec = None
+            self._J_mat = None
+
+        def F(self, _):
+            if self._F_vec is None:
+                self._F_vec = assemble(self._F)
+            else:
+                assemble(self._F_vec, self._F)
+            DirichletBCLegacy.apply(self._bc, self._F_vec, self._up.vector())
+            return self._F_vec
+
+        def J(self, _):
+            if self._J_mat is None:
+                self._J_mat = assemble(self._J)
+            else:
+                assemble(self._J_mat, self._J)
+            DirichletBCLegacy.apply(self._bc, self._J_mat, 1.0)
+            return self._J_mat
 
     # Solve
-    problem = NonlinearVariationalProblem(F, up, bc, J)
-    solver = NonlinearVariationalSolver(problem)
-    solver.parameters.update(snes_solver_parameters)
-    solver.solve()
+    problem = NavierStokesProblem(F, up, bc, J)
+    solver = NewtonSolver(mesh.mpi_comm())
+    set_solver_parameters(solver)
+    solver.solve(problem, up.vector())
 
     # Extract solutions
-    (u, p) = up.split()
-    # plt.figure()
-    # plot(u, title="Velocity monolithic", mode="color")
-    # plt.figure()
-    # plot(p, title="Pressure monolithic", mode="color")
-    # plt.show()
+    return up
     
-    return (u, p)
-    
-(u_m, p_m) = run_monolithic()
+up_m = run_monolithic()
 
 # -------------------------------------------------- #
 
@@ -125,37 +146,27 @@ def run_block():
     # Boundary conditions
     u_in = interpolate(Expression(u_in_eval, shape=(2,)), W.sub(0))
     u_wall = interpolate(Expression(u_wall_eval, shape=(2,)), W.sub(0))
-    inlet_bc = DirichletBC(W.sub(0), u_in, boundaries, 1)
-    wall_bc = DirichletBC(W.sub(0), u_wall, boundaries, 2)
+    inlet_bc = DirichletBC(W.sub(0), u_in, (boundaries, 1))
+    wall_bc = DirichletBC(W.sub(0), u_wall, (boundaries, 2))
     bc = BlockDirichletBC([[inlet_bc, wall_bc], []])
 
     # Solve
     problem = BlockNonlinearProblem(F, up, bc, J)
-    solver = BlockPETScSNESSolver(problem)
-    solver.parameters.update(snes_solver_parameters["snes_solver"])
-    solver.solve()
+    solver = BlockNewtonSolver(mesh.mpi_comm())
+    set_solver_parameters(solver)
+    solver.solve(problem, up.block_vector())
 
     # Extract solutions
-    (u, p) = up.block_split()
-    # plt.figure()
-    # plot(u, title="Velocity block", mode="color")
-    # plt.figure()
-    # plot(p, title="Pressure block", mode="color")
-    # plt.show()
+    return up
     
-    return (u, p)
-    
-(u_b, p_b) = run_block()
+up_b = run_block()
 
 # -------------------------------------------------- #
 
 #                  ERROR COMPUTATION                 #
-def run_error(u_m, u_b, p_m, p_b):
-    # plt.figure()
-    # plot(u_b - u_m, title="Velocity error", mode="color")
-    # plt.figure()
-    # plot(p_b - p_m, title="Pressure error", mode="color")
-    # plt.show()
+def run_error(up_m, up_b):
+    (u, p) = up.split()
+    (u, p) = up.block_split()
     u_m_norm = sqrt(assemble(inner(grad(u_m), grad(u_m))*dx))
     err_u_norm = sqrt(assemble(inner(grad(u_b - u_m), grad(u_b - u_m))*dx))
     p_m_norm = sqrt(assemble(inner(p_m, p_m)*dx))
@@ -165,4 +176,4 @@ def run_error(u_m, u_b, p_m, p_b):
     assert isclose(err_u_norm/u_m_norm, 0., atol=1.e-10)
     assert isclose(err_p_norm/p_m_norm, 0., atol=1.e-10)
 
-run_error(u_m, u_b, p_m, p_b)
+run_error(up_m, up_b)
