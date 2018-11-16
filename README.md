@@ -7,6 +7,8 @@
 ### 1. Prerequisites
 **multiphenics** requires **FEniCS** (>= 2018.1.0, python 3) with PETSc and SLEPc.
 
+Support for **FEniCS-X** is available in the [fenicsx branch](https://gitlab.com/multiphenics/multiphenics/tree/fenicsx).
+
 ### 2. Installation and usage
 Simply clone the **multiphenics** public repository
 ```
