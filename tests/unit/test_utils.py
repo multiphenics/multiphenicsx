@@ -25,7 +25,7 @@ from dolfin import as_matrix, as_tensor, as_vector, DOLFIN_EPS, dx, FiniteElemen
 from dolfin.cpp.la import PETScMatrix, PETScVector
 from dolfin.fem import assemble
 from multiphenics import BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
-from multiphenics.fem import block_assemble
+from multiphenics.fem import block_assemble, BlockDirichletBCLegacy, DirichletBCLegacy
 
 # ================ PYTEST HELPER ================ #
 def pytest_mark_slow(item):
@@ -564,12 +564,12 @@ def apply_bc_and_block_bc_vector(rhs, block_rhs, block_bcs):
     N = len(block_bcs)
     assert N in (1, 2)
     if N == 1:
-        [bc.apply(rhs) for bc in block_bcs[0]]
-        block_bcs.apply(block_rhs)
+        DirichletBCLegacy.apply(block_bcs[0], rhs)
+        BlockDirichletBCLegacy.apply(block_bcs, block_rhs)
     else:
-        [bc1.apply(rhs[0]) for bc1 in block_bcs[0]]
-        [bc2.apply(rhs[1]) for bc2 in block_bcs[1]]
-        block_bcs.apply(block_rhs)
+        DirichletBCLegacy.apply(block_bcs[0], rhs[0])
+        DirichletBCLegacy.apply(block_bcs[1], rhs[1])
+        BlockDirichletBCLegacy.apply(block_bcs, block_rhs)
     
 def apply_bc_and_block_bc_vector_non_linear(rhs, block_rhs, block_bcs, block_V):
     if block_bcs is None:
@@ -578,17 +578,17 @@ def apply_bc_and_block_bc_vector_non_linear(rhs, block_rhs, block_bcs, block_V):
     assert N in (1, 2)
     if N == 1:
         function = Function(block_V[0])
-        [bc.apply(rhs, function.vector()) for bc in block_bcs[0]]
+        DirichletBCLegacy.apply(block_bcs[0], rhs, function.vector())
         block_function = BlockFunction(block_V)
-        block_bcs.apply(block_rhs, block_function.block_vector())
+        BlockDirichletBCLegacy.apply(block_bcs, block_rhs, block_function.block_vector())
         return (function, block_function)
     else:
         function1 = Function(block_V[0])
-        [bc1.apply(rhs[0], function1.vector()) for bc1 in block_bcs[0]]
+        DirichletBCLegacy.apply(block_bcs[0], rhs[0], function1.vector())
         function2 = Function(block_V[1])
-        [bc2.apply(rhs[1], function2.vector()) for bc2 in block_bcs[1]]
+        DirichletBCLegacy.apply(block_bcs[1], rhs[1], function2.vector())
         block_function = BlockFunction(block_V)
-        block_bcs.apply(block_rhs, block_function.block_vector())
+        BlockDirichletBCLegacy.apply(block_bcs, block_rhs, block_function.block_vector())
         return ((function1, function2), block_function)
         
 # ================ LEFT-HAND SIDE BLOCK FORM ASSEMBLER ================ #
@@ -608,14 +608,14 @@ def apply_bc_and_block_bc_matrix(lhs, block_lhs, block_bcs):
     N = len(block_bcs)
     assert N in (1, 2)
     if N == 1:
-        [bc.apply(lhs) for bc in block_bcs[0]]
-        block_bcs.apply(block_lhs)
+        DirichletBCLegacy.apply(block_bcs[0], lhs, 1.)
+        BlockDirichletBCLegacy.apply(block_bcs, block_lhs, 1.)
     else:
-        [bc0.apply(lhs[0][0]) for bc0 in block_bcs[0]]
-        [bc0.zero(lhs[0][1]) for bc0 in block_bcs[0]]
-        [bc1.zero(lhs[1][0]) for bc1 in block_bcs[1]]
-        [bc1.apply(lhs[1][1]) for bc1 in block_bcs[1]]
-        block_bcs.apply(block_lhs)
+        DirichletBCLegacy.apply(block_bcs[0], lhs[0][0], 1.)
+        DirichletBCLegacy.apply(block_bcs[0], lhs[0][1], 0.)
+        DirichletBCLegacy.apply(block_bcs[1], lhs[1][0], 0.)
+        DirichletBCLegacy.apply(block_bcs[1], lhs[1][1], 1.)
+        BlockDirichletBCLegacy.apply(block_bcs, block_lhs, 1.)
         
 # ================ BLOCK FUNCTIONS GENERATOR ================ #
 # Computation of block function for single block
