@@ -63,76 +63,76 @@ namespace multiphenics
       BlockPETScSubMatrix& operator=(BlockPETScSubMatrix&& A) = delete;
       
       /// Return number of rows and columns (num_rows, num_cols).
-      std::array<std::int64_t, 2> size() const;
+      virtual std::array<std::int64_t, 2> size() const;
       
       /// Return local range along dimension dim
-      std::array<std::int64_t, 2> local_range(std::size_t dim) const;
+      virtual std::array<std::int64_t, 2> local_range(std::size_t dim) const;
       
       /// Set block of values using global indices
-      void set(const PetscScalar* block,
-               std::size_t m, const PetscInt* rows,
-               std::size_t n, const PetscInt* cols);
+      virtual void set(const PetscScalar* block,
+                       std::size_t m, const PetscInt* rows,
+                       std::size_t n, const PetscInt* cols);
 
       /// Set block of values using local indices
-      void set_local(const PetscScalar* block,
-                     std::size_t m, const PetscInt* rows,
-                     std::size_t n, const PetscInt* cols);
+      virtual void set_local(const PetscScalar* block,
+                             std::size_t m, const PetscInt* rows,
+                             std::size_t n, const PetscInt* cols);
 
       /// Add block of values using global indices
-      void add(const PetscScalar* block,
-               std::size_t m, const PetscInt* rows,
-               std::size_t n, const PetscInt* cols);
+      virtual void add(const PetscScalar* block,
+                       std::size_t m, const PetscInt* rows,
+                       std::size_t n, const PetscInt* cols);
 
       /// Add block of values using local indices
-      void add_local(const PetscScalar* block,
-                     std::size_t m, const PetscInt* rows,
-                     std::size_t n, const PetscInt* cols);
+      virtual void add_local(const PetscScalar* block,
+                             std::size_t m, const PetscInt* rows,
+                             std::size_t n, const PetscInt* cols);
                              
       /// Return norm of matrix
-      double norm(dolfin::la::Norm norm_type) const;
+      virtual double norm(dolfin::la::Norm norm_type) const;
                              
       /// Set all entries to zero and keep any sparse structure
-      void zero();
+      virtual void zero();
       
       /// Finalize assembly of tensor. The following values are recognized
       /// for the mode parameter:
       /// @param type
       ///   FINAL    - corresponds to PETSc MatAssemblyBegin+End(MAT_FINAL_ASSEMBLY)
       ///   FLUSH  - corresponds to PETSc MatAssemblyBegin+End(MAT_FLUSH_ASSEMBLY)
-      void apply(AssemblyType type);
+      virtual void apply(AssemblyType type);
       
       // Matrix-vector product, y = Ax
       void mult(const BlockPETScSubVector& x, BlockPETScSubVector& y) const;
 
       /// Multiply matrix by a scalar
-      void scale(PetscScalar a);
+      virtual void scale(PetscScalar a);
 
       /// Test if matrix is symmetric
-      bool is_symmetric(double tol) const;
+      virtual bool is_symmetric(double tol) const;
       
       /// Test if matrix is hermitian
-      bool is_hermitian(double tol) const;
+      virtual bool is_hermitian(double tol) const;
       
       //--- Special PETSc Functions ---
 
       /// Sets the prefix used by PETSc when searching the options
       /// database
-      void set_options_prefix(std::string options_prefix);
+      virtual void set_options_prefix(std::string options_prefix);
 
       /// Returns the prefix used by PETSc when searching the options
       /// database
-      std::string get_options_prefix() const;
+      virtual std::string get_options_prefix() const;
 
       /// Call PETSc function MatSetFromOptions on the PETSc Mat object
-      void set_from_options();
+      virtual void set_from_options();
 
       /// Attach nullspace to matrix (typically used by Krylov solvers
       /// when solving singular systems)
-      void set_nullspace(const dolfin::la::VectorSpaceBasis& nullspace);
+      virtual void set_nullspace(const dolfin::la::VectorSpaceBasis& nullspace);
 
       /// Attach near nullspace to matrix (used by preconditioners, such
       /// as smoothed aggregation algerbraic multigrid)
-      void set_near_nullspace(const dolfin::la::VectorSpaceBasis& nullspace);
+      virtual void set_near_nullspace(const dolfin::la::VectorSpaceBasis& nullspace);
 
     private:
       // Hide operations with PETScVector arguments

@@ -63,18 +63,18 @@ namespace multiphenics
       BlockPETScSubVector& operator=(BlockPETScSubVector&& x) = delete;
       
       /// Return size of vector.
-      std::int64_t size() const;
+      virtual std::int64_t size() const;
       
       /// Set all entries to 'a' using VecSet. This is local and does not
       /// update ghost entries.
-      void set(PetscScalar a);
+      virtual void set(PetscScalar a);
       
       /// A scalar 'a' using VecSet. This is local and does not update ghost
       /// entries.
-      void shift(PetscScalar a);
+      virtual void shift(PetscScalar a);
 
       /// Multiply by scala a
-      void scale(PetscScalar a);
+      virtual void scale(PetscScalar a);
 
       /// Multiply vector by vector x pointwise
       void mult(const BlockPETScSubVector& x);
@@ -82,46 +82,46 @@ namespace multiphenics
       /// Finalize assembly of vector. Communicates off-process entries
       /// added or set on this process to the owner, and receives from other
       /// processes changes to owned entries.
-      void apply();
+      virtual void apply();
 
       /// Update owned entries owned by this process and which are ghosts on
       /// other processes, i.e., have been added to by a remote process.
       /// This is more efficient that apply() when processes only add/set
       /// their owned entries and the pre-defined ghosts.
-      void apply_ghosts();
+      virtual void apply_ghosts();
 
       /// Update ghost values (gathers ghost values from the owning
       /// processes)
-      void update_ghosts();
+      virtual void update_ghosts();
       
       /// Get block of values using local indices
-      void get_local(PetscScalar* block, std::size_t m,
-                     const PetscInt* rows) const;
+      virtual void get_local(PetscScalar* block, std::size_t m,
+                             const PetscInt* rows) const;
 
       /// Set block of values using global indices
-      void set(const PetscScalar* block, std::size_t m,
-               const PetscInt* rows);
+      virtual void set(const PetscScalar* block, std::size_t m,
+                       const PetscInt* rows);
 
       /// Set block of values using local indices
-      void set_local(const PetscScalar* block, std::size_t m,
-                     const PetscInt* rows);
+      virtual void set_local(const PetscScalar* block, std::size_t m,
+                             const PetscInt* rows);
 
       /// Add block of values using global indices
-      void add(const PetscScalar* block, std::size_t m,
-               const PetscInt* rows);
+      virtual void add(const PetscScalar* block, std::size_t m,
+                       const PetscInt* rows);
 
       /// Add block of values using local indices
-      void add_local(const PetscScalar* block, std::size_t m,
-                     const PetscInt* rows);
+      virtual void add_local(const PetscScalar* block, std::size_t m,
+                             const PetscInt* rows);
 
       /// Get all values on local process
-      void get_local(std::vector<PetscScalar>& values) const;
+      virtual void get_local(std::vector<PetscScalar>& values) const;
 
       /// Set all values on local process
-      void set_local(const std::vector<PetscScalar>& values);
+      virtual void set_local(const std::vector<PetscScalar>& values);
 
       /// Add values to each entry on local process
-      void add_local(const std::vector<PetscScalar>& values);
+      virtual void add_local(const std::vector<PetscScalar>& values);
       
       /// Gather entries (given by global indices) into local
       /// (MPI_COMM_SELF) vector x. Provided x must be empty or of correct
@@ -134,43 +134,43 @@ namespace multiphenics
       void axpy(PetscScalar a, const BlockPETScSubVector& x);
 
       /// Replace all entries in the vector by their absolute values
-      void abs();
+      virtual void abs();
 
       /// Return dot product with given vector. For complex vectors, the
       /// argument v gets complex conjugate.
-      PetscScalar dot(const BlockPETScSubVector& v) const;
+      virtual PetscScalar dot(const BlockPETScSubVector& v) const;
 
       /// Return norm of vector
-      PetscReal norm(dolfin::la::Norm norm_type) const;
+      virtual PetscReal norm(dolfin::la::Norm norm_type) const;
 
       /// Normalize vector with respect to the l2 norm. Returns the norm
       /// before normalization.
-      PetscReal normalize();
+      virtual PetscReal normalize();
 
       /// Return minimum value of vector, and location of entry. For complex
       /// vectors returns the minimum real part.
-      std::pair<double, PetscInt> min() const;
+      virtual std::pair<double, PetscInt> min() const;
 
       /// Return maximum value of vector, and location of entry. For complex
       /// vectors returns the maximum real part.
-      std::pair<double, PetscInt> max() const;
+      virtual std::pair<double, PetscInt> max() const;
 
       /// Return sum of entries
-      PetscScalar sum() const;
+      virtual PetscScalar sum() const;
 
       //--- Special PETSc functions ---
 
       /// Sets the prefix used by PETSc when searching the options
       /// database
-      void set_options_prefix(std::string options_prefix);
+      virtual void set_options_prefix(std::string options_prefix);
 
       /// Returns the prefix used by PETSc when searching the options
       /// database
-      std::string get_options_prefix() const;
+      virtual std::string get_options_prefix() const;
 
       /// Call PETSc function VecSetFromOptions on the underlying Vec
       /// object
-      void set_from_options();
+      virtual void set_from_options();
       
     private:
       // Hide operations with PETScVector arguments
