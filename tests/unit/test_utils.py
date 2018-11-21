@@ -33,26 +33,49 @@ def pytest_mark_slow(item):
 
 def pytest_mark_slow_for_cartesian_product(generator_1, generator_2):
     for i in generator_1():
-        for j in generator_2():
-            slow = False
-            if isinstance(i, ParameterSet):
-                assert len(i.marks) is 1
+        broken_i = False # TODO remove when pytest_mark_broken_by_dolfinx is removed
+        slow_i = False
+        if isinstance(i, ParameterSet):
+            assert len(i.marks) is 1
+            if i.marks[0].name == "skip": # TODO remove when pytest_mark_broken_by_dolfinx is removed
+                assert len(i.values) is 1
+                i = i.values[0]
+                broken_i = True
+            else:
                 assert i.marks[0].name == "slow"
                 assert len(i.values) is 1
                 i = i.values[0]
-                slow = True
+                slow_i = True
+        for j in generator_2():
+            broken_j = False # TODO remove when pytest_mark_broken_by_dolfinx is removed
+            slow_j = False
             if isinstance(j, ParameterSet):
                 assert len(j.marks) is 1
-                assert j.marks[0].name == "slow"
-                assert len(j.values) is 1
-                j = j.values[0]
-                slow = True
+                if j.marks[0].name == "skip": # TODO remove when pytest_mark_broken_by_dolfinx is removed
+                    assert len(j.values) is 1
+                    j = j.values[0]
+                    broken_j = True
+                else:
+                    assert j.marks[0].name == "slow"
+                    assert len(j.values) is 1
+                    j = j.values[0]
+                    slow_j = True
             assert not isinstance(i, ParameterSet)
             assert not isinstance(j, ParameterSet)
-            if slow:
+            if broken_i or broken_j: # TODO remove when pytest_mark_broken_by_dolfinx is removed
+                yield pytest_mark_broken_by_dolfinx((i, j), -1)
+            elif slow_i or slow_j:
                 yield pytest_mark_slow((i, j))
             else:
                 yield (i, j)
+                
+def pytest_mark_broken_by_dolfinx(item, dolfinx_issue_number): # TODO remove when dolfinx issue is fixed
+    if isinstance(item, ParameterSet):
+        assert len(item.marks) is 1
+        assert item.marks[0].name == "slow"
+        assert len(item.values) is 1
+        item = item.values[0]
+    return pytest.param(item, marks=pytest.mark.skip)
 
 # ================ EQUALITY BETWEEN ARRAYS ================ #
 # Floating point equality check
@@ -213,10 +236,10 @@ def get_function_spaces_1():
         pytest_mark_slow(lambda mesh: TensorFunctionSpace(mesh, ("Lagrange", 2))),
         lambda mesh: StokesFunctionSpace(mesh, ("Lagrange", 1)),
         pytest_mark_slow(lambda mesh: StokesFunctionSpace(mesh, ("Lagrange", 2))),
-        lambda mesh: FunctionSpace(mesh, ("Real", 0)),
-        pytest_mark_slow(lambda mesh: VectorFunctionSpace(mesh, ("Real", 0))),
-        pytest_mark_slow(lambda mesh: FunctionAndRealSpace(mesh, ("Lagrange", 1))),
-        pytest_mark_slow(lambda mesh: FunctionAndRealSpace(mesh, ("Lagrange", 2)))
+        pytest_mark_broken_by_dolfinx(lambda mesh: FunctionSpace(mesh, ("Real", 0)), 225),
+        pytest_mark_broken_by_dolfinx(pytest_mark_slow(lambda mesh: VectorFunctionSpace(mesh, ("Real", 0))), 225),
+        pytest_mark_broken_by_dolfinx(pytest_mark_slow(lambda mesh: FunctionAndRealSpace(mesh, ("Lagrange", 1))), 225),
+        pytest_mark_broken_by_dolfinx(pytest_mark_slow(lambda mesh: FunctionAndRealSpace(mesh, ("Lagrange", 2))), 225)
     )
     
 def get_function_spaces_2():
@@ -232,10 +255,10 @@ def get_elements_1():
         pytest_mark_slow(lambda mesh: TensorElement("Lagrange", mesh.ufl_cell(), 2)),
         lambda mesh: StokesElement("Lagrange", mesh.ufl_cell(), 1),
         pytest_mark_slow(lambda mesh: StokesElement("Lagrange", mesh.ufl_cell(), 2)),
-        lambda mesh: FiniteElement("Real", mesh.ufl_cell(), 0),
-        pytest_mark_slow(lambda mesh: VectorElement("Real", mesh.ufl_cell(), 0)),
-        pytest_mark_slow(lambda mesh: FunctionAndRealElement("Lagrange", mesh.ufl_cell(), 1)),
-        pytest_mark_slow(lambda mesh: FunctionAndRealElement("Lagrange", mesh.ufl_cell(), 2))
+        pytest_mark_broken_by_dolfinx(lambda mesh: FiniteElement("Real", mesh.ufl_cell(), 0), 225),
+        pytest_mark_broken_by_dolfinx(pytest_mark_slow(lambda mesh: VectorElement("Real", mesh.ufl_cell(), 0)), 225),
+        pytest_mark_broken_by_dolfinx(pytest_mark_slow(lambda mesh: FunctionAndRealElement("Lagrange", mesh.ufl_cell(), 1)), 225),
+        pytest_mark_broken_by_dolfinx(pytest_mark_slow(lambda mesh: FunctionAndRealElement("Lagrange", mesh.ufl_cell(), 2)), 225)
     )
     
 def get_elements_2():
