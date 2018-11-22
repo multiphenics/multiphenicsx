@@ -17,12 +17,13 @@
 #
 
 import pytest
-from numpy.linalg import norm
 from dolfin import div, ds, dx, grad, FunctionSpace, inner, MPI, UnitSquareMesh, VectorFunctionSpace
 from dolfin.fem import assemble
 from dolfin_utils.test.fixtures import fixture as module_fixture
 from multiphenics import block_adjoint, block_derivative, BlockForm, BlockFunction, BlockFunctionSpace, block_restrict, block_split, BlockTestFunction, BlockTrialFunction
 from test_utils import array_equal, get_list_of_functions_2, to_dense
+
+ds = dx # TODO due to dolfinx issue 251  # noqa
 
 # Mesh
 @module_fixture
