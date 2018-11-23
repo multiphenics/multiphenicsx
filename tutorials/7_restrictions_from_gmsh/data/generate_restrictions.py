@@ -21,7 +21,7 @@ from multiphenics import *
 
 # Helper function to generate subdomain restriction based on a gmsh subdomain id
 def generate_subdomain_restriction(mesh, subdomains, subdomain_id):
-    D = mesh.topology().dim()
+    D = mesh.topology.dim
     # Initialize empty restriction
     restriction = MeshRestriction(mesh)
     for d in range(D + 1):
@@ -42,7 +42,7 @@ def generate_subdomain_restriction(mesh, subdomains, subdomain_id):
 def generate_interface_restriction(mesh, subdomains, subdomain_ids):
     assert isinstance(subdomain_ids, set)
     assert len(subdomain_ids) == 2
-    D = mesh.topology().dim()
+    D = mesh.topology.dim
     # Initialize empty restriction
     restriction = MeshRestriction(mesh)
     for d in range(D + 1):
@@ -69,11 +69,6 @@ mesh = Mesh("mesh.xml")
 subdomains = MeshFunction("size_t", mesh, "mesh_physical_region.xml")
 boundaries = MeshFunction("size_t", mesh, "mesh_facet_region.xml")
 
-# Write out new-style xml files
-File("mesh.xml") << mesh
-File("mesh_physical_region.xml") << subdomains
-File("mesh_facet_region.xml") << boundaries
-
 # Write out for visualization
 XDMFFile("mesh.xdmf").write(mesh)
 XDMFFile("mesh_physical_region.xdmf").write(subdomains)
@@ -86,7 +81,5 @@ sphere_restriction = generate_subdomain_restriction(mesh, subdomains, 2)
 interface_restriction = generate_interface_restriction(mesh, subdomains, {1, 2})
 
 # Write out for simulation import (.xml) and visualization (.xdmf)
-File("mesh_sphere_restriction.rtc.xml") << sphere_restriction
-File("mesh_interface_restriction.rtc.xml") << interface_restriction
 XDMFFile("mesh_sphere_restriction.rtc.xdmf").write(sphere_restriction)
 XDMFFile("mesh_interface_restriction.rtc.xdmf").write(interface_restriction)

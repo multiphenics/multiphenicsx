@@ -48,7 +48,7 @@ domain.set_subdomain(4, observation)
 mesh = generate_mesh(domain, 64)
 
 # Create subdomains
-subdomains = MeshFunction("size_t", mesh, mesh.topology().dim(), mesh.domains())
+subdomains = MeshFunction("size_t", mesh, mesh.topology.dim, mesh.domains())
 
 # Create boundaries
 class Inlet(SubDomain):
@@ -88,7 +88,7 @@ class Boundary_w(SubDomain):
             )
         )
         
-boundaries = MeshFunction("size_t", mesh, mesh.topology().dim() - 1)
+boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
 inlet = Inlet()
 inlet.mark(boundaries, 1) # Gamma_in
 boundary_s = Boundary_s()
@@ -104,10 +104,6 @@ boundary_w.mark(boundaries, 5) # Gamma_W
 control_restriction = MeshRestriction(mesh, boundary_c)
 
 # Save
-File("vorticity_reduction.xml") << mesh
-File("vorticity_reduction_physical_region.xml") << subdomains
-File("vorticity_reduction_facet_region.xml") << boundaries
-File("vorticity_reduction_restriction_control.rtc.xml") << control_restriction
 XDMFFile("vorticity_reduction.xdmf").write(mesh)
 XDMFFile("vorticity_reduction_physical_region.xdmf").write(subdomains)
 XDMFFile("vorticity_reduction_facet_region.xdmf").write(boundaries)

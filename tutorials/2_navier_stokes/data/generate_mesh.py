@@ -33,8 +33,7 @@ domain = (
 mesh = generate_mesh(domain, 62)
 
 # Create subdomains
-subdomains = MeshFunction("size_t", mesh, 2)
-subdomains.set_all(0)
+subdomains = MeshFunction("size_t", mesh, mesh.topology.dim, 0)
 
 # Create boundaries
 class Inlet(SubDomain):
@@ -53,8 +52,7 @@ class Top(SubDomain):
     def inside(self, x, on_boundary):
         return on_boundary and abs(x[1] - after_step_height) < DOLFIN_EPS
     
-boundaries = MeshFunction("size_t", mesh, mesh.topology().dim() - 1)
-boundaries.set_all(0)
+boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
 inlet = Inlet()
 inlet_ID = 1
 inlet.mark(boundaries, inlet_ID)
@@ -66,9 +64,6 @@ top_ID = 2
 top.mark(boundaries, top_ID)
 
 # Save
-File("backward_facing_step.xml") << mesh
-File("backward_facing_step_physical_region.xml") << subdomains
-File("backward_facing_step_facet_region.xml") << boundaries
 XDMFFile("backward_facing_step.xdmf").write(mesh)
 XDMFFile("backward_facing_step_physical_region.xdmf").write(subdomains)
 XDMFFile("backward_facing_step_facet_region.xdmf").write(boundaries)

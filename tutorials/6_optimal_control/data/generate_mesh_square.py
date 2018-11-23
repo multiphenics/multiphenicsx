@@ -38,8 +38,7 @@ domain = Rectangle(Point(0., 0.), Point(1., 1.))
 mesh = generate_mesh(domain, 32)
 
 # Create subdomains
-subdomains = MeshFunction("size_t", mesh, 2)
-subdomains.set_all(0)
+subdomains = MeshFunction("size_t", mesh, mesh.topology.dim, 0)
 
 # Create boundaries
 class Left(SubDomain):
@@ -58,8 +57,7 @@ class Top(SubDomain):
     def inside(self, x, on_boundary):
         return on_boundary and abs(x[1] - 1.) < DOLFIN_EPS
         
-boundaries = MeshFunction("size_t", mesh, mesh.topology().dim() - 1)
-boundaries.set_all(0)
+boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
 bottom = Bottom()
 bottom.mark(boundaries, 1)
 left = Left()
@@ -73,10 +71,6 @@ right.mark(boundaries, 4)
 left_restriction = MeshRestriction(mesh, left)
 
 # Save
-File("square.xml") << mesh
-File("square_physical_region.xml") << subdomains
-File("square_facet_region.xml") << boundaries
-File("square_restriction_boundary_2.rtc.xml") << left_restriction
 XDMFFile("square.xdmf").write(mesh)
 XDMFFile("square_physical_region.xdmf").write(subdomains)
 XDMFFile("square_facet_region.xdmf").write(boundaries)

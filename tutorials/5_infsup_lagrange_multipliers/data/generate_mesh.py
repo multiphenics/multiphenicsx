@@ -25,15 +25,14 @@ domain = Circle(Point(0., 0.), 3.)
 mesh = generate_mesh(domain, 15)
 
 # Create subdomains
-subdomains = MeshFunction("size_t", mesh, 2)
-subdomains.set_all(0)
+subdomains = MeshFunction("size_t", mesh, mesh.topology.dim, 0)
 
 # Create boundaries
 class OnBoundary(SubDomain):
     def inside(self, x, on_boundary):
         return on_boundary
 
-boundaries = MeshFunction("size_t", mesh, mesh.topology().dim() - 1)
+boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
 on_boundary = OnBoundary()
 on_boundary.mark(boundaries, 1)
 
@@ -41,10 +40,6 @@ on_boundary.mark(boundaries, 1)
 boundary_restriction = MeshRestriction(mesh, on_boundary)
 
 # Save
-File("circle.xml") << mesh
-File("circle_physical_region.xml") << subdomains
-File("circle_facet_region.xml") << boundaries
-File("circle_restriction_boundary.rtc.xml") << boundary_restriction
 XDMFFile("circle.xdmf").write(mesh)
 XDMFFile("circle_physical_region.xdmf").write(subdomains)
 XDMFFile("circle_facet_region.xdmf").write(boundaries)

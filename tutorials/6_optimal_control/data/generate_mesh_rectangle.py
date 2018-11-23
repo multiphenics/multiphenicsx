@@ -36,21 +36,18 @@ domain.set_subdomain(2, rectangle)
 mesh = generate_mesh(domain, 64)
 
 # Create subdomains
-subdomains = MeshFunction("size_t", mesh, mesh.topology().dim(), mesh.domains())
+subdomains = MeshFunction("size_t", mesh, mesh.topology.dim, mesh.domains())
 
 # Create boundaries
 class Boundary(SubDomain):
     def inside(self, x, on_boundary):
         return on_boundary
         
-boundaries = MeshFunction("size_t", mesh, mesh.topology().dim() - 1)
+boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
 boundary = Boundary()
 boundary.mark(boundaries, 1)
 
 # Save
-File("rectangle.xml") << mesh
-File("rectangle_physical_region.xml") << subdomains
-File("rectangle_facet_region.xml") << boundaries
 XDMFFile("rectangle.xdmf").write(mesh)
 XDMFFile("rectangle_physical_region.xdmf").write(subdomains)
 XDMFFile("rectangle_facet_region.xdmf").write(boundaries)
