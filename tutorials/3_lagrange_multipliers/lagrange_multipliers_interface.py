@@ -19,9 +19,9 @@
 from numpy import isclose
 from dolfin import *
 from dolfin import function
-# import matplotlib.pyplot as plt
+from dolfin.cpp.mesh import GhostMode
 from multiphenics import *
-parameters["ghost_mode"] = "shared_facet" # required by dS
+from multiphenics.io import XDMFFile
 
 r"""
 In this example we solve
@@ -46,13 +46,13 @@ where boundary conditions on \partial\Omega are embedded in V(.)
 
 # MESHES #
 # Mesh
-mesh = Mesh("data/circle.xml")
-subdomains = MeshFunction("size_t", mesh, "data/circle_physical_region.xml")
-boundaries = MeshFunction("size_t", mesh, "data/circle_facet_region.xml")
+mesh = XDMFFile(MPI.comm_world, "data/circle.xdmf").read_mesh(MPI.comm_world, GhostMode.shared_facet) # shared_facet ghost mode is required by dS
+subdomains = XDMFFile(MPI.comm_world, "data/circle_physical_region.xdmf").read_mf_size_t(mesh)
+boundaries = XDMFFile(MPI.comm_world, "data/circle_facet_region.xdmf").read_mf_size_t(mesh)
 # Restrictions
-left = MeshRestriction(mesh, "data/circle_restriction_left.rtc.xml")
-right = MeshRestriction(mesh, "data/circle_restriction_right.rtc.xml")
-interface = MeshRestriction(mesh, "data/circle_restriction_interface.rtc.xml")
+left = XDMFFile(MPI.comm_world, "data/circle_restriction_left.rtc.xdmf").read_mesh_restriction(mesh)
+right = XDMFFile(MPI.comm_world, "data/circle_restriction_right.rtc.xdmf").read_mesh_restriction(mesh)
+interface = XDMFFile(MPI.comm_world, "data/circle_restriction_interface.rtc.xdmf").read_mesh_restriction(mesh)
 
 # FUNCTION SPACES #
 # Function space
@@ -89,21 +89,9 @@ bcs = BlockDirichletBC([bc1,
                         None])
 
 # SOLVE #
-A = block_assemble(a)
-F = block_assemble(f)
-bcs.apply(A)
-bcs.apply(F)
-
-U = BlockFunction(W)
-block_solve(A, U.block_vector(), F)
-
-# plt.figure()
-# plot(U[0])
-# plt.figure()
-# plot(U[1])
-# plt.figure()
-# plot(U[2])
-# plt.show()
+u = BlockFunction(W)
+solver_parameters = {"ksp_type": "preonly", "pc_type": "lu", "pc_factor_mat_solver_type": "mumps"}
+block_solve(a, u.block_vector(), f, bcs, petsc_options=solver_parameters)
 
 # ERROR #
 u = TrialFunction(V)
@@ -113,21 +101,18 @@ F_ex = assemble(v*dx)
 bc_ex = DirichletBC(V, zero, boundaries, 1)
 bc_ex.apply(A_ex)
 bc_ex.apply(F_ex)
-U_ex = Function(V)
-solve(A_ex, U_ex.vector(), F_ex)
-# plt.figure()
-# plot(U_ex)
-# plt.show()
+u_ex = Function(V)
+solve(A_ex, u_ex.vector(), F_ex)
 err1 = Function(V)
-err1.vector().add_local(+ U_ex.vector().get_local())
-err1.vector().add_local(- U[0].vector().get_local())
+err1.vector().add_local(+ u_ex.vector().get_local())
+err1.vector().add_local(- u[0].vector().get_local())
 err1.vector().apply("")
 err2 = Function(V)
-err2.vector().add_local(+ U_ex.vector().get_local())
-err2.vector().add_local(- U[1].vector().get_local())
+err2.vector().add_local(+ u_ex.vector().get_local())
+err2.vector().add_local(- u[1].vector().get_local())
 err2.vector().apply("")
-err1_norm = sqrt(assemble(err1*err1*dx(1))/assemble(U_ex*U_ex*dx(1)))
-err2_norm = sqrt(assemble(err2*err2*dx(2))/assemble(U_ex*U_ex*dx(2)))
+err1_norm = sqrt(assemble(err1*err1*dx(1))/assemble(u_ex*u_ex*dx(1)))
+err2_norm = sqrt(assemble(err2*err2*dx(2))/assemble(u_ex*u_ex*dx(2)))
 print("Relative error on subdomain 1", err1_norm)
 print("Relative error on subdomain 2", err2_norm)
 assert isclose(err1_norm, 0., atol=1.e-10)

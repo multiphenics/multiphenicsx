@@ -16,11 +16,13 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+import numpy
 from numpy import isclose
 from ufl import replace
 from dolfin import *
-# import matplotlib.pyplot as plt
+from dolfin.cpp.mesh import GhostMode
 from multiphenics import *
+from multiphenics.io import XDMFFile
 
 r"""
 In this example we solve a nonlinear Laplace problem associated to
@@ -31,19 +33,13 @@ where
 using a Lagrange multiplier to handle non-homogeneous Dirichlet boundary conditions.
 """
 
-snes_solver_parameters = {"nonlinear_solver": "snes",
-                          "snes_solver": {"linear_solver": "mumps",
-                                          "maximum_iterations": 20,
-                                          "report": True,
-                                          "error_on_nonconvergence": False}}
-
 # MESHES #
 # Mesh
-mesh = Mesh("data/circle.xml")
-subdomains = MeshFunction("size_t", mesh, "data/circle_physical_region.xml")
-boundaries = MeshFunction("size_t", mesh, "data/circle_facet_region.xml")
+mesh = XDMFFile(MPI.comm_world, "data/circle.xdmf").read_mesh(MPI.comm_world, GhostMode.none)
+subdomains = XDMFFile(MPI.comm_world, "data/circle_physical_region.xdmf").read_mf_size_t(mesh)
+boundaries = XDMFFile(MPI.comm_world, "data/circle_facet_region.xdmf").read_mf_size_t(mesh)
 # Dirichlet boundary
-boundary_restriction = MeshRestriction(mesh, "data/circle_restriction_boundary.rtc.xml")
+boundary_restriction = XDMFFile(MPI.comm_world, "data/circle_restriction_boundary.rtc.xdmf").read_mesh_restriction(mesh)
 
 # FUNCTION SPACES #
 # Function space
@@ -72,36 +68,27 @@ J = block_derivative(F, ul, dul)
 
 # SOLVE #
 problem = BlockNonlinearProblem(F, ul, None, J)
-solver = BlockPETScSNESSolver(problem)
-solver.parameters.update(snes_solver_parameters["snes_solver"])
-solver.solve()
-
-# (u, l) = ul.block_split()
-# plt.figure()
-# plot(u)
-# plt.figure()
-# plot(l)
-# plt.show()
+solver = BlockNewtonSolver(problem)
+solver_parameters = {"maximum_iterations": 20, "report": True}
+solver.parameters.update(solver_parameters)
+solver.solve(problem, ul.block_vector())
 
 # ERROR #
 u_ex = Function(V)
 F_ex = replace(F[0], {u: u_ex})
 J_ex = derivative(F_ex, u_ex, du)
-bc_ex = DirichletBC(V, g, boundaries, 1)
+@function.expression.numba_eval
+def g_eval(values, x, cell):
+    values[:, 0] = numpy.sin(3*x[:, 0] + 1)*numpy.sin(3*x[:, 1] + 1)
+bc_ex = DirichletBC(V, interpolate(Expression(g_eval), V), (boundaries, 1))
 problem_ex = NonlinearVariationalProblem(F_ex, u_ex, bc_ex, J_ex)
 solver_ex = NonlinearVariationalSolver(problem_ex)
 solver_ex.parameters.update(snes_solver_parameters)
 solver_ex.solve()
-# plt.figure()
-# plot(u_ex)
-# plt.show()
 err = Function(V)
 err.vector().add_local(+ u_ex.vector().get_local())
 err.vector().add_local(- u.vector().get_local())
 err.vector().apply("")
-# plt.figure()
-# plot(err)
-# plt.show()
 u_ex_norm = sqrt(assemble(inner(grad(u_ex), grad(u_ex))*dx))
 err_norm = sqrt(assemble(inner(grad(err), grad(err))*dx))
 print("Relative error is equal to", err_norm/u_ex_norm)

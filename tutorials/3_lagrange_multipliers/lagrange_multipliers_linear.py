@@ -16,10 +16,13 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+import numpy
 from numpy import isclose
+import ufl
 from dolfin import *
-# import matplotlib.pyplot as plt
+from dolfin.cpp.mesh import GhostMode
 from multiphenics import *
+from multiphenics.io import XDMFFile
 
 """
 In this example we solve a Laplace problem with non-homogeneous
@@ -39,15 +42,15 @@ see data/generate_mesh.py
 
 # MESHES #
 # Mesh
-mesh = Mesh("data/circle.xml")
-subdomains = MeshFunction("size_t", mesh, "data/circle_physical_region.xml")
-boundaries = MeshFunction("size_t", mesh, "data/circle_facet_region.xml")
+mesh = XDMFFile(MPI.comm_world, "data/circle.xdmf").read_mesh(MPI.comm_world, GhostMode.none)
+subdomains = XDMFFile(MPI.comm_world, "data/circle_physical_region.xdmf").read_mf_size_t(mesh)
+boundaries = XDMFFile(MPI.comm_world, "data/circle_facet_region.xdmf").read_mf_size_t(mesh)
 # Dirichlet boundary
-boundary_restriction = MeshRestriction(mesh, "data/circle_restriction_boundary.rtc.xml")
+boundary_restriction = XDMFFile(MPI.comm_world, "data/circle_restriction_boundary.rtc.xdmf").read_mesh_restriction(mesh)
 
 # FUNCTION SPACES #
 # Function space
-V = FunctionSpace(mesh, "Lagrange", 2)
+V = FunctionSpace(mesh, ("Lagrange", 2))
 # Block function space
 W = BlockFunctionSpace([V, V], restrict=[None, boundary_restriction])
 
@@ -63,43 +66,28 @@ ds = Measure("ds")(subdomain_data=boundaries)
 
 # ASSEMBLE #
 x = SpatialCoordinate(mesh)
-g = sin(3*x[0] + 1)*sin(3*x[1] + 1)
+g = ufl.sin(3*x[0] + 1)*ufl.sin(3*x[1] + 1)
 a = [[inner(grad(u), grad(v))*dx, l*v*ds],
      [u*m*ds                    , 0     ]]
 f =  [v*dx                      , g*m*ds]
 
 # SOLVE #
-A = block_assemble(a)
-F = block_assemble(f)
-
-U = BlockFunction(W)
-block_solve(A, U.block_vector(), F)
-
-# plt.figure()
-# plot(U[0])
-# plt.figure()
-# plot(U[1])
-# plt.show()
+u = BlockFunction(W)
+solver_parameters = {"ksp_type": "preonly", "pc_type": "lu", "pc_factor_mat_solver_type": "mumps"}
+block_solve(a, u.block_vector(), f, petsc_options=solver_parameters)
 
 # ERROR #
-A_ex = assemble(a[0][0])
-F_ex = assemble(f[0])
-bc_ex = DirichletBC(V, g, boundaries, 1)
-bc_ex.apply(A_ex)
-bc_ex.apply(F_ex)
-U_ex = Function(V)
-solve(A_ex, U_ex.vector(), F_ex)
-# plt.figure()
-# plot(U_ex)
-# plt.show()
+@function.expression.numba_eval
+def g_eval(values, x, cell):
+    values[:, 0] = numpy.sin(3*x[:, 0] + 1)*numpy.sin(3*x[:, 1] + 1)
+bc_ex = DirichletBC(V, interpolate(Expression(g_eval), V), (boundaries, 1))
+u_ex = Function(V)
+solve(a[0][0] == f[0], u_ex, bc_ex, petsc_options=solver_parameters)
 err = Function(V)
-err.vector().add_local(+ U_ex.vector().get_local())
-err.vector().add_local(- U[0].vector().get_local())
+err.vector().add_local(+ u_ex.vector().get_local())
+err.vector().add_local(- u[0].vector().get_local())
 err.vector().apply("")
-# plt.figure()
-# plot(err)
-# plt.show()
-U_ex_norm = sqrt(assemble(inner(grad(U_ex), grad(U_ex))*dx))
+u_ex_norm = sqrt(assemble(inner(grad(u_ex), grad(u_ex))*dx))
 err_norm = sqrt(assemble(inner(grad(err), grad(err))*dx))
-print("Relative error is equal to", err_norm/U_ex_norm)
-assert isclose(err_norm/U_ex_norm, 0., atol=1.e-10)
+print("Relative error is equal to", err_norm/u_ex_norm)
+assert isclose(err_norm/u_ex_norm, 0., atol=1.e-10)
