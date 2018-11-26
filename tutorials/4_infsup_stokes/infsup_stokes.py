@@ -16,10 +16,10 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import isclose
+from numpy import isclose, logical_and, logical_or
 from dolfin import *
 from dolfin import function
-# import matplotlib.pyplot as plt
+from dolfin.fem import assemble
 from multiphenics import *
 
 """
@@ -31,15 +31,14 @@ of a Stokes by standard FEniCS code and multiphenics code.
 
 #                  MESH GENERATION                   #
 # Create mesh
-mesh = UnitSquareMesh(32, 32)
+mesh = UnitSquareMesh(MPI.comm_world, 32, 32)
 
 # Create boundaries
 class Wall(SubDomain):
     def inside(self, x, on_boundary):
-        return on_boundary and (x[1] < 0 + DOLFIN_EPS or x[1] > 1 - DOLFIN_EPS)
+        return logical_and(logical_or(x[:, 1] < 0 + DOLFIN_EPS, x[:, 1] > 1 - DOLFIN_EPS), on_boundary)
     
-boundaries = MeshFunction("size_t", mesh, mesh.topology().dim() - 1)
-boundaries.set_all(0)
+boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
 wall = Wall()
 wall.mark(boundaries, 1)
 
@@ -80,15 +79,13 @@ def run_monolithic():
 
     # Boundary conditions
     zero = interpolate(Expression(zero_eval, shape=(2,)), W.sub(0).collapse())
-    bc = [DirichletBC(W.sub(0), zero, boundaries, 1)]
+    bc = [DirichletBC(W.sub(0), zero, (boundaries, 1))]
 
     # Assemble lhs and rhs matrices
     LHS = assemble(lhs)
     RHS = assemble(rhs)
 
     # Solve
-    LHS = as_backend_type(LHS)
-    RHS = as_backend_type(RHS)
     eigensolver = SLEPcEigenSolver(LHS, RHS, bc)
     eigensolver.parameters["problem_type"] = "gen_non_hermitian"
     eigensolver.parameters["spectrum"] = "target real"
@@ -106,13 +103,6 @@ def run_monolithic():
     (u_fun, p_fun) = r_fun.split(deepcopy=True)
     (u_fun_1, u_fun_2) = u_fun.split(deepcopy=True)
     normalize(u_fun_1, u_fun_2, p_fun)
-    # plt.figure()
-    # plot(u_fun_1, title="Velocity 1 monolithic", mode="color")
-    # plt.figure()
-    # plot(u_fun_2, title="Velocity 2 monolithic", mode="color")
-    # plt.figure()
-    # plot(p_fun, title="Pressure monolithic", mode="color")
-    # plt.show()
     
     return (r, u_fun_1, u_fun_2, p_fun)
     
@@ -164,13 +154,6 @@ def run_block():
     (u_fun, p_fun) = r_fun.block_split()
     (u_fun_1, u_fun_2) = u_fun.split(deepcopy=True)
     normalize(u_fun_1, u_fun_2, p_fun)
-    # plt.figure()
-    # plot(u_fun_1, title="Velocity 1 block", mode="color")
-    # plt.figure()
-    # plot(u_fun_2, title="Velocity 2 block", mode="color")
-    # plt.figure()
-    # plot(p_fun, title="Pressure block", mode="color")
-    # plt.show()
     
     return (r, u_fun_1, u_fun_2, p_fun)
     
@@ -206,15 +189,9 @@ def run_error(eig_m, eig_b, u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m,
         if ratio_minus < ratio_plus:
             print("Relative error for ", component_name, "component of eigenvector equal to", ratio_minus, "(the one with opposite sign was", ratio_plus, ")")
             assert isclose(ratio_minus, 0., atol=1.e-6)
-            # plt.figure()
-            # plot(err_minus, title="Error " + component_name, mode="color")
-            # plt.show()
         else:
             print("Relative error for", component_name, "component of eigenvector equal to", ratio_plus, "(the one with opposite sign was", ratio_minus, ")")
             assert isclose(ratio_plus, 0., atol=1.e-6)
-            # plt.figure()
-            # plot(err_plus, title="Error " + component_name, mode="color")
-            # plt.show()
     select_error(err_1_plus, err_1_plus_norm, err_1_minus, err_1_minus_norm, u_fun_1_norm, "velocity 1")
     select_error(err_2_plus, err_2_plus_norm, err_2_minus, err_2_minus_norm, u_fun_2_norm, "velocity 2")
     select_error(err_p_plus, err_p_plus_norm, err_p_minus, err_p_minus_norm, p_fun_norm, "pressure")
