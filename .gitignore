@@ -5,6 +5,8 @@
 *.egg-info
 *.h5
 *.m
+*.nbc
+*.nbi
 *.pvd
 *.pvtu
 *.py[cod]
