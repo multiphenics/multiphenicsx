@@ -19,7 +19,7 @@
 import numbers
 import pytest
 from _pytest.mark import ParameterSet
-from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, hstack as bvec, sort, unique, vstack
+from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, hstack, hstack as bvec, sort, unique, vstack
 from dolfin import assemble, Constant, DOLFIN_EPS, dx, Expression, FiniteElement, Function, FunctionSpace, inner, MixedElement, project, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
 from dolfin.cpp.la import GenericMatrix, GenericVector
 from multiphenics import assign, block_assemble, block_assign, BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
@@ -93,25 +93,20 @@ def assert_block_vectors_equal(rhs, block_rhs, block_V):
         rhs2 = None
     comm = block_rhs.mpi_comm()
     if rhs2 is not None:
-        map_block_to_original = gather_on_zero((block_V.block_dofmap().block_to_original(0), block_V.block_dofmap().block_to_original(1)), comm, block_dofmap=block_V.block_dofmap(), dofmap=(block_V[0].dofmap(), block_V[1].dofmap()))
-        rhs1g = gather_on_zero(rhs1, comm)
-        rhs2g = gather_on_zero(rhs2, comm)
-        if comm.Get_rank() == 0:
-            rhsg = bvec([rhs1g, rhs2g])
-        else:
-            rhsg = None
+        map_block_to_original = allgather((block_V.block_dofmap().block_to_original(0), block_V.block_dofmap().block_to_original(1)), comm, block_dofmap=block_V.block_dofmap(), dofmap=(block_V[0].dofmap(), block_V[1].dofmap()))
+        rhs1g = allgather(rhs1, comm)
+        rhs2g = allgather(rhs2, comm)
+        rhsg = bvec([rhs1g, rhs2g])
     else:
-        map_block_to_original = gather_on_zero(block_V.block_dofmap().block_to_original(0), comm, block_dofmap=block_V.block_dofmap(), dofmap=block_V[0].dofmap())
-        rhs1g = gather_on_zero(rhs1, comm)
+        map_block_to_original = allgather(block_V.block_dofmap().block_to_original(0), comm, block_dofmap=block_V.block_dofmap(), dofmap=block_V[0].dofmap())
+        rhs1g = allgather(rhs1, comm)
         rhsg = rhs1g
-    block_rhsg = gather_on_zero(block_rhs, comm)
-    if comm.Get_rank() == 0:
-        assert block_rhsg.shape[0] == len(map_block_to_original)
-        rhsg_for_assert = block_rhsg*0.
-        for (block, original) in map_block_to_original.items():
-            rhsg_for_assert[block] = rhsg[original]
-        assert array_equal(rhsg_for_assert, block_rhsg)
-    comm.barrier()
+    block_rhsg = allgather(block_rhs, comm)
+    assert block_rhsg.shape[0] == len(map_block_to_original)
+    rhsg_for_assert = block_rhsg*0.
+    for (block, original) in map_block_to_original.items():
+        rhsg_for_assert[block] = rhsg[original]
+    assert array_equal(rhsg_for_assert, block_rhsg)
     
 # ================ EQUALITY BETWEEN BLOCK MATRICES ================ #
 def assert_block_matrices_equal(lhs, block_lhs, block_V):
@@ -127,29 +122,24 @@ def assert_block_matrices_equal(lhs, block_lhs, block_V):
         lhs22 = None
     comm = block_lhs.mpi_comm()
     if lhs22 is not None:
-        map_block_to_original = gather_on_zero((block_V.block_dofmap().block_to_original(0), block_V.block_dofmap().block_to_original(1)), comm, block_dofmap=block_V.block_dofmap(), dofmap=(block_V[0].dofmap(), block_V[1].dofmap()))
-        lhs11g = gather_on_zero(lhs11, comm)
-        lhs12g = gather_on_zero(lhs12, comm)
-        lhs21g = gather_on_zero(lhs21, comm)
-        lhs22g = gather_on_zero(lhs22, comm)
-        if comm.Get_rank() == 0:
-            lhsg = bmat([[lhs11g, lhs12g], [lhs21g, lhs22g]])
-        else:
-            lhsg = None
+        map_block_to_original = allgather((block_V.block_dofmap().block_to_original(0), block_V.block_dofmap().block_to_original(1)), comm, block_dofmap=block_V.block_dofmap(), dofmap=(block_V[0].dofmap(), block_V[1].dofmap()))
+        lhs11g = allgather(lhs11, comm)
+        lhs12g = allgather(lhs12, comm)
+        lhs21g = allgather(lhs21, comm)
+        lhs22g = allgather(lhs22, comm)
+        lhsg = bmat([[lhs11g, lhs12g], [lhs21g, lhs22g]])
     else:
-        map_block_to_original = gather_on_zero(block_V.block_dofmap().block_to_original(0), comm, block_dofmap=block_V.block_dofmap(), dofmap=block_V[0].dofmap())
-        lhs11g = gather_on_zero(lhs11, comm)
+        map_block_to_original = allgather(block_V.block_dofmap().block_to_original(0), comm, block_dofmap=block_V.block_dofmap(), dofmap=block_V[0].dofmap())
+        lhs11g = allgather(lhs11, comm)
         lhsg = lhs11g
-    block_lhsg = gather_on_zero(block_lhs, comm)
-    if comm.Get_rank() == 0:
-        assert block_lhsg.shape[0] == len(map_block_to_original)
-        assert block_lhsg.shape[1] == len(map_block_to_original)
-        lhsg_for_assert = block_lhsg*0.
-        for (block_i, original_i) in map_block_to_original.items():
-            for (block_j, original_j) in map_block_to_original.items():
-                lhsg_for_assert[block_i, block_j] = lhsg[original_i, original_j]
-        assert array_equal(lhsg_for_assert, block_lhsg)
-    comm.barrier()
+    block_lhsg = allgather(block_lhs, comm)
+    assert block_lhsg.shape[0] == len(map_block_to_original)
+    assert block_lhsg.shape[1] == len(map_block_to_original)
+    lhsg_for_assert = block_lhsg*0.
+    for (block_i, original_i) in map_block_to_original.items():
+        for (block_j, original_j) in map_block_to_original.items():
+            lhsg_for_assert[block_i, block_j] = lhsg[original_i, original_j]
+    assert array_equal(lhsg_for_assert, block_lhsg)
     
 # ================ EQUALITY BETWEEN BLOCK FUNCTIONS ================ #
 def assert_block_functions_equal(functions, block_function, block_V):
@@ -642,70 +632,60 @@ def get_list_of_functions_2(block_V):
     
 # ================ PARALLEL SUPPORT ================ #
 # Gather matrices, vector and dicts on zero-th process
-def gather_on_zero(obj, comm, **kwargs):
+def allgather(obj, comm, **kwargs):
     assert isinstance(obj, (dict, tuple, GenericMatrix, GenericVector))
     if isinstance(obj, (dict, tuple)):
         assert "block_dofmap" in kwargs
         assert "dofmap" in kwargs
         if isinstance(obj, tuple):
             assert isinstance(kwargs["dofmap"], tuple)
-            all_block_to_original1 = comm.gather(obj[0], root=0)
-            all_ownership_ranges1 = comm.gather(kwargs["dofmap"][0].ownership_range(), root=0)
-            all_block_ownership_ranges1 = comm.gather(kwargs["block_dofmap"].sub_index_map(0).local_range(), root=0)
-            all_block_to_original2 = comm.gather(obj[1], root=0)
-            all_ownership_ranges2 = comm.gather(kwargs["dofmap"][1].ownership_range(), root=0)
-            all_block_ownership_ranges2 = comm.gather(kwargs["block_dofmap"].sub_index_map(1).local_range(), root=0)
-            if comm.Get_rank() == 0:
-                base_index1 = [None]*comm.Get_size()
-                block_base_index1 = [None]*comm.Get_size()
-                base_index2 = [None]*comm.Get_size()
-                block_base_index2 = [None]*comm.Get_size()
-                for r in range(comm.Get_size() + 1):
-                    if r == 0:
-                        base_index1[0] = 0
-                        base_index2[0] = all_ownership_ranges1[-1][1]
-                        block_base_index1[0] = 0
-                    if r > 0:
-                        block_base_index2[r-1] = block_base_index1[r-1] + (all_block_ownership_ranges1[r-1][1] - all_block_ownership_ranges1[r-1][0])
-                        if r < comm.Get_size():
-                            base_index1[r] = all_ownership_ranges1[r-1][1]
-                            base_index2[r] = all_ownership_ranges1[-1][1] + all_ownership_ranges2[r-1][1]
-                            block_base_index1[r] = block_base_index2[r-1] + (all_block_ownership_ranges2[r-1][1] - all_block_ownership_ranges2[r-1][0])
-                output = dict()
-                for r in range(comm.Get_size()):
-                    for (block1, original1) in all_block_to_original1[r].items():
-                        if original1 < all_ownership_ranges1[r][1] - all_ownership_ranges1[r][0]:
-                            output[block1 + block_base_index1[r]] = original1 + base_index1[r]
-                    for (block2, original2) in all_block_to_original2[r].items():
-                        if original2 < all_ownership_ranges2[r][1] - all_ownership_ranges2[r][0]:
-                            # Note that we use block_base_index1 instead of block_base_index2 due to internal storage of block2
-                            output[block2 + block_base_index1[r]] = original2 + base_index2[r]
-                return output
-            else:
-                return None
+            all_block_to_original1 = comm.allgather(obj[0])
+            all_ownership_ranges1 = comm.allgather(kwargs["dofmap"][0].ownership_range())
+            all_block_ownership_ranges1 = comm.allgather(kwargs["block_dofmap"].sub_index_map(0).local_range())
+            all_block_to_original2 = comm.allgather(obj[1])
+            all_ownership_ranges2 = comm.allgather(kwargs["dofmap"][1].ownership_range())
+            all_block_ownership_ranges2 = comm.allgather(kwargs["block_dofmap"].sub_index_map(1).local_range())
+            base_index1 = [None]*comm.Get_size()
+            block_base_index1 = [None]*comm.Get_size()
+            base_index2 = [None]*comm.Get_size()
+            block_base_index2 = [None]*comm.Get_size()
+            for r in range(comm.Get_size() + 1):
+                if r == 0:
+                    base_index1[0] = 0
+                    base_index2[0] = all_ownership_ranges1[-1][1]
+                    block_base_index1[0] = 0
+                if r > 0:
+                    block_base_index2[r-1] = block_base_index1[r-1] + (all_block_ownership_ranges1[r-1][1] - all_block_ownership_ranges1[r-1][0])
+                    if r < comm.Get_size():
+                        base_index1[r] = all_ownership_ranges1[r-1][1]
+                        base_index2[r] = all_ownership_ranges1[-1][1] + all_ownership_ranges2[r-1][1]
+                        block_base_index1[r] = block_base_index2[r-1] + (all_block_ownership_ranges2[r-1][1] - all_block_ownership_ranges2[r-1][0])
+            output = dict()
+            for r in range(comm.Get_size()):
+                for (block1, original1) in all_block_to_original1[r].items():
+                    if original1 < all_ownership_ranges1[r][1] - all_ownership_ranges1[r][0]:
+                        output[block1 + block_base_index1[r]] = original1 + base_index1[r]
+                for (block2, original2) in all_block_to_original2[r].items():
+                    if original2 < all_ownership_ranges2[r][1] - all_ownership_ranges2[r][0]:
+                        # Note that we use block_base_index1 instead of block_base_index2 due to internal storage of block2
+                        output[block2 + block_base_index1[r]] = original2 + base_index2[r]
+            return output
         else:
             assert isinstance(obj, dict)
-            all_block_to_original1 = comm.gather(obj, root=0)
-            all_ownership_ranges1 = comm.gather(kwargs["dofmap"].ownership_range(), root=0)
-            all_block_ownership_ranges1 = comm.gather(kwargs["block_dofmap"].sub_index_map(0).local_range(), root=0)
-            if comm.Get_rank() == 0:
-                base_index1 = [ownr[0] for ownr in all_ownership_ranges1]
-                block_base_index1 = [ownr[0] for ownr in all_block_ownership_ranges1]
-                output = dict()
-                for r in range(comm.Get_size()):
-                    for (block1, original1) in all_block_to_original1[r].items():
-                        if original1 < all_ownership_ranges1[r][1] - all_ownership_ranges1[r][0]:
-                            output[block1 + block_base_index1[r]] = original1 + base_index1[r]
-                return output
-            else:
-                return None
+            all_block_to_original1 = comm.allgather(obj)
+            all_ownership_ranges1 = comm.allgather(kwargs["dofmap"].ownership_range())
+            all_block_ownership_ranges1 = comm.allgather(kwargs["block_dofmap"].sub_index_map(0).local_range())
+            base_index1 = [ownr[0] for ownr in all_ownership_ranges1]
+            block_base_index1 = [ownr[0] for ownr in all_block_ownership_ranges1]
+            output = dict()
+            for r in range(comm.Get_size()):
+                for (block1, original1) in all_block_to_original1[r].items():
+                    if original1 < all_ownership_ranges1[r][1] - all_ownership_ranges1[r][0]:
+                        output[block1 + block_base_index1[r]] = original1 + base_index1[r]
+            return output
     elif isinstance(obj, GenericMatrix):
-        all_arrays = comm.gather(obj.array(), root=0)
-        if comm.Get_rank() == 0:
-            return vstack(all_arrays)
-        else:
-            return None
+        return vstack(comm.allgather(obj.array()))
     elif isinstance(obj, GenericVector):
-        return obj.gather_on_zero()
+        return hstack(comm.allgather(obj.get_local()))
     else:
-        raise AssertionError("Invalid arguments to gather_on_zero")
+        raise AssertionError("Invalid arguments to allgather")
