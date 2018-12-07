@@ -35,7 +35,6 @@ using dolfin::mesh::Mesh;
 using dolfin::mesh::MeshEntity;
 using dolfin::mesh::MeshFunction;
 using dolfin::mesh::MeshRange;
-using dolfin::MPI;
 using dolfin::la::PETScVector;
 
 //-----------------------------------------------------------------------------
@@ -336,7 +335,7 @@ void BlockDofMap::_assign_owned_dofs_to_block_dofmap(
   for (auto & cell_to_dofs: _dofmap)
     if (cell_to_dofs.second.size() > _max_element_dofs)
       _max_element_dofs = cell_to_dofs.second.size();
-  _max_element_dofs = MPI::max(comm, _max_element_dofs);
+  _max_element_dofs = dolfin::MPI::max(comm, _max_element_dofs);
   
   // Fill in 
   // * maximum number of dofs associated with each entity dimension
@@ -396,8 +395,8 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
   }
   
   // Fill in local to global map of unowned dofs
-  const std::size_t mpi_rank = MPI::rank(comm);
-  const std::size_t mpi_size = MPI::size(comm);
+  const std::size_t mpi_rank = dolfin::MPI::rank(comm);
+  const std::size_t mpi_size = dolfin::MPI::size(comm);
   std::vector<std::vector<std::size_t>> send_buffer(mpi_size);
   std::vector<std::vector<std::size_t>> recv_buffer(mpi_size);
   std::vector<std::size_t> local_to_global_unowned(block_dofmap_unowned_size);
@@ -441,7 +440,7 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
       recv_buffer_r.clear();
     
     // Step 1 - communicate
-    MPI::all_to_all(comm, send_buffer, recv_buffer);
+    dolfin::MPI::all_to_all(comm, send_buffer, recv_buffer);
     
     // Step 2 - cleanup sending buffer
     for (auto& send_buffer_r: send_buffer)
@@ -470,7 +469,7 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
       recv_buffer_r.clear();
     
     // Step 2 - communicate
-    MPI::all_to_all(comm, send_buffer, recv_buffer);
+    dolfin::MPI::all_to_all(comm, send_buffer, recv_buffer);
     
     // Step 3 - cleanup sending buffer
     for (auto& send_buffer_r: send_buffer)

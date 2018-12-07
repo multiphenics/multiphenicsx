@@ -29,7 +29,6 @@ using dolfin::fem::DirichletBC;
 using dolfin::la::petsc_error;
 using dolfin::la::PETScMatrix;
 using dolfin::la::PETScVector;
-using dolfin::MPI;
 using multiphenics::la::BlockInsertMode;
 using multiphenics::la::BlockPETScSubMatrix;
 using multiphenics::la::BlockPETScSubVector;
@@ -73,7 +72,7 @@ void BlockDirichletBCLegacy::apply(const BlockDirichletBC& bcs, PETScMatrix& A, 
     if (ierr != 0) petsc_error(ierr, __FILE__, "MatSetOption");
     // Call MatZeroRows. Note that this will clear {A_{IJ} for all J}, even though local-to-global maps were extracted
     // from A_{II} only, because we are now clearing the global matrix A (i.e., global rows).
-    std::size_t MatZeroRows_called = MPI::sum(A.mpi_comm(), bc_indices_I.size());
+    std::size_t MatZeroRows_called = dolfin::MPI::sum(A.mpi_comm(), bc_indices_I.size());
     if (bc_indices_I.size() > 0)
     {
       ierr = MatZeroRows(A.mat(), matrix_global_row_indices.size(), matrix_global_row_indices.data(), diag, NULL, NULL);
