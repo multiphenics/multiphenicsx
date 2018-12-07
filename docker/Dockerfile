@@ -16,10 +16,9 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-FROM quay.io/fenicsproject/dev
+FROM quay.io/fenicsproject/dolfinx:real
 MAINTAINER Francesco Ballarin <francesco.ballarin@sissa.it>
 
-USER root
 RUN apt-get -qq update && \
     apt-get -qq remove python3-pytest && \
     apt-get clean && \
@@ -28,19 +27,7 @@ RUN apt-get -qq update && \
     sed -i "s/pytest_report_header/DISABLED_pytest_report_header/g" /usr/local/lib/python3.6/dist-packages/pytest_metadata/plugin.py && \
     cat /dev/null > $FENICS_HOME/WELCOME
 
-USER fenics
-COPY --chown=fenics . /tmp/multiphenics
+COPY . /tmp/multiphenics
 
-USER root
 WORKDIR /tmp/multiphenics
-RUN python3 setup.py -q install
-
-USER fenics
-WORKDIR $FENICS_HOME
-RUN mkdir multiphenics && \
-    ln -s $FENICS_PREFIX/lib/python3.6/dist-packages/multiphenics*egg/multiphenics multiphenics/source && \
-    mv /tmp/multiphenics/tests multiphenics/ && \
-    mv /tmp/multiphenics/tutorials multiphenics
-    
-USER root
-RUN rm -rf /tmp/multiphenics
+RUN python3 setup.py -q install && rm -rf /tmp/multiphenics

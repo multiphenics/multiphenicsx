@@ -22,10 +22,8 @@ build:
 import:
   image:
     name: $TESTING_IMAGE
-    entrypoint: ["/sbin/my_init","--quiet","--","/sbin/setuser","fenics"]
   stage: import
   before_script:
-    - source $FENICS_HOME/fenics.env.conf
     - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
   script:
     - python3 -c "import multiphenics"
@@ -37,10 +35,8 @@ import:
 flake8:
   image:
     name: $TESTING_IMAGE
-    entrypoint: ["/sbin/my_init","--quiet","--","/sbin/setuser","fenics"]
   stage: test
   before_script:
-    - source $FENICS_HOME/fenics.env.conf
     - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
     - python3 -c "import multiphenics"
   script:
@@ -57,10 +53,8 @@ flake8:
 tutorials_serial:
   image:
     name: $TESTING_IMAGE
-    entrypoint: ["/sbin/my_init","--quiet","--","/sbin/setuser","fenics"]
   stage: test
   before_script:
-    - source $FENICS_HOME/fenics.env.conf
     - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
     - python3 -c "import multiphenics"
   script:
@@ -73,10 +67,8 @@ tutorials_serial:
 tests_serial:
   image:
     name: $TESTING_IMAGE
-    entrypoint: ["/sbin/my_init","--quiet","--","/sbin/setuser","fenics"]
   stage: test
   before_script:
-    - source $FENICS_HOME/fenics.env.conf
     - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
     - python3 -c "import multiphenics"
   script:
@@ -89,10 +81,8 @@ tests_serial:
 .tutorials_parallel:
   image:
     name: $TESTING_IMAGE
-    entrypoint: ["/sbin/my_init","--quiet","--","/sbin/setuser","fenics"]
   stage: test
   before_script:
-    - source $FENICS_HOME/fenics.env.conf
     - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
     - python3 -c "import multiphenics"
   script:
@@ -105,10 +95,8 @@ tests_serial:
 .tests_parallel:
   image:
     name: $TESTING_IMAGE
-    entrypoint: ["/sbin/my_init","--quiet","--","/sbin/setuser","fenics"]
   stage: test
   before_script:
-    - source $FENICS_HOME/fenics.env.conf
     - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
     - python3 -c "import multiphenics"
   script:
