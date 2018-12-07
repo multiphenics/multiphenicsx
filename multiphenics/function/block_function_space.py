@@ -194,7 +194,7 @@ class BlockFunctionSpace(object):
         
         # Finally, fill in ufl_element
         ufl_sub_elements = [subspace.ufl_element() for subspace in self]
-        self._ufl_element = BlockElement(*ufl_sub_elements)
+        self._ufl_element = BlockElement(ufl_sub_elements)
     
     def __str__(self):
         "Pretty-print."

@@ -17,5 +17,11 @@
 #
 
 class BlockElement(tuple):
-    def __new__(cls, *elements):
+    def __new__(cls, *args):
+        elements = list()
+        for arg in args:
+            if isinstance(arg, (list, tuple)):
+                elements.extend(arg)
+            else:
+                elements.append(arg)
         return tuple.__new__(cls, elements)
