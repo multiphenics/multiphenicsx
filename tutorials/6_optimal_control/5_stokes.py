@@ -118,7 +118,7 @@ plot(p, title="uncontrolled state pressure")
 plt.show()
 
 # OPTIMAL CONTROL #
-A = block_assemble(a)
+A = block_assemble(a, keep_diagonal=True)
 F = block_assemble(f)
 bc.apply(A)
 bc.apply(F)

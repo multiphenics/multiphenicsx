@@ -49,7 +49,7 @@ class BlockNonlinearProblem(NonlinearProblem):
         # Wrap FEniCS jacobian into a block jacobian
         block_jacobian = self.block_backend.wrap_matrix(fenics_jacobian)
         # Assemble the block jacobian
-        block_assemble(self.jacobian_block_form, block_tensor=block_jacobian)
+        block_assemble(self.jacobian_block_form, block_tensor=block_jacobian, keep_diagonal=self.bcs is not None)
         # Apply boundary conditions
         if self.bcs is not None:
             self.bcs.apply(block_jacobian)
