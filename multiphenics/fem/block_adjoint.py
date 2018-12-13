@@ -17,9 +17,11 @@
 #
 
 from numpy import ndarray as array, empty
+from ufl import Form
 from dolfin import adjoint
 from multiphenics.fem.block_form import _block_form_preprocessing
 from multiphenics.fem.block_form_2 import BlockForm2
+from multiphenics.fem.block_replace_zero import _is_zero
 from multiphenics.function import BlockTestFunction, BlockTrialFunction
 
 def block_adjoint(block_form):
@@ -41,7 +43,13 @@ def block_adjoint(block_form):
     block_adjoint_form = empty((M, N), dtype=object)
     for I in range(N):
         for J in range(M):
-            block_adjoint_form[J, I] = adjoint(block_form[I, J], (block_test_function_adjoint[J], block_trial_function_adjoint[I]))
+            assert isinstance(block_form[I, J], Form) or _is_zero(block_form[I, J])
+            if isinstance(block_form[I, J], Form):
+                block_adjoint_form[J, I] = adjoint(block_form[I, J], (block_test_function_adjoint[J], block_trial_function_adjoint[I]))
+            elif _is_zero(block_form[I, J]):
+                block_adjoint_form[J, I] = 0
+            else:
+                raise TypeError("Invalid form")
     if input_type is array:
         return block_adjoint_form
     elif input_type is BlockForm2:

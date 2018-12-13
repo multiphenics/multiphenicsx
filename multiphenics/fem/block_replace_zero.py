@@ -18,12 +18,8 @@
 
 from numpy import ndarray as array
 from ufl import Form
-from ufl.algorithms import expand_derivatives
-from ufl.algorithms.analysis import has_exact_type
-from ufl.classes import CoefficientDerivative
-from dolfin import Constant, dx, inner, tr
-from multiphenics.function.test_function import TestFunction
-from multiphenics.function.trial_function import TrialFunction
+from dolfin import compile_cpp_code
+from dolfin.cpp.fem import Form as cpp_Form
 
 zeros = (0, 0.)
 
@@ -37,17 +33,10 @@ def block_replace_zero(block_form, index, block_function_space):
                 or
             (isinstance(block_form[I][J], (float, int)) and block_form[I][J] in zeros)
         )
-        if block_form[I][J] in zeros:
-            block_form_IJ = block_form[I][J]
-        elif has_exact_type(block_form[I][J], CoefficientDerivative):
-            block_form_IJ = expand_derivatives(block_form[I][J])
+        if _is_zero(block_form[I][J]):
+            return _get_zero_form(block_function_space, (I, J))
         else:
-            block_form_IJ = block_form[I][J]
-        if block_form_IJ in zeros or block_form_IJ.empty():
-            block_form_IJ = _get_zero_form(block_function_space, (I, J))
-        else:
-            assert not block_form_IJ.empty()
-        return block_form_IJ
+            return block_form[I][J]
     else:
         I = index[0]  # noqa: E741
         assert (
@@ -55,21 +44,36 @@ def block_replace_zero(block_form, index, block_function_space):
                 or
             (isinstance(block_form[I], (float, int)) and block_form[I] in zeros)
         )
-        block_form_I = block_form[I]
-        if block_form_I in zeros:
-            block_form_I = _get_zero_form(block_function_space, (I, ))
+        if _is_zero(block_form[I]):
+            return _get_zero_form(block_function_space, (I, ))
         else:
-            assert not block_form_I.empty()
-        return block_form_I
+            return block_form[I]
         
 def _is_zero(form_or_block_form):
     assert (
-        isinstance(form_or_block_form, (array, Form, list))
+        isinstance(form_or_block_form, (array, cpp_Form, Form, list))
             or
         (isinstance(form_or_block_form, (float, int)) and form_or_block_form in zeros)
     )
     if isinstance(form_or_block_form, Form):
         return form_or_block_form.empty()
+    elif isinstance(form_or_block_form, cpp_Form):
+        _is_zero_form_cpp_code = """
+            #include <dolfin/fem/Form.h>
+            #include <pybind11/pybind11.h>
+            
+            bool is_zero_form(std::shared_ptr<dolfin::Form> form)
+            {
+              return !form->ufc_form();
+            }
+            
+            PYBIND11_MODULE(SIGNATURE, m)
+            {
+                m.def("is_zero_form", &is_zero_form);
+            }
+            """
+        is_zero_form = compile_cpp_code(_is_zero_form_cpp_code).is_zero_form
+        return is_zero_form(form_or_block_form)
     elif isinstance(form_or_block_form, (array, list)):
         block_form_rank = _get_block_form_rank(form_or_block_form)
         assert block_form_rank in (None, 1, 2)
@@ -118,52 +122,4 @@ def _get_block_form_rank(form_or_block_form):
         raise AssertionError("Invalid case in _get_block_form_rank")
     
 def _get_zero_form(block_function_space, index):
-    zero = Constant(0.)
-    assert len(index) in (1, 2)
-    if len(index) == 2:
-        test = TestFunction(block_function_space[0][index[0]], block_function_space=block_function_space[0], block_index=index[0])
-        trial = TrialFunction(block_function_space[1][index[1]], block_function_space=block_function_space[1], block_index=index[1])
-        len_test_shape = len(test.ufl_shape)
-        len_trial_shape = len(trial.ufl_shape)
-        assert len_test_shape in (0, 1, 2)
-        assert len_trial_shape in (0, 1, 2)
-        if len_test_shape == 0 and len_trial_shape == 0:
-            return zero*test*trial*dx
-        elif len_test_shape == 0 and len_trial_shape == 1:
-            return zero*test*_vec_sum(trial)*dx
-        elif len_test_shape == 0 and len_trial_shape == 2:
-            return zero*test*tr(trial)*dx
-        elif len_test_shape == 1 and len_trial_shape == 0:
-            return zero*_vec_sum(test)*trial*dx
-        elif len_test_shape == 1 and len_trial_shape == 1:
-            return zero*inner(test, trial)*dx
-        elif len_test_shape == 1 and len_trial_shape == 2:
-            return zero*_vec_sum(test)*tr(trial)*dx
-        elif len_test_shape == 2 and len_trial_shape == 0:
-            return zero*tr(test)*trial*dx
-        elif len_test_shape == 2 and len_trial_shape == 1:
-            return zero*tr(test)*_vec_sum(trial)*dx
-        elif len_test_shape == 2 and len_trial_shape == 2:
-            return zero*inner(test, trial)*dx
-        else:
-            raise AssertionError("Invalid case in _get_zero_form.")
-    else:
-        test = TestFunction(block_function_space[0][index[0]], block_function_space=block_function_space[0], block_index=index[0])
-        len_test_shape = len(test.ufl_shape)
-        assert len_test_shape in (0, 1, 2)
-        if len_test_shape == 0:
-            return zero*test*dx
-        elif len_test_shape == 1:
-            return zero*_vec_sum(test)*dx
-        elif len_test_shape == 2:
-            return zero*tr(test)*dx
-        else:
-            raise AssertionError("Invalid case in _get_zero_form.")
-    
-def _vec_sum(test_or_trial):
-    sum_ = 0
-    shape = test_or_trial.ufl_shape
-    assert len(shape) is 1
-    for i in range(shape[0]):
-        sum_ += test_or_trial[i]
-    return sum_
+    return cpp_Form(len(index), 0)

@@ -17,7 +17,10 @@
 #
 
 from numpy import empty
+from ufl import Form
+from dolfin.cpp.fem import Form as cpp_Form
 from dolfin.fem.assembling import _create_dolfin_form
+from multiphenics.fem.block_replace_zero import block_replace_zero, _is_zero
 from multiphenics.python import cpp
 
 BlockForm1_Base = cpp.fem.BlockForm1
@@ -36,10 +39,17 @@ class BlockForm1(BlockForm1_Base):
         N = len(block_form)
         replaced_block_form = empty((N, ), dtype=object)
         for I in range(N):
-            replaced_block_form[I] = _create_dolfin_form(
-                form=block_form[I],
-                form_compiler_parameters=form_compiler_parameters
-            )
+            replaced_block_form[I] = block_replace_zero(block_form, (I, ), block_function_space)
+            assert isinstance(replaced_block_form[I], Form) or _is_zero(replaced_block_form[I])
+            if isinstance(replaced_block_form[I], Form):
+                replaced_block_form[I] = _create_dolfin_form(
+                    form=replaced_block_form[I],
+                    form_compiler_parameters=form_compiler_parameters
+                )
+            elif _is_zero(replaced_block_form[I]):
+                assert isinstance(replaced_block_form[I], cpp_Form)
+            else:
+                raise TypeError("Invalid form")
         BlockForm1_Base.__init__(self, replaced_block_form.tolist(), [block_function_space_.cpp_object() for block_function_space_ in block_function_space])
         # Store size for len and shape method
         self.N = N

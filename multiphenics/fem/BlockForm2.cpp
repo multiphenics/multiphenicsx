@@ -54,7 +54,7 @@ bool BlockForm2::has_cell_integrals() const
 {
   for (auto & form_vec : _forms)
     for (auto & form : form_vec)
-      if (form->ufc_form()->has_cell_integrals())
+      if (form->ufc_form() and form->ufc_form()->has_cell_integrals())
         return true;
   return false;
 }
@@ -63,7 +63,7 @@ bool BlockForm2::has_interior_facet_integrals() const
 {
   for (auto & form_vec : _forms)
     for (auto & form : form_vec)
-      if (form->ufc_form()->has_interior_facet_integrals())
+      if (form->ufc_form() and form->ufc_form()->has_interior_facet_integrals())
         return true;
   return false;
 }
@@ -72,7 +72,7 @@ bool BlockForm2::has_exterior_facet_integrals() const
 {
   for (auto & form_vec : _forms)
     for (auto & form : form_vec)
-      if (form->ufc_form()->has_exterior_facet_integrals())
+      if (form->ufc_form() and form->ufc_form()->has_exterior_facet_integrals())
         return true;
   return false;
 }
@@ -81,7 +81,7 @@ bool BlockForm2::has_vertex_integrals() const
 {
   for (auto & form_vec : _forms)
    for (auto & form : form_vec)
-     if (form->ufc_form()->has_vertex_integrals())
+     if (form->ufc_form() and form->ufc_form()->has_vertex_integrals())
        return true;
   return false;
 }

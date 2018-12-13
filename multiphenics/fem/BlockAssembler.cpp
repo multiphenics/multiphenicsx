@@ -60,13 +60,16 @@ void BlockAssembler::assemble(GenericTensor& A, const BlockFormBase& a)
     for (unsigned int i(0); i < a_form2.block_size(0); ++i)
       for (unsigned int j(0); j < a_form2.block_size(1); ++j)
       {
-        if (i == j)
-          assembler.keep_diagonal = keep_diagonal;
-        else
-          assembler.keep_diagonal = false;
-        std::shared_ptr<GenericMatrix> A_ij = block_linear_algebra_factory.create_sub_matrix(A_mat, i, j, BlockInsertMode::ADD_VALUES);
         const Form& a_ij = a_form2(i, j);
-        this->sub_assemble(*A_ij, a_ij, assembler);
+        if (a_ij.ufc_form())
+        {
+          if (i == j)
+            assembler.keep_diagonal = keep_diagonal;
+          else
+            assembler.keep_diagonal = false;
+          std::shared_ptr<GenericMatrix> A_ij = block_linear_algebra_factory.create_sub_matrix(A_mat, i, j, BlockInsertMode::ADD_VALUES);
+          this->sub_assemble(*A_ij, a_ij, assembler);
+        }
       }
   }
   else if (a.rank() == 1)
@@ -75,9 +78,12 @@ void BlockAssembler::assemble(GenericTensor& A, const BlockFormBase& a)
     const BlockForm1& a_form1 = dynamic_cast<const BlockForm1&>(a);
     for (unsigned int i(0); i < a_form1.block_size(0); ++i)
     {
-      std::shared_ptr<GenericVector> A_i = block_linear_algebra_factory.create_sub_vector(A_vec, i, BlockInsertMode::ADD_VALUES);
       const Form& a_i = a_form1(i);
-      this->sub_assemble(*A_i, a_i, assembler);
+      if (a_i.ufc_form())
+      {
+        std::shared_ptr<GenericVector> A_i = block_linear_algebra_factory.create_sub_vector(A_vec, i, BlockInsertMode::ADD_VALUES);
+        this->sub_assemble(*A_i, a_i, assembler);
+      }
     }
   }
 

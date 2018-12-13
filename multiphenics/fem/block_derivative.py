@@ -21,6 +21,7 @@ from dolfin import derivative
 from multiphenics.fem.block_form import _block_form_preprocessing
 from multiphenics.fem.block_form_1 import BlockForm1
 from multiphenics.fem.block_form_2 import BlockForm2
+from multiphenics.fem.block_replace_zero import _is_zero
 
 def block_derivative(F, u, du):
     assert isinstance(F, (array, list, BlockForm1))
@@ -38,6 +39,7 @@ def block_derivative(F, u, du):
     assert len(F) == len(u) == len(du)
     J = empty((len(F), len(u)), dtype=object)
     for i in range(len(F)):
+        assert not _is_zero(F[i]) # J[i, :] would be zero, resulting in a singular matrix
         for j in range(len(u)):
             J[i, j] = derivative(F[i], u[j], du[j])
     if input_type is array:

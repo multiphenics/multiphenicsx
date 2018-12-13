@@ -17,7 +17,6 @@
 #
 
 import pytest
-from numpy.linalg import norm
 from dolfin import assemble, assign, div, ds, dx, grad, FunctionSpace, inner, UnitSquareMesh, VectorFunctionSpace
 from dolfin_utils.test import fixture as module_fixture
 from multiphenics import block_adjoint, block_derivative, BlockForm, BlockFunction, BlockFunctionSpace, block_restrict, block_split, BlockTestFunction, BlockTrialFunction
@@ -64,7 +63,7 @@ def test_case_0a_bilinear(mesh):
     for i in range(A.block_size(0)):
         for j in range(A.block_size(1)):
             if i == 1 and j == 1:
-                assert norm(assemble(A[i, j]).array()) == 0.
+                assert A[i, j] is 0
             else:
                 assert array_equal(assemble(A[i, j]).array(), assemble(a[i][j]).array())
     
@@ -110,7 +109,7 @@ def test_case_0b_bilinear(mesh):
     for i in range(A_sub.block_size(0)):
         for j in range(A_sub.block_size(1)):
             if i == 1 and j == 1:
-                assert norm(assemble(A_sub[i, j]).array()) == 0.
+                assert A_sub[i, j] is 0
             else:
                 assert array_equal(assemble(A_sub[i, j]).array(), assemble(a[i][j]).array())
                 
@@ -192,7 +191,7 @@ def test_case_0d_bilinear_1(mesh):
     # Restrict bilinear form to subspace
     A_sub = block_restrict(a, [W_sub, W_sub])
     # Assert equality for restricted bilinear form
-    assert norm(assemble(A_sub[0, 0]).array()) == 0.
+    assert A_sub[0, 0] is 0
     
 # Case 0d: simple forms (no nesting), define the pressure subspace and assemble on subspace [bilinear form]
 def test_case_0d_bilinear_2(mesh):
@@ -236,7 +235,7 @@ def test_case_0d_bilinear_3(mesh):
     a_sub = [[a[1][1]]]
     A_sub = BlockForm(a_sub, block_function_space=[W_sub, W_sub], block_form_rank=2)
     # Assert equality for restricted bilinear form
-    assert norm(assemble(A_sub[0, 0]).array()) == 0.
+    assert A_sub[0, 0] is 0
     
 # Case 0e: simple forms (no nesting), define both velocity and pressure subspaces and assemble rectangular matrix on them
 def test_case_0e_1(mesh):
@@ -332,7 +331,7 @@ def test_case_0f(mesh):
     for i in range(Jac.block_size(0)):
         for j in range(Jac.block_size(1)):
             if i == 1 and j == 1:
-                assert norm(assemble(Jac[i, j]).array()) == 0.
+                assert Jac[i, j].empty()
             else:
                 assert array_equal(assemble(Jac[i, j]).array(), assemble(a[i][j]).array())
                 
@@ -357,7 +356,7 @@ def test_case_0g(mesh):
     for i in range(At.block_size(0)):
         for j in range(At.block_size(1)):
             if i == 1 and j == 1:
-                assert norm(assemble(At[i, j]).array()) == 0.
+                assert At[i, j] is 0
             else:
                 assert array_equal(assemble(At[i, j]).array(), (-1)**(i+j)*assemble(a[i][j]).array())
                 
@@ -409,7 +408,10 @@ def test_case_0h_bilinear(mesh):
     assert A.block_size(1) == A_ex.block_size(1)
     for i in range(A.block_size(0)):
         for j in range(A.block_size(1)):
-            assert array_equal(assemble(A[i, j]).array(), assemble(A_ex[i, j]).array())
+            if i == 1 and j == 1:
+                assert A[i, j] is 0
+            else:
+                assert array_equal(assemble(A[i, j]).array(), assemble(A_ex[i, j]).array())
 
 # Case 0i: simple forms (no nesting), sum [linear form]
 def test_case_0i_linear(mesh):
@@ -455,7 +457,10 @@ def test_case_0i_bilinear(mesh):
     assert A.block_size(1) == A_ex.block_size(1)
     for i in range(A.block_size(0)):
         for j in range(A.block_size(1)):
-            assert array_equal(assemble(A[i, j]).array(), assemble(A_ex[i, j]).array())
+            if i == 1 and j == 1:
+                assert A[i, j] == 0.
+            else:
+                assert array_equal(assemble(A[i, j]).array(), assemble(A_ex[i, j]).array())
 
 # Case 0j: simple forms (no nesting), product between bilinear form and solution
 def test_case_0j(mesh):
@@ -528,7 +533,7 @@ def test_case_1a_bilinear(mesh):
     assert array_equal(assemble(A[0, 0]).array(), assemble(a_00[0][0]).array())
     assert array_equal(assemble(A[0, 1]).array(), assemble(a_01[0][0]).array())
     assert array_equal(assemble(A[1, 0]).array(), assemble(a_10[0][0]).array())
-    assert norm(assemble(A[1, 1]).array()) == 0.
+    assert A[1, 1] is 0
     
 # Case 1b: forms with at most one level of nesting, test non constant nesting levels [linear form]
 def test_case_1b_linear(mesh):
@@ -572,7 +577,7 @@ def test_case_1b_bilinear(mesh):
     assert array_equal(assemble(A[0, 0]).array(), assemble(a_00[0][0]).array())
     assert array_equal(assemble(A[0, 1]).array(), assemble(a_01[0][0]).array())
     assert array_equal(assemble(A[1, 0]).array(), assemble(a_10[0][0]).array())
-    assert norm(assemble(A[1, 1]).array()) == 0.
+    assert A[1, 1] is 0
     
 # Case 1c: forms with at most one level of nesting, test block_adjoint in nested matrix
 def test_case_1c(mesh):
@@ -592,10 +597,10 @@ def test_case_1c(mesh):
          [block_adjoint(a_01), 0   ]]
     A = BlockForm(a)
     # Assert equality for bilinear form
-    assert norm(assemble(A[0, 0]).array()) == 0.
+    assert A[0, 0] is 0
     assert array_equal(assemble(A[0, 1]).array(), assemble(a_01[0][0]).array())
     assert array_equal(assemble(A[1, 0]).array(), assemble(-a_10[0][0]).array())
-    assert norm(assemble(A[1, 1]).array()) == 0.
+    assert A[1, 1] is 0
     
 # Case 1d: forms with at most one level of nesting, test nesting on standard forms [linear form]
 def test_case_1d_linear(mesh):
@@ -654,12 +659,12 @@ def test_case_1d_bilinear(mesh):
     assert array_equal(assemble(A[1, 3]).array(), assemble(a_01[1][1]).array())
     assert array_equal(assemble(A[2, 0]).array(), assemble(a_10[0][0]).array())
     assert array_equal(assemble(A[2, 1]).array(), assemble(a_10[0][1]).array())
-    assert norm(assemble(A[2, 2]).array()) == 0.
-    assert norm(assemble(A[2, 3]).array()) == 0.
+    assert A[2, 2] is 0
+    assert A[2, 3] is 0
     assert array_equal(assemble(A[3, 0]).array(), assemble(a_10[1][0]).array())
     assert array_equal(assemble(A[3, 1]).array(), assemble(a_10[1][1]).array())
-    assert norm(assemble(A[3, 2]).array()) == 0.
-    assert norm(assemble(A[3, 3]).array()) == 0.
+    assert A[3, 2] is 0
+    assert A[3, 3] is 0
     
 # Case 1e: forms with at most one level of nesting, test non constant nesting levels [linear form]
 def test_case_1e_linear(mesh):
@@ -720,12 +725,12 @@ def test_case_1e_bilinear(mesh):
     assert array_equal(assemble(A[1, 3]).array(), assemble(a_01[1][1]).array())
     assert array_equal(assemble(A[2, 0]).array(), assemble(a_10[0][0]).array())
     assert array_equal(assemble(A[2, 1]).array(), assemble(a_10[0][1]).array())
-    assert norm(assemble(A[2, 2]).array()) == 0.
-    assert norm(assemble(A[2, 3]).array()) == 0.
+    assert A[2, 2] is 0
+    assert A[2, 3] is 0
     assert array_equal(assemble(A[3, 0]).array(), assemble(a_10[1][0]).array())
     assert array_equal(assemble(A[3, 1]).array(), assemble(a_10[1][1]).array())
-    assert norm(assemble(A[3, 2]).array()) == 0.
-    assert norm(assemble(A[3, 3]).array()) == 0.
+    assert A[3, 2] is 0
+    assert A[3, 3] is 0
     
 # Case 1f: forms with at most one level of nesting, test block_adjoint in nested matrix
 def test_case_1f(mesh):
@@ -747,22 +752,22 @@ def test_case_1f(mesh):
          [block_adjoint(a_01), 0   ]]
     A = BlockForm(a)
     # Assert equality for bilinear form
-    assert norm(assemble(A[0, 0]).array()) == 0.
-    assert norm(assemble(A[0, 1]).array()) == 0.
+    assert A[0, 0] is 0
+    assert A[0, 1] is 0
     assert array_equal(assemble(A[0, 2]).array(), assemble(a_01[0][0]).array())
     assert array_equal(assemble(A[0, 3]).array(), assemble(a_01[0][1]).array())
-    assert norm(assemble(A[1, 0]).array()) == 0.
-    assert norm(assemble(A[1, 1]).array()) == 0.
+    assert A[1, 0] is 0
+    assert A[1, 1] is 0
     assert array_equal(assemble(A[1, 2]).array(), assemble(a_01[1][0]).array())
     assert array_equal(assemble(A[1, 3]).array(), assemble(a_01[1][1]).array())
     assert array_equal(assemble(A[2, 0]).array(), assemble(-a_10[0][0]).array())
     assert array_equal(assemble(A[2, 1]).array(), assemble(-3./2.*a_10[0][1]).array())
-    assert norm(assemble(A[2, 2]).array()) == 0.
-    assert norm(assemble(A[2, 3]).array()) == 0.
+    assert A[2, 2] is 0
+    assert A[2, 3] is 0
     assert array_equal(assemble(A[3, 0]).array(), assemble(-2./3.*a_10[1][0]).array())
     assert array_equal(assemble(A[3, 1]).array(), assemble(-a_10[1][1]).array())
-    assert norm(assemble(A[3, 2]).array()) == 0.
-    assert norm(assemble(A[3, 3]).array()) == 0.
+    assert A[3, 2] is 0
+    assert A[3, 3] is 0
     
 # Case 1g: forms with at most one level of nesting, test nesting on standard forms [linear form]
 def test_case_1g_linear(mesh):
@@ -815,7 +820,7 @@ def test_case_1g_bilinear(mesh):
     assert array_equal(assemble(A[1, 2]).array(), assemble(a_01[1][0]).array())
     assert array_equal(assemble(A[2, 0]).array(), assemble(a_10[0][0]).array())
     assert array_equal(assemble(A[2, 1]).array(), assemble(a_10[0][1]).array())
-    assert norm(assemble(A[2, 2]).array()) == 0.
+    assert A[2, 2] is 0
     
 # Case 1h: forms with at most one level of nesting, test non constant nesting levels [linear form]
 def test_case_1h_linear(mesh):
@@ -870,7 +875,7 @@ def test_case_1h_bilinear(mesh):
     assert array_equal(assemble(A[1, 2]).array(), assemble(a_01[1][0]).array())
     assert array_equal(assemble(A[2, 0]).array(), assemble(a_10[0][0]).array())
     assert array_equal(assemble(A[2, 1]).array(), assemble(a_10[0][1]).array())
-    assert norm(assemble(A[2, 2]).array()) == 0.
+    assert A[2, 2] is 0
     
 # Case 1i: forms with at most one level of nesting, test block_adjoint in nested matrix [bilinear form]
 def test_case_1i_bilinear(mesh):
@@ -891,15 +896,15 @@ def test_case_1i_bilinear(mesh):
          [block_adjoint(a_01), 0   ]]
     A = BlockForm(a)
     # Assert equality for bilinear form
-    assert norm(assemble(A[0, 0]).array()) == 0.
-    assert norm(assemble(A[0, 1]).array()) == 0.
+    assert A[0, 0] is 0
+    assert A[0, 1] is 0
     assert array_equal(assemble(A[0, 2]).array(), assemble(a_01[0][0]).array())
-    assert norm(assemble(A[1, 0]).array()) == 0.
-    assert norm(assemble(A[1, 1]).array()) == 0.
+    assert A[1, 0] is 0
+    assert A[1, 1] is 0
     assert array_equal(assemble(A[1, 2]).array(), assemble(a_01[1][0]).array())
     assert array_equal(assemble(A[2, 0]).array(), assemble(-a_10[0][0]).array())
     assert array_equal(assemble(A[2, 1]).array(), assemble(-a_10[0][1]).array())
-    assert norm(assemble(A[2, 2]).array()) == 0.
+    assert A[2, 2] is 0
 
 # Case 2a: forms with at most two levels of nesting, test nesting on standard forms [linear form]
 def test_case_2a_linear(mesh):
@@ -951,14 +956,14 @@ def test_case_2a_bilinear(mesh):
     A = BlockForm(a)
     # Assert equality for bilinear form
     assert array_equal(assemble(A[0, 0]).array(), assemble(a_00[0][0]).array())
-    assert norm(assemble(A[0, 1]).array()) == 0.
+    assert A[0, 1] is 0
     assert array_equal(assemble(A[0, 2]).array(), assemble(a_02[0][0]).array())
-    assert norm(assemble(A[1, 0]).array()) == 0.
+    assert A[1, 0] is 0
     assert array_equal(assemble(A[1, 1]).array(), assemble(a_11[0][0]).array())
     assert array_equal(assemble(A[1, 2]).array(), assemble(a_12[0][0]).array())
     assert array_equal(assemble(A[2, 0]).array(), assemble(a_20[0][0]).array())
     assert array_equal(assemble(A[2, 1]).array(), assemble(a_21[0][0]).array())
-    assert norm(assemble(A[2, 2]).array()) == 0.
+    assert A[2, 2] is 0
     
 # Case 2b: forms with at most two levels of nesting, test block_adjoint in nested matrix
 def test_case_2b(mesh):
@@ -986,14 +991,14 @@ def test_case_2b(mesh):
     A = BlockForm(a)
     # Assert equality for bilinear form
     assert array_equal(assemble(A[0, 0]).array(), assemble(a_00[0][0]).array())
-    assert norm(assemble(A[0, 1]).array()) == 0.
+    assert A[0, 1] is 0
     assert array_equal(assemble(A[0, 2]).array(), assemble(-a_02[0][0]).array())
-    assert norm(assemble(A[1, 0]).array()) == 0.
+    assert A[1, 0] is 0
     assert array_equal(assemble(A[1, 1]).array(), assemble(a_11[0][0]).array())
     assert array_equal(assemble(A[1, 2]).array(), assemble(-a_12[0][0]).array())
     assert array_equal(assemble(A[2, 0]).array(), assemble(a_20[0][0]).array())
     assert array_equal(assemble(A[2, 1]).array(), assemble(a_21[0][0]).array())
-    assert norm(assemble(A[2, 2]).array()) == 0.
+    assert A[2, 2] is 0
     
 # Case 2c: forms with at most two levels of nesting, test nesting on standard forms [linear form]
 def test_case_2c_linear(mesh):
@@ -1058,24 +1063,24 @@ def test_case_2c_bilinear(mesh):
     # Assert equality for bilinear form
     assert array_equal(assemble(A[0, 0]).array(), assemble(a_00[0][0]).array())
     assert array_equal(assemble(A[0, 1]).array(), assemble(a_00[0][1]).array())
-    assert norm(assemble(A[0, 2]).array()) == 0.
-    assert norm(assemble(A[0, 3]).array()) == 0.
+    assert A[0, 2] is 0
+    assert A[0, 3] is 0
     assert array_equal(assemble(A[0, 4]).array(), assemble(a_02[0][0]).array())
     assert array_equal(assemble(A[0, 5]).array(), assemble(a_02[0][1]).array())
     assert array_equal(assemble(A[1, 0]).array(), assemble(a_00[1][0]).array())
     assert array_equal(assemble(A[1, 1]).array(), assemble(a_00[1][1]).array())
-    assert norm(assemble(A[1, 2]).array()) == 0.
-    assert norm(assemble(A[1, 3]).array()) == 0.
+    assert A[1, 2] is 0
+    assert A[1, 3] is 0
     assert array_equal(assemble(A[1, 4]).array(), assemble(a_02[1][0]).array())
     assert array_equal(assemble(A[1, 5]).array(), assemble(a_02[1][1]).array())
-    assert norm(assemble(A[2, 0]).array()) == 0.
-    assert norm(assemble(A[2, 1]).array()) == 0.
+    assert A[2, 0] is 0
+    assert A[2, 1] is 0
     assert array_equal(assemble(A[2, 2]).array(), assemble(a_11[0][0]).array())
     assert array_equal(assemble(A[2, 3]).array(), assemble(a_11[0][1]).array())
     assert array_equal(assemble(A[2, 4]).array(), assemble(a_12[0][0]).array())
     assert array_equal(assemble(A[2, 5]).array(), assemble(a_12[0][1]).array())
-    assert norm(assemble(A[3, 0]).array()) == 0.
-    assert norm(assemble(A[3, 1]).array()) == 0.
+    assert A[3, 0] is 0
+    assert A[3, 1] is 0
     assert array_equal(assemble(A[3, 2]).array(), assemble(a_11[1][0]).array())
     assert array_equal(assemble(A[3, 3]).array(), assemble(a_11[1][1]).array())
     assert array_equal(assemble(A[3, 4]).array(), assemble(a_12[1][0]).array())
@@ -1084,14 +1089,14 @@ def test_case_2c_bilinear(mesh):
     assert array_equal(assemble(A[4, 1]).array(), assemble(a_20[0][1]).array())
     assert array_equal(assemble(A[4, 2]).array(), assemble(a_21[0][0]).array())
     assert array_equal(assemble(A[4, 3]).array(), assemble(a_21[0][1]).array())
-    assert norm(assemble(A[4, 4]).array()) == 0.
-    assert norm(assemble(A[4, 5]).array()) == 0.
+    assert A[4, 4] is 0
+    assert A[4, 5] is 0
     assert array_equal(assemble(A[5, 0]).array(), assemble(a_20[1][0]).array())
     assert array_equal(assemble(A[5, 1]).array(), assemble(a_20[1][1]).array())
     assert array_equal(assemble(A[5, 2]).array(), assemble(a_21[1][0]).array())
     assert array_equal(assemble(A[5, 3]).array(), assemble(a_21[1][1]).array())
-    assert norm(assemble(A[5, 4]).array()) == 0.
-    assert norm(assemble(A[5, 5]).array()) == 0.
+    assert A[5, 4] is 0
+    assert A[5, 5] is 0
     
 # Case 2d: forms with at most two levels of nesting, test block_adjoint in nested matrix
 def test_case_2d(mesh):
@@ -1126,24 +1131,24 @@ def test_case_2d(mesh):
     # Assert equality for bilinear form
     assert array_equal(assemble(A[0, 0]).array(), assemble(a_00[0][0]).array())
     assert array_equal(assemble(A[0, 1]).array(), assemble(a_00[0][1]).array())
-    assert norm(assemble(A[0, 2]).array()) == 0.
-    assert norm(assemble(A[0, 3]).array()) == 0.
+    assert A[0, 2] is 0
+    assert A[0, 3] is 0
     assert array_equal(assemble(A[0, 4]).array(), assemble(-a_02[0][0]).array())
     assert array_equal(assemble(A[0, 5]).array(), assemble(-3./2.*a_02[0][1]).array())
     assert array_equal(assemble(A[1, 0]).array(), assemble(a_00[1][0]).array())
     assert array_equal(assemble(A[1, 1]).array(), assemble(a_00[1][1]).array())
-    assert norm(assemble(A[1, 2]).array()) == 0.
-    assert norm(assemble(A[1, 3]).array()) == 0.
+    assert A[1, 2] is 0
+    assert A[1, 3] is 0
     assert array_equal(assemble(A[1, 4]).array(), assemble(-2./3.*a_02[1][0]).array())
     assert array_equal(assemble(A[1, 5]).array(), assemble(-a_02[1][1]).array())
-    assert norm(assemble(A[2, 0]).array()) == 0.
-    assert norm(assemble(A[2, 1]).array()) == 0.
+    assert A[2, 0] is 0
+    assert A[2, 1] is 0
     assert array_equal(assemble(A[2, 2]).array(), assemble(a_11[0][0]).array())
     assert array_equal(assemble(A[2, 3]).array(), assemble(a_11[0][1]).array())
     assert array_equal(assemble(A[2, 4]).array(), assemble(-a_12[0][0]).array())
     assert array_equal(assemble(A[2, 5]).array(), assemble(-7./6.*a_12[0][1]).array())
-    assert norm(assemble(A[3, 0]).array()) == 0.
-    assert norm(assemble(A[3, 1]).array()) == 0.
+    assert A[3, 0] is 0
+    assert A[3, 1] is 0
     assert array_equal(assemble(A[3, 2]).array(), assemble(a_11[1][0]).array())
     assert array_equal(assemble(A[3, 3]).array(), assemble(a_11[1][1]).array())
     assert array_equal(assemble(A[3, 4]).array(), assemble(-6./7.*a_12[1][0]).array())
@@ -1152,14 +1157,14 @@ def test_case_2d(mesh):
     assert array_equal(assemble(A[4, 1]).array(), assemble(a_20[0][1]).array())
     assert array_equal(assemble(A[4, 2]).array(), assemble(a_21[0][0]).array())
     assert array_equal(assemble(A[4, 3]).array(), assemble(a_21[0][1]).array())
-    assert norm(assemble(A[4, 4]).array()) == 0.
-    assert norm(assemble(A[4, 5]).array()) == 0.
+    assert A[4, 4] is 0
+    assert A[4, 5] is 0
     assert array_equal(assemble(A[5, 0]).array(), assemble(a_20[1][0]).array())
     assert array_equal(assemble(A[5, 1]).array(), assemble(a_20[1][1]).array())
     assert array_equal(assemble(A[5, 2]).array(), assemble(a_21[1][0]).array())
     assert array_equal(assemble(A[5, 3]).array(), assemble(a_21[1][1]).array())
-    assert norm(assemble(A[5, 4]).array()) == 0.
-    assert norm(assemble(A[5, 5]).array()) == 0.
+    assert A[5, 4] is 0
+    assert A[5, 5] is 0
     
 # Case 2e: forms with at most two levels of nesting, test nesting on standard forms [linear form]
 def test_case_2e_linear(mesh):
@@ -1220,21 +1225,21 @@ def test_case_2e_bilinear(mesh):
     # Assert equality for bilinear form
     assert array_equal(assemble(A[0, 0]).array(), assemble(a_00[0][0]).array())
     assert array_equal(assemble(A[0, 1]).array(), assemble(a_00[0][1]).array())
-    assert norm(assemble(A[0, 2]).array()) == 0.
-    assert norm(assemble(A[0, 3]).array()) == 0.
+    assert A[0, 2] is 0
+    assert A[0, 3] is 0
     assert array_equal(assemble(A[0, 4]).array(), assemble(a_02[0][0]).array())
     assert array_equal(assemble(A[1, 0]).array(), assemble(a_00[1][0]).array())
     assert array_equal(assemble(A[1, 1]).array(), assemble(a_00[1][1]).array())
-    assert norm(assemble(A[1, 2]).array()) == 0.
-    assert norm(assemble(A[1, 3]).array()) == 0.
+    assert A[1, 2] is 0
+    assert A[1, 3] is 0
     assert array_equal(assemble(A[1, 4]).array(), assemble(a_02[1][0]).array())
-    assert norm(assemble(A[2, 0]).array()) == 0.
-    assert norm(assemble(A[2, 1]).array()) == 0.
+    assert A[2, 0] is 0
+    assert A[2, 1] is 0
     assert array_equal(assemble(A[2, 2]).array(), assemble(a_11[0][0]).array())
     assert array_equal(assemble(A[2, 3]).array(), assemble(a_11[0][1]).array())
     assert array_equal(assemble(A[2, 4]).array(), assemble(a_12[0][0]).array())
-    assert norm(assemble(A[3, 0]).array()) == 0.
-    assert norm(assemble(A[3, 1]).array()) == 0.
+    assert A[3, 0] is 0
+    assert A[3, 1] is 0
     assert array_equal(assemble(A[3, 2]).array(), assemble(a_11[1][0]).array())
     assert array_equal(assemble(A[3, 3]).array(), assemble(a_11[1][1]).array())
     assert array_equal(assemble(A[3, 4]).array(), assemble(a_12[1][0]).array())
@@ -1242,7 +1247,7 @@ def test_case_2e_bilinear(mesh):
     assert array_equal(assemble(A[4, 1]).array(), assemble(a_20[0][1]).array())
     assert array_equal(assemble(A[4, 2]).array(), assemble(a_21[0][0]).array())
     assert array_equal(assemble(A[4, 3]).array(), assemble(a_21[0][1]).array())
-    assert norm(assemble(A[4, 4]).array()) == 0.
+    assert A[4, 4] is 0
     
 # Case 2f: forms with at most two levels of nesting, test block_adjoint in nested matrix
 def test_case_2f(mesh):
@@ -1275,21 +1280,21 @@ def test_case_2f(mesh):
     # Assert equality for bilinear form
     assert array_equal(assemble(A[0, 0]).array(), assemble(a_00[0][0]).array())
     assert array_equal(assemble(A[0, 1]).array(), assemble(a_00[0][1]).array())
-    assert norm(assemble(A[0, 2]).array()) == 0.
-    assert norm(assemble(A[0, 3]).array()) == 0.
+    assert A[0, 2] is 0
+    assert A[0, 3] is 0
     assert array_equal(assemble(A[0, 4]).array(), assemble(-a_02[0][0]).array())
     assert array_equal(assemble(A[1, 0]).array(), assemble(a_00[1][0]).array())
     assert array_equal(assemble(A[1, 1]).array(), assemble(a_00[1][1]).array())
-    assert norm(assemble(A[1, 2]).array()) == 0.
-    assert norm(assemble(A[1, 3]).array()) == 0.
+    assert A[1, 2] is 0
+    assert A[1, 3] is 0
     assert array_equal(assemble(A[1, 4]).array(), assemble(-a_02[1][0]).array())
-    assert norm(assemble(A[2, 0]).array()) == 0.
-    assert norm(assemble(A[2, 1]).array()) == 0.
+    assert A[2, 0] is 0
+    assert A[2, 1] is 0
     assert array_equal(assemble(A[2, 2]).array(), assemble(a_11[0][0]).array())
     assert array_equal(assemble(A[2, 3]).array(), assemble(a_11[0][1]).array())
     assert array_equal(assemble(A[2, 4]).array(), assemble(-a_12[0][0]).array())
-    assert norm(assemble(A[3, 0]).array()) == 0.
-    assert norm(assemble(A[3, 1]).array()) == 0.
+    assert A[3, 0] is 0
+    assert A[3, 1] is 0
     assert array_equal(assemble(A[3, 2]).array(), assemble(a_11[1][0]).array())
     assert array_equal(assemble(A[3, 3]).array(), assemble(a_11[1][1]).array())
     assert array_equal(assemble(A[3, 4]).array(), assemble(-a_12[1][0]).array())
@@ -1297,4 +1302,4 @@ def test_case_2f(mesh):
     assert array_equal(assemble(A[4, 1]).array(), assemble(a_20[0][1]).array())
     assert array_equal(assemble(A[4, 2]).array(), assemble(a_21[0][0]).array())
     assert array_equal(assemble(A[4, 3]).array(), assemble(a_21[0][1]).array())
-    assert norm(assemble(A[4, 4]).array()) == 0.
+    assert A[4, 4] is 0
