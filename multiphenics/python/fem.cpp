@@ -85,13 +85,13 @@ namespace multiphenics_wrappers
            })
       .def("apply", (void (multiphenics::BlockDirichletBC::*)(dolfin::GenericVector&) const)
            &multiphenics::BlockDirichletBC::apply)
-      .def("apply", (void (multiphenics::BlockDirichletBC::*)(dolfin::GenericMatrix&) const)
+      .def("apply", (void (multiphenics::BlockDirichletBC::*)(dolfin::GenericMatrix&, std::vector<std::vector<bool>>) const)
            &multiphenics::BlockDirichletBC::apply)
-      .def("apply", (void (multiphenics::BlockDirichletBC::*)(dolfin::GenericMatrix&, dolfin::GenericVector&) const)
+      .def("apply", (void (multiphenics::BlockDirichletBC::*)(dolfin::GenericMatrix&, dolfin::GenericVector&, std::vector<std::vector<bool>>) const)
            &multiphenics::BlockDirichletBC::apply)
       .def("apply", (void (multiphenics::BlockDirichletBC::*)(dolfin::GenericVector&, const dolfin::GenericVector&) const)
            &multiphenics::BlockDirichletBC::apply)
-      .def("apply", (void (multiphenics::BlockDirichletBC::*)(dolfin::GenericMatrix&, dolfin::GenericVector&, const dolfin::GenericVector&) const)
+      .def("apply", (void (multiphenics::BlockDirichletBC::*)(dolfin::GenericMatrix&, dolfin::GenericVector&, const dolfin::GenericVector&, std::vector<std::vector<bool>>) const)
            &multiphenics::BlockDirichletBC::apply);
   }
 }

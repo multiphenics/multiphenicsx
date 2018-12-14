@@ -38,7 +38,8 @@ BlockDirichletBC::~BlockDirichletBC()
   // Do nothing
 }
 //-----------------------------------------------------------------------------
-void BlockDirichletBC::apply(GenericMatrix& A) const
+void BlockDirichletBC::apply(GenericMatrix& A,
+                             std::vector<std::vector<bool>> zero_off_block_diagonal) const
 {
   GenericBlockLinearAlgebraFactory& block_linear_algebra_factory = dynamic_cast<GenericBlockLinearAlgebraFactory&>(A.factory());
   for (std::size_t I(0); I < _bcs.size(); ++I)
@@ -48,7 +49,7 @@ void BlockDirichletBC::apply(GenericMatrix& A) const
       for (auto & bc_I: _bcs[I])
         if (I == J)
           bc_I->apply(*A_IJ);
-        else
+        else if (zero_off_block_diagonal[I][J])
           bc_I->zero(*A_IJ);
     }
 }
@@ -65,7 +66,8 @@ void BlockDirichletBC::apply(GenericVector& b) const
 }
 //-----------------------------------------------------------------------------
 void BlockDirichletBC::apply(GenericMatrix& A,
-                             GenericVector& b) const
+                             GenericVector& b,
+                             std::vector<std::vector<bool>> zero_off_block_diagonal) const
 {
   GenericBlockLinearAlgebraFactory& block_linear_algebra_factory_A = dynamic_cast<GenericBlockLinearAlgebraFactory&>(A.factory());
   GenericBlockLinearAlgebraFactory& block_linear_algebra_factory_b = dynamic_cast<GenericBlockLinearAlgebraFactory&>(b.factory());
@@ -78,7 +80,7 @@ void BlockDirichletBC::apply(GenericMatrix& A,
       for (auto & bc_I: _bcs[I])
         if (I == J)
           bc_I->apply(*A_IJ, *b_I);
-        else
+        else if (zero_off_block_diagonal[I][J])
           bc_I->zero(*A_IJ);
     }
   }
@@ -100,7 +102,8 @@ void BlockDirichletBC::apply(GenericVector& b,
 //-----------------------------------------------------------------------------
 void BlockDirichletBC::apply(GenericMatrix& A,
                              GenericVector& b,
-                             const GenericVector& x) const
+                             const GenericVector& x,
+                             std::vector<std::vector<bool>> zero_off_block_diagonal) const
 {
   GenericBlockLinearAlgebraFactory& block_linear_algebra_factory_A = dynamic_cast<GenericBlockLinearAlgebraFactory&>(A.factory());
   GenericBlockLinearAlgebraFactory& block_linear_algebra_factory_b = dynamic_cast<GenericBlockLinearAlgebraFactory&>(b.factory());
@@ -115,7 +118,7 @@ void BlockDirichletBC::apply(GenericMatrix& A,
       for (auto & bc_I: _bcs[I])
         if (I == J)
           bc_I->apply(*A_IJ, *b_I, *x_I);
-        else
+        else if (zero_off_block_diagonal[I][J])
           bc_I->zero(*A_IJ);
     }
   }
@@ -147,7 +150,8 @@ void BlockDirichletBC::gather(Map& boundary_values) const
   }
 }
 //-----------------------------------------------------------------------------
-void BlockDirichletBC::zero(GenericMatrix& A) const
+void BlockDirichletBC::zero(GenericMatrix& A,
+                            std::vector<std::vector<bool>> zero_off_block_diagonal) const
 {
   GenericBlockLinearAlgebraFactory& block_linear_algebra_factory = dynamic_cast<GenericBlockLinearAlgebraFactory&>(A.factory());
   for (std::size_t I(0); I < _bcs.size(); ++I)
@@ -155,7 +159,8 @@ void BlockDirichletBC::zero(GenericMatrix& A) const
     {
       std::shared_ptr<GenericMatrix> A_IJ = block_linear_algebra_factory.create_sub_matrix(A, I, J, BlockInsertMode::INSERT_VALUES);
       for (auto & bc_I: _bcs[I])
-        bc_I->zero(*A_IJ);
+        if (I == J || zero_off_block_diagonal[I][J])
+          bc_I->zero(*A_IJ);
     }
 }
 //-----------------------------------------------------------------------------

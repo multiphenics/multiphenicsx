@@ -46,7 +46,8 @@ namespace multiphenics
     ///
     /// @param     A (_GenericMatrix_)
     ///         The matrix to apply boundary condition to.
-    void apply(dolfin::GenericMatrix& A) const;
+    void apply(dolfin::GenericMatrix& A,
+               std::vector<std::vector<bool>> zero_off_block_diagonal) const;
 
     /// Apply boundary condition to a vector
     ///
@@ -61,7 +62,8 @@ namespace multiphenics
     /// @param     b (_GenericVector_)
     ///         The vector to apply boundary condition to.
     void apply(dolfin::GenericMatrix& A,
-               dolfin::GenericVector& b) const;
+               dolfin::GenericVector& b,
+               std::vector<std::vector<bool>> zero_off_block_diagonal) const;
 
     /// Apply boundary condition to vectors for a nonlinear problem
     ///
@@ -82,7 +84,8 @@ namespace multiphenics
     ///         Another vector (nonlinear problem).
     void apply(dolfin::GenericMatrix& A,
                dolfin::GenericVector& b,
-               const dolfin::GenericVector& x) const;
+               const dolfin::GenericVector& x,
+               std::vector<std::vector<bool>> zero_off_block_diagonal) const;
                
     /// Get Dirichlet dofs and values. If a method other than 'pointwise' is
     /// used in parallel, the map may not be complete for local vertices since
@@ -107,7 +110,8 @@ namespace multiphenics
     ///
     /// @param[in,out] A (GenericMatrix&)
     ///         The matrix
-    void zero(dolfin::GenericMatrix& A) const;
+    void zero(dolfin::GenericMatrix& A,
+              std::vector<std::vector<bool>> zero_off_block_diagonal) const;
     
     /// Return the block function space
     ///

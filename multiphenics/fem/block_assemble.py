@@ -16,12 +16,13 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import ndarray as array
+from numpy import empty, ndarray as array
 from dolfin.fem.assembling import _create_tensor as _dolfin_create_tensor
 from multiphenics.fem.block_assembler import BlockAssembler
 from multiphenics.fem.block_form import BlockForm
 from multiphenics.fem.block_form_1 import BlockForm1
 from multiphenics.fem.block_form_2 import BlockForm2
+from multiphenics.fem.block_replace_zero import _is_zero
 from multiphenics.la import as_backend_type, BlockDefaultFactory
 
 def block_assemble(block_form,
@@ -74,5 +75,13 @@ def _create_block_tensor(comm, block_form, rank, block_tensor):
             block_tensor.attach_block_dof_map(block_dofmap)
         else:
             assert block_dofmap == block_tensor.get_block_dof_map()
+            
+    # Store private attribute for BlockDirichletBC application to off diagonal blocks
+    if rank is 2:
+        bcs_zero_off_block_diagonal = empty(block_form.shape, dtype=bool)
+        for I in range(block_form.shape[0]):
+            for J in range(block_form.shape[1]):
+                bcs_zero_off_block_diagonal[I, J] = not _is_zero(block_form[I, J])
+        block_tensor._bcs_zero_off_block_diagonal = bcs_zero_off_block_diagonal.tolist()
     
     return block_tensor
