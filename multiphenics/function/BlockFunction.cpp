@@ -41,6 +41,9 @@ BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
 {
   // Initialize block vector
   init_block_vector();
+  
+  // Apply from subfunctions
+  apply("from subfunctions");
 }
 //-----------------------------------------------------------------------------
 BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
