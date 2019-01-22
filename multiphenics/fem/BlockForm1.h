@@ -52,11 +52,6 @@ namespace multiphenics
     const dolfin::Form & operator()(std::size_t i) const;
     
   protected:
-    
-    virtual bool has_cell_integrals() const;
-    virtual bool has_interior_facet_integrals() const;
-    virtual bool has_exterior_facet_integrals() const;
-    virtual bool has_vertex_integrals() const;
 
     // Block forms
     std::vector<std::shared_ptr<const dolfin::Form>> _forms;

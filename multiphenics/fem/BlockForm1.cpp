@@ -48,35 +48,3 @@ const Form & BlockForm1::operator()(std::size_t i) const
   return *_forms[i];
 }
 //-----------------------------------------------------------------------------
-bool BlockForm1::has_cell_integrals() const
-{
-  for (auto & form : _forms)
-    if (form->ufc_form() and form->ufc_form()->has_cell_integrals())
-      return true;
-  return false;
-}
-//-----------------------------------------------------------------------------
-bool BlockForm1::has_interior_facet_integrals() const
-{
-  for (auto & form : _forms)
-    if (form->ufc_form() and form->ufc_form()->has_interior_facet_integrals())
-      return true;
-  return false;
-}
-//-----------------------------------------------------------------------------
-bool BlockForm1::has_exterior_facet_integrals() const
-{
-  for (auto & form : _forms)
-    if (form->ufc_form() and form->ufc_form()->has_exterior_facet_integrals())
-      return true;
-  return false;
-}
-//-----------------------------------------------------------------------------
-bool BlockForm1::has_vertex_integrals() const
-{
-  for (auto & form : _forms)
-    if (form->ufc_form() and form->ufc_form()->has_vertex_integrals())
-      return true;
-  return false;
-}
-//-----------------------------------------------------------------------------

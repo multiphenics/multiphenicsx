@@ -60,10 +60,6 @@ namespace multiphenics
     
   protected:
   
-    virtual bool has_cell_integrals() const = 0;
-    virtual bool has_interior_facet_integrals() const = 0;
-    virtual bool has_exterior_facet_integrals() const = 0;
-    virtual bool has_vertex_integrals() const = 0;
     friend class BlockAssemblerBase;
 
     // Block function spaces (one for each argument)
