@@ -22,6 +22,7 @@
 #include <dolfin/la/GenericMatrix.h>
 #include <dolfin/la/GenericTensor.h>
 #include <dolfin/la/TensorLayout.h>
+#include <dolfin/la/SparsityPattern.h>
 #include <multiphenics/fem/BlockDofMap.h>
 #include <multiphenics/fem/BlockAssemblerBase.h>
 #include <multiphenics/log/log.h>
@@ -42,11 +43,6 @@ void BlockAssemblerBase::init_global_tensor(GenericTensor& A, const BlockFormBas
   // This method is adapted from
   //    AssemblerBase::init_global_tensor
   
-  // Get dof maps
-  std::vector<const GenericDofMap*> dofmaps;
-  for (std::size_t i = 0; i < a.rank(); ++i)
-    dofmaps.push_back(a.block_function_spaces()[i]->block_dofmap().get());
-  
   // Get mesh
   dolfin_assert(a.mesh());
   const Mesh& mesh = *(a.mesh());
@@ -59,13 +55,12 @@ void BlockAssemblerBase::init_global_tensor(GenericTensor& A, const BlockFormBas
     std::shared_ptr<TensorLayout> tensor_layout;
     tensor_layout = A.factory().create_layout(mesh.mpi_comm(), a.rank());
     dolfin_assert(tensor_layout);
-
+    
     // Get dimensions and mapping across processes for each dimension
     std::vector<std::shared_ptr<const IndexMap>> index_maps;
     for (std::size_t i = 0; i < a.rank(); i++)
     {
-      dolfin_assert(dofmaps[i]);
-      index_maps.push_back(dofmaps[i]->index_map());
+      index_maps.push_back(a.block_function_spaces()[i]->block_dofmap()->index_map());
     }
 
     // Initialise tensor layout
@@ -75,13 +70,38 @@ void BlockAssemblerBase::init_global_tensor(GenericTensor& A, const BlockFormBas
     if (tensor_layout->sparsity_pattern())
     {
       SparsityPattern& pattern = *tensor_layout->sparsity_pattern();
-      SparsityPatternBuilder::build(pattern,
-                                mesh, dofmaps,
-                                a.has_cell_integrals(),
-                                a.has_interior_facet_integrals(),
-                                a.has_exterior_facet_integrals(),
-                                a.has_vertex_integrals(),
-                                keep_diagonal);
+      
+      // Initialize sparsity pattern
+      pattern.init(index_maps);
+      
+      // Build sparsity pattern for each block
+      const BlockForm2& a_form2 = dynamic_cast<const BlockForm2&>(a);
+      for (std::size_t i = 0; i < a_form2.block_size(0); i++)
+      {
+        for (std::size_t j = 0; j < a_form2.block_size(1); j++)
+        {
+          const Form& a_ij = a_form2(i, j);
+          if (a_ij.ufc_form())
+          {
+            std::vector<const GenericDofMap*> dofmaps{
+              &a.block_function_spaces()[0]->block_dofmap()->view(i),
+              &a.block_function_spaces()[1]->block_dofmap()->view(j)
+            };
+            SparsityPatternBuilder::build(pattern,
+                                          mesh, dofmaps,
+                                          a_ij.ufc_form()->has_cell_integrals(),
+                                          a_ij.ufc_form()->has_interior_facet_integrals(),
+                                          a_ij.ufc_form()->has_exterior_facet_integrals(),
+                                          a_ij.ufc_form()->has_vertex_integrals(),
+                                          keep_diagonal,
+                                          /* initialize = */ false,
+                                          /* finalize = */ false);
+          }
+        }
+      }
+      
+      // Finalize sparsity pattern
+      pattern.apply();
     }
     t0.stop();
 
@@ -120,7 +140,7 @@ void BlockAssemblerBase::init_global_tensor(GenericTensor& A, const BlockFormBas
     // If tensor is not reset, check that dimensions are correct
     for (std::size_t i = 0; i < a.rank(); ++i)
     {
-      if (A.size(i) != dofmaps[i]->global_dimension())
+      if (A.size(i) != a.block_function_spaces()[i]->block_dofmap()->global_dimension())
       {
         multiphenics_error("BlockAssemblerBase.cpp",
                            "assemble form",

@@ -80,11 +80,18 @@ namespace multiphenics
       const std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,
       const std::vector<std::set<std::size_t>>& real_dofs
     );
+    void _precompute_views(
+      const std::vector<std::shared_ptr<const GenericDofMap>> dofmaps
+    );
     
     /// Copy constructor
     BlockDofMap(const BlockDofMap& block_dofmap);
-
+    
   public:
+  
+    /// Create a view for a component, *considering* restrictions. This is supposed to be used only in this class,
+    /// as precomputed views are already available through the view() method.
+    BlockDofMap(const BlockDofMap& block_dofmap, std::size_t i);
     
     /// Destructor
     virtual ~BlockDofMap();
@@ -99,6 +106,9 @@ namespace multiphenics
     /// True if dof map is a view into another map (is a sub-dofmap).
     /// BlockDofMap does not allow views, so the value will always be False.
     bool is_view() const;
+    
+    /// Return a view to the i-th block
+    const BlockDofMap & view(std::size_t i) const;
 
     /// Return the dimension of the global finite element function
     /// space
@@ -427,7 +437,7 @@ namespace multiphenics
     // Local to local (owned and unowned) map from original dofs to block dofs, for each component
     std::vector<std::map<dolfin::la_index, dolfin::la_index>> _original_to_block__local_to_local;
     
-    // Local to local (owned and unowned) map from block dofs to original dofs (pair of component and local dof)
+    // Local to local (owned and unowned) map from block dofs to original dofs, for each component
     std::vector<std::map<dolfin::la_index, dolfin::la_index>> _block_to_original__local_to_local;
     
     // Local to local (owned and unowned) map from original dofs to block sub dofs, for each component
@@ -435,6 +445,9 @@ namespace multiphenics
     
     // Local to local (owned and unowned) map from block sub dofs to original dofs, for each component
     std::vector<std::map<dolfin::la_index, dolfin::la_index>> _sub_block_to_original__local_to_local;
+    
+    // Precomputed views
+    std::vector<std::shared_ptr<BlockDofMap>> _views;
   };
 
 }
