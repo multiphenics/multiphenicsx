@@ -34,6 +34,10 @@ namespace multiphenics_wrappers
       .def("dofmaps", &multiphenics::BlockDofMap::dofmaps)
       .def("ownership_range", &multiphenics::BlockDofMap::ownership_range)
       .def("global_dimension", &multiphenics::BlockDofMap::global_dimension)
+      .def("block_owned_dofs__local_numbering", &multiphenics::BlockDofMap::block_owned_dofs__local_numbering)
+      .def("block_unowned_dofs__local_numbering", &multiphenics::BlockDofMap::block_unowned_dofs__local_numbering)
+      .def("block_owned_dofs__global_numbering", &multiphenics::BlockDofMap::block_owned_dofs__global_numbering)
+      .def("block_unowned_dofs__global_numbering", &multiphenics::BlockDofMap::block_unowned_dofs__global_numbering)
       .def("original_to_block", &multiphenics::BlockDofMap::original_to_block)
       .def("block_to_original", &multiphenics::BlockDofMap::block_to_original)
       .def("sub_index_map", &multiphenics::BlockDofMap::sub_index_map);
