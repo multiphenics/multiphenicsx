@@ -26,7 +26,7 @@ def block_flatten_nested(block_form, block_function_space):
     assert isinstance(block_form, (array, list))
     assert isinstance(block_function_space, list)
     assert len(block_function_space) in (1, 2)
-    if len(block_function_space) is 2:
+    if len(block_function_space) == 2:
         N = block_function_space[0].num_sub_spaces()
         M = block_function_space[1].num_sub_spaces()
         flattened_block_form = zeros((N, M), dtype=object)
@@ -34,7 +34,7 @@ def block_flatten_nested(block_form, block_function_space):
             for block_form_IJ_nested in block_form_I_nested:
                 _flatten_nested_2(block_form_IJ_nested, flattened_block_form, block_function_space)
         return flattened_block_form
-    elif len(block_function_space) is 1:
+    elif len(block_function_space) == 1:
         N = block_function_space[0].num_sub_spaces()
         flattened_block_form = zeros((N, ), dtype=object)
         for block_form_I_nested in block_form:
@@ -86,7 +86,7 @@ def _flatten_nested_2(form_or_block_form, flattened_block_form, block_function_s
             assert trial_block_function_space == block_function_space[1]
         flattened_block_form[test_block_index, trial_block_index] += form_or_block_form
     elif isinstance(form_or_block_form, (array, list)):
-        assert _get_block_form_rank(form_or_block_form) is 2
+        assert _get_block_form_rank(form_or_block_form) == 2
         for block_form_I_nested in form_or_block_form:
             for block_form_IJ_nested in block_form_I_nested:
                 _flatten_nested_2(block_form_IJ_nested, flattened_block_form, block_function_space)
@@ -103,7 +103,7 @@ def _flatten_nested_1(form_or_block_form, flattened_block_form, block_function_s
         test_block_index = None
         test_block_function_space = None
         for arg in args:
-            assert arg.number() is 0
+            assert arg.number() == 0
             if test_block_index is not None:
                 assert test_block_index == arg.block_index(), "Test functions corresponding to different blocks appear in the same form."
                 assert test_block_function_space == arg.block_function_space(), "Test functions defined in different block function spaces appear in the same form."
@@ -120,7 +120,7 @@ def _flatten_nested_1(form_or_block_form, flattened_block_form, block_function_s
             assert test_block_function_space == block_function_space[0]
         flattened_block_form[test_block_index] += form_or_block_form
     elif isinstance(form_or_block_form, (array, list)):
-        assert _get_block_form_rank(form_or_block_form) is 1
+        assert _get_block_form_rank(form_or_block_form) == 1
         for block_form_I_nested in form_or_block_form:
             _flatten_nested_1(block_form_I_nested, flattened_block_form, block_function_space)
     else:

@@ -28,7 +28,7 @@ def block_derivative(F, u, du):
     if isinstance(F, (array, list)):
         input_type = array
         (F, block_V, block_form_rank) = _block_form_preprocessing(F)
-        assert block_form_rank is 1
+        assert block_form_rank == 1
     else:
         input_type = BlockForm1
         block_V = F.block_function_spaces()

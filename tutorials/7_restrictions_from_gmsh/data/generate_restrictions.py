@@ -41,7 +41,7 @@ def generate_subdomain_restriction(mesh, subdomains, subdomain_id):
 # Helper function to generate interface restriction based on a pair of gmsh subdomain ids
 def generate_interface_restriction(mesh, subdomains, subdomain_ids):
     assert isinstance(subdomain_ids, set)
-    assert len(subdomain_ids) is 2
+    assert len(subdomain_ids) == 2
     D = mesh.topology().dim()
     # Initialize empty restriction
     restriction = MeshRestriction(mesh, None)

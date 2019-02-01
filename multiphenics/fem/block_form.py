@@ -29,9 +29,9 @@ def BlockForm(block_form, block_function_space=None, block_form_rank=None, form_
     if isinstance(block_form, (array, list)):
         (replaced_block_form, block_function_space, block_form_rank) = \
             _block_form_preprocessing(block_form, block_function_space, block_form_rank)
-        if block_form_rank is 2:
+        if block_form_rank == 2:
             return BlockForm2(replaced_block_form, block_function_space, form_compiler_parameters)
-        elif block_form_rank is 1:
+        elif block_form_rank == 1:
             return BlockForm1(replaced_block_form, block_function_space, form_compiler_parameters)
     else:
         return block_form
@@ -43,7 +43,7 @@ def _block_form_preprocessing(block_form, block_function_space=None, block_form_
         assert block_form_rank is not None, \
             "A block form rank should be provided when assemblying a zero block vector/matrix."
     assert block_form_rank in (1, 2)
-    if block_form_rank is 2:
+    if block_form_rank == 2:
         # Extract BlockFunctionSpace from the current form, if required
         if not block_function_space:
             assert not all([_is_zero(block_form_I_J) for block_form_I in block_form for block_form_I_J in block_form_I]), \
@@ -55,7 +55,7 @@ def _block_form_preprocessing(block_form, block_function_space=None, block_form_
             block_function_space = [block_function_space[0], block_function_space[1]] # convert from dict to list
         else:
             assert isinstance(block_function_space, list)
-            assert len(block_function_space) is 2
+            assert len(block_function_space) == 2
             assert isinstance(block_function_space[0], BlockFunctionSpace)
             assert isinstance(block_function_space[1], BlockFunctionSpace)
         
@@ -64,7 +64,7 @@ def _block_form_preprocessing(block_form, block_function_space=None, block_form_
         
         # Return preprocessed data
         return (block_form, block_function_space, block_form_rank)
-    elif block_form_rank is 1:
+    elif block_form_rank == 1:
         # Extract BlockFunctionSpace from the current form, if required
         if not block_function_space:
             assert not all([_is_zero(block_form_I) for block_form_I in block_form]), \

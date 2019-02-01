@@ -34,9 +34,9 @@ def block_restrict(block_input, block_function_sub_space):
         elif isinstance(block_input, BlockForm1):
             block_form = block_input
             block_form_rank = 1
-        if block_form_rank is 2:
+        if block_form_rank == 2:
             assert isinstance(block_function_sub_space, list)
-            assert len(block_function_sub_space) is 2
+            assert len(block_function_sub_space) == 2
             assert isinstance(block_function_sub_space[0], BlockFunctionSpace)
             assert isinstance(block_function_sub_space[1], BlockFunctionSpace)
             N_sub_space = block_function_sub_space[0].num_sub_spaces()
@@ -48,11 +48,11 @@ def block_restrict(block_input, block_function_sub_space):
                     J_space = _sub_component_to_component(block_function_sub_space[1], J_sub_space)
                     sub_block_form[I_sub_space, J_sub_space] = block_form[I_space, J_space]
             return BlockForm2(sub_block_form, block_function_sub_space)
-        elif block_form_rank is 1:
+        elif block_form_rank == 1:
             assert isinstance(block_function_sub_space, (BlockFunctionSpace, list))
             if isinstance(block_function_sub_space, BlockFunctionSpace):
                 block_function_sub_space = [block_function_sub_space]
-            assert len(block_function_sub_space) is 1
+            assert len(block_function_sub_space) == 1
             assert isinstance(block_function_sub_space[0], BlockFunctionSpace)
             N_sub_space = block_function_sub_space[0].num_sub_spaces()
             sub_block_form = zeros((N_sub_space, ), dtype=object)
@@ -63,7 +63,7 @@ def block_restrict(block_input, block_function_sub_space):
     elif isinstance(block_input, BlockFunction):
         assert isinstance(block_function_sub_space, (BlockFunctionSpace, list))
         if isinstance(block_function_sub_space, list):
-            assert len(block_function_sub_space) is 1
+            assert len(block_function_sub_space) == 1
             block_function_sub_space = block_function_sub_space[0]
         assert isinstance(block_function_sub_space, BlockFunctionSpace)
         N_sub_space = block_function_sub_space.num_sub_spaces()
@@ -75,7 +75,7 @@ def block_restrict(block_input, block_function_sub_space):
     elif isinstance(block_input, BlockDirichletBC):
         assert isinstance(block_function_sub_space, (BlockFunctionSpace, list))
         if isinstance(block_function_sub_space, list):
-            assert len(block_function_sub_space) is 1
+            assert len(block_function_sub_space) == 1
             block_function_sub_space = block_function_sub_space[0]
         assert isinstance(block_function_sub_space, BlockFunctionSpace)
         N_sub_space = block_function_sub_space.num_sub_spaces()

@@ -35,7 +35,7 @@ class BlockForm2(BlockForm2_Base):
         # Store UFL form
         self._block_form = block_form
         # Store block function space
-        assert len(block_function_space) is 2
+        assert len(block_function_space) == 2
         self._block_function_space = block_function_space
         # Replace UFL form by Dolfin form before passing it to the constructor
         # (note that we assume that block_form has been already preprocessed,

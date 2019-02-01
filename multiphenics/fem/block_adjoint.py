@@ -29,7 +29,7 @@ def block_adjoint(block_form):
     if isinstance(block_form, (array, list)):
         input_type = array
         (block_form, block_function_space, block_form_rank) = _block_form_preprocessing(block_form)
-        assert block_form_rank is 2
+        assert block_form_rank == 2
         N = len(block_form)
         M = len(block_form[0])
         block_adjoint_function_space = [block_function_space[1], block_function_space[0]]

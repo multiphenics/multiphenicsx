@@ -82,7 +82,7 @@ class BlockDirichletBC(BlockDirichletBC_Base):
         
     def apply(self, *args):
         assert len(args) in (1, 2, 3)
-        if len(args) is 1:
+        if len(args) == 1:
             arg0 = args[0]
             assert isinstance(arg0, (GenericMatrix, GenericVector))
             if isinstance(arg0, GenericMatrix):
@@ -92,7 +92,7 @@ class BlockDirichletBC(BlockDirichletBC_Base):
                 BlockDirichletBC_Base.apply(self, arg0)
             else:
                 raise ValueError("Invalid arguments")
-        elif len(args) is 2:
+        elif len(args) == 2:
             arg0 = args[0]
             arg1 = args[1]
             assert isinstance(arg0, (GenericMatrix, GenericVector))
@@ -103,7 +103,7 @@ class BlockDirichletBC(BlockDirichletBC_Base):
                 BlockDirichletBC_Base.apply(self, arg0, arg1)
             else:
                 raise ValueError("Invalid arguments")
-        elif len(args) is 3:
+        elif len(args) == 3:
             arg0 = args[0]
             arg1 = args[1]
             arg2 = args[1]
@@ -116,7 +116,7 @@ class BlockDirichletBC(BlockDirichletBC_Base):
         return
         
     def zero(self, *args):
-        assert len(args) is 1
+        assert len(args) == 1
         arg0 = args[0]
         assert isinstance(arg0, GenericMatrix)
         BlockDirichletBC_Base.zero(self, arg0, arg0._bcs_zero_off_block_diagonal)

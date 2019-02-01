@@ -77,13 +77,13 @@ def _is_zero(form_or_block_form):
     elif isinstance(form_or_block_form, (array, list)):
         block_form_rank = _get_block_form_rank(form_or_block_form)
         assert block_form_rank in (None, 1, 2)
-        if block_form_rank is 2:
+        if block_form_rank == 2:
             for block_form_I in form_or_block_form:
                 for block_form_IJ in block_form_I:
                     if not _is_zero(block_form_IJ):
                         return False
             return True
-        elif block_form_rank is 1:
+        elif block_form_rank == 1:
             for block_form_I in form_or_block_form:
                 if not _is_zero(block_form_I):
                     return False

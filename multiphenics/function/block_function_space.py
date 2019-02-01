@@ -54,13 +54,13 @@ class BlockFunctionSpace(object):
             assert isinstance(args[0], (list, tuple, BlockFunctionSpace_Base))
             if isinstance(args[0], (list, tuple)):
                 assert (
-                    len(kwargs) is 0
+                    len(kwargs) == 0
                         or
-                    (len(kwargs) is 1 and "restrict" in kwargs)
+                    (len(kwargs) == 1 and "restrict" in kwargs)
                 )
                 self._init_from_function_spaces(*args, **kwargs)
             elif isinstance(args[0], BlockFunctionSpace_Base):
-                assert len(kwargs) is 1
+                assert len(kwargs) == 1
                 assert "num_sub_spaces" in kwargs
                 self._init_from_cpp(*args, **kwargs)
             else:
@@ -69,9 +69,9 @@ class BlockFunctionSpace(object):
             assert isinstance(args[0], Mesh)
             assert isinstance(args[1], (list, tuple, BlockElement))
             assert (
-                len(kwargs) is 0
+                len(kwargs) == 0
                     or
-                (len(kwargs) is 1 and "restrict" in kwargs)
+                (len(kwargs) == 1 and "restrict" in kwargs)
             )
             self._init_from_ufl(*args, **kwargs)
             
