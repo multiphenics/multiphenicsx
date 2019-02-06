@@ -17,8 +17,8 @@
 #
 
 import types
+from petsc4py import PETSc
 from dolfin import Function
-from dolfin.cpp.la import PETScVector
 from multiphenics.python import cpp
 from multiphenics.function.block_function_space import BlockFunctionSpace
 
@@ -36,7 +36,7 @@ class BlockFunction(object):
             self._init_from_block_function_space(block_V)
         elif len(args) == 2:
             # If passing BlockFunctionSpace together with a block vector
-            if isinstance(args[1], PETScVector):
+            if isinstance(args[1], PETSc.Vec):
                 self._init_from_block_function_space_and_block_vector(block_V, args[1])
             # If passing BlockFunctionSpace together with a BlockFunction_Base
             elif isinstance(args[1], BlockFunction_Base):
@@ -48,7 +48,7 @@ class BlockFunction(object):
                 raise TypeError("Invalid arguments")
         elif len(args) == 3:
             # If passing BlockFunctionSpace together with a block vector and list of subfunctions
-            assert isinstance(args[1], PETScVector)
+            assert isinstance(args[1], PETSc.Vec)
             assert isinstance(args[2], list)
             assert isinstance(args[2][0], Function)
             self._init_from_block_function_space_and_block_vector_and_sub_functions(block_V, args[1], args[2])
