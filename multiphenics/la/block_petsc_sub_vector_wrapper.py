@@ -16,20 +16,6 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from multiphenics.la.block_matlab_export import block_matlab_export
-from multiphenics.la.block_petsc_sub_matrix import BlockPETScSubMatrix
-from multiphenics.la.block_petsc_sub_vector_read_wrapper import BlockPETScSubVectorReadWrapper
-from multiphenics.la.block_petsc_sub_vector_wrapper import BlockPETScSubVectorWrapper
-from multiphenics.la.block_slepc_eigen_solver import BlockSLEPcEigenSolver
-from multiphenics.la.block_solve import block_solve
-from multiphenics.la.slepc_eigen_solver import SLEPcEigenSolver
+from multiphenics.python import cpp
 
-__all__ = [
-    'block_matlab_export',
-    'BlockPETScSubMatrix',
-    'BlockPETScSubVectorReadWrapper',
-    'BlockPETScSubVectorWrapper',
-    'BlockSLEPcEigenSolver',
-    'block_solve',
-    'SLEPcEigenSolver'
-]
+BlockPETScSubVectorWrapper = cpp.la.BlockPETScSubVectorWrapper

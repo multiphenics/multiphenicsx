@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2020 by the multiphenics authors
+# Copyright (C) 2016-2019 by the multiphenics authors
 #
 # This file is part of multiphenics.
 #
@@ -18,4 +18,4 @@
 
 from multiphenics.python import cpp
 
-BlockPETScSubVector = cpp.la.BlockPETScSubVector
+BlockPETScSubVectorReadWrapper = cpp.la.BlockPETScSubVectorReadWrapper

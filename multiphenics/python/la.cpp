@@ -42,12 +42,16 @@ namespace multiphenics_wrappers
       .value("INSERT_VALUES", multiphenics::la::BlockInsertMode::INSERT_VALUES)
       .value("ADD_VALUES", multiphenics::la::BlockInsertMode::ADD_VALUES);
       
-    // multiphenics::la::BlockPETScSubVector
-    py::class_<multiphenics::la::BlockPETScSubVector, std::shared_ptr<multiphenics::la::BlockPETScSubVector>, dolfin::la::PETScVector>
-      (m, "BlockPETScSubVector", "multiphenics BlockPETScSubVector object");
+    // multiphenics::la::BlockPETScSubVectorReadWrapper
+    py::class_<multiphenics::la::BlockPETScSubVectorReadWrapper, std::shared_ptr<multiphenics::la::BlockPETScSubVectorReadWrapper>>
+      (m, "BlockPETScSubVectorReadWrapper", "multiphenics BlockPETScSubVectorReadWrapper object");
+      
+    // multiphenics::la::BlockPETScSubVectorWrapper
+    py::class_<multiphenics::la::BlockPETScSubVectorWrapper, std::shared_ptr<multiphenics::la::BlockPETScSubVectorWrapper>>
+      (m, "BlockPETScSubVectorWrapper", "multiphenics BlockPETScSubVectorWrapper object");
       
     // multiphenics::la::BlockPETScSubMatrix
-    py::class_<multiphenics::la::BlockPETScSubMatrix, std::shared_ptr<multiphenics::la::BlockPETScSubMatrix>, dolfin::la::PETScMatrix>
+    py::class_<multiphenics::la::BlockPETScSubMatrix, std::shared_ptr<multiphenics::la::BlockPETScSubMatrix>>
       (m, "BlockPETScSubMatrix", "multiphenics BlockPETScSubMatrix object");
       
     #ifdef HAS_SLEPC

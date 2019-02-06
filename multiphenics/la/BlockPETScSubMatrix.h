@@ -19,34 +19,22 @@
 #ifndef __BLOCK_PETSC_SUB_MATRIX_H
 #define __BLOCK_PETSC_SUB_MATRIX_H
 
-#include <dolfin/la/PETScMatrix.h>
+#include <petscmat.h>
 #include <multiphenics/fem/BlockDofMap.h>
-#include <multiphenics/la/BlockInsertMode.h>
-#include <multiphenics/la/BlockPETScSubVector.h>
 
 namespace multiphenics
 {
-  namespace fem
-  {
-    // Forward declaration for friend class
-    class BlockDirichletBCLegacy;
-  }
-  
   namespace la
   {
-    /// This is an extension of PETScMatrix to be used while assemblying block forms, that
-    /// a) carries out the extraction of a sub matrix
-    /// b) in case of restrictions, overrides get/set/add methods to convert original index without restriction to index with restriction
-    class BlockPETScSubMatrix : public dolfin::la::PETScMatrix
+    /// This class initializes a PETSc sub matrix associated to a specific block pair.
+    class BlockPETScSubMatrix
     {
     public:
       /// Constructor
-      BlockPETScSubMatrix(const dolfin::la::PETScMatrix & A,
-                          std::size_t block_i, std::size_t block_j,
-                          std::shared_ptr<const multiphenics::fem::BlockDofMap> block_dof_map_0,
-                          std::shared_ptr<const multiphenics::fem::BlockDofMap> block_dof_map_1,
-                          BlockInsertMode insert_mode);
-
+      BlockPETScSubMatrix(Mat A,
+                          std::array<std::size_t, 2> block_indices,
+                          std::array<std::shared_ptr<const multiphenics::fem::BlockDofMap>, 2> block_dofmaps);
+      
       /// Destructor
       ~BlockPETScSubMatrix();
       
@@ -62,104 +50,13 @@ namespace multiphenics
       /// Move assignment operator (deleted)
       BlockPETScSubMatrix& operator=(BlockPETScSubMatrix&& A) = delete;
       
-      /// Return number of rows and columns (num_rows, num_cols).
-      virtual std::array<std::int64_t, 2> size() const;
+      /// Pointer to submatrix
+      Mat mat() const;
       
-      /// Return local range along dimension dim
-      virtual std::array<std::int64_t, 2> local_range(std::size_t dim) const;
-      
-      /// Set block of values using global indices
-      virtual void set(const PetscScalar* block,
-                       std::size_t m, const PetscInt* rows,
-                       std::size_t n, const PetscInt* cols);
-
-      /// Set block of values using local indices
-      virtual void set_local(const PetscScalar* block,
-                             std::size_t m, const PetscInt* rows,
-                             std::size_t n, const PetscInt* cols);
-
-      /// Add block of values using global indices
-      virtual void add(const PetscScalar* block,
-                       std::size_t m, const PetscInt* rows,
-                       std::size_t n, const PetscInt* cols);
-
-      /// Add block of values using local indices
-      virtual void add_local(const PetscScalar* block,
-                             std::size_t m, const PetscInt* rows,
-                             std::size_t n, const PetscInt* cols);
-                             
-      /// Return norm of matrix
-      virtual double norm(dolfin::la::Norm norm_type) const;
-                             
-      /// Set all entries to zero and keep any sparse structure
-      virtual void zero();
-      
-      /// Finalize assembly of tensor. The following values are recognized
-      /// for the mode parameter:
-      /// @param type
-      ///   FINAL    - corresponds to PETSc MatAssemblyBegin+End(MAT_FINAL_ASSEMBLY)
-      ///   FLUSH  - corresponds to PETSc MatAssemblyBegin+End(MAT_FLUSH_ASSEMBLY)
-      virtual void apply(AssemblyType type);
-      
-      // Matrix-vector product, y = Ax
-      void mult(const BlockPETScSubVector& x, BlockPETScSubVector& y) const;
-
-      /// Multiply matrix by a scalar
-      virtual void scale(PetscScalar a);
-
-      /// Test if matrix is symmetric
-      virtual bool is_symmetric(double tol) const;
-      
-      /// Test if matrix is hermitian
-      virtual bool is_hermitian(double tol) const;
-      
-      //--- Special PETSc Functions ---
-
-      /// Sets the prefix used by PETSc when searching the options
-      /// database
-      virtual void set_options_prefix(std::string options_prefix);
-
-      /// Returns the prefix used by PETSc when searching the options
-      /// database
-      virtual std::string get_options_prefix() const;
-
-      /// Call PETSc function MatSetFromOptions on the PETSc Mat object
-      virtual void set_from_options();
-
-      /// Attach nullspace to matrix (typically used by Krylov solvers
-      /// when solving singular systems)
-      virtual void set_nullspace(const dolfin::la::VectorSpaceBasis& nullspace);
-
-      /// Attach near nullspace to matrix (used by preconditioners, such
-      /// as smoothed aggregation algerbraic multigrid)
-      virtual void set_near_nullspace(const dolfin::la::VectorSpaceBasis& nullspace);
-
     private:
-      // Hide operations with PETScVector arguments
-      using PETScMatrix::mult;
-      
-      void to_restricted_submatrix_row_indices(
-        const std::vector<PetscInt> & block_unrestricted_submatrix_row_indices, std::vector<PetscInt> & block_restricted_submatrix_row_indices,
-        std::vector<bool> * is_row_in_restriction = NULL
-      );
-      void to_restricted_submatrix_col_indices(
-        const std::vector<PetscInt> & block_unrestricted_submatrix_col_indices, std::vector<PetscInt> & block_restricted_submatrix_col_indices,
-        std::vector<bool> * is_col_in_restriction = NULL
-      );
-      void to_restricted_submatrix_indices_and_values(
-        const std::vector<PetscInt> & block_unrestricted_submatrix_row_indices, std::vector<PetscInt> & block_restricted_submatrix_row_indices,
-        const std::vector<PetscInt> & block_unrestricted_submatrix_col_indices, std::vector<PetscInt> & block_restricted_submatrix_col_indices,
-        const std::vector<PetscScalar> & block_unrestricted_submatrix_values, std::vector<PetscScalar> & block_restricted_submatrix_values
-      );
-      
-      // Allow BlockDirichletBCLegacy to access to_restricted_submatrix_row_indices
-      friend class multiphenics::fem::BlockDirichletBCLegacy;
-      
-      const PETScMatrix & _global_matrix;
-      const std::map<PetscInt, PetscInt> & _original_to_sub_block_0;
-      const std::map<PetscInt, PetscInt> & _original_to_sub_block_1;
-      /*PETSc*/ InsertMode _insert_mode;
-      std::vector<IS> _is;
+      Mat _global_matrix;
+      std::array<IS, 2> _is;
+      Mat _A;
     };
   }
 }
