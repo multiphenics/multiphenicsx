@@ -65,13 +65,11 @@ def _is_zero(form_or_block_form):
             bool is_zero_form(std::shared_ptr<dolfin::fem::Form> form)
             {
               return (
-                form->integrals().num_cell_integrals() == 0
+                form->integrals().num_integrals(dolfin::fem::FormIntegrals::Type::cell) == 0
                     &&
-                form->integrals().num_interior_facet_integrals() == 0
+                form->integrals().num_integrals(dolfin::fem::FormIntegrals::Type::interior_facet) == 0
                     &&
-                form->integrals().num_exterior_facet_integrals() == 0
-                    &&
-                form->integrals().num_vertex_integrals() == 0
+                form->integrals().num_integrals(dolfin::fem::FormIntegrals::Type::exterior_facet) == 0
               );
             }
             

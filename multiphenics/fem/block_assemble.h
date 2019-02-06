@@ -16,9 +16,11 @@
 // along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef __BLOCK_ASSEMBLER_H
-#define __BLOCK_ASSEMBLER_H
+#ifndef __BLOCK_ASSEMBLE_H
+#define __BLOCK_ASSEMBLE_H
 
+#include <petscmat.h>
+#include <petscvec.h>
 #include <multiphenics/fem/BlockForm1.h>
 #include <multiphenics/fem/BlockForm2.h>
 
@@ -27,22 +29,22 @@ namespace multiphenics
   namespace fem
   {
     /// Assemble block vector from given block form of rank 1
-    std::shared_ptr<dolfin::la::PETScVector> block_assemble(const BlockForm1& L);
+    Vec block_assemble(const BlockForm1& L);
     
     /// Assemble block vector from given block form of rank 1, re-using existing vector
-    void block_assemble(dolfin::la::PETScVector& b, const BlockForm1& L);
+    void block_assemble(Vec b, const BlockForm1& L);
     
     /// Assemble block vector from given block form of rank 2
-    std::shared_ptr<dolfin::la::PETScMatrix> block_assemble(const BlockForm2& a);
+    Mat block_assemble(const BlockForm2& a);
     
     /// Assemble block vector from given block form of rank 2, re-using existing matrix
-    void block_assemble(dolfin::la::PETScMatrix& A, const BlockForm2& a);
+    void block_assemble(Mat A, const BlockForm2& a);
     
     // Initialize block vector
-    std::shared_ptr<dolfin::la::PETScVector> init_vector(const BlockForm1& L);
+    Vec init_vector(const BlockForm1& L);
     
     // Initialize block matrix
-    std::shared_ptr<dolfin::la::PETScMatrix> init_matrix(const BlockForm2& a);
+    Mat init_matrix(const BlockForm2& a);
   }
 }
 

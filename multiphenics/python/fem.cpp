@@ -19,6 +19,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <multiphenics/python/petsc_casters.h> // TODO remove local copy of DOLFIN's pybind11 files
+
 namespace py = pybind11;
 
 namespace multiphenics_wrappers
@@ -66,7 +68,7 @@ namespace multiphenics_wrappers
       py::arg("L"));
     m.def("block_assemble",
       py::overload_cast<
-        dolfin::la::PETScVector&, const multiphenics::fem::BlockForm1&
+        Vec, const multiphenics::fem::BlockForm1&
       >(&multiphenics::fem::block_assemble),
       py::arg("b"), py::arg("L"));
     m.def("block_assemble",
@@ -76,7 +78,7 @@ namespace multiphenics_wrappers
       py::arg("a"));
     m.def("block_assemble",
       py::overload_cast<
-        dolfin::la::PETScMatrix&, const multiphenics::fem::BlockForm2&
+        Mat, const multiphenics::fem::BlockForm2&
       >(&multiphenics::fem::block_assemble),
       py::arg("A"), py::arg("a"));
               
