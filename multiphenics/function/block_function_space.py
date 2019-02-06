@@ -48,7 +48,6 @@ class BlockFunctionSpace(object):
     def __init__(self, *args, **kwargs):
         assert len(args) in (1, 2)
         if len(args) == 1:
-            assert isinstance(args[0], (list, tuple, BlockFunctionSpace_Base))
             assert isinstance(args[0], (list, tuple))
             assert (
                 len(kwargs) is 0
