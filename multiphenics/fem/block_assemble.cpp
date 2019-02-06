@@ -186,36 +186,40 @@ std::shared_ptr<PETScMatrix> multiphenics::fem::init_matrix(const BlockForm2& a)
   std::array<std::shared_ptr<const IndexMap>, 2> index_maps
       = {{dofmaps[0]->index_map(), dofmaps[1]->index_map()}};
       
-  // Check integral types in block form. Note that this might create
-  // an overly conservative sparsity pattern.
-  bool has_cell_integrals(false);
-  bool has_interior_facet_integrals(false);
-  bool has_exterior_facet_integrals(false);
-  bool has_vertex_integrals(false);
-  for (unsigned int i(0); i < a.block_size(0); ++i)
+  // Create and initialize sparsity pattern
+  SparsityPattern pattern(mesh.mpi_comm(), index_maps)
+  pattern.init(index_maps);
+  
+  // Build sparsity pattern for each block
+  for (std::size_t i = 0; i < a.block_size(0); i++)
   {
-    for (unsigned int j(0); j < a.block_size(1); ++j)
+    for (std::size_t j = 0; j < a.block_size(1); j++)
     {
       const Form & a_ij(a(i, j));
-      if (a_ij.integrals().num_cell_integrals() > 0)
-        has_cell_integrals = true;
-      if (a_ij.integrals().num_interior_facet_integrals() > 0)
-        has_interior_facet_integrals = true;
-      if (a_ij.integrals().num_exterior_facet_integrals() > 0)
-        has_exterior_facet_integrals = true;
-      if (a_ij.integrals().num_vertex_integrals() > 0)
-        has_vertex_integrals = true;
+      if (
+        a.integrals().num_integrals(fem::FormIntegrals::Type::cell) > 0
+          ||
+        a.integrals().num_integrals(fem::FormIntegrals::Type::interior_facet) > 0
+          ||
+        a.integrals().num_integrals(fem::FormIntegrals::Type::exterior_facet) > 0
+      )
+      {
+        std::array<const GenericDofMap*, 2> dofmaps{{
+          &a.block_function_spaces()[0]->block_dofmap()->view(i),
+          &a.block_function_spaces()[1]->block_dofmap()->view(j)
+        }};
+        SparsityPatternBuilder::build(pattern,
+                                      mesh, dofmaps,
+                                      (a.integrals().num_integrals(fem::FormIntegrals::Type::cell) > 0),
+                                      (a.integrals().num_integrals(fem::FormIntegrals::Type::interior_facet) > 0),
+                                      (a.integrals().num_integrals(fem::FormIntegrals::Type::exterior_facet) > 0)
+                                     );
+      }
     }
   }
   
-  // Create and build sparsity pattern
-  SparsityPattern pattern = SparsityPatternBuilder::build(
-      mesh.mpi_comm(), mesh, dofmaps,
-      has_cell_integrals,
-      has_interior_facet_integrals,
-      has_exterior_facet_integrals,
-      has_vertex_integrals,
-      keep_diagonal);
+  // Finalize sparsity pattern
+  pattern.apply();
   t0.stop();
 
   // Initialize matrix

@@ -81,12 +81,19 @@ namespace multiphenics
         const std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> dofmaps,
         const std::vector<std::set<std::size_t>>& real_dofs
       );
+      void _precompute_views(
+        const std::vector<std::shared_ptr<const GenericDofMap>> dofmaps
+      );
 
     public:
       
       /// Copy constructor
       BlockDofMap(const BlockDofMap& dofmap) = delete;
-
+      
+      /// Create a view for a component, *considering* restrictions. This is supposed to be used only in this class,
+      /// as precomputed views are already available through the view() method.
+      BlockDofMap(const BlockDofMap& block_dofmap, std::size_t i);
+    
       /// Move constructor
       BlockDofMap(BlockDofMap&& dofmap) = default;
       
@@ -111,6 +118,9 @@ namespace multiphenics
       ///         True if the dof map is a sub-dof map (a view into
       ///         another map).
       bool is_view() const;
+      
+      /// Returns a view of the i-th block
+      const BlockDofMap & view(std::size_t i) const;
 
       /// Return the dimension of the global finite element function
       /// space. Use index_map()->size() to get the local dimension.
@@ -341,7 +351,7 @@ namespace multiphenics
       // Local to local (owned and unowned) map from original dofs to block dofs, for each component
       std::vector<std::map<PetscInt, PetscInt>> _original_to_block__local_to_local;
       
-      // Local to local (owned and unowned) map from block dofs to original dofs (pair of component and local dof)
+      // Local to local (owned and unowned) map from block dofs to original dofs, for each component
       std::vector<std::map<PetscInt, PetscInt>> _block_to_original__local_to_local;
       
       // Local to local (owned and unowned) map from original dofs to block sub dofs, for each component
@@ -349,6 +359,9 @@ namespace multiphenics
       
       // Local to local (owned and unowned) map from block sub dofs to original dofs, for each component
       std::vector<std::map<PetscInt, PetscInt>> _sub_block_to_original__local_to_local;
+      
+      // Precomputed views
+      std::vector<std::shared_ptr<BlockDofMap>> _views;
     };
   }
 }

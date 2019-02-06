@@ -102,6 +102,9 @@ BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const GenericDofMap>> dofma
   
   // D. STORE REAL DOFS
   _store_real_dofs(dofmaps, real_dofs);
+  
+  // E. PRECOMPUTE VIEWS
+  _precompute_views(dofmaps);
 }
 //-----------------------------------------------------------------------------
 void BlockDofMap::_extract_dofs_from_original_dofmaps(
@@ -519,6 +522,50 @@ void BlockDofMap::_store_real_dofs(
       _real_dofs__local.push_back(_original_to_block__local_to_local[i].at(real_dof));
 }
 //-----------------------------------------------------------------------------
+BlockDofMap::BlockDofMap(const BlockDofMap& block_dofmap, std::size_t i)
+{
+  // Get local (owned and unowned) block indices associated to component i
+  std::vector<PetscInt> block_i_dofs;
+  block_i_dofs.reserve(block_dofmap._block_to_original__local_to_local[i].size());
+  for (const auto & parent__block_to_original__iterator: block_dofmap._block_to_original__local_to_local[i])
+    block_i_dofs.push_back(parent__block_to_original__iterator.first);
+    
+  // Intersect parent's _dofmap content with block_i_dofs
+  for (const auto & parent__cell_to_dofs: block_dofmap._dofmap)
+  {
+    const auto cell = parent__cell_to_dofs.first;
+    const auto & parent__dofs = parent__cell_to_dofs.second;
+    std::set_intersection(
+      parent__dofs.begin(), parent__dofs.end(),
+      block_i_dofs.begin(), block_i_dofs.end(),
+      std::back_inserter(_dofmap[cell])
+    );
+  }
+
+  // Intersect parent's _real_dofs__local content with block_i_dofs
+  std::set_intersection(
+    block_dofmap._real_dofs__local.begin(), block_dofmap._real_dofs__local.end(),
+    block_i_dofs.begin(), block_i_dofs.end(),
+    std::back_inserter(_real_dofs__local)
+  );
+  
+  // Copy index map from local to global from parent
+  _index_map = block_dofmap._index_map;
+  
+  // Skip initalizing the rest of the private attributes, as this is the bare minimum
+  // required by SparsityPatternBuilder::build()
+}
+//-----------------------------------------------------------------------------
+void BlockDofMap::_precompute_views(
+  const std::vector<std::shared_ptr<const GenericDofMap>> dofmaps
+)
+{
+  for (unsigned int i = 0; i < dofmaps.size(); ++i)
+    _views.push_back(
+      std::make_shared<BlockDofMap>(*this, i)
+    );
+}
+//-----------------------------------------------------------------------------
 std::vector<std::shared_ptr<const GenericDofMap>> BlockDofMap::dofmaps() const
 {
   return _constructor_dofmaps;
@@ -526,8 +573,16 @@ std::vector<std::shared_ptr<const GenericDofMap>> BlockDofMap::dofmaps() const
 //-----------------------------------------------------------------------------
 bool BlockDofMap::is_view() const
 {
-  /// BlockDofMap does not allow views, so the value will always be False.
-  return false;
+  /// BlockDofMap view does not have a few private attributes
+  if (_constructor_dofmaps.size() == 0)
+    return true;
+  else
+    return false;
+}
+//-----------------------------------------------------------------------------
+const BlockDofMap & BlockDofMap::view(std::size_t i) const
+{
+  return *_views[i];
 }
 //-----------------------------------------------------------------------------
 std::int64_t BlockDofMap::global_dimension() const
