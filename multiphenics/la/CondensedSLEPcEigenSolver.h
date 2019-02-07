@@ -47,24 +47,23 @@ namespace dolfin
       
       /// Set operators (B may be nullptr for regular eigenvalues
       /// problems)
-      void set_operators(std::shared_ptr<const PETScMatrix> A,
-                         std::shared_ptr<const PETScMatrix> B);
+      void set_operators(const Mat A, const Mat B);
       
       /// Set boundary conditions. This method must be called *before* setting operators.
       void set_boundary_conditions(std::vector<std::shared_ptr<const fem::DirichletBC>> bcs);
 
       /// Get ith eigenpair
       void get_eigenpair(PetscScalar& lr, PetscScalar& lc,
-                         PETScVector& r, PETScVector& c, std::size_t i) const;
+                         Vec r, Vec c, std::size_t i) const;
       
     protected:
       IS _is;
       
     private:
-      Mat _condense_matrix(std::shared_ptr<const PETScMatrix> mat);
+      Mat _condense_matrix(const Mat mat) const;
       
-      std::shared_ptr<const PETScMatrix> _A;
-      std::shared_ptr<const PETScMatrix> _B;
+      Mat _A;
+      Mat _B;
       Mat _condensed_A;
       Mat _condensed_B;
 

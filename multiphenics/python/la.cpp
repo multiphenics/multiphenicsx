@@ -29,30 +29,60 @@ namespace multiphenics_wrappers
   void la(py::module& m)
   {
     #ifdef HAS_SLEPC
+    // dolfin::la::SLEPcEigenSolver // TODO remove when it gets wrapped upstream, but be careful with the different signature of get_eigenpair
+    py::class_<dolfin::la::SLEPcEigenSolver, std::shared_ptr<dolfin::la::SLEPcEigenSolver>>
+      (m, "SLEPcEigenSolver", "DOLFIN SLEPcEigenSolver object")
+      .def(py::init([](const dolfin_wrappers::MPICommWrapper comm) {
+        return std::make_unique<dolfin::la::CondensedSLEPcEigenSolver>(comm.get());
+      }))
+      .def("set_options_prefix", &dolfin::la::SLEPcEigenSolver::set_options_prefix)
+      .def("set_from_options", &dolfin::la::SLEPcEigenSolver::set_from_options)
+      .def("set_operators", &dolfin::la::SLEPcEigenSolver::set_operators)
+      .def("get_options_prefix", &dolfin::la::SLEPcEigenSolver::get_options_prefix)
+      .def("get_number_converged", &dolfin::la::SLEPcEigenSolver::get_number_converged)
+      .def("solve", (void (dolfin::la::SLEPcEigenSolver::*)())
+           &dolfin::la::SLEPcEigenSolver::solve)
+      .def("solve", (void (dolfin::la::SLEPcEigenSolver::*)(std::int64_t))
+           &dolfin::la::SLEPcEigenSolver::solve)
+      .def("get_eigenvalue", &dolfin::la::SLEPcEigenSolver::get_eigenvalue)
+      .def("get_eigenpair", [](dolfin::la::CondensedSLEPcEigenSolver& self, dolfin::function::Function& r, dolfin::function::Function& c, std::size_t i)
+           {
+             PetscScalar lr, lc;
+             self.get_eigenpair(lr, lc, r.vector().vec(), c.vector().vec(), i);
+             PetscErrorCode ierr;
+             ierr = VecGhostUpdateBegin(r.vector().vec(), INSERT_VALUES, SCATTER_FORWARD);
+             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateBegin");
+             ierr = VecGhostUpdateBegin(c.vector().vec(), INSERT_VALUES, SCATTER_FORWARD);
+             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateBegin");
+             ierr = VecGhostUpdateEnd(r.vector().vec(), INSERT_VALUES, SCATTER_FORWARD);
+             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
+             ierr = VecGhostUpdateEnd(c.vector().vec(), INSERT_VALUES, SCATTER_FORWARD);
+             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
+             return py::make_tuple(lr, lc);
+           });
+           
     // dolfin::la::CondensedSLEPcEigenSolver
     py::class_<dolfin::la::CondensedSLEPcEigenSolver, std::shared_ptr<dolfin::la::CondensedSLEPcEigenSolver>, dolfin::la::SLEPcEigenSolver>
       (m, "CondensedSLEPcEigenSolver", "multiphenics CondensedSLEPcEigenSolver object")
       .def(py::init([](const dolfin_wrappers::MPICommWrapper comm) {
         return std::make_unique<dolfin::la::CondensedSLEPcEigenSolver>(comm.get());
       }))
-      .def("set_operators",
-           &dolfin::la::CondensedSLEPcEigenSolver::set_operators)
-      .def("set_boundary_conditions",
-           &dolfin::la::CondensedSLEPcEigenSolver::set_boundary_conditions)
-      .def("get_eigenpair", [](dolfin::la::CondensedSLEPcEigenSolver& self, dolfin::function::Function& r_fun, dolfin::function::Function& c_fun, std::size_t i)
+      .def("set_operators", &dolfin::la::CondensedSLEPcEigenSolver::set_operators)
+      .def("set_boundary_conditions", &dolfin::la::CondensedSLEPcEigenSolver::set_boundary_conditions)
+      .def("get_eigenpair", [](dolfin::la::CondensedSLEPcEigenSolver& self, dolfin::function::Function& r, dolfin::function::Function& c, std::size_t i)
            {
-             double lr, lc;
-             dolfin::la::PETScVector r, c; // cannot use r_fun and c_fun vectors due to different ghosting
-             self.get_eigenpair(lr, lc, r, c, i);
-             std::vector<double> r_local;
-             r.get_local(r_local);
-             r_fun.vector()->set_local(r_local);
-             r_fun.vector()->apply();
-             std::vector<double> c_local;
-             c.get_local(c_local);
-             c_fun.vector()->set_local(c_local);
-             c_fun.vector()->apply();
-             return py::make_tuple(lr, lc, r_fun, c_fun);
+             PetscScalar lr, lc;
+             self.get_eigenpair(lr, lc, r.vector().vec(), c.vector().vec(), i);
+             PetscErrorCode ierr;
+             ierr = VecGhostUpdateBegin(r.vector().vec(), INSERT_VALUES, SCATTER_FORWARD);
+             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateBegin");
+             ierr = VecGhostUpdateBegin(c.vector().vec(), INSERT_VALUES, SCATTER_FORWARD);
+             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateBegin");
+             ierr = VecGhostUpdateEnd(r.vector().vec(), INSERT_VALUES, SCATTER_FORWARD);
+             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
+             ierr = VecGhostUpdateEnd(c.vector().vec(), INSERT_VALUES, SCATTER_FORWARD);
+             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
+             return py::make_tuple(lr, lc);
            });
     
     // multiphenics::la::CondensedBlockSLEPcEigenSolver
@@ -61,26 +91,25 @@ namespace multiphenics_wrappers
       .def(py::init([](const dolfin_wrappers::MPICommWrapper comm) {
         return std::make_unique<multiphenics::la::CondensedBlockSLEPcEigenSolver>(comm.get());
       }))
-      .def("set_operators",
-           &multiphenics::la::CondensedBlockSLEPcEigenSolver::set_operators)
+      .def("set_operators", &multiphenics::la::CondensedBlockSLEPcEigenSolver::set_operators)
       .def("set_boundary_conditions", (void (multiphenics::la::CondensedBlockSLEPcEigenSolver::*)(std::shared_ptr<const multiphenics::fem::BlockDirichletBC>))
            &multiphenics::la::CondensedBlockSLEPcEigenSolver::set_boundary_conditions)
-      .def("get_eigenpair", [](multiphenics::la::CondensedBlockSLEPcEigenSolver& self, multiphenics::function::BlockFunction& r_fun, multiphenics::function::BlockFunction& c_fun, std::size_t i)
+      .def("get_eigenpair", [](multiphenics::la::CondensedBlockSLEPcEigenSolver& self, multiphenics::function::BlockFunction& r, multiphenics::function::BlockFunction& c, std::size_t i)
            {
-             double lr, lc;
-             dolfin::la::PETScVector r, c; // cannot use r_fun and c_fun block vectors due to different ghosting
-             self.get_eigenpair(lr, lc, r, c, i);
-             std::vector<double> r_local;
-             r.get_local(r_local);
-             r_fun.block_vector()->set_local(r_local);
-             r_fun.block_vector()->apply();
-             r_fun.apply("to subfunctions");
-             std::vector<double> c_local;
-             c.get_local(c_local);
-             c_fun.block_vector()->set_local(c_local);
-             c_fun.block_vector()->apply();
-             c_fun.apply("to subfunctions");
-             return py::make_tuple(lr, lc, r_fun, c_fun);
+             PetscScalar lr, lc;
+             self.get_eigenpair(lr, lc, r.block_vector(), c.block_vector(), i);
+             PetscErrorCode ierr;
+             ierr = VecGhostUpdateBegin(r.block_vector(), INSERT_VALUES, SCATTER_FORWARD);
+             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateBegin");
+             ierr = VecGhostUpdateBegin(c.block_vector(), INSERT_VALUES, SCATTER_FORWARD);
+             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateBegin");
+             ierr = VecGhostUpdateEnd(r.block_vector(), INSERT_VALUES, SCATTER_FORWARD);
+             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
+             ierr = VecGhostUpdateEnd(c.block_vector(), INSERT_VALUES, SCATTER_FORWARD);
+             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
+             r.apply("to subfunctions");
+             c.apply("to subfunctions");
+             return py::make_tuple(lr, lc);
            });
     #endif
   }

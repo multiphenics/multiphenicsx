@@ -18,11 +18,6 @@
 
 #ifdef HAS_SLEPC
 
-#include <dolfin/function/FunctionSpace.h>
-#include <dolfin/fem/GenericDofMap.h>
-#include <dolfin/la/PETScMatrix.h>
-#include <dolfin/la/PETScVector.h>
-#include <multiphenics/log/log.h>
 #include <multiphenics/la/CondensedSLEPcEigenSolver.h>
 
 using dolfin::fem::DirichletBC;
@@ -76,11 +71,10 @@ void CondensedSLEPcEigenSolver::set_boundary_conditions(std::vector<std::shared_
   std::set<PetscInt> constrained_local_dofs;
   for (auto & bc : bcs)
   {
-    DirichletBC::Map bc_local_indices_to_values;
-    bc->get_boundary_values(bc_local_indices_to_values);
-    for (auto & bc_local_index_to_value : bc_local_indices_to_values)
+    const auto bc_local_dofs = bc->dof_indices();
+    for (Eigen::Index i = 0; i < bc_local_dofs.size(); ++i)
     {
-      constrained_local_dofs.insert(dofmap->index_map()->local_to_global(bc_local_index_to_value.first/dofmap_block_size)*dofmap_block_size + (bc_local_index_to_value.first%dofmap_block_size));
+      constrained_local_dofs.insert(dofmap->index_map()->local_to_global(bc_local_dofs[i]/dofmap_block_size)*dofmap_block_size + (bc_local_dofs[i]%dofmap_block_size));
     }
   }
   
@@ -99,8 +93,7 @@ void CondensedSLEPcEigenSolver::set_boundary_conditions(std::vector<std::shared_
   if (ierr != 0) petsc_error(ierr, __FILE__, "ISCreateGeneral");
 }
 //-----------------------------------------------------------------------------
-void CondensedSLEPcEigenSolver::set_operators(std::shared_ptr<const PETScMatrix> A,
-                                              std::shared_ptr<const PETScMatrix> B)
+void CondensedSLEPcEigenSolver::set_operators(const Mat A, const Mat B)
 {
   _A = A;
   _condensed_A = _condense_matrix(A);
@@ -116,24 +109,19 @@ void CondensedSLEPcEigenSolver::set_operators(std::shared_ptr<const PETScMatrix>
   }
 }
 //-----------------------------------------------------------------------------
-Mat CondensedSLEPcEigenSolver::_condense_matrix(std::shared_ptr<const PETScMatrix> mat)
+Mat CondensedSLEPcEigenSolver::_condense_matrix(const Mat mat) const
 {
   PetscErrorCode ierr;
   
   Mat condensed_mat;
-  #if PETSC_VERSION_MAJOR == 3 && PETSC_VERSION_MINOR <= 7
-  ierr = MatGetSubMatrix(mat->mat(), _is, _is, MAT_INITIAL_MATRIX, &condensed_mat);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "MatGetSubMatrix");
-  #else
-  ierr = MatCreateSubMatrix(mat->mat(), _is, _is, MAT_INITIAL_MATRIX, &condensed_mat);
+  ierr = MatCreateSubMatrix(mat, _is, _is, MAT_INITIAL_MATRIX, &condensed_mat);
   if (ierr != 0) petsc_error(ierr, __FILE__, "MatCreateSubMatrix");
-  #endif
   
   return condensed_mat;
 }
 //-----------------------------------------------------------------------------
 void CondensedSLEPcEigenSolver::get_eigenpair(double& lr, double& lc,
-                                              PETScVector& r, PETScVector& c,
+                                              Vec r, Vec c,
                                               std::size_t i) const
 {
   const PetscInt ii = static_cast<PetscInt>(i);
@@ -146,25 +134,21 @@ void CondensedSLEPcEigenSolver::get_eigenpair(double& lr, double& lc,
   {
     PetscErrorCode ierr;
     
-    // Initialize input vectors, if needed
-    r = _A->init_vector(0);
-    c = _A->init_vector(0);
-    
     // Condense input vectors
     Vec condensed_r_vec;
-    ierr = VecGetSubVector(r.vec(), _is, &condensed_r_vec);
+    ierr = VecGetSubVector(r, _is, &condensed_r_vec);
     if (ierr != 0) petsc_error(ierr, __FILE__, "VecGetSubVector");
     Vec condensed_c_vec;
-    ierr = VecGetSubVector(c.vec(), _is, &condensed_c_vec);
+    ierr = VecGetSubVector(c, _is, &condensed_c_vec);
     if (ierr != 0) petsc_error(ierr, __FILE__, "VecGetSubVector");
     
     // Get eigen pairs (as in Parent)
     EPSGetEigenpair(this->eps(), ii, &lr, &lc, condensed_r_vec, condensed_c_vec);
     
     // Restore input vectors
-    ierr = VecRestoreSubVector(r.vec(), _is, &condensed_r_vec);
+    ierr = VecRestoreSubVector(r, _is, &condensed_r_vec);
     if (ierr != 0) petsc_error(ierr, __FILE__, "VecRestoreSubVector");
-    ierr = VecRestoreSubVector(c.vec(), _is, &condensed_c_vec);
+    ierr = VecRestoreSubVector(c, _is, &condensed_c_vec);
     if (ierr != 0) petsc_error(ierr, __FILE__, "VecRestoreSubVector");
   }
   else

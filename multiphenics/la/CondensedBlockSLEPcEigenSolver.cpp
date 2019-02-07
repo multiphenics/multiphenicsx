@@ -45,17 +45,31 @@ CondensedBlockSLEPcEigenSolver::~CondensedBlockSLEPcEigenSolver()
 void CondensedBlockSLEPcEigenSolver::set_boundary_conditions(std::shared_ptr<const BlockDirichletBC> block_bcs)
 {
   // Get dofmap and related quantities
-  auto comm = block_bcs->block_function_space()->mesh()->mpi_comm();
-  auto block_dofmap = block_bcs->block_function_space()->block_dofmap();
+  const auto comm = block_bcs->block_function_space()->mesh()->mpi_comm();
+  const auto block_dofmap = block_bcs->block_function_space()->block_dofmap();
   assert(block_dofmap->index_map()->block_size() == 1);
+  const auto block_index_map = block_dofmap->index_map();
   auto local_range = block_dofmap->ownership_range();
   
   // List all constrained local dofs
   std::set<PetscInt> constrained_local_dofs;
-  BlockDirichletBC::Map bc_local_indices_to_values;
-  block_bcs->get_boundary_values(bc_local_indices_to_values);
-  for (auto & bc_local_index_to_value : bc_local_indices_to_values)
-    constrained_local_dofs.insert(block_dofmap->index_map()->local_to_global(bc_local_index_to_value.first));
+  for (std::size_t I(0); I < block_bcs->size(); ++I)
+  {
+    const auto & original_to_block = block_dofmap->original_to_block(I);
+    for (auto bc: block_bcs->operator[](I))
+    {
+      const auto original_local_indices = bc->dof_indices();
+      for (Eigen::Index o = 0; o < original_local_indices.size(); ++o)
+      {
+        if (original_to_block.count(original_local_indices[o]) > 0) // skip all dofs which have been removed by restriction
+        {
+          constrained_local_dofs.insert(
+            block_index_map->local_to_global(original_to_block.at(original_local_indices[o]))
+          );
+        }
+      }
+    }
+  }
   
   // List all unconstrained dofs
   std::vector<PetscInt> local_dofs(local_range[1] - local_range[0]);

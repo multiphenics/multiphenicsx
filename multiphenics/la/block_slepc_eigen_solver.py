@@ -16,28 +16,17 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import dolfin
 from multiphenics.python import cpp
 
-def DecorateGetEigenPair(BlockSLEPcEigenSolver):
-    from multiphenics.function import BlockFunction # avoid recursive imports
-    
-    class DecoratedBlockSLEPcEigenSolver(BlockSLEPcEigenSolver):
-        def get_eigenpair(self, r_fun, c_fun, i):
-            assert isinstance(r_fun, BlockFunction)
-            assert isinstance(c_fun, BlockFunction)
-            (lr, lc, _, _) = BlockSLEPcEigenSolver.get_eigenpair(self, r_fun._cpp_object, c_fun._cpp_object, i)
-            return (lr, lc, r_fun, c_fun)
-            
-    return DecoratedBlockSLEPcEigenSolver
-    
 def BlockSLEPcEigenSolver(A, B=None, bcs=None):
-    from multiphenics.fem import BlockDirichletBC # avoid recursive imports
+    mpi_comm = A.getComm()
     
     if bcs is None:
-        EigenSolver = DecorateGetEigenPair(dolfin.SLEPcEigenSolver)
-        return EigenSolver(A, B)
+        eigen_solver = cpp.la.SLEPcEigenSolver(A.getComm())
     else:
-        assert isinstance(bcs, BlockDirichletBC)
-        EigenSolver = DecorateGetEigenPair(cpp.la.CondensedBlockSLEPcEigenSolver)
-        return EigenSolver(A, B, bcs)
+        eigen_solver = cpp.la.CondensedBlockSLEPcEigenSolver(A.getComm())
+        eigen_solver.set_boundary_conditions(bcs)
+        
+    eigen_solver.set_operators(A, B)
+    return eigen_solver
+    
