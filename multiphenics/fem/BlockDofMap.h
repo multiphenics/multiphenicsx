@@ -19,6 +19,7 @@
 #ifndef __BLOCK_DOF_MAP_H
 #define __BLOCK_DOF_MAP_H
 
+#include <petscvec.h>
 #include <dolfin/fem/GenericDofMap.h>
 #include <dolfin/mesh/MeshFunction.h>
 
@@ -277,11 +278,11 @@ namespace multiphenics
       /// function is typically used to construct the null space of a
       /// matrix operator.
       ///
-      /// @param  x (la::PETScVector)
+      /// @param  x (Vec)
       ///         The vector to set.
       /// @param  value (PetscScalar)
       ///         The value to set.
-      void set(dolfin::la::PETScVector& x, double value) const;
+      void set(Vec x, double value) const;
 
       /// Return the map from local to global (const access)
       std::shared_ptr<const dolfin::common::IndexMap> index_map() const;

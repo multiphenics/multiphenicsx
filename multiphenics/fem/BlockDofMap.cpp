@@ -35,7 +35,6 @@ using dolfin::mesh::Mesh;
 using dolfin::mesh::MeshEntity;
 using dolfin::mesh::MeshFunction;
 using dolfin::mesh::MeshRange;
-using dolfin::la::PETScVector;
 
 //-----------------------------------------------------------------------------
 BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,
@@ -716,7 +715,7 @@ Eigen::Array<PetscInt, Eigen::Dynamic, 1> BlockDofMap::dofs(const Mesh& mesh,
                      "This method was supposedly never used by block interface, and its implementation requires some more work");
 }
 //-----------------------------------------------------------------------------
-void BlockDofMap::set(PETScVector& x, double value) const
+void BlockDofMap::set(Vec x, double value) const
 {
   multiphenics_error("BlockDofMap.cpp",
                      "set dof entries of a vector to a value",
