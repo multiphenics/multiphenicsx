@@ -30,8 +30,6 @@ namespace multiphenics
     class BlockDirichletBC: public dolfin::common::Variable
     {
     public:
-      typedef dolfin::fem::DirichletBC::Map Map;
-      
       /// Create boundary condition for subdomain
       ///
       /// @param    bcs (list of list _DirichletBC_)
@@ -42,24 +40,6 @@ namespace multiphenics
       /// Destructor
       ~BlockDirichletBC();
       
-      /// Get Dirichlet dofs and values. If a method other than 'pointwise' is
-      /// used in parallel, the map may not be complete for local vertices since
-      /// a vertex can have a bc applied, but the partition might not have a
-      /// facet on the boundary. To ensure all local boundary dofs are marked,
-      /// it is necessary to call gather() on the returned boundary values.
-      ///
-      /// @param[in,out] boundary_values (Map&)
-      ///         Map from dof to boundary value.
-      void get_boundary_values(Map& boundary_values) const;
-
-      /// Get boundary values from neighbour processes. If a method other than
-      /// "pointwise" is used, this is necessary to ensure all boundary dofs are
-      /// marked on all processes.
-      ///
-      /// @param[in,out] boundary_values (Map&)
-      ///         Map from dof to boundary value.
-      void gather(Map& boundary_values) const;
-            
       /// Return the block function space
       ///
       /// @return multiphenics::function::BlockFunctionSpace
@@ -70,8 +50,6 @@ namespace multiphenics
       std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>> operator[](std::size_t I) const;
 
     private:
-      void _original_to_block_boundary_values(Map& boundary_values, const Map& boundary_values_I, std::size_t I) const;
-
       std::vector<std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>> _bcs;
       std::shared_ptr<const multiphenics::function::BlockFunctionSpace> _block_function_space;
 

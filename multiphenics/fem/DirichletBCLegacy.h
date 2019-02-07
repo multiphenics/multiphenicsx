@@ -19,9 +19,9 @@
 #ifndef __DIRICHLET_BC_LEGACY_H
 #define __DIRICHLET_BC_LEGACY_H
 
+#include <petscmat.h>
+#include <petscvec.h>
 #include <dolfin/fem/DirichletBC.h>
-#include <dolfin/la/PETScMatrix.h>
-#include <dolfin/la/PETScVector.h>
 
 namespace dolfin
 {
@@ -32,17 +32,17 @@ namespace dolfin
     public:
       /// Apply list of boundary conditions to a matrix
       static void apply(std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>> bcs,
-                        dolfin::la::PETScMatrix& A,
+                        Mat A,
                         PetscScalar diag);
 
       /// Apply list of boundary conditions to a vector
       static void apply(std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>> bcs,
-                        dolfin::la::PETScVector& b);
+                        Vec b);
 
       /// Apply list of boundary conditions to vectors for a nonlinear problem
       static void apply(std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>> bcs,
-                        dolfin::la::PETScVector& b,
-                        const dolfin::la::PETScVector& x);
+                        Vec b,
+                        const Vec x);
     };
   }
 }

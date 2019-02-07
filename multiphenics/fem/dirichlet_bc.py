@@ -30,7 +30,7 @@ def DirichletBC(*args, **kwargs):
         _function_space = args[0]
     # Override the function_space() method. This is already available in the public interface,
     # but it casts the function space to a C++ FunctionSpace and then wraps it into a python FunctionSpace,
-    # losing all the customization that we have done in the function_space.py file (most notably, the
+    # losing all the customization that we have done in the block_function_space.py file (most notably, the
     # block_function_space() method)
     output._function_space = _function_space
     def function_space(self_):  # nopep8

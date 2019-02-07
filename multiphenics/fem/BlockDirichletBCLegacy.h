@@ -19,9 +19,9 @@
 #ifndef __BLOCK_DIRICHLET_BC_LEGACY_H
 #define __BLOCK_DIRICHLET_BC_LEGACY_H
 
+#include <petscmat.h>
+#include <petscvec.h>
 #include <multiphenics/fem/BlockDirichletBC.h>
-#include <dolfin/la/PETScMatrix.h>
-#include <dolfin/la/PETScVector.h>
 
 namespace multiphenics
 {
@@ -32,22 +32,17 @@ namespace multiphenics
     public:
       /// Apply block boundary conditions to a matrix
       static void apply(const BlockDirichletBC& bcs,
-                        dolfin::la::PETScMatrix& A,
+                        Mat A,
                         PetscScalar diag);
 
       /// Apply block boundary conditions to a vector
       static void apply(const BlockDirichletBC& bcs,
-                        dolfin::la::PETScVector& b);
+                        Vec b);
 
       /// Apply block boundary conditions to vectors for a nonlinear problem
       static void apply(const BlockDirichletBC& bcs,
-                        dolfin::la::PETScVector& b,
-                        const dolfin::la::PETScVector& x);
-    private:
-      /// Collect common implementation for application to vector
-      static void _apply(std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>> bcs,
-                         std::vector<PetscInt>& unrestricted_rows,
-                         std::vector<PetscScalar>& unrestricted_values);
+                        Vec b,
+                        const Vec x);
     };
   }
 }

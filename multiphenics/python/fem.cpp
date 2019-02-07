@@ -87,30 +87,24 @@ namespace multiphenics_wrappers
       (m, "BlockDirichletBC", "multiphenics BlockDirichletBC object")
       .def(py::init<std::vector<std::vector<std::shared_ptr<const DirichletBC>>>,
                     std::shared_ptr<const BlockFunctionSpace>>())
-      .def("block_function_space", &multiphenics::fem::BlockDirichletBC::block_function_space)
-      .def("get_boundary_values", [](const multiphenics::fem::BlockDirichletBC& instance)
-           {
-             multiphenics::fem::BlockDirichletBC::Map map;
-             instance.get_boundary_values(map);
-             return map;
-           });
+      .def("block_function_space", &multiphenics::fem::BlockDirichletBC::block_function_space);
            
     // dolfin::fem::DirichletBCLegacy
     py::class_<dolfin::fem::DirichletBCLegacy, std::shared_ptr<dolfin::fem::DirichletBCLegacy>>
       (m, "DirichletBCLegacy", "dolfin DirichletBCLegacy object")
       .def_static("apply",
         py::overload_cast<
-          std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>, dolfin::la::PETScMatrix&, PetscScalar
+          std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>, Mat, PetscScalar
         >(&dolfin::fem::DirichletBCLegacy::apply),
         py::arg("bcs"), py::arg("A"), py::arg("diag"))
       .def_static("apply",
         py::overload_cast<
-          std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>, dolfin::la::PETScVector&
+          std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>, Vec
         >(&dolfin::fem::DirichletBCLegacy::apply),
         py::arg("bcs"), py::arg("b"))
       .def_static("apply",
         py::overload_cast<
-          std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>, dolfin::la::PETScVector&, const dolfin::la::PETScVector&
+          std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>, Vec, const Vec
         >(&dolfin::fem::DirichletBCLegacy::apply),
         py::arg("bcs"), py::arg("b"), py::arg("x"));
     
@@ -119,17 +113,17 @@ namespace multiphenics_wrappers
       (m, "BlockDirichletBCLegacy", "multiphenics BlockDirichletBCLegacy object")
       .def_static("apply",
         py::overload_cast<
-          const multiphenics::fem::BlockDirichletBC&, dolfin::la::PETScMatrix&, PetscScalar
+          const multiphenics::fem::BlockDirichletBC&, Mat, PetscScalar
         >(&multiphenics::fem::BlockDirichletBCLegacy::apply),
         py::arg("bcs"), py::arg("A"), py::arg("diag"))
       .def_static("apply",
         py::overload_cast<
-          const multiphenics::fem::BlockDirichletBC&, dolfin::la::PETScVector&
+          const multiphenics::fem::BlockDirichletBC&, Vec
         >(&multiphenics::fem::BlockDirichletBCLegacy::apply),
         py::arg("bcs"), py::arg("b"))
       .def_static("apply",
         py::overload_cast<
-          const multiphenics::fem::BlockDirichletBC&, dolfin::la::PETScVector&, const dolfin::la::PETScVector&
+          const multiphenics::fem::BlockDirichletBC&, Vec, const Vec
         >(&multiphenics::fem::BlockDirichletBCLegacy::apply),
         py::arg("bcs"), py::arg("b"), py::arg("x"));
   }

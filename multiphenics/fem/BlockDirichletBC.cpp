@@ -37,47 +37,6 @@ BlockDirichletBC::~BlockDirichletBC()
   // Do nothing
 }
 //-----------------------------------------------------------------------------
-void BlockDirichletBC::get_boundary_values(Map& boundary_values) const
-{
-  for (std::size_t I(0); I < _bcs.size(); ++I)
-  {
-    Map boundary_values_I;
-    for (auto & bc_I: _bcs[I])
-    {
-      bc_I->get_boundary_values(boundary_values_I);
-    }
-    _original_to_block_boundary_values(boundary_values, boundary_values_I, I);
-  }
-}
-//-----------------------------------------------------------------------------
-void BlockDirichletBC::gather(Map& boundary_values) const
-{
-  for (std::size_t I(0); I < _bcs.size(); ++I)
-  {
-    Map boundary_values_I;
-    for (auto & bc_I: _bcs[I])
-    {
-      bc_I->gather(boundary_values_I);
-    }
-    _original_to_block_boundary_values(boundary_values, boundary_values_I, I);
-  }
-}
-//-----------------------------------------------------------------------------
-void BlockDirichletBC::_original_to_block_boundary_values(Map& boundary_values, const Map& boundary_values_I, std::size_t I) const
-{
-  const auto & original_to_block = _block_function_space->block_dofmap()->original_to_block(I);
-  for (auto bc_original_local_index_to_value : boundary_values_I)
-  {
-    auto original_local_index = bc_original_local_index_to_value.first;
-    auto value = bc_original_local_index_to_value.second;
-    if (original_to_block.count(original_local_index) > 0)
-    {
-      auto block_local_index = original_to_block.at(original_local_index);
-      boundary_values[block_local_index] = value;
-    }
-  }
-}
-//-----------------------------------------------------------------------------
 std::shared_ptr<const BlockFunctionSpace> BlockDirichletBC::block_function_space() const
 {
   return _block_function_space;
