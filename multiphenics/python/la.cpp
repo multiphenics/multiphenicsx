@@ -28,32 +28,6 @@ namespace multiphenics_wrappers
 {
   void la(py::module& m)
   {
-    // multiphenics::la::BlockMATLABExport
-    py::class_<multiphenics::la::BlockMATLABExport>
-      (m, "BlockMATLABExport", "multiphenics BlockMATLABExport object")
-      .def_static("export_", (void (*)(const dolfin::la::PETScMatrix&, std::string))
-                  &multiphenics::la::BlockMATLABExport::export_)
-      .def_static("export_", (void (*)(const dolfin::la::PETScVector&, std::string))
-                  &multiphenics::la::BlockMATLABExport::export_);
-      
-    // multiphenics::la::BlockInsertMode
-    py::enum_<multiphenics::la::BlockInsertMode>
-      (m, "BlockInsertMode", "multiphenics BlockInsertMode enum")
-      .value("INSERT_VALUES", multiphenics::la::BlockInsertMode::INSERT_VALUES)
-      .value("ADD_VALUES", multiphenics::la::BlockInsertMode::ADD_VALUES);
-      
-    // multiphenics::la::BlockPETScSubVectorReadWrapper
-    py::class_<multiphenics::la::BlockPETScSubVectorReadWrapper, std::shared_ptr<multiphenics::la::BlockPETScSubVectorReadWrapper>>
-      (m, "BlockPETScSubVectorReadWrapper", "multiphenics BlockPETScSubVectorReadWrapper object");
-      
-    // multiphenics::la::BlockPETScSubVectorWrapper
-    py::class_<multiphenics::la::BlockPETScSubVectorWrapper, std::shared_ptr<multiphenics::la::BlockPETScSubVectorWrapper>>
-      (m, "BlockPETScSubVectorWrapper", "multiphenics BlockPETScSubVectorWrapper object");
-      
-    // multiphenics::la::BlockPETScSubMatrix
-    py::class_<multiphenics::la::BlockPETScSubMatrix, std::shared_ptr<multiphenics::la::BlockPETScSubMatrix>>
-      (m, "BlockPETScSubMatrix", "multiphenics BlockPETScSubMatrix object");
-      
     #ifdef HAS_SLEPC
     // dolfin::la::CondensedSLEPcEigenSolver
     py::class_<dolfin::la::CondensedSLEPcEigenSolver, std::shared_ptr<dolfin::la::CondensedSLEPcEigenSolver>, dolfin::la::SLEPcEigenSolver>

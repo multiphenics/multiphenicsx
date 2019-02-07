@@ -29,7 +29,6 @@ cpp = compile_package(
     "function/BlockFunctionSpace.cpp",
     "fem/BlockForm1.cpp",
     "fem/BlockForm2.cpp",
-    "la/BlockMATLABExport.cpp",
     "la/BlockPETScSubMatrix.cpp",
     "la/BlockPETScSubVectorReadWrapper.cpp",
     "la/BlockPETScSubVectorWrapper.cpp",

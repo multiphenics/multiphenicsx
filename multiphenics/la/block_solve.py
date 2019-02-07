@@ -17,7 +17,8 @@
 #
 
 from numpy import ndarray as array
-from dolfin.la import PETScKrylovSolver, PETScOptions, PETScVector
+from petsc4py import PETSc
+from dolfin.la import PETScKrylovSolver, PETScOptions
 from multiphenics.fem import block_assemble, BlockDirichletBC, BlockDirichletBCLegacy, BlockForm, BlockForm1, BlockForm2
 
 def block_solve(block_lhs, block_x, block_rhs, block_bcs=None, form_compiler_parameters=None, petsc_options=None):
@@ -25,7 +26,7 @@ def block_solve(block_lhs, block_x, block_rhs, block_bcs=None, form_compiler_par
     if isinstance(block_lhs, (array, list)):
         block_lhs = BlockForm(block_lhs, form_compiler_parameters=form_compiler_parameters)
     assert isinstance(block_lhs, BlockForm2)
-    assert isinstance(block_x, PETScVector)
+    assert isinstance(block_x, PETSc.Vec)
     if isinstance(block_rhs, (array, list)):
         block_rhs = BlockForm(block_rhs, form_compiler_parameters=form_compiler_parameters)
     assert isinstance(block_rhs, BlockForm1)
