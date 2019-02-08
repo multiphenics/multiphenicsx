@@ -16,9 +16,9 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import isclose, logical_and
+from numpy import finfo, isclose, logical_and, where
 from dolfin import *
-from dolfin.fem import assemble
+from dolfin.fem import assemble_scalar
 from multiphenics import *
 
 """
@@ -51,17 +51,18 @@ mesh = UnitIntervalMesh(MPI.comm_world, 32)
 
 class Left(SubDomain):
     def inside(self, x, on_boundary):
-        return logical_and(abs(x[:, 0] - 0.) < DOLFIN_EPS, on_boundary)
+        return logical_and(abs(x[:, 0] - 0.) < finfo(float).eps, on_boundary)
 
 class Right(SubDomain):
     def inside(self, x, on_boundary):
-        return logical_and(abs(x[:, 0] - 1.) < DOLFIN_EPS, on_boundary)
+        return logical_and(abs(x[:, 0] - 1.) < finfo(float).eps, on_boundary)
         
 boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
 left = Left()
 left.mark(boundaries, 1)
 right = Right()
 right.mark(boundaries, 1)
+boundaries_1 = where(boundaries.array() == 1)[0]
 
 x0 = SpatialCoordinate(mesh)[0]
 
@@ -80,8 +81,9 @@ def run_standard():
 
     # Define boundary conditions
     zero = Function(V)
-    zero.vector().set(0.0)
-    bc = DirichletBC(V, zero, (boundaries, 1))
+    with zero.vector().localForm() as zero_local:
+        zero_local.set(0.0)
+    bc = DirichletBC(V, zero, boundaries_1)
     
     # Solve the linear system
     u = Function(V)
@@ -109,15 +111,16 @@ def run_block():
     
     # Define block boundary conditions
     zero = Function(V)
-    zero.vector().set(0.0)
-    bc1 = DirichletBC(VV.sub(0), zero, (boundaries, 1))
-    bc2 = DirichletBC(VV.sub(1), zero, (boundaries, 1))
+    with zero.vector().localForm() as zero_local:
+        zero_local.set(0.0)
+    bc1 = DirichletBC(VV.sub(0), zero, boundaries_1)
+    bc2 = DirichletBC(VV.sub(1), zero, boundaries_1)
     bcs = BlockDirichletBC([bc1,
                             bc2])
     
     # Solve the block linear system
     uu = BlockFunction(VV)
-    block_solve(aa, uu.block_vector(), ff, bcs, petsc_options=solver_parameters)
+    block_solve(aa, uu, ff, bcs, petsc_options=solver_parameters)
     uu1, uu2 = uu
     
     # Return the block solution
@@ -125,9 +128,9 @@ def run_block():
     
 uu1, uu2 = run_block()
 
-u_norm = sqrt(assemble(inner(grad(u), grad(u))*dx))
-err_1_norm = sqrt(assemble(inner(grad(u - uu1), grad(u - uu1))*dx))
-err_2_norm = sqrt(assemble(inner(grad(u - uu2), grad(u - uu2))*dx))
+u_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u), grad(u))*dx)))
+err_1_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u - uu1), grad(u - uu1))*dx)))
+err_2_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u - uu2), grad(u - uu2))*dx)))
 print("Relative error for first component is equal to", err_1_norm/u_norm)
 print("Relative error for second component is equal to", err_2_norm/u_norm)
 assert isclose(err_1_norm/u_norm, 0., atol=1.e-10)
