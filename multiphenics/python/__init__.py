@@ -30,7 +30,6 @@ cpp = compile_package(
     "fem/BlockForm1.cpp",
     "fem/BlockForm2.cpp",
     "la/BlockMATLABExport.cpp",
-    "la/BlockInsertMode.cpp",
     "la/BlockPETScSubMatrix.cpp",
     "la/BlockPETScSubVector.cpp",
     "function/BlockFunction.cpp",
