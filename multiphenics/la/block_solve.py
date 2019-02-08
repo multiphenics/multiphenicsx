@@ -17,16 +17,16 @@
 #
 
 from numpy import ndarray as array
-from petsc4py import PETSc
 from dolfin.la import PETScKrylovSolver, PETScOptions
 from multiphenics.fem import block_assemble, BlockDirichletBC, BlockDirichletBCLegacy, BlockForm, BlockForm1, BlockForm2
+from multiphenics.function import BlockFunction
 
 def block_solve(block_lhs, block_x, block_rhs, block_bcs=None, form_compiler_parameters=None, petsc_options=None):
     # Process inputs
     if isinstance(block_lhs, (array, list)):
         block_lhs = BlockForm(block_lhs, form_compiler_parameters=form_compiler_parameters)
     assert isinstance(block_lhs, BlockForm2)
-    assert isinstance(block_x, PETSc.Vec)
+    assert isinstance(block_x, BlockFunction)
     if isinstance(block_rhs, (array, list)):
         block_rhs = BlockForm(block_rhs, form_compiler_parameters=form_compiler_parameters)
     assert isinstance(block_rhs, BlockForm1)
@@ -39,13 +39,13 @@ def block_solve(block_lhs, block_x, block_rhs, block_bcs=None, form_compiler_par
         BlockDirichletBCLegacy.apply(block_bcs, block_A, 1.0)
         BlockDirichletBCLegacy.apply(block_bcs, block_b)
     # Solve
-    solver = PETScKrylovSolver(block_x.block_function().block_function_space().mesh().mpi_comm())
+    solver = PETScKrylovSolver(block_x.block_function_space().mesh().mpi_comm())
     solver.set_options_prefix("multiphenics_solve_")
     if petsc_options is not None:
         for k, v in petsc_options.items():
             PETScOptions.set("multiphenics_solve_" + k, v)
     solver.set_from_options()
     solver.set_operator(block_A)
-    solver.solve(block_x, block_b)
+    solver.solve(block_x.block_vector(), block_b)
     # Keep subfunctions up to date
-    block_x.block_function().apply("to subfunctions")
+    block_x.apply("to subfunctions")

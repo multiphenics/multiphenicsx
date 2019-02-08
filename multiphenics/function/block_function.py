@@ -157,16 +157,7 @@ class BlockFunction(object):
         Return block vector
         """
         
-        def extend_block_vector(block_vector):
-            # Make sure to preserve a reference to the block function
-            def block_function(self_):
-                return self
-            block_vector.block_function = types.MethodType(block_function, block_vector)
-            
-        block_vector = self._cpp_object.block_vector()
-        extend_block_vector(block_vector)
-        
-        return block_vector
+        return self._cpp_object.block_vector()
         
     def ufl_element(self):
         return self._block_function_space.ufl_element()
