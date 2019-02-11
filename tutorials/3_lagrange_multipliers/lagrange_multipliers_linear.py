@@ -17,10 +17,10 @@
 #
 
 import numpy
-from numpy import isclose
-import ufl
+from numpy import isclose, where
 from dolfin import *
 from dolfin.cpp.mesh import GhostMode
+from dolfin.fem import assemble_scalar
 from multiphenics import *
 from multiphenics.io import XDMFFile
 
@@ -65,29 +65,25 @@ dx = Measure("dx")(subdomain_data=subdomains)
 ds = Measure("ds")(subdomain_data=boundaries)
 
 # ASSEMBLE #
-x = SpatialCoordinate(mesh)
-g = ufl.sin(3*x[0] + 1)*ufl.sin(3*x[1] + 1)
+@function.expression.numba_eval
+def g_eval(values, x, cell):
+    values[:, 0] = numpy.sin(3*x[:, 0] + 1)*numpy.sin(3*x[:, 1] + 1)
+g = interpolate(Expression(g_eval), V)
 a = [[inner(grad(u), grad(v))*dx, l*v*ds],
      [u*m*ds                    , 0     ]]
 f =  [v*dx                      , g*m*ds]
 
 # SOLVE #
-u = BlockFunction(W)
+ul = BlockFunction(W)
 solver_parameters = {"ksp_type": "preonly", "pc_type": "lu", "pc_factor_mat_solver_type": "mumps"}
-block_solve(a, u.block_vector(), f, petsc_options=solver_parameters)
+block_solve(a, ul, f, petsc_options=solver_parameters)
 
 # ERROR #
-@function.expression.numba_eval
-def g_eval(values, x, cell):
-    values[:, 0] = numpy.sin(3*x[:, 0] + 1)*numpy.sin(3*x[:, 1] + 1)
-bc_ex = DirichletBC(V, interpolate(Expression(g_eval), V), (boundaries, 1))
+boundaries_1 = where(boundaries.array() == 1)[0]
+bc_ex = DirichletBC(V, g, boundaries_1)
 u_ex = Function(V)
 solve(a[0][0] == f[0], u_ex, bc_ex, petsc_options=solver_parameters)
-err = Function(V)
-err.vector().add_local(+ u_ex.vector().get_local())
-err.vector().add_local(- u[0].vector().get_local())
-err.vector().apply("")
-u_ex_norm = sqrt(assemble(inner(grad(u_ex), grad(u_ex))*dx))
-err_norm = sqrt(assemble(inner(grad(err), grad(err))*dx))
+u_ex_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u_ex), grad(u_ex))*dx)))
+err_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u_ex - ul[0]), grad(u_ex - ul[0]))*dx)))
 print("Relative error is equal to", err_norm/u_ex_norm)
 assert isclose(err_norm/u_ex_norm, 0., atol=1.e-10)
