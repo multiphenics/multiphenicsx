@@ -16,10 +16,11 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import isclose
+from numpy import isclose, where
+from petsc4py import PETSc
 from dolfin import *
 from dolfin.cpp.mesh import GhostMode
-from dolfin.fem import assemble
+from dolfin.fem import assemble_matrix, assemble_scalar, assemble_vector
 from dolfin.io import XDMFFile
 from multiphenics import *
 from multiphenics.fem import DirichletBCLegacy
@@ -49,6 +50,8 @@ def set_solver_parameters(solver):
 mesh = XDMFFile(MPI.comm_world, "data/backward_facing_step.xdmf").read_mesh(MPI.comm_world, GhostMode.none)
 subdomains = XDMFFile(MPI.comm_world, "data/backward_facing_step_physical_region.xdmf").read_mf_size_t(mesh)
 boundaries = XDMFFile(MPI.comm_world, "data/backward_facing_step_facet_region.xdmf").read_mf_size_t(mesh)
+boundaries_1 = where(boundaries.array() == 1)[0]
+boundaries_2 = where(boundaries.array() == 2)[0]
 
 # Function spaces
 V_element = VectorElement("Lagrange", mesh.ufl_cell(), 2)
@@ -81,8 +84,8 @@ def run_monolithic():
     # Boundary conditions
     u_in = interpolate(Expression(u_in_eval, shape=(2,)), W.sub(0).collapse())
     u_wall = interpolate(Expression(u_wall_eval, shape=(2,)), W.sub(0).collapse())
-    inlet_bc = DirichletBC(W.sub(0), u_in, (boundaries, 1))
-    wall_bc = DirichletBC(W.sub(0), u_wall, (boundaries, 2))
+    inlet_bc = DirichletBC(W.sub(0), u_in, boundaries_1)
+    wall_bc = DirichletBC(W.sub(0), u_wall, boundaries_2)
     bc = [inlet_bc, wall_bc]
     
     # Class for interfacing with the Newton solver
@@ -95,20 +98,28 @@ def run_monolithic():
             self._J = J
             self._F_vec = None
             self._J_mat = None
+            
+        def form(self, x):
+            x.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
 
         def F(self, _):
             if self._F_vec is None:
-                self._F_vec = assemble(self._F)
+                self._F_vec = assemble_vector(self._F)
             else:
-                assemble(self._F_vec, self._F)
+                with self._F_vec.localForm() as f_local:
+                    f_local.set(0.0)
+                assemble_vector(self._F_vec, self._F)
+            self._F_vec.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
             DirichletBCLegacy.apply(self._bc, self._F_vec, self._up.vector())
             return self._F_vec
 
         def J(self, _):
             if self._J_mat is None:
-                self._J_mat = assemble(self._J)
+                self._J_mat = assemble_matrix(self._J)
             else:
-                assemble(self._J_mat, self._J)
+                self._J_mat.zeroEntries()
+                assemble_matrix(self._J_mat, self._J)
+            self._J_mat.assemble()
             DirichletBCLegacy.apply(self._bc, self._J_mat, 1.0)
             return self._J_mat
 
@@ -146,8 +157,8 @@ def run_block():
     # Boundary conditions
     u_in = interpolate(Expression(u_in_eval, shape=(2,)), W.sub(0))
     u_wall = interpolate(Expression(u_wall_eval, shape=(2,)), W.sub(0))
-    inlet_bc = DirichletBC(W.sub(0), u_in, (boundaries, 1))
-    wall_bc = DirichletBC(W.sub(0), u_wall, (boundaries, 2))
+    inlet_bc = DirichletBC(W.sub(0), u_in, boundaries_1)
+    wall_bc = DirichletBC(W.sub(0), u_wall, boundaries_2)
     bc = BlockDirichletBC([[inlet_bc, wall_bc], []])
 
     # Solve
@@ -165,12 +176,12 @@ up_b = run_block()
 
 #                  ERROR COMPUTATION                 #
 def run_error(up_m, up_b):
-    (u, p) = up.split()
-    (u, p) = up.block_split()
-    u_m_norm = sqrt(assemble(inner(grad(u_m), grad(u_m))*dx))
-    err_u_norm = sqrt(assemble(inner(grad(u_b - u_m), grad(u_b - u_m))*dx))
-    p_m_norm = sqrt(assemble(inner(p_m, p_m)*dx))
-    err_p_norm = sqrt(assemble(inner(p_b - p_m, p_b - p_m)*dx))
+    (u_m, p_m) = up_m.split()
+    (u_b, p_b) = up_b.block_split()
+    u_m_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u_m), grad(u_m))*dx)))
+    err_u_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u_b - u_m), grad(u_b - u_m))*dx)))
+    p_m_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(p_m, p_m)*dx)))
+    err_p_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(p_b - p_m, p_b - p_m)*dx)))
     print("Relative error for velocity component is equal to", err_u_norm/u_m_norm)
     print("Relative error for pressure component is equal to", err_p_norm/p_m_norm)
     assert isclose(err_u_norm/u_m_norm, 0., atol=1.e-10)
