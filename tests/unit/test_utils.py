@@ -19,11 +19,11 @@
 import numbers
 import pytest
 from _pytest.mark import ParameterSet
-from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, full, hstack, hstack as bvec, logical_and, sort, unique, vstack
+from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, finfo, full, hstack, hstack as bvec, logical_and, sort, unique, vstack, where
 from scipy.sparse import csr_matrix
-from dolfin import as_matrix, as_tensor, as_vector, DOLFIN_EPS, dx, FiniteElement, Function, FunctionSpace, inner, MeshFunction, MixedElement, project, SpatialCoordinate, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
-from dolfin.cpp.la import PETScMatrix, PETScVector
-from dolfin.fem import assemble
+from petsc4py import PETSc
+from dolfin import as_matrix, as_tensor, as_vector, dx, FiniteElement, Function, FunctionSpace, inner, MeshFunction, MixedElement, project, SpatialCoordinate, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
+from dolfin.fem import assemble_matrix, assemble_vector
 from multiphenics import BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
 from multiphenics.fem import block_assemble, BlockDirichletBCLegacy, DirichletBCLegacy
 
@@ -111,13 +111,14 @@ def assert_tabulated_dof_coordinates(dof_coordinates, block_dof_coordinates):
     
 # ================ EQUALITY BETWEEN BLOCK VECTORS ================ #
 def assert_block_vectors_equal(rhs, block_rhs, block_V):
-    if isinstance(rhs, tuple):
-        rhs1 = rhs[0]
+    assert isinstance(rhs, tuple)
+    assert len(rhs) in (1, 2)
+    rhs1 = rhs[0]
+    if len(rhs) == 2:
         rhs2 = rhs[1]
-    else:
-        rhs1 = rhs
+    elif len(rhs) == 1:
         rhs2 = None
-    comm = block_rhs.vec().getComm().tompi4py()
+    comm = block_rhs.getComm().tompi4py()
     if rhs2 is not None:
         map_block_to_original = allgather((block_V.block_dofmap().block_to_original(0), block_V.block_dofmap().block_to_original(1)), comm, block_dofmap=block_V.block_dofmap(), dofmap=(block_V[0].dofmap(), block_V[1].dofmap()))
         rhs1g = allgather(rhs1, comm)
@@ -136,17 +137,18 @@ def assert_block_vectors_equal(rhs, block_rhs, block_V):
     
 # ================ EQUALITY BETWEEN BLOCK MATRICES ================ #
 def assert_block_matrices_equal(lhs, block_lhs, block_V):
-    if isinstance(lhs, tuple):
-        lhs11 = lhs[0][0]
+    assert isinstance(lhs, tuple)
+    assert len(lhs) in (1, 2)
+    lhs11 = lhs[0][0]
+    if len(lhs) == 2:
         lhs12 = lhs[0][1]
         lhs21 = lhs[1][0]
         lhs22 = lhs[1][1]
-    else:
-        lhs11 = lhs
+    elif len(lhs) == 1:
         lhs12 = None
         lhs21 = None
         lhs22 = None
-    comm = block_lhs.mat().getComm().tompi4py()
+    comm = block_lhs.getComm().tompi4py()
     if lhs22 is not None:
         map_block_to_original = allgather((block_V.block_dofmap().block_to_original(0), block_V.block_dofmap().block_to_original(1)), comm, block_dofmap=block_V.block_dofmap(), dofmap=(block_V[0].dofmap(), block_V[1].dofmap()))
         lhs11g = allgather(lhs11, comm)
@@ -171,10 +173,13 @@ def assert_block_matrices_equal(lhs, block_lhs, block_V):
 def assert_block_functions_equal(functions, block_function, block_V):
     if functions is None and block_function is None:
         pass
-    elif isinstance(functions, tuple):
-        assert_block_vectors_equal((functions[0].vector(), functions[1].vector()), block_function.block_vector(), block_V)
     else:
-        assert_block_vectors_equal(functions.vector(), block_function.block_vector(), block_V)
+        assert isinstance(functions, tuple)
+        assert len(functions) in (1, 2)
+        if len(functions) == 2:
+            assert_block_vectors_equal((functions[0].vector(), functions[1].vector()), block_function.block_vector(), block_V)
+        elif len(functions) == 1:
+            assert_block_vectors_equal((functions[0].vector(), ), block_function.block_vector(), block_V)
     
 def assert_functions_manipulations(functions, block_V):
     n_blocks = len(functions)
@@ -182,30 +187,55 @@ def assert_functions_manipulations(functions, block_V):
     # a) Convert from a list of Functions to a BlockFunction
     block_function_a = BlockFunction(block_V)
     for (index, function) in enumerate(functions):
-        function.vector().vec().copy(result=block_function_a.sub(index).vector().vec())
-        block_function_a.sub(index).vector().apply()
+        function.vector().copy(result=block_function_a.sub(index).vector())
+        block_function_a.sub(index).vector().ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
     block_function_a.apply("from subfunctions")
     # Block vector should have received the data stored in the list of Functions
     if n_blocks == 1:
-        assert_block_functions_equal(functions[0], block_function_a, block_V)
+        assert_block_functions_equal((functions[0], ), block_function_a, block_V)
     else:
         assert_block_functions_equal((functions[0], functions[1]), block_function_a, block_V)
     # Clean up non-zero values in the restriction by clearing subfunctions and reassigning
     # their values (only on restrictions) from the block_vector. This is not needed in general,
     # but it is required in order to simplify the test b).
     for index in range(n_blocks):
-        block_function_a.sub(index).vector().set(0.)
+        with block_function_a.sub(index).vector().localForm() as local_form:
+            local_form.set(0.)
     block_function_a.apply("to subfunctions")
     # b) Test assignment of BlockFunctions
     block_function_b = BlockFunction(block_V)
-    block_function_a.block_vector().vec().copy(result=block_function_b.block_vector().vec())
-    block_function_b.block_vector().apply()
+    block_function_a.block_vector().copy(result=block_function_b.block_vector())
+    block_function_b.sub(index).vector().ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
     block_function_b.apply("to subfunctions")
     # Each sub function should now contain the same data as the original block function
     for index in range(n_blocks):
-        assert array_equal(block_function_b.sub(index).vector().get_local(), block_function_a.sub(index).vector().get_local())
+        assert array_equal(block_function_b.sub(index).vector().getArray(), block_function_a.sub(index).vector().getArray())
     # The two block vectors should store the same data
-    assert array_equal(block_function_b.block_vector().get_local(), block_function_a.block_vector().get_local())
+    assert array_equal(block_function_b.block_vector().getArray(), block_function_a.block_vector().getArray())
+    
+# ================ EQUALITY BETWEEN FORMS ================ #
+def assert_forms_equal(form1, form2):
+    if form2 == 0:
+        assert form1 == 0
+    else:
+        def form_rank(form):
+            return len(form.arguments())
+        if form_rank(form1) == 1:
+            assert form_rank(form2) == 1
+            vector1 = assemble_vector(form1)
+            vector2 = assemble_vector(form2)
+            vector1.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+            vector2.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+            assert array_equal(to_dense(vector1), to_dense(vector2))
+        elif form_rank(form1) == 2:
+            assert form_rank(form2) == 2
+            matrix1 = assemble_matrix(form1)
+            matrix2 = assemble_matrix(form2)
+            matrix1.assemble()
+            matrix2.assemble()
+            assert array_equal(to_dense(matrix1), to_dense(matrix2))
+        else:
+            raise RuntimeError("Invalid rank")
     
 # ================ FUNCTION SPACES GENERATOR ================ #
 def StokesFunctionSpace(mesh, family_degree):
@@ -282,11 +312,11 @@ def UnitSquareInterface(X=None, Y=None, on_boundary=False):
     if X is not None:
         class CustomSubDomain(SubDomain):
             def inside(self, x, on_boundary_):
-                return logical_and(x[:, 0] >= X - DOLFIN_EPS, x[:, 0] <= X + DOLFIN_EPS)
+                return logical_and(x[:, 0] >= X - finfo(float).eps, x[:, 0] <= X + finfo(float).eps)
     elif Y is not None:
         class CustomSubDomain(SubDomain):
             def inside(self, x, on_boundary_):
-                return logical_and(x[:, 1] >= Y - DOLFIN_EPS, x[:, 1] <= Y + DOLFIN_EPS)
+                return logical_and(x[:, 1] >= Y - finfo(float).eps, x[:, 1] <= Y + finfo(float).eps)
     elif on_boundary is True:
         class CustomSubDomain(SubDomain):
             def inside(self, x, on_boundary_):
@@ -337,17 +367,20 @@ def get_block_bcs_1():
         mesh = block_V.mesh()
         boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
         OnBoundary().mark(boundaries, 1)
+        boundaries_1 = where(boundaries.array() == 1)[0]
         num_sub_elements = block_V[0].ufl_element().num_sub_elements()
         if num_sub_elements is 0:
             bc1_fun = Function(block_V[0])
-            bc1_fun.vector().set(1.)
-            return [DirichletBC(block_V[0], bc1_fun, (boundaries, 1))]
+            with bc1_fun.vector().localForm() as local_form:
+                local_form.set(1.)
+            return [DirichletBC(block_V[0], bc1_fun, boundaries_1)]
         else:
             bc1 = list()
             for i in range(num_sub_elements):
                 bc1_fun = Function(block_V[0].sub(i).collapse())
-                bc1_fun.vector().set(i + 1.)
-                bc1.append(DirichletBC(block_V[0].sub(i), bc1_fun, (boundaries, 1)))
+                with bc1_fun.vector().localForm() as local_form:
+                    local_form.set(i + 1.)
+                bc1.append(DirichletBC(block_V[0].sub(i), bc1_fun, boundaries_1))
             return bc1
     return (
         lambda block_V: None,
@@ -361,33 +394,39 @@ def get_block_bcs_2():
         mesh = block_V.mesh()
         boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
         OnBoundary().mark(boundaries, 1)
+        boundaries_1 = where(boundaries.array() == 1)[0]
         num_sub_elements = block_V[0].ufl_element().num_sub_elements()
         if num_sub_elements is 0:
             bc1_fun = Function(block_V[0])
-            bc1_fun.vector().set(1.)
-            return [DirichletBC(block_V[0], bc1_fun, (boundaries, 1))]
+            with bc1_fun.vector().localForm() as local_form:
+                local_form.set(1.)
+            return [DirichletBC(block_V[0], bc1_fun, boundaries_1)]
         else:
             bc1 = list()
             for i in range(num_sub_elements):
                 bc1_fun = Function(block_V[0].sub(i).collapse())
-                bc1_fun.vector().set(i + 1.)
-                bc1.append(DirichletBC(block_V[0].sub(i), bc1_fun, (boundaries, 1)))
+                with bc1_fun.vector().localForm() as local_form:
+                    local_form.set(i + 1.)
+                bc1.append(DirichletBC(block_V[0].sub(i), bc1_fun, boundaries_1))
             return bc1
     def _get_bc_2(block_V):
         mesh = block_V.mesh()
         boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
         OnBoundary().mark(boundaries, 1)
+        boundaries_1 = where(boundaries.array() == 1)[0]
         num_sub_elements = block_V[1].ufl_element().num_sub_elements()
         if num_sub_elements is 0:
             bc2_fun = Function(block_V[1])
-            bc2_fun.vector().set(11.)
-            return [DirichletBC(block_V[1], bc2_fun, (boundaries, 1))]
+            with bc2_fun.vector().localForm() as local_form:
+                local_form.set(11.)
+            return [DirichletBC(block_V[1], bc2_fun, boundaries_1)]
         else:
             bc2 = list()
             for i in range(num_sub_elements):
                 bc2_fun = Function(block_V[1].sub(i).collapse())
-                bc2_fun.vector().set(i + 11.)
-                bc2.append(DirichletBC(block_V[1].sub(i), bc2_fun, (boundaries, 1)))
+                with bc2_fun.vector().localForm() as local_form:
+                    local_form.set(i + 11.)
+                bc2.append(DirichletBC(block_V[1].sub(i), bc2_fun, boundaries_1))
             return bc2
     return (
         lambda block_V: None,
@@ -574,71 +613,47 @@ def get_lhs_block_form_2(block_V):
     
 # ================ RIGHT-HAND SIDE BLOCK FORM ASSEMBLER ================ #
 def assemble_and_block_assemble_vector(block_form):
+    block_vector = block_assemble(block_form)
     N = len(block_form)
-    assert N in (1, 2)
-    if N == 1:
-        return assemble(block_form[0]), block_assemble(block_form)
-    else:
-        return (assemble(block_form[0]), assemble(block_form[1])), block_assemble(block_form)
+    vector = [assemble_vector(block_form[i]) for i in range(N)]
+    [vector[i].ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE) for i in range(N)]
+    return tuple(vector), block_vector
         
 def apply_bc_and_block_bc_vector(rhs, block_rhs, block_bcs):
-    if block_bcs is None:
-        return
-    N = len(block_bcs)
-    assert N in (1, 2)
-    if N == 1:
-        DirichletBCLegacy.apply(block_bcs[0], rhs)
+    if block_bcs is not None:
+        N = len(block_bcs)
         BlockDirichletBCLegacy.apply(block_bcs, block_rhs)
-    else:
-        DirichletBCLegacy.apply(block_bcs[0], rhs[0])
-        DirichletBCLegacy.apply(block_bcs[1], rhs[1])
-        BlockDirichletBCLegacy.apply(block_bcs, block_rhs)
+        [DirichletBCLegacy.apply(block_bcs[i], rhs[i]) for i in range(N)]
     
 def apply_bc_and_block_bc_vector_non_linear(rhs, block_rhs, block_bcs, block_V):
-    if block_bcs is None:
-        return (None, None)
-    N = len(block_bcs)
-    assert N in (1, 2)
-    if N == 1:
-        function = Function(block_V[0])
-        DirichletBCLegacy.apply(block_bcs[0], rhs, function.vector())
+    if block_bcs is not None:
         block_function = BlockFunction(block_V)
         BlockDirichletBCLegacy.apply(block_bcs, block_rhs, block_function.block_vector())
-        return (function, block_function)
+        N = len(block_bcs)
+        function = [Function(block_V[i]) for i in range(N)]
+        [DirichletBCLegacy.apply(block_bcs[i], rhs[i], function[i].vector()) for i in range(N)]
+        return tuple(function), block_function
     else:
-        function1 = Function(block_V[0])
-        DirichletBCLegacy.apply(block_bcs[0], rhs[0], function1.vector())
-        function2 = Function(block_V[1])
-        DirichletBCLegacy.apply(block_bcs[1], rhs[1], function2.vector())
-        block_function = BlockFunction(block_V)
-        BlockDirichletBCLegacy.apply(block_bcs, block_rhs, block_function.block_vector())
-        return ((function1, function2), block_function)
+        return (None, None)
         
 # ================ LEFT-HAND SIDE BLOCK FORM ASSEMBLER ================ #
 def assemble_and_block_assemble_matrix(block_form):
+    block_matrix = block_assemble(block_form)
     N = len(block_form)
-    assert N in (1, 2)
     M = len(block_form[0])
     assert M == N
-    if N == 1:
-        return assemble(block_form[0][0]), block_assemble(block_form)
-    else:
-        return ((assemble(block_form[0][0]), assemble(block_form[0][1])), (assemble(block_form[1][0]), assemble(block_form[1][1]))), block_assemble(block_form)
+    matrix = [[assemble_matrix(block_form[i][j]) for j in range(M)] for i in range(N)]
+    [matrix[i][j].assemble() for j in range(M) for i in range(N)]
+    return tuple(matrix), block_matrix
     
 def apply_bc_and_block_bc_matrix(lhs, block_lhs, block_bcs):
-    if block_bcs is None:
-        return
-    N = len(block_bcs)
-    assert N in (1, 2)
-    if N == 1:
-        DirichletBCLegacy.apply(block_bcs[0], lhs, 1.)
+    if block_bcs is not None:
         BlockDirichletBCLegacy.apply(block_bcs, block_lhs, 1.)
-    else:
-        DirichletBCLegacy.apply(block_bcs[0], lhs[0][0], 1.)
-        DirichletBCLegacy.apply(block_bcs[0], lhs[0][1], 0.)
-        DirichletBCLegacy.apply(block_bcs[1], lhs[1][0], 0.)
-        DirichletBCLegacy.apply(block_bcs[1], lhs[1][1], 1.)
-        BlockDirichletBCLegacy.apply(block_bcs, block_lhs, 1.)
+        N = len(lhs)
+        M = len(lhs[0])
+        assert M == N
+        assert N == len(block_bcs)
+        [DirichletBCLegacy.apply(block_bcs[i], lhs[i][j], 1.*(i == j)) for j in range(M) for i in range(N)]
         
 # ================ BLOCK FUNCTIONS GENERATOR ================ #
 # Computation of block function for single block
@@ -684,7 +699,7 @@ def get_list_of_functions_2(block_V):
 # ================ PARALLEL SUPPORT ================ #
 # Gather matrices, vector and dicts on zero-th process
 def allgather(obj, comm, **kwargs):
-    assert isinstance(obj, (dict, tuple, PETScMatrix, PETScVector))
+    assert isinstance(obj, (dict, tuple, PETSc.Mat, PETSc.Vec))
     if isinstance(obj, (dict, tuple)):
         assert "block_dofmap" in kwargs
         assert "dofmap" in kwargs
@@ -734,18 +749,18 @@ def allgather(obj, comm, **kwargs):
                     if original1 < all_ownership_ranges1[r][1] - all_ownership_ranges1[r][0]:
                         output[block1 + block_base_index1[r]] = original1 + base_index1[r]
             return output
-    elif isinstance(obj, PETScMatrix):
+    elif isinstance(obj, PETSc.Mat):
         return vstack(comm.allgather(to_dense(obj)))
-    elif isinstance(obj, PETScVector):
+    elif isinstance(obj, PETSc.Vec):
         return hstack(comm.allgather(to_dense(obj)))
     else:
         raise AssertionError("Invalid arguments to allgather")
         
 # Get dense representation of local part of tensor
 def to_dense(obj):
-    assert isinstance(obj, (PETScMatrix, PETScVector))
-    if isinstance(obj, PETScMatrix):
-        ai, aj, av = obj.mat().getValuesCSR()
-        return csr_matrix((av, aj, ai), shape=(obj.mat().getLocalSize()[0], obj.mat().getSize()[1])).todense().A
-    elif isinstance(obj, PETScVector):
-        return obj.get_local()
+    assert isinstance(obj, (PETSc.Mat, PETSc.Vec))
+    if isinstance(obj, PETSc.Mat):
+        ai, aj, av = obj.getValuesCSR()
+        return csr_matrix((av, aj, ai), shape=(obj.getLocalSize()[0], obj.getSize()[1])).todense().A
+    elif isinstance(obj, PETSc.Vec):
+        return obj.getArray()
