@@ -21,7 +21,7 @@ from ufl import Form
 from ufl.algorithms import expand_derivatives
 from ufl.algorithms.analysis import has_exact_type
 from ufl.classes import CoefficientDerivative
-from dolfin.fem.assembling import _create_cpp_form
+from dolfin.fem.assemble import _create_cpp_form
 from dolfin.cpp.fem import Form as cpp_Form
 from multiphenics.fem.block_form_1 import BlockForm1
 from multiphenics.fem.block_replace_zero import block_replace_zero, _is_zero
