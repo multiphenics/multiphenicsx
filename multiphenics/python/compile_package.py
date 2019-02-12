@@ -93,16 +93,16 @@ def compile_package(package_name, package_root, *args, **kwargs):
     
 def compile_cpp_code(package_name, package_code, **kwargs):
     # Patch dijitso to generate package with a custom prefix
-    original_dijitso_jit = dolfin.jit.dijitso_jit
+    original_dijitso_jit = dolfin.pybind11jit.dijitso_jit
     def dijitso_jit(jitable, name, params, generate=None, send=None, receive=None, wait=None):
         return original_dijitso_jit(jitable, name.replace("dolfin", package_name), params, generate, send, receive, wait)
-    dolfin.jit.dijitso_jit = dijitso_jit
+    dolfin.pybind11jit.dijitso_jit = dijitso_jit
     
     # Call DOLFIN's compile_cpp_code
     cpp = dolfin_compile_cpp_code(package_code, **kwargs)
     
     # Undo dijitso patch
-    dolfin.jit.dijitso_jit = original_dijitso_jit
+    dolfin.pybind11jit.dijitso_jit = original_dijitso_jit
     
     # Return compiled module
     return cpp
