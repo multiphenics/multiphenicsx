@@ -31,7 +31,7 @@ from multiphenics.python import cpp
 BlockForm2_Base = cpp.fem.BlockForm2
 
 class BlockForm2(BlockForm2_Base):
-    def __init__(self, block_form, block_function_space, form_compiler_parameters=None):
+    def __init__(self, block_form, block_function_space):
         # Store UFL form
         self._block_form = block_form
         # Store block function space
@@ -53,8 +53,7 @@ class BlockForm2(BlockForm2_Base):
                 assert isinstance(replaced_block_form[I, J], Form) or _is_zero(replaced_block_form[I, J])
                 if isinstance(replaced_block_form[I, J], Form):
                     replaced_block_form[I, J] = _create_cpp_form(
-                        form=replaced_block_form[I, J],
-                        form_compiler_parameters=form_compiler_parameters
+                        form=replaced_block_form[I, J]
                     )
                 elif _is_zero(replaced_block_form[I, J]):
                     assert isinstance(replaced_block_form[I, J], cpp_Form)

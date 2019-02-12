@@ -24,15 +24,15 @@ from multiphenics.fem.block_form_2 import BlockForm2
 from multiphenics.fem.block_replace_zero import _get_block_form_rank, _is_zero
 from multiphenics.function import BlockFunctionSpace
 
-def BlockForm(block_form, block_function_space=None, block_form_rank=None, form_compiler_parameters=None):
+def BlockForm(block_form, block_function_space=None, block_form_rank=None):
     assert isinstance(block_form, (array, list, BlockForm1, BlockForm2))
     if isinstance(block_form, (array, list)):
         (replaced_block_form, block_function_space, block_form_rank) = \
             _block_form_preprocessing(block_form, block_function_space, block_form_rank)
         if block_form_rank == 2:
-            return BlockForm2(replaced_block_form, block_function_space, form_compiler_parameters)
+            return BlockForm2(replaced_block_form, block_function_space)
         elif block_form_rank == 1:
-            return BlockForm1(replaced_block_form, block_function_space, form_compiler_parameters)
+            return BlockForm1(replaced_block_form, block_function_space)
     else:
         return block_form
         

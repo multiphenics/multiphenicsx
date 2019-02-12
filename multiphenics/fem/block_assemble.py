@@ -23,12 +23,11 @@ from multiphenics.fem.block_form_2 import BlockForm2
 from multiphenics.python import cpp
 
 def block_assemble(block_form,
-                   block_tensor=None,
-                   form_compiler_parameters=None):
+                   block_tensor=None):
 
     # Create a block form, the provided one is a list of Forms
     if isinstance(block_form, (array, list)):
-        block_form = BlockForm(block_form, form_compiler_parameters=form_compiler_parameters)
+        block_form = BlockForm(block_form)
     else:
         assert isinstance(block_form, (BlockForm1, BlockForm2))
 
