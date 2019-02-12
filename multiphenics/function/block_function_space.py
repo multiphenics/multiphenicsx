@@ -18,9 +18,10 @@
 
 import types
 import numpy
+import cffi
 from ufl.finiteelement import FiniteElementBase
 from dolfin import FunctionSpace, Mesh, MeshFunction, SubDomain
-import dolfin.cpp as dolfin_cpp
+import dolfin.cpp
 from dolfin.cpp.mesh import MeshFunctionBool
 import dolfin.fem.dofmap
 from dolfin.jit import ffc_jit
@@ -29,14 +30,16 @@ from multiphenics.python import cpp
 from multiphenics.mesh import MeshRestriction
 
 def _compile_dolfin_element(element, mesh):
-    # Compile dofmap and element
-    ufc_element, ufc_dofmap = ffc_jit(element, form_compiler_parameters=None,
-                                      mpi_comm=mesh.mpi_comm())
-    ufc_element = dolfin_cpp.fem.make_ufc_finite_element(ufc_element)
+    # Compile dofmap and element and create DOLFIN objects
+    ufc_element, ufc_dofmap = ffc_jit(
+        element,
+        form_compiler_parameters=None,
+        mpi_comm=mesh.mpi_comm())
 
-    # Create DOLFIN element and dofmap
-    dolfin_element = dolfin_cpp.fem.FiniteElement(ufc_element)
-    dolfin_dofmap = dolfin.fem.dofmap.DofMap.fromufc(ufc_dofmap, mesh)
+    ffi = cffi.FFI()
+    ufc_element = dolfin.fem.dofmap.make_ufc_finite_element(ffi.cast("uintptr_t", ufc_element))
+    dolfin_element = dolfin.cpp.fem.FiniteElement(ufc_element)
+    dolfin_dofmap = dolfin.fem.dofmap.DofMap.fromufc(ffi.cast("uintptr_t", ufc_dofmap), mesh)
     
     return dolfin_element, dolfin_dofmap
     
