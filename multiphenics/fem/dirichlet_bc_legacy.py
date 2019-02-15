@@ -16,6 +16,6 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from multiphenics.python import cpp
+from multiphenics.cpp import cpp
 
 DirichletBCLegacy = cpp.fem.DirichletBCLegacy

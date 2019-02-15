@@ -4,7 +4,7 @@
 //
 // SPDX-License-Identifier:    LGPL-3.0-or-later
 
-#include <multiphenics/python/MPICommWrapper.h>
+#include <multiphenics/pybind11/MPICommWrapper.h>
 
 using namespace dolfin_wrappers;
 

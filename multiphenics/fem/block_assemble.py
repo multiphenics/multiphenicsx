@@ -17,10 +17,10 @@
 #
 
 from numpy import ndarray as array
+from multiphenics.cpp import cpp
 from multiphenics.fem.block_form import BlockForm
 from multiphenics.fem.block_form_1 import BlockForm1
 from multiphenics.fem.block_form_2 import BlockForm2
-from multiphenics.python import cpp
 
 def block_assemble(block_form,
                    block_tensor=None):

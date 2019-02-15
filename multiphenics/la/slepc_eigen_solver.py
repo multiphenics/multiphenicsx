@@ -17,7 +17,7 @@
 #
 
 from dolfin import DirichletBC
-from multiphenics.python import cpp
+from multiphenics.cpp import cpp
     
 def SLEPcEigenSolver(A, B=None, bcs=None):
     mpi_comm = A.getComm()    

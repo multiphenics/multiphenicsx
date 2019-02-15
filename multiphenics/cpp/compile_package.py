@@ -30,17 +30,14 @@ def compile_package(package_name, package_root, *args, **kwargs):
     # Make sure that there are no duplicate files
     assert len(files) == len(set(files)), "There seems to be duplicate files. Make sure to include in the list only *.cpp files, not *.h ones."
     
-    # Extract folders
-    package_folder = os.path.join(package_root, package_name)
-    
     # Extract files
-    package_headers = [os.path.join(package_folder, f + ".h") for f in files]
-    package_sources = [os.path.join(package_folder, f + ".cpp") for f in files]
+    package_headers = [os.path.join(package_root, package_name, f + ".h") for f in files]
+    package_sources = [os.path.join(package_root, package_name, f + ".cpp") for f in files]
     assert len(package_headers) == len(package_sources)
     
     # Make sure that there are no files missing
     for (extension, typename, files_to_check) in zip(["h", "cpp"], ["headers", "sources"], [package_headers, package_sources]):
-        all_package_files = set(glob.glob(os.path.join(package_folder, "[!python]*", "*." + extension)))
+        all_package_files = set(glob.glob(os.path.join(package_root, package_name, "[!pybind11]*", "*." + extension)))
         sorted_package_files = set(files_to_check)
         if len(sorted_package_files) > len(all_package_files):
             raise AssertionError("Input " + typename + " list contains more files than ones present in the library. The files " + str(sorted_package_files - all_package_files) + " seem not to exist.")
@@ -50,17 +47,17 @@ def compile_package(package_name, package_root, *args, **kwargs):
             assert sorted_package_files == all_package_files, "Input " + typename + " list contains different files than ones present in the library. The files " + str(sorted_package_files - all_package_files) + " seem not to exist."
             
     # Extract submodules
-    package_submodules = set([os.path.relpath(f, package_folder) for f in glob.glob(os.path.join(package_folder, "[!_]*"))])
-    package_submodules.remove("python")
+    package_submodules = set([os.path.relpath(f, os.path.join(package_root, package_name)) for f in glob.glob(os.path.join(package_root, package_name, "[!_]*/"))])
+    package_submodules.remove("pybind11")
     package_submodules = sorted(package_submodules)
     
     # Extract pybind11 files corresponding to each submodule
     package_pybind11_sources = list()
     for package_submodule in package_submodules:
-        package_pybind11_sources.append(os.path.join(package_folder, "python", package_submodule + ".cpp"))
-    if os.path.isfile(os.path.join(package_folder, "python", "MPICommWrapper.cpp")):
-        package_pybind11_sources.append(os.path.join(package_folder, "python", "MPICommWrapper.cpp")) # TODO remove local copy of DOLFIN's pybind11 files
-    package_pybind11_sources.append(os.path.join(package_folder, "python", package_name + ".cpp"))
+        package_pybind11_sources.append(os.path.join(package_root, package_name, "pybind11", package_submodule + ".cpp"))
+    if os.path.isfile(os.path.join(package_root, package_name, "pybind11", "MPICommWrapper.cpp")):
+        package_pybind11_sources.append(os.path.join(package_root, package_name, "pybind11", "MPICommWrapper.cpp")) # TODO remove local copy of DOLFIN's pybind11 files
+    package_pybind11_sources.append(os.path.join(package_root, package_name, "pybind11", package_name + ".cpp"))
     
     # Read in the code
     package_code = ""

@@ -19,7 +19,7 @@
 import types
 from petsc4py import PETSc
 from dolfin import Function
-from multiphenics.python import cpp
+from multiphenics.cpp import cpp
 from multiphenics.function.block_function_space import BlockFunctionSpace
 
 BlockFunction_Base = cpp.function.BlockFunction

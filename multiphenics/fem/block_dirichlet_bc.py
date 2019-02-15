@@ -17,7 +17,7 @@
 #
 
 import collections
-from multiphenics.python import cpp
+from multiphenics.cpp import cpp
 
 BlockDirichletBC_Base = cpp.fem.BlockDirichletBC
 

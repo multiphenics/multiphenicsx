@@ -19,7 +19,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include <multiphenics/python/petsc_casters.h> // TODO remove local copy of DOLFIN's pybind11 files
+#include <multiphenics/pybind11/petsc_casters.h> // TODO remove local copy of DOLFIN's pybind11 files
 
 namespace py = pybind11;
 

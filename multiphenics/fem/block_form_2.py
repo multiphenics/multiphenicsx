@@ -23,10 +23,10 @@ from ufl.algorithms.analysis import has_exact_type
 from ufl.classes import CoefficientDerivative
 from dolfin.fem.assemble import _create_cpp_form
 from dolfin.cpp.fem import Form as cpp_Form
+from multiphenics.cpp import cpp
 from multiphenics.fem.block_form_1 import BlockForm1
 from multiphenics.fem.block_replace_zero import block_replace_zero, _is_zero
 from multiphenics.function import BlockFunction
-from multiphenics.python import cpp
 
 BlockForm2_Base = cpp.fem.BlockForm2
 

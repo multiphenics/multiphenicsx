@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <multiphenics/python/MPICommWrapper.h>
+#include <multiphenics/pybind11/MPICommWrapper.h>
 #include <dolfin/common/SubSystemsManager.h>
 #include <pybind11/pybind11.h>
 

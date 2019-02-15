@@ -25,8 +25,8 @@ import dolfin.cpp
 from dolfin.cpp.mesh import MeshFunctionBool
 import dolfin.fem.dofmap
 from dolfin.jit import ffc_jit
+from multiphenics.cpp import cpp
 from multiphenics.function.block_element import BlockElement
-from multiphenics.python import cpp
 from multiphenics.mesh import MeshRestriction
 
 def _compile_dolfin_element(element, mesh):

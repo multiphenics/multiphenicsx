@@ -17,12 +17,12 @@
 #
 
 import os
-from multiphenics.python.compile_package import compile_package
+from multiphenics.cpp.compile_package import compile_package
 
 # Compile package
 cpp = compile_package(
     "multiphenics",
-    os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../..")),
+    os.path.dirname(os.path.abspath(__file__)),
     # Files are manually sorted to handle dependencies
     "log/log.cpp",
     "fem/BlockDofMap.cpp",

@@ -20,8 +20,8 @@ from numpy import empty
 from ufl import Form
 from dolfin.cpp.fem import Form as cpp_Form
 from dolfin.fem.assemble import _create_cpp_form
+from multiphenics.cpp import cpp
 from multiphenics.fem.block_replace_zero import block_replace_zero, _is_zero
-from multiphenics.python import cpp
 
 BlockForm1_Base = cpp.fem.BlockForm1
 

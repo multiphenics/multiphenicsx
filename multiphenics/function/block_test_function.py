@@ -16,8 +16,8 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from multiphenics.function.test_function import TestFunction
 from multiphenics.function.block_test_trial_function_base import BlockTestTrialFunction_Base
+from multiphenics.function.test_function import TestFunction
 
 class BlockTestFunction(BlockTestTrialFunction_Base):
     def __new__(cls, arg1):
