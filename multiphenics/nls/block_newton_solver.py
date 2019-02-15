@@ -22,4 +22,4 @@ class BlockNewtonSolver(NewtonSolver):
     def solve(self, problem, block_solution_vector):
         NewtonSolver.solve(self, problem, block_solution_vector)
         # Keep subfunctions up to date
-        block_solution_vector.block_solution().apply("to subfunctions")
+        problem.block_solution.apply("to subfunctions")

@@ -16,6 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from petsc4py import PETSc
 from dolfin import NonlinearProblem
 from multiphenics.fem import block_assemble, BlockDirichletBCLegacy
 
@@ -31,6 +32,9 @@ class BlockNonlinearProblem(NonlinearProblem):
         self.residual_block_vector = None
         self.jacobian_block_matrix = None
         
+    def form(self, block_x):
+        block_x.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
+        
     def F(self, _):
         # Update block solution subfunctions based on the last argument, which has already been
         # stored in self.block_solution.block_vector()
@@ -39,6 +43,8 @@ class BlockNonlinearProblem(NonlinearProblem):
         if self.residual_block_vector is None:
             self.residual_block_vector = block_assemble(self.residual_block_form)
         else:
+            with self.residual_block_vector.localForm() as residual_block_vector_local:
+                residual_block_vector_local.set(0.0)
             block_assemble(self.residual_block_form, block_tensor=self.residual_block_vector)
         # Apply boundary conditions
         if self.bcs is not None:
@@ -52,6 +58,7 @@ class BlockNonlinearProblem(NonlinearProblem):
         if self.jacobian_block_matrix is None:
             self.jacobian_block_matrix = block_assemble(self.jacobian_block_form)
         else:
+            self.jacobian_block_matrix.zeroEntries()
             block_assemble(self.jacobian_block_form, block_tensor=self.jacobian_block_matrix)
         # Apply boundary conditions
         if self.bcs is not None:
