@@ -21,7 +21,7 @@ from petsc4py import PETSc
 from dolfin import div, ds, dx, grad, FunctionSpace, inner, MPI, UnitSquareMesh, VectorFunctionSpace
 from dolfin_utils.test.fixtures import fixture as module_fixture
 from multiphenics import block_adjoint, block_derivative, BlockForm, BlockFunction, BlockFunctionSpace, block_restrict, block_split, BlockTestFunction, BlockTrialFunction
-from test_utils import assert_forms_equal, get_list_of_functions_2, to_dense
+from test_utils import assert_forms_equal, get_list_of_functions_2
 
 # Mesh
 @module_fixture
@@ -1424,7 +1424,7 @@ def test_case_2f(mesh):
     assert_forms_equal(A[3, 1], 0)
     assert_forms_equal(A[3, 2], a_11[1][0])
     assert_forms_equal(A[3, 3], a_11[1][1])
-    assert_forms_equal(A[3, 4],-a_12[1][0])
+    assert_forms_equal(A[3, 4], -a_12[1][0])
     assert_forms_equal(A[4, 0], a_20[0][0])
     assert_forms_equal(A[4, 1], a_20[0][1])
     assert_forms_equal(A[4, 2], a_21[0][0])

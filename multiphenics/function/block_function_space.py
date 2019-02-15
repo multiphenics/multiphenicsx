@@ -53,23 +53,23 @@ class BlockFunctionSpace(object):
         if len(args) == 1:
             assert isinstance(args[0], (list, tuple))
             assert (
-                len(kwargs) is 0
+                len(kwargs) == 0
                     or
-                (len(kwargs) is 1 and "restrict" in kwargs)
+                (len(kwargs) == 1 and "restrict" in kwargs)
             )
             self._init_from_function_spaces(*args, **kwargs)
         elif len(args) == 2:
             if isinstance(args[0], Mesh):
                 assert isinstance(args[1], (list, tuple, BlockElement))
                 assert (
-                    len(kwargs) is 0
+                    len(kwargs) == 0
                         or
-                    (len(kwargs) is 1 and "restrict" in kwargs)
+                    (len(kwargs) == 1 and "restrict" in kwargs)
                 )
                 self._init_from_ufl(*args, **kwargs)
             elif isinstance(args[0], BlockFunctionSpace_Base):
                 assert isinstance(args[1], (list, tuple, BlockElement))
-                assert len(kwargs) is 0
+                assert len(kwargs) == 0
                 self._init_from_cpp(*args, **kwargs)
             else:
                 raise AssertionError("Invalid argument to BlockFunctionSpace")

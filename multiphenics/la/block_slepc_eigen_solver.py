@@ -19,8 +19,6 @@
 from multiphenics.cpp import cpp
 
 def BlockSLEPcEigenSolver(A, B=None, bcs=None):
-    mpi_comm = A.getComm()
-    
     if bcs is None:
         eigen_solver = cpp.la.SLEPcEigenSolver(A.getComm())
     else:
@@ -29,4 +27,3 @@ def BlockSLEPcEigenSolver(A, B=None, bcs=None):
         
     eigen_solver.set_operators(A, B)
     return eigen_solver
-    

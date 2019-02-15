@@ -20,17 +20,15 @@ from dolfin import DirichletBC
 from multiphenics.cpp import cpp
     
 def SLEPcEigenSolver(A, B=None, bcs=None):
-    mpi_comm = A.getComm()    
-    
     if bcs is None:
-        eigen_solver = cpp.la.SLEPcEigenSolver(mpi_comm)
+        eigen_solver = cpp.la.SLEPcEigenSolver(A.getComm())
     else:
         assert isinstance(bcs, (DirichletBC, list))
         if isinstance(bcs, DirichletBC):
             bcs = [bcs]
         else:
             assert all([isinstance(bc, DirichletBC) for bc in bcs])
-        eigen_solver = cpp.la.CondensedSLEPcEigenSolver(mpi_comm)
+        eigen_solver = cpp.la.CondensedSLEPcEigenSolver(A.getComm())
         eigen_solver.set_boundary_conditions(bcs)
         
     eigen_solver.set_operators(A, B)
