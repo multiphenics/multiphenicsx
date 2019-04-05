@@ -39,7 +39,7 @@ degree of freedom.
 The preferred way to impose non-homogeneous Dirichlet boundary conditions should still
 either be through BlockDirichletBC objects (see tutorial 1) or lagrange multipliers
 (see tutorial 3). This example means to show how to get the list of degrees of freedom
-associated to a specific restriction, and how to perform local modifications to assemble
+associated to a specific restriction, and how to perform local modifications to assembled
 matrices.
 """
 

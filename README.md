@@ -33,6 +33,8 @@ Several tutorials are provided in the [**tutorials** subfolder](https://gitlab.c
 * **Tutorial 4**: computation of the inf-sup constant for a Stokes problem assembled using block matrices.
 * **Tutorial 5**: computation of the inf-sup constant for the problem presented in tutorial 3.
 * **Tutorial 6**: several examples on optimal control problems, with different state equations (elliptic, Stokes, Navier-Stokes), control (distributed or boundary) and observation (distributed or boundary).
+* **Tutorial 7**: generation of restrictions for meshes obtained from gmsh.
+* **Tutorial 8**: how to get the list of degrees of freedom associated to a specific restriction, and use it e.g. to perform local modifications to assembled tensors.
 * Additional tutorials on simple multiphysics problems are forthcoming.
 
 ### 4. Authors and contributors
@@ -46,7 +48,7 @@ Contact us by [email](mailto:francesco.ballarin@sissa.it) for further informatio
 * multimesh support in FEniCS, which aims at providing support for problems on non conforming meshes. In **multiphenics** we are rather interested in conforming meshes, with possible restriction of the unknowns to subdomains and/or boundaries.
 * [CutFEM](http://www.cutfem.org/), an unfitted finite element framework for multi-physics problems that relies on the FEniCS project.
 * [CBC.Block](https://bitbucket.org/fenics-apps/cbc.block/) for the definition of block matrices and vectors in FEniCS.
-* Weak imposition of Dirichlet Dirichlet boundary conditions by Lagrange multipliers is a frequently asked question on FEniCS support forums [[1](https://fenicsproject.org/qa/), [2](https://www.allanswered.com/community/s/fenics-project/)]. Some answers provide possible solutions to the problem (e.g. constraining the useless degrees of freedom by DirichletBC), which however may result in an unnecessarily large system to be solved. **multiphenics** handles subdomain/boundary restricted variables in an efficient and automatic way.
+* Weak imposition of Dirichlet Dirichlet boundary conditions by Lagrange multipliers is a frequently asked question on FEniCS support forums [[1](https://fenicsproject.org/qa/), [2](https://fenicsproject.discourse.group/)]. Some answers provide possible solutions to the problem (e.g. constraining the useless degrees of freedom by DirichletBC), which however may result in an unnecessarily large system to be solved. **multiphenics** handles subdomain/boundary restricted variables in an efficient and automatic way.
 * Please contact us by [email](mailto:francesco.ballarin@sissa.it) if you have other related resources.
 
 ### 6. How to cite
