@@ -23,11 +23,11 @@ setup(name="multiphenics",
       long_description="Easy prototyping of multiphysics problems on conforming meshes in FEniCS",
       author="Francesco Ballarin (and contributors)",
       author_email="francesco.ballarin@sissa.it",
-      version="0.2.dev0",
+      version="0.2.0",
       license="GNU Library or Lesser General Public License (LGPL)",
       url="http://mathlab.sissa.it/multiphenics",
       classifiers=[
-          "Development Status :: 3 - Alpha"
+          "Development Status :: 5 - Production/Stable"
           "Intended Audience :: Developers",
           "Intended Audience :: Science/Research",
           "Programming Language :: Python :: 3",
