@@ -35,7 +35,7 @@ Several tutorials are provided in the [**tutorials** subfolder](https://gitlab.c
 * **Tutorial 6**: several examples on optimal control problems, with different state equations (elliptic, Stokes, Navier-Stokes), control (distributed or boundary) and observation (distributed or boundary).
 * **Tutorial 7**: generation of restrictions for meshes obtained from gmsh.
 * **Tutorial 8**: how to get the list of degrees of freedom associated to a specific restriction, and use it e.g. to perform local modifications to assembled tensors.
-* Additional tutorials on simple multiphysics problems are forthcoming.
+* **Tutorial 9**: applications of **multiphenics** to multiphysics problems. [We are looking forward to receiving further multiphysics examples from our users!](https://gitlab.com/multiphenics/multiphenics/issues/10)
 
 ### 4. Authors and contributors
 **multiphenics** is currently developed and maintained at [SISSA mathLab](http://mathlab.sissa.it/) by [Dr. Francesco Ballarin](http://people.sissa.it/~fballarin/), under the supervision of [Prof. Gianluigi Rozza](http://people.sissa.it/~grozza/) in the framework of the [AROMA-CFD ERC CoG project](http://people.sissa.it/~grozza/aroma-cfd/). Please see the [AUTHORS file](https://gitlab.com/multiphenics/multiphenics/raw/master/AUTHORS) for a list of contributors.
