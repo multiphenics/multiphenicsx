@@ -93,7 +93,34 @@ class BlockForm2(BlockForm2_Base):
             output_block_form = empty((self.N, self.M), dtype=object)
             for I in range(self.N):
                 for J in range(self.M):
-                    output_block_form[I, J] = self[I, J] + other[I, J]
+                    assert isinstance(self[I, J], Form) or _is_zero(self[I, J])
+                    assert isinstance(other[I, J], Form) or _is_zero(other[I, J])
+                    if (
+                        isinstance(self[I, J], Form)
+                            and
+                        isinstance(other[I, J], Form)
+                    ):
+                        output_block_form[I, J] = self[I, J] + other[I, J]
+                    elif (
+                        isinstance(self[I, J], Form)
+                            and
+                        _is_zero(other[I, J])
+                    ):
+                        output_block_form[I, J] = self[I, J]
+                    elif (
+                        isinstance(other[I, J], Form)
+                            and
+                        _is_zero(self[I, J])
+                    ):
+                        output_block_form[I, J] = other[I, J]
+                    elif (
+                        _is_zero(self[I, J])
+                            and
+                        _is_zero(other[I, J])
+                    ):
+                        output_block_form[I, J] = 0
+                    else:
+                        raise TypeError("Invalid form")
             return BlockForm2(output_block_form, self._block_function_space)
         else:
             return NotImplemented
@@ -104,9 +131,16 @@ class BlockForm2(BlockForm2_Base):
             assert self._block_function_space[1] is other._block_function_space
             output_block_form = empty((self.N, ), dtype=object)
             for I in range(self.N):
-                output_block_form[I] = self[I, 0]*other[0]
-                for J in range(1, self.M):
-                    output_block_form[I] += self[I, J]*other[J]
+                non_zero_J = list()
+                for J in range(self.M):
+                    if isinstance(self[I, J], Form):
+                        non_zero_J.append(J)
+                if len(non_zero_J) > 0:
+                    output_block_form[I] = self[I, non_zero_J[0]]*other[non_zero_J[0]]
+                    for J in non_zero_J[1:]:
+                        output_block_form[I] += self[I, J]*other[J]
+                else:
+                    output_block_form = 0
             return BlockForm1(output_block_form, [self._block_function_space[0]])
         else:
             return NotImplemented
@@ -125,7 +159,13 @@ class BlockForm2(BlockForm2_Base):
             output_block_form = empty((self.N, self.M), dtype=object)
             for I in range(self.N):
                 for J in range(self.M):
-                    output_block_form[I, J] = other*self[I, J]
+                    assert isinstance(self[I, J], Form) or _is_zero(self[I, J])
+                    if isinstance(self[I, J], Form):
+                        output_block_form[I, J] = other*self[I, J]
+                    elif _is_zero(self[I, J]):
+                        output_block_form[I, J] = 0
+                    else:
+                        raise TypeError("Invalid form")
             return BlockForm2(output_block_form, self._block_function_space)
         else:
             return NotImplemented

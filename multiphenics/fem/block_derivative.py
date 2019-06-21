@@ -39,9 +39,11 @@ def block_derivative(F, u, du):
     assert len(F) == len(u) == len(du)
     J = empty((len(F), len(u)), dtype=object)
     for i in range(len(F)):
-        assert not _is_zero(F[i]) # J[i, :] would be zero, resulting in a singular matrix
-        for j in range(len(u)):
-            J[i, j] = derivative(F[i], u[j], du[j])
+        if not _is_zero(F[i]):
+            for j in range(len(u)):
+                J[i, j] = derivative(F[i], u[j], du[j])
+        else:
+            J[i, :] = 0
     if input_type is array:
         return J
     elif input_type is BlockForm1:

@@ -80,7 +80,34 @@ class BlockForm1(BlockForm1_Base):
             assert self._block_function_space[0] is other._block_function_space[0]
             output_block_form = empty((self.N, ), dtype=object)
             for I in range(self.N):
-                output_block_form[I] = self[I] + other[I]
+                assert isinstance(self[I], Form) or _is_zero(self[I])
+                assert isinstance(other[I], Form) or _is_zero(other[I])
+                if (
+                    isinstance(self[I], Form)
+                        and
+                    isinstance(other[I], Form)
+                ):
+                    output_block_form[I] = self[I] + other[I]
+                elif (
+                    isinstance(self[I], Form)
+                        and
+                    _is_zero(other[I])
+                ):
+                    output_block_form[I] = self[I]
+                elif (
+                    isinstance(other[I], Form)
+                        and
+                    _is_zero(self[I])
+                ):
+                    output_block_form[I] = other[I]
+                elif (
+                    _is_zero(self[I])
+                        and
+                    _is_zero(other[I])
+                ):
+                    output_block_form[I] = 0
+                else:
+                    raise TypeError("Invalid form")
             return BlockForm1(output_block_form, self._block_function_space)
         else:
             return NotImplemented
@@ -98,7 +125,13 @@ class BlockForm1(BlockForm1_Base):
         if isinstance(other, float):
             output_block_form = empty((self.N, ), dtype=object)
             for I in range(self.N):
-                output_block_form[I] = other*self[I]
+                assert isinstance(self[I], Form) or _is_zero(self[I])
+                if isinstance(self[I], Form):
+                    output_block_form[I] = other*self[I]
+                elif _is_zero(self[I]):
+                    output_block_form[I] = 0
+                else:
+                    raise TypeError("Invalid form")
             return BlockForm1(output_block_form, self._block_function_space)
         else:
             return NotImplemented
