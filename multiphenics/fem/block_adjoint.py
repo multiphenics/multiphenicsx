@@ -18,7 +18,7 @@
 
 from numpy import ndarray as array, empty
 from ufl import Form
-from dolfin import adjoint
+from dolfin.fem import adjoint
 from multiphenics.fem.block_form import _block_form_preprocessing
 from multiphenics.fem.block_form_2 import BlockForm2
 from multiphenics.fem.block_replace_zero import _is_zero
