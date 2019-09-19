@@ -18,7 +18,6 @@
 
 #include <dolfin/common/IndexMap.h>
 #include <dolfin/fem/DofMap.h>
-#include <dolfin/mesh/Cell.h>
 #include <dolfin/mesh/Mesh.h>
 #include <dolfin/mesh/MeshIterator.h>
 #include <multiphenics/fem/BlockDofMap.h>
@@ -28,7 +27,6 @@ using namespace multiphenics::fem;
 
 using dolfin::common::IndexMap;
 using dolfin::fem::DofMap;
-using dolfin::mesh::Cell;
 using dolfin::mesh::Mesh;
 using dolfin::mesh::MeshEntity;
 using dolfin::mesh::MeshFunction;
@@ -178,7 +176,7 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
           }
                     
           // Get the first cell connected to the entity
-          const Cell cell(mesh, *cell_indices.begin());
+          const MeshEntity cell(mesh, D, *cell_indices.begin());
 
           // Find local entity number
           std::size_t local_entity_ind = 0;
