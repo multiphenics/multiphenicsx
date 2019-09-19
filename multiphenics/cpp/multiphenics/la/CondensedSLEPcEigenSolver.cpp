@@ -65,7 +65,7 @@ void CondensedSLEPcEigenSolver::set_boundary_conditions(std::vector<std::shared_
   }
   #endif
   auto local_range = dofmap->index_map->local_range();
-  int dofmap_block_size = dofmap->index_map->block_size();
+  int dofmap_block_size = dofmap->index_map->block_size;
   
   // List all constrained local dofs
   std::set<PetscInt> constrained_local_dofs;

@@ -218,7 +218,7 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
               if (in_restriction)
               {
                 unowned_dofs_in_restriction[i].insert(cell_dof);
-                int dofmap_block_size = dofmap->index_map->block_size();
+                int dofmap_block_size = dofmap->index_map->block_size;
                 std::size_t cell_global_dof = dofmap->index_map->local_to_global(cell_dof/dofmap_block_size)*dofmap_block_size + (cell_dof%dofmap_block_size);
                 unowned_dofs_in_restriction__local_to_global[i][cell_dof] = cell_global_dof;
                 for (auto c : cell_indices)
@@ -341,7 +341,7 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
   {
     sub_local_to_sub_global_unowned[i].resize(sub_block_dofmap_unowned_size[i]);
     std::shared_ptr<const DofMap> dofmap = std::dynamic_pointer_cast<const DofMap>(dofmaps[i]);
-    int dofmap_block_size = dofmap->index_map->block_size();
+    int dofmap_block_size = dofmap->index_map->block_size;
     
     // In order to fill in the (block) local to (block) global map of unowned dofs,
     // we need to proceed as follows:
