@@ -247,15 +247,6 @@ def StokesElement(family, cell, degree):
     Q_element = FiniteElement(family, cell, degree)
     return MixedElement(V_element, Q_element)
     
-def FunctionAndRealSpace(mesh, family_degree):
-    function_and_real_element = FunctionAndRealElement(family_degree[0], mesh.ufl_cell(), family_degree[1])
-    return FunctionSpace(mesh, function_and_real_element)
-
-def FunctionAndRealElement(family, cell, degree):
-    V_element = FiniteElement(family, cell, degree)
-    R_element = FiniteElement("Real", cell, 0)
-    return MixedElement(V_element, R_element)
-    
 def get_function_spaces_1():
     return (
         lambda mesh: FunctionSpace(mesh, ("Lagrange", 1)),
@@ -265,11 +256,7 @@ def get_function_spaces_1():
         pytest_mark_slow(lambda mesh: TensorFunctionSpace(mesh, ("Lagrange", 1))),
         pytest_mark_slow(lambda mesh: TensorFunctionSpace(mesh, ("Lagrange", 2))),
         lambda mesh: StokesFunctionSpace(mesh, ("Lagrange", 1)),
-        pytest_mark_slow(lambda mesh: StokesFunctionSpace(mesh, ("Lagrange", 2))),
-        pytest_mark_broken_by_dolfinx(lambda mesh: FunctionSpace(mesh, ("Real", 0)), 225),
-        pytest_mark_broken_by_dolfinx(pytest_mark_slow(lambda mesh: VectorFunctionSpace(mesh, ("Real", 0))), 225),
-        pytest_mark_broken_by_dolfinx(pytest_mark_slow(lambda mesh: FunctionAndRealSpace(mesh, ("Lagrange", 1))), 225),
-        pytest_mark_broken_by_dolfinx(pytest_mark_slow(lambda mesh: FunctionAndRealSpace(mesh, ("Lagrange", 2))), 225)
+        pytest_mark_slow(lambda mesh: StokesFunctionSpace(mesh, ("Lagrange", 2)))
     )
     
 def get_function_spaces_2():
@@ -284,11 +271,7 @@ def get_elements_1():
         pytest_mark_slow(lambda mesh: TensorElement("Lagrange", mesh.ufl_cell(), 1)),
         pytest_mark_slow(lambda mesh: TensorElement("Lagrange", mesh.ufl_cell(), 2)),
         lambda mesh: StokesElement("Lagrange", mesh.ufl_cell(), 1),
-        pytest_mark_slow(lambda mesh: StokesElement("Lagrange", mesh.ufl_cell(), 2)),
-        pytest_mark_broken_by_dolfinx(lambda mesh: FiniteElement("Real", mesh.ufl_cell(), 0), 225),
-        pytest_mark_broken_by_dolfinx(pytest_mark_slow(lambda mesh: VectorElement("Real", mesh.ufl_cell(), 0)), 225),
-        pytest_mark_broken_by_dolfinx(pytest_mark_slow(lambda mesh: FunctionAndRealElement("Lagrange", mesh.ufl_cell(), 1)), 225),
-        pytest_mark_broken_by_dolfinx(pytest_mark_slow(lambda mesh: FunctionAndRealElement("Lagrange", mesh.ufl_cell(), 2)), 225)
+        pytest_mark_slow(lambda mesh: StokesElement("Lagrange", mesh.ufl_cell(), 2))
     )
     
 def get_elements_2():
