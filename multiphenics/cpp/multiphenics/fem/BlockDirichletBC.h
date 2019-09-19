@@ -19,7 +19,6 @@
 #ifndef __BLOCK_DIRICHLET_BC_H
 #define __BLOCK_DIRICHLET_BC_H
 
-#include <dolfin/common/Variable.h>
 #include <dolfin/fem/DirichletBC.h>
 #include <multiphenics/function/BlockFunctionSpace.h>
 
@@ -27,7 +26,7 @@ namespace multiphenics
 {
   namespace fem
   {
-    class BlockDirichletBC: public dolfin::common::Variable
+    class BlockDirichletBC
     {
     public:
       /// Create boundary condition for subdomain

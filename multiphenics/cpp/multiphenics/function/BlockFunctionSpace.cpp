@@ -23,7 +23,6 @@ using namespace multiphenics;
 using namespace multiphenics::function;
 
 using dolfin::EigenRowArrayXXd;
-using dolfin::common::Variable;
 using dolfin::fem::DofMap;
 using dolfin::fem::FiniteElement;
 using dolfin::function::FunctionSpace;

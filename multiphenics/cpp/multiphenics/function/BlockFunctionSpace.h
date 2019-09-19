@@ -30,7 +30,7 @@ namespace multiphenics
     /// a mesh, a vector of finite elements, and a vector of local-to-global mapping of the
     /// degrees of freedom (dofmap).
 
-    class BlockFunctionSpace : public dolfin::common::Variable
+    class BlockFunctionSpace
     {
     public:
     
