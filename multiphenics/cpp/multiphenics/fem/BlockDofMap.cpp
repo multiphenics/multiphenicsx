@@ -27,6 +27,7 @@ using namespace multiphenics::fem;
 
 using dolfin::common::IndexMap;
 using dolfin::fem::DofMap;
+using dolfin::mesh::cell_num_entities;
 using dolfin::mesh::Mesh;
 using dolfin::mesh::MeshEntity;
 using dolfin::mesh::MeshFunction;
@@ -139,7 +140,7 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
     {
       if (restriction.size() == D + 1)
       {
-        if (restriction[d]->dim() != d)
+        if (restriction[d]->dim() != static_cast<int>(d))
         {
           throw std::runtime_error("Cannot initialize block dof map."
                                    "Invalid dimension of restriction mesh function.");
@@ -149,16 +150,16 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
       const std::size_t dofs_per_entity = dofmap->element_dof_layout->num_entity_dofs(d);
       if (dofs_per_entity > 0)
       {
-        mesh.init(d);
-        mesh.init(d, D);
+        mesh.create_entities(d);
+        mesh.create_connectivity(d, D);
         
-        for (const auto& e : MeshRange<MeshEntity>(mesh, d))
+        for (const auto& e : MeshRange(mesh, d))
         {
           // Check if the mesh entity is in restriction
           bool in_restriction;
           if (restriction.size() > 0)
           {
-            in_restriction = (restriction[d]->operator[](e.index()) > 0);
+            in_restriction = (restriction[d]->values()[e.index()] > 0);
           }
           else
           {
@@ -167,20 +168,22 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
           }
           
           // Get ids of all cells connected to the entity
-          assert(e.num_entities(D) > 0);
+          const std::size_t num_cells
+              = mesh.topology().connectivity(d, D)->size(e.index());
+          assert(num_cells > 0);
           std::set<std::size_t> cell_indices;
-          for (std::size_t c(0); c < e.num_entities(D); ++c)
+          for (std::size_t c(0); c < num_cells; ++c)
           {
             std::size_t cell_index = e.entities(D)[c];
             cell_indices.insert(cell_index);
           }
-                    
+          
           // Get the first cell connected to the entity
           const MeshEntity cell(mesh, D, *cell_indices.begin());
 
           // Find local entity number
           std::size_t local_entity_ind = 0;
-          for (std::size_t local_i = 0; local_i < cell.num_entities(d); ++local_i)
+          for (int local_i = 0; local_i < cell_num_entities(mesh.cell_type, d); ++local_i)
           {
             if (cell.entities(d)[local_i] == e.index())
             {
@@ -193,7 +196,7 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
           const auto cell_dof_list = dofmap->cell_dofs(cell.index());
 
           // Tabulate local to local map of dofs on local entity
-          const auto local_to_local_map = dofmap->tabulate_entity_dofs(d, local_entity_ind);
+          const auto local_to_local_map = dofmap->element_dof_layout->entity_dofs(d, local_entity_ind);
 
           // Fill local dofs for the entity
           for (std::size_t local_dof = 0; local_dof < dofs_per_entity; ++local_dof)
@@ -268,7 +271,7 @@ void BlockDofMap::_assign_owned_dofs_to_block_dofmap(
   MPI_Comm comm = meshes[0]->mpi_comm();
   
   // Prepare temporary index map, neglecting ghosts
-  std::vector<std::size_t> empty_ghosts;
+  std::vector<std::int64_t> empty_ghosts;
   index_map.reset(new IndexMap(comm, block_dofmap_local_size, empty_ghosts, 1));
   for (unsigned int i = 0; i < dofmaps.size(); ++i) 
   {
@@ -332,8 +335,8 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
   const std::size_t mpi_size = dolfin::MPI::size(comm);
   std::vector<std::vector<std::size_t>> send_buffer(mpi_size);
   std::vector<std::vector<std::size_t>> recv_buffer(mpi_size);
-  std::vector<std::size_t> local_to_global_unowned(block_dofmap_unowned_size);
-  std::vector<std::vector<std::size_t>> sub_local_to_sub_global_unowned(dofmaps.size());
+  std::vector<std::int64_t> local_to_global_unowned(block_dofmap_unowned_size);
+  std::vector<std::vector<std::int64_t>> sub_local_to_sub_global_unowned(dofmaps.size());
   for (unsigned int i = 0; i < dofmaps.size(); ++i) 
   {
     sub_local_to_sub_global_unowned[i].resize(sub_block_dofmap_unowned_size[i]);
@@ -497,25 +500,6 @@ BlockDofMap::cell_dofs(std::size_t cell_index) const
   }
 }
 //-----------------------------------------------------------------------------
-DofMap
-BlockDofMap::extract_sub_dofmap(const std::vector<std::size_t>& component,
-                                const Mesh& mesh) const
-{
-  throw std::runtime_error("This method was supposedly never used by block interface, and its implementation requires some more work");
-}
-//-----------------------------------------------------------------------------
-std::pair<std::shared_ptr<DofMap>, std::vector<PetscInt>>
-BlockDofMap::collapse(const Mesh& mesh) const
-{
-  throw std::runtime_error("This method was supposedly never used by block interface, and its implementation requires some more work");
-}
-//-----------------------------------------------------------------------------
-void BlockDofMap::set(Eigen::Ref<Eigen::Matrix<PetscScalar, Eigen::Dynamic, 1>> x,
-                      PetscScalar value) const; const
-{
-  throw std::runtime_error("This method was supposedly never used by block interface, and its implementation requires some more work");
-}
-//-----------------------------------------------------------------------------
 std::string BlockDofMap::str(bool verbose) const
 {
   std::stringstream s;
@@ -524,18 +508,6 @@ std::string BlockDofMap::str(bool verbose) const
     << ">"
     << std::endl;
   return s.str();
-}
-//-----------------------------------------------------------------------------
-Eigen::Ref<const Eigen::Array<PetscInt, Eigen::Dynamic, 1>> BlockDofMap::dof_array() const
-{
-  throw std::runtime_error("This method was supposedly never used by block interface, and its implementation requires some more work");
-}
-
-//-----------------------------------------------------------------------------
-Eigen::Array<PetscInt, Eigen::Dynamic, 1> BlockDofMap::dofs(const Mesh& mesh,
-                                                       std::size_t dim) const
-{
-  throw std::runtime_error("This method was supposedly never used by block interface, and its implementation requires some more work");
 }
 //-----------------------------------------------------------------------------
 const std::vector<PetscInt> & BlockDofMap::block_owned_dofs__local_numbering(std::size_t b) const

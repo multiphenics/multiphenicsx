@@ -31,7 +31,7 @@ namespace multiphenics
     /// function spaces, also considering possible restrictions to 
     /// subdomains
 
-    class BlockDofMap : public dolfin::fem::DofMap
+    class BlockDofMap
     {
     public:
 
@@ -78,7 +78,7 @@ namespace multiphenics
         const std::vector<std::int64_t>& sub_block_dofmap_local_size
       );
       void _precompute_views(
-        const std::vector<std::shared_ptr<const DofMap>> dofmaps
+        const std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps
       );
 
     public:
@@ -86,14 +86,10 @@ namespace multiphenics
       /// Copy constructor
       BlockDofMap(const BlockDofMap& dofmap) = delete;
       
-    private:
-      
       /// Create a view for a component, *considering* restrictions. This is supposed to be used only in this class,
       /// as precomputed views are already available through the view() method.
       BlockDofMap(const BlockDofMap& block_dofmap, std::size_t i);
     
-    public:
-      
       /// Move constructor
       BlockDofMap(BlockDofMap&& dofmap) = default;
       
@@ -116,30 +112,6 @@ namespace multiphenics
       Eigen::Map<const Eigen::Array<PetscInt, Eigen::Dynamic, 1>>
       cell_dofs(std::size_t cell_index) const;
       
-      /// Extract subdofmap component
-      /// @param[in] component The component indices
-      /// @param[in] mesh The mesh the the dofmap is defined on
-      /// @return The dofmap for the component
-      dolfin::fem::DofMap
-      extract_sub_dofmap(const std::vector<std::size_t>& component,
-                         const dolfin::mesh::Mesh& mesh) const;
-
-      /// Create a "collapsed" dofmap (collapses a sub-dofmap)
-      /// @param[in] mesh The mesh that the dofmap is defined on
-      /// @return The collapsed dofmap
-      std::pair<std::unique_ptr<dolfin::fem::DofMap>, std::vector<PetscInt>>
-      collapse(const dolfin::mesh::Mesh& mesh) const;
-
-      /// Set dof entries in vector to a specified value. Parallel layout
-      /// of vector must be consistent with dof map range. This
-      /// function is typically used to construct the null space of a
-      /// matrix operator.
-      ///
-      /// @param[in,out] x The vector to set
-      /// @param[in] value The value to set on the vector
-      void set(Eigen::Ref<Eigen::Matrix<PetscScalar, Eigen::Dynamic, 1>> x,
-               PetscScalar value) const;
-               
       // Constructor arguments
       std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps;
       std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> restrictions;
@@ -154,14 +126,6 @@ namespace multiphenics
       /// @param[in] verbose Flag to turn on additional output.
       /// @return An informal representation of the function space.
       std::string str(bool verbose) const;
-      
-      /// Get dofmap array
-      Eigen::Ref<const Eigen::Array<PetscInt, Eigen::Dynamic, 1>> dof_array() const;
-      
-      /// Return list of dof indices on this process that belong to mesh
-      /// entities of dimension dim
-      Eigen::Array<PetscInt, Eigen::Dynamic, 1> dofs(const dolfin::mesh::Mesh& mesh,
-                                                     std::size_t dim) const;
       
       /// Accessors
       const std::vector<PetscInt> & block_owned_dofs__local_numbering(std::size_t b) const;
