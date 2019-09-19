@@ -29,7 +29,6 @@ using namespace multiphenics::fem;
 
 using dolfin::common::IndexMap;
 using dolfin::fem::DofMap;
-using dolfin::fem::GenericDofMap;
 using dolfin::mesh::Cell;
 using dolfin::mesh::Mesh;
 using dolfin::mesh::MeshEntity;
@@ -37,7 +36,7 @@ using dolfin::mesh::MeshFunction;
 using dolfin::mesh::MeshRange;
 
 //-----------------------------------------------------------------------------
-BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,
+BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const DofMap>> dofmaps,
                          std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions):
   _constructor_dofmaps(dofmaps),
   _constructor_restrictions(restrictions),
@@ -54,7 +53,7 @@ BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const GenericDofMap>> dofma
   // Do nothing
 }
 //-----------------------------------------------------------------------------
-BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,
+BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const DofMap>> dofmaps,
                          std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions,
                          const Mesh& mesh):
   BlockDofMap(dofmaps, restrictions, std::vector<std::shared_ptr<const Mesh>>(dofmaps.size(), std::shared_ptr<const Mesh>(&mesh, [](const Mesh*){})))
@@ -62,7 +61,7 @@ BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const GenericDofMap>> dofma
   // Do nothing
 }
 //-----------------------------------------------------------------------------
-BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,
+BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const DofMap>> dofmaps,
                          std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions,
                          std::vector<std::shared_ptr<const Mesh>> meshes):
   BlockDofMap(dofmaps, restrictions)
@@ -107,7 +106,7 @@ BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const GenericDofMap>> dofma
 }
 //-----------------------------------------------------------------------------
 void BlockDofMap::_extract_dofs_from_original_dofmaps(
-  std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,
+  std::vector<std::shared_ptr<const DofMap>> dofmaps,
   std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions,
   std::vector<std::shared_ptr<const Mesh>> meshes,
   std::vector<std::set<PetscInt>>& owned_dofs,
@@ -278,7 +277,7 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
 }
 //-----------------------------------------------------------------------------
 void BlockDofMap::_assign_owned_dofs_to_block_dofmap(
-  std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,
+  std::vector<std::shared_ptr<const DofMap>> dofmaps,
       std::vector<std::shared_ptr<const Mesh>> meshes,
   const std::vector<std::set<PetscInt>>& owned_dofs,
   const std::vector<std::map<PetscInt, bool>>& owned_dofs__to__in_restriction,
@@ -356,7 +355,7 @@ void BlockDofMap::_assign_owned_dofs_to_block_dofmap(
 }
 //-----------------------------------------------------------------------------
 void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
-  std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,
+  std::vector<std::shared_ptr<const DofMap>> dofmaps,
   MPI_Comm comm,
   const std::vector<std::set<PetscInt>>& unowned_dofs_in_restriction,
   const std::vector<std::map<PetscInt, PetscInt>>& unowned_dofs_in_restriction__local_to_global,
@@ -511,7 +510,7 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
 }
 //-----------------------------------------------------------------------------
 void BlockDofMap::_store_real_dofs(
-  const std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,
+  const std::vector<std::shared_ptr<const DofMap>> dofmaps,
   const std::vector<std::set<std::size_t>>& real_dofs
 )
 {
@@ -556,7 +555,7 @@ BlockDofMap::BlockDofMap(const BlockDofMap& block_dofmap, std::size_t i)
 }
 //-----------------------------------------------------------------------------
 void BlockDofMap::_precompute_views(
-  const std::vector<std::shared_ptr<const GenericDofMap>> dofmaps
+  const std::vector<std::shared_ptr<const DofMap>> dofmaps
 )
 {
   for (unsigned int i = 0; i < dofmaps.size(); ++i)
@@ -565,7 +564,7 @@ void BlockDofMap::_precompute_views(
     );
 }
 //-----------------------------------------------------------------------------
-std::vector<std::shared_ptr<const GenericDofMap>> BlockDofMap::dofmaps() const
+std::vector<std::shared_ptr<const DofMap>> BlockDofMap::dofmaps() const
 {
   return _constructor_dofmaps;
 }
@@ -689,7 +688,7 @@ Eigen::Array<std::size_t, Eigen::Dynamic, 1> BlockDofMap::tabulate_global_dofs()
   return dofs;
 }
 //-----------------------------------------------------------------------------
-std::unique_ptr<GenericDofMap>
+std::unique_ptr<DofMap>
 BlockDofMap::extract_sub_dofmap(const std::vector<std::size_t>& component,
                                 const Mesh& mesh) const
 {
@@ -698,7 +697,7 @@ BlockDofMap::extract_sub_dofmap(const std::vector<std::size_t>& component,
                      "This method was supposedly never used by block interface, and its implementation requires some more work");
 }
 //-----------------------------------------------------------------------------
-std::pair<std::shared_ptr<GenericDofMap>,
+std::pair<std::shared_ptr<DofMap>,
         std::unordered_map<std::size_t, std::size_t>>
 BlockDofMap::collapse(const Mesh& mesh) const
 {

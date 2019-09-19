@@ -25,7 +25,7 @@ using namespace multiphenics;
 using namespace multiphenics::function;
 
 using dolfin::common::IndexMap;
-using dolfin::fem::GenericDofMap;
+using dolfin::fem::DofMap;
 using dolfin::function::Function;
 using dolfin::la::create_petsc_vector;
 using dolfin::la::petsc_error;
@@ -121,7 +121,7 @@ void BlockFunction::init_block_vector()
   // Get dof map
   assert(_block_function_space);
   assert(_block_function_space->block_dofmap());
-  const GenericDofMap& dofmap = *(_block_function_space->block_dofmap());
+  const DofMap& dofmap = *(_block_function_space->block_dofmap());
   // Get index map
   std::shared_ptr<const IndexMap> index_map = dofmap.index_map();
   assert(index_map);

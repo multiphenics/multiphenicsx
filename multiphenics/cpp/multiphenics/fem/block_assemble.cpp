@@ -31,9 +31,9 @@ using namespace multiphenics::fem;
 
 using dolfin::common::IndexMap;
 using dolfin::common::Timer;
+using dolfin::fem::DofMap;
 using dolfin::fem::Form;
 using dolfin::fem::FormIntegrals;
-using dolfin::fem::GenericDofMap;
 using dolfin::fem::impl::assemble_vector;
 using dolfin::fem::impl::assemble_matrix;
 using dolfin::fem::SparsityPatternBuilder;
@@ -147,7 +147,7 @@ Mat multiphenics::fem::init_matrix(const BlockForm2& a)
     for (std::size_t j = 0; j < a.block_size(1); j++)
     {
       const Form & a_ij(a(i, j));
-      std::array<const GenericDofMap*, 2> dofmaps_ij{{
+      std::array<const DofMap*, 2> dofmaps_ij{{
         &a.block_function_spaces()[0]->block_dofmap()->view(i),
         &a.block_function_spaces()[1]->block_dofmap()->view(j)
       }};

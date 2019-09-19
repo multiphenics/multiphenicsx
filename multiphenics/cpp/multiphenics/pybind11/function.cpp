@@ -37,10 +37,10 @@ namespace multiphenics_wrappers
                     std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>>>())
       .def(py::init<std::shared_ptr<const dolfin::mesh::Mesh>,
                     std::vector<std::shared_ptr<const dolfin::fem::FiniteElement>>,
-                    std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>>>())
+                    std::vector<std::shared_ptr<const dolfin::fem::DofMap>>>())
       .def(py::init<std::shared_ptr<const dolfin::mesh::Mesh>,
                     std::vector<std::shared_ptr<const dolfin::fem::FiniteElement>>,
-                    std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>>,
+                    std::vector<std::shared_ptr<const dolfin::fem::DofMap>>,
                     std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>>>())
       .def(py::init<const multiphenics::function::BlockFunctionSpace&>())
       .def("__eq__", &multiphenics::function::BlockFunctionSpace::operator==)

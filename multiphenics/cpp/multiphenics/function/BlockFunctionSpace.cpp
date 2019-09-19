@@ -24,8 +24,8 @@ using namespace multiphenics::function;
 
 using dolfin::EigenRowArrayXXd;
 using dolfin::common::Variable;
+using dolfin::fem::DofMap;
 using dolfin::fem::FiniteElement;
-using dolfin::fem::GenericDofMap;
 using dolfin::function::FunctionSpace;
 using dolfin::mesh::Mesh;
 using dolfin::mesh::MeshFunction;
@@ -49,7 +49,7 @@ BlockFunctionSpace::BlockFunctionSpace(std::vector<std::shared_ptr<const Functio
 //-----------------------------------------------------------------------------
 BlockFunctionSpace::BlockFunctionSpace(std::shared_ptr<const Mesh> mesh,
                                        std::vector<std::shared_ptr<const FiniteElement>> elements,
-                                       std::vector<std::shared_ptr<const GenericDofMap>> dofmaps)
+                                       std::vector<std::shared_ptr<const DofMap>> dofmaps)
   : _mesh(mesh), _elements(elements), _dofmaps(dofmaps), _restrictions(dofmaps.size()), _root_space_id(id())
 {
   _init_function_spaces_from_elements_and_dofmaps();
@@ -58,7 +58,7 @@ BlockFunctionSpace::BlockFunctionSpace(std::shared_ptr<const Mesh> mesh,
 //-----------------------------------------------------------------------------
 BlockFunctionSpace::BlockFunctionSpace(std::shared_ptr<const Mesh> mesh,
                                        std::vector<std::shared_ptr<const FiniteElement>> elements,
-                                       std::vector<std::shared_ptr<const GenericDofMap>> dofmaps,
+                                       std::vector<std::shared_ptr<const DofMap>> dofmaps,
                                        std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions)
   : _mesh(mesh), _elements(elements), _dofmaps(dofmaps), _restrictions(restrictions), _root_space_id(id())
 {
@@ -172,7 +172,7 @@ std::vector<std::shared_ptr<const FiniteElement>> BlockFunctionSpace::elements()
   return _elements;
 }
 //-----------------------------------------------------------------------------
-std::vector<std::shared_ptr<const GenericDofMap>> BlockFunctionSpace::dofmaps() const
+std::vector<std::shared_ptr<const DofMap>> BlockFunctionSpace::dofmaps() const
 {
   return _dofmaps;
 }
@@ -225,7 +225,7 @@ BlockFunctionSpace::extract_block_sub_space(const std::vector<std::size_t>& comp
       sub_elements.push_back(_elements[c]);
 
     // Extract sub dofmaps
-    std::vector<std::shared_ptr<const GenericDofMap>> sub_dofmaps;
+    std::vector<std::shared_ptr<const DofMap>> sub_dofmaps;
     for (auto c: component)
       sub_dofmaps.push_back(_dofmaps[c]);
 

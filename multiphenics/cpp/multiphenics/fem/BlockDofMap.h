@@ -20,7 +20,7 @@
 #define __BLOCK_DOF_MAP_H
 
 #include <petscvec.h>
-#include <dolfin/fem/GenericDofMap.h>
+#include <dolfin/fem/DofMap.h>
 #include <dolfin/mesh/MeshFunction.h>
 
 namespace multiphenics
@@ -31,25 +31,25 @@ namespace multiphenics
     /// function spaces, also considering possible restrictions to 
     /// subdomains
 
-    class BlockDofMap : public dolfin::fem::GenericDofMap
+    class BlockDofMap : public dolfin::fem::DofMap
     {
     public:
 
       /// Constructor
-      BlockDofMap(std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> dofmaps,
+      BlockDofMap(std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps,
                   std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>> restrictions,
                   const dolfin::mesh::Mesh& mesh);
 
     protected:
       
       /// Helper functions for constructor
-      BlockDofMap(std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> dofmaps,
+      BlockDofMap(std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps,
                   std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>> restrictions);
-      BlockDofMap(std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> dofmaps,
+      BlockDofMap(std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps,
                   std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>> restrictions,
                   std::vector<std::shared_ptr<const dolfin::mesh::Mesh>> meshes);
       void _extract_dofs_from_original_dofmaps(
-        std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> dofmaps,
+        std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps,
         std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>> restrictions,
         std::vector<std::shared_ptr<const dolfin::mesh::Mesh>> meshes,
         std::vector<std::set<PetscInt>>& owned_dofs,
@@ -61,7 +61,7 @@ namespace multiphenics
         std::vector<std::set<std::size_t>>& real_dofs
       ) const;
       void _assign_owned_dofs_to_block_dofmap(
-        std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> dofmaps,
+        std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps,
         std::vector<std::shared_ptr<const dolfin::mesh::Mesh>> meshes,
         const std::vector<std::set<PetscInt>>& owned_dofs,
         const std::vector<std::map<PetscInt, bool>>& owned_dofs__to__in_restriction,
@@ -70,7 +70,7 @@ namespace multiphenics
         std::vector<std::int64_t>& sub_block_dofmap_local_size
       );
       void _prepare_local_to_global_for_unowned_dofs(
-        std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> dofmaps,
+        std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps,
         MPI_Comm comm,
         const std::vector<std::set<PetscInt>>& unowned_dofs_in_restriction,
         const std::vector<std::map<PetscInt, PetscInt>>& unowned_dofs_in_restriction__local_to_global,
@@ -79,11 +79,11 @@ namespace multiphenics
         const std::vector<std::int64_t>& sub_block_dofmap_local_size
       );
       void _store_real_dofs(
-        const std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> dofmaps,
+        const std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps,
         const std::vector<std::set<std::size_t>>& real_dofs
       );
       void _precompute_views(
-        const std::vector<std::shared_ptr<const GenericDofMap>> dofmaps
+        const std::vector<std::shared_ptr<const DofMap>> dofmaps
       );
 
     public:
@@ -109,9 +109,9 @@ namespace multiphenics
       
       /// Return dofmaps *neglecting* restrictions
       ///
-      /// @return   std::vector<const _dolfin::fem::GenericDofMap_>
+      /// @return   std::vector<const _dolfin::fem::DofMap_>
       ///         The vector of dofmaps *neglecting* restrictions
-      std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> dofmaps() const;
+      std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps() const;
       
       /// True iff dof map is a view into another map
       ///
@@ -251,7 +251,7 @@ namespace multiphenics
       ///
       /// @return     DofMap
       ///         The subdofmap component.
-      std::unique_ptr<dolfin::fem::GenericDofMap>
+      std::unique_ptr<dolfin::fem::DofMap>
       extract_sub_dofmap(const std::vector<std::size_t>& component,
                          const dolfin::mesh::Mesh& mesh) const;
 
@@ -264,7 +264,7 @@ namespace multiphenics
       ///
       /// @return    DofMap
       ///         The collapsed dofmap.
-      std::pair<std::shared_ptr<dolfin::fem::GenericDofMap>,
+      std::pair<std::shared_ptr<dolfin::fem::DofMap>,
                 std::unordered_map<std::size_t, std::size_t>>
       collapse(const dolfin::mesh::Mesh& mesh) const;
 
@@ -316,7 +316,7 @@ namespace multiphenics
     protected:
       
       // Constructor arguments
-      std::vector<std::shared_ptr<const dolfin::fem::GenericDofMap>> _constructor_dofmaps;
+      std::vector<std::shared_ptr<const dolfin::fem::DofMap>> _constructor_dofmaps;
       std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>> _constructor_restrictions;
 
       // Cell-local-to-dof map
