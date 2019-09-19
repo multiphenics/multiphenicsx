@@ -34,8 +34,6 @@ namespace multiphenics_wrappers
                     std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>>,
                     const dolfin::mesh::Mesh&>())
       .def("dofmaps", &multiphenics::fem::BlockDofMap::dofmaps)
-      .def("ownership_range", &multiphenics::fem::BlockDofMap::ownership_range)
-      .def("global_dimension", &multiphenics::fem::BlockDofMap::global_dimension)
       .def("block_owned_dofs__local_numbering", &multiphenics::fem::BlockDofMap::block_owned_dofs__local_numbering)
       .def("block_unowned_dofs__local_numbering", &multiphenics::fem::BlockDofMap::block_unowned_dofs__local_numbering)
       .def("block_owned_dofs__global_numbering", &multiphenics::fem::BlockDofMap::block_owned_dofs__global_numbering)

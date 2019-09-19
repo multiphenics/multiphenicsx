@@ -40,7 +40,6 @@ BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const DofMap>> dofmaps,
                          std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions):
   _constructor_dofmaps(dofmaps),
   _constructor_restrictions(restrictions),
-  _max_element_dofs(0),
   _block_owned_dofs__local(dofmaps.size()),
   _block_unowned_dofs__local(dofmaps.size()),
   _block_owned_dofs__global(dofmaps.size()),
@@ -73,12 +72,10 @@ BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const DofMap>> dofmaps,
   std::vector<std::set<PetscInt>> unowned_dofs_in_restriction(dofmaps.size());
   std::vector<std::map<PetscInt, PetscInt>> unowned_dofs_in_restriction__local_to_global(dofmaps.size());
   std::vector<std::map<PetscInt, std::set<std::size_t>>> unowned_dofs_in_restriction__to__cell_indices(dofmaps.size());
-  std::vector<std::set<std::size_t>> real_dofs(dofmaps.size());
   _extract_dofs_from_original_dofmaps(
     dofmaps, restrictions, meshes,
     owned_dofs, owned_dofs__to__in_restriction, owned_dofs__to__cell_indices,
-    unowned_dofs_in_restriction, unowned_dofs_in_restriction__local_to_global, unowned_dofs_in_restriction__to__cell_indices,
-    real_dofs
+    unowned_dofs_in_restriction, unowned_dofs_in_restriction__local_to_global, unowned_dofs_in_restriction__to__cell_indices
   );
   
   // B. ASSIGN OWNED DOFS TO BLOCK DOF MAP
@@ -98,10 +95,7 @@ BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const DofMap>> dofmaps,
     block_dofmap_local_size, sub_block_dofmap_local_size
   );
   
-  // D. STORE REAL DOFS
-  _store_real_dofs(dofmaps, real_dofs);
-  
-  // E. PRECOMPUTE VIEWS
+  // D. PRECOMPUTE VIEWS
   _precompute_views(dofmaps);
 }
 //-----------------------------------------------------------------------------
@@ -114,8 +108,7 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
   std::vector<std::map<PetscInt, std::set<std::size_t>>>& owned_dofs__to__cell_indices,
   std::vector<std::set<PetscInt>>& unowned_dofs_in_restriction,
   std::vector<std::map<PetscInt, PetscInt>>& unowned_dofs_in_restriction__local_to_global,
-  std::vector<std::map<PetscInt, std::set<std::size_t>>>& unowned_dofs_in_restriction__to__cell_indices,
-  std::vector<std::set<std::size_t>>& real_dofs
+  std::vector<std::map<PetscInt, std::set<std::size_t>>>& unowned_dofs_in_restriction__to__cell_indices
 ) const
 {
   // Parts of this code have been adapted from
@@ -143,12 +136,9 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
     }
     
     // Local size
-    const std::int64_t dofmap_local_size = dofmap->ownership_range()[1] - dofmap->ownership_range()[0];
+    const std::int64_t dofmap_local_size = dofmap->index_map->local_range()[1] - dofmap->index_map->local_range()[0];
     
-    // Retrieve Real dofs on the current dofmap
-    auto real_dofs_i = dofmap->tabulate_global_dofs();
-    real_dofs[i] = std::set<std::size_t>(real_dofs_i.data(), real_dofs_i.data() + real_dofs_i.size());
-    
+    // Loop over entity dimension
     for (std::size_t d = 0; d <= D; ++d)
     {
       if (restriction.size() == D + 1)
@@ -161,11 +151,7 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
         }
       }
       
-      // In the case of Real dofs, dofs_per_entity > 0 only when D == d, therefore
-      // in the following, when calling
-      //    dofmap->tabulate_entity_dofs()       for dimension D
-      // we are also obtaining the list of Real dofs, which will be handled separately.
-      const std::size_t dofs_per_entity = dofmap->num_entity_dofs(d);
+      const std::size_t dofs_per_entity = dofmap->element_dof_layout->num_entity_dofs(d);
       if (dofs_per_entity > 0)
       {
         mesh.init(d);
@@ -218,59 +204,31 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
           for (std::size_t local_dof = 0; local_dof < dofs_per_entity; ++local_dof)
           {
             PetscInt cell_dof = cell_dof_list[local_to_local_map[local_dof]];
-            if (real_dofs[i].count(cell_dof) == 0)
+            if (cell_dof < dofmap_local_size) 
             {
-              if (cell_dof < dofmap_local_size) 
+              owned_dofs[i].insert(cell_dof);
+              if (owned_dofs__to__in_restriction[i].count(cell_dof) == 0)
+                owned_dofs__to__in_restriction[i][cell_dof] = in_restriction;
+              else
+                owned_dofs__to__in_restriction[i][cell_dof] = owned_dofs__to__in_restriction[i][cell_dof] or in_restriction;
+              if (in_restriction)
+                for (auto c : cell_indices)
+                  owned_dofs__to__cell_indices[i][cell_dof].insert(c);
+            }
+            else 
+            {
+              if (in_restriction)
               {
-                owned_dofs[i].insert(cell_dof);
-                if (owned_dofs__to__in_restriction[i].count(cell_dof) == 0)
-                  owned_dofs__to__in_restriction[i][cell_dof] = in_restriction;
-                else
-                  owned_dofs__to__in_restriction[i][cell_dof] = owned_dofs__to__in_restriction[i][cell_dof] or in_restriction;
-                if (in_restriction)
-                  for (auto c : cell_indices)
-                    owned_dofs__to__cell_indices[i][cell_dof].insert(c);
-              }
-              else 
-              {
-                if (in_restriction)
-                {
-                  unowned_dofs_in_restriction[i].insert(cell_dof);
-                  int dofmap_block_size = dofmap->index_map()->block_size();
-                  std::size_t cell_global_dof = dofmap->index_map()->local_to_global(cell_dof/dofmap_block_size)*dofmap_block_size + (cell_dof%dofmap_block_size);
-                  unowned_dofs_in_restriction__local_to_global[i][cell_dof] = cell_global_dof;
-                  for (auto c : cell_indices)
-                    unowned_dofs_in_restriction__to__cell_indices[i][cell_dof].insert(c);
-                }
+                unowned_dofs_in_restriction[i].insert(cell_dof);
+                int dofmap_block_size = dofmap->index_map()->block_size();
+                std::size_t cell_global_dof = dofmap->index_map()->local_to_global(cell_dof/dofmap_block_size)*dofmap_block_size + (cell_dof%dofmap_block_size);
+                unowned_dofs_in_restriction__local_to_global[i][cell_dof] = cell_global_dof;
+                for (auto c : cell_indices)
+                  unowned_dofs_in_restriction__to__cell_indices[i][cell_dof].insert(c);
               }
             }
-            else
-            {
-              // Real dofs will be handled separately below, at the end of the loop over mesh dimensions
-            }
-          } 
+          }
         }
-      }
-    }
-    
-    // Handle Real dofs. They are connected to every cell, regardless of restriction (which is ignored).
-    for (auto real_dof : real_dofs[i])
-    {
-      if (real_dof < static_cast<std::size_t>(dofmap_local_size))
-      {
-        owned_dofs[i].insert(real_dof);
-        owned_dofs__to__in_restriction[i][real_dof] = true;
-        for (const auto& c : MeshRange<MeshEntity>(mesh, D))
-          owned_dofs__to__cell_indices[i][real_dof].insert(c.index());
-      }
-      else 
-      {
-        unowned_dofs_in_restriction[i].insert(real_dof);
-        int dofmap_block_size = dofmap->index_map()->block_size();
-        std::size_t real_global_dof = dofmap->index_map()->local_to_global(real_dof/dofmap_block_size)*dofmap_block_size + (real_dof%dofmap_block_size);
-        unowned_dofs_in_restriction__local_to_global[i][real_dof] = real_global_dof;
-        for (const auto& c : MeshRange<MeshEntity>(mesh, D))
-          unowned_dofs_in_restriction__to__cell_indices[i][real_dof].insert(c.index());
       }
     }
   }
@@ -329,27 +287,6 @@ void BlockDofMap::_assign_owned_dofs_to_block_dofmap(
     for (auto local_dof : _block_owned_dofs__local[i])
     {
       _block_owned_dofs__global[i].push_back(_index_map->local_to_global(local_dof));
-    }
-  }
-  
-  // Fill in the maximum number of elements associated to a cell in _dofmap
-  for (auto & cell_to_dofs: _dofmap)
-    if (cell_to_dofs.second.size() > _max_element_dofs)
-      _max_element_dofs = cell_to_dofs.second.size();
-  _max_element_dofs = dolfin::MPI::max(comm, _max_element_dofs);
-  
-  // Fill in 
-  // * maximum number of dofs associated with each entity dimension
-  // * maximum number of dofs associated with closure of an entity for each dimension
-  // * maximum number of facet dofs
-  for (unsigned int i = 0; i < dofmaps.size(); ++i) 
-  {
-    std::shared_ptr<const DofMap> dofmap = std::dynamic_pointer_cast<const DofMap>(dofmaps[i]);
-    const std::size_t D = meshes[i]->topology().dim();
-    for (std::size_t d = 0; d <= D; ++d)
-    {
-      _num_entity_dofs[d] += dofmap->num_entity_dofs(d);
-      _num_entity_closure_dofs[d] += dofmap->num_entity_closure_dofs(d);
     }
   }
 }
@@ -456,7 +393,7 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
         const std::size_t original_global_dof = *q;
         const std::size_t sender_rank = *(q + 1);
 
-        const std::size_t original_local_dof = original_global_dof - dofmap->ownership_range()[0];
+        const std::size_t original_local_dof = original_global_dof - dofmap->index_map->local_range()[0];
         PetscInt block_local_dof = _original_to_block__local_to_local[i].at(original_local_dof);
         PetscInt sub_block_local_dof = _original_to_sub_block__local_to_local[i].at(original_local_dof);
         send_buffer[sender_rank].push_back(_index_map->local_to_global(block_local_dof));
@@ -509,17 +446,6 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
   }
 }
 //-----------------------------------------------------------------------------
-void BlockDofMap::_store_real_dofs(
-  const std::vector<std::shared_ptr<const DofMap>> dofmaps,
-  const std::vector<std::set<std::size_t>>& real_dofs
-)
-{
-  // Fill in private attributes related to Real indices
-  for (unsigned int i = 0; i < dofmaps.size(); ++i) 
-    for (auto real_dof : real_dofs[i])
-      _real_dofs__local.push_back(_original_to_block__local_to_local[i].at(real_dof));
-}
-//-----------------------------------------------------------------------------
 BlockDofMap::BlockDofMap(const BlockDofMap& block_dofmap, std::size_t i)
 {
   // Get local (owned and unowned) block indices associated to component i
@@ -539,13 +465,6 @@ BlockDofMap::BlockDofMap(const BlockDofMap& block_dofmap, std::size_t i)
       std::back_inserter(_dofmap[cell])
     );
   }
-
-  // Intersect parent's _real_dofs__local content with block_i_dofs
-  std::set_intersection(
-    block_dofmap._real_dofs__local.begin(), block_dofmap._real_dofs__local.end(),
-    block_i_dofs.begin(), block_i_dofs.end(),
-    std::back_inserter(_real_dofs__local)
-  );
   
   // Copy index map from local to global from parent
   _index_map = block_dofmap._index_map;
@@ -569,62 +488,9 @@ std::vector<std::shared_ptr<const DofMap>> BlockDofMap::dofmaps() const
   return _constructor_dofmaps;
 }
 //-----------------------------------------------------------------------------
-bool BlockDofMap::is_view() const
-{
-  /// BlockDofMap view does not have a few private attributes
-  if (_constructor_dofmaps.size() == 0)
-    return true;
-  else
-    return false;
-}
-//-----------------------------------------------------------------------------
 const BlockDofMap & BlockDofMap::view(std::size_t i) const
 {
   return *_views[i];
-}
-//-----------------------------------------------------------------------------
-std::int64_t BlockDofMap::global_dimension() const
-{
-  return _index_map->size_global();
-}
-//-----------------------------------------------------------------------------
-std::size_t BlockDofMap::num_element_dofs(std::size_t cell_index) const
-{
-  return _dofmap.at(cell_index).size();
-}
-//-----------------------------------------------------------------------------
-std::size_t BlockDofMap::max_element_dofs() const
-{
-  return _max_element_dofs;
-}
-//-----------------------------------------------------------------------------
-std::size_t BlockDofMap::num_entity_dofs(std::size_t entity_dim) const
-{
-  return _num_entity_dofs.at(entity_dim);
-}
-//-----------------------------------------------------------------------------
-std::size_t BlockDofMap::num_entity_closure_dofs(std::size_t entity_dim) const
-{
-  return _num_entity_closure_dofs.at(entity_dim);
-}
-//-----------------------------------------------------------------------------
-std::array<std::int64_t, 2> BlockDofMap::ownership_range() const
-{
-  return _index_map->local_range();
-}
-//-----------------------------------------------------------------------------
-const std::unordered_map<int, std::vector<int>>& BlockDofMap::shared_nodes() const
-{
-  multiphenics_error("BlockDofMap.cpp",
-                     "compute shared nodes",
-                     "This method was supposedly never used by block interface, and its implementation requires some more work");
-}
-//-----------------------------------------------------------------------------
-const std::set<int>& BlockDofMap::neighbours() const
-{
-  multiphenics_error("BlockDofMap.cpp",
-                     "compute neighbours",
-                     "This method was supposedly never used by block interface, and its implementation requires some more work");
 }
 //-----------------------------------------------------------------------------
 Eigen::Map<const Eigen::Array<PetscInt, Eigen::Dynamic, 1>>
@@ -641,54 +507,7 @@ BlockDofMap::cell_dofs(std::size_t cell_index) const
   }
 }
 //-----------------------------------------------------------------------------
-Eigen::Array<PetscInt, Eigen::Dynamic, 1>
-BlockDofMap::entity_dofs(
-    const Mesh& mesh,
-    std::size_t entity_dim,
-    const std::vector<std::size_t> & entity_indices) const
-{
-  multiphenics_error("BlockDofMap.cpp",
-                     "compute dofs associate to entity indices",
-                     "This method was supposedly never used by block interface, and its implementation requires some more work");
-}
-//-----------------------------------------------------------------------------
-Eigen::Array<PetscInt, Eigen::Dynamic, 1>
-BlockDofMap::entity_dofs(
-    const Mesh& mesh,
-    std::size_t entity_dim) const
-{
-  multiphenics_error("BlockDofMap.cpp",
-                     "compute dofs associate to entity indices",
-                     "This method was supposedly never used by block interface, and its implementation requires some more work");
-}
-//-----------------------------------------------------------------------------
-Eigen::Array<int, Eigen::Dynamic, 1>
-BlockDofMap::tabulate_entity_dofs(std::size_t entity_dim, std::size_t cell_entity_index) const
-{
-  multiphenics_error("BlockDofMap.cpp",
-                     "tabulate entity dofs",
-                     "This method was supposedly never used by block interface, and its implementation requires some more work");
-}
-//-----------------------------------------------------------------------------
-Eigen::Array<int, Eigen::Dynamic, 1>
-BlockDofMap::tabulate_entity_closure_dofs(std::size_t entity_dim, std::size_t cell_entity_index) const
-{
-  multiphenics_error("BlockDofMap.cpp",
-                     "tabulate entity closure dofs",
-                     "This method was supposedly never used by block interface, and its implementation requires some more work");
-}
-//-----------------------------------------------------------------------------
-Eigen::Array<std::size_t, Eigen::Dynamic, 1> BlockDofMap::tabulate_global_dofs() const
-{
-  Eigen::Array<std::size_t, Eigen::Dynamic, 1> dofs(_real_dofs__local.size());
-  std::size_t i = 0;
-  for (auto d : _real_dofs__local)
-    dofs[i++] = d;
-
-  return dofs;
-}
-//-----------------------------------------------------------------------------
-std::unique_ptr<DofMap>
+DofMap
 BlockDofMap::extract_sub_dofmap(const std::vector<std::size_t>& component,
                                 const Mesh& mesh) const
 {
@@ -697,8 +516,7 @@ BlockDofMap::extract_sub_dofmap(const std::vector<std::size_t>& component,
                      "This method was supposedly never used by block interface, and its implementation requires some more work");
 }
 //-----------------------------------------------------------------------------
-std::pair<std::shared_ptr<DofMap>,
-        std::unordered_map<std::size_t, std::size_t>>
+std::pair<std::shared_ptr<DofMap>, std::vector<PetscInt>>
 BlockDofMap::collapse(const Mesh& mesh) const
 {
   multiphenics_error("BlockDofMap.cpp",
@@ -706,15 +524,8 @@ BlockDofMap::collapse(const Mesh& mesh) const
                      "This method was supposedly never used by block interface, and its implementation requires some more work");
 }
 //-----------------------------------------------------------------------------
-Eigen::Array<PetscInt, Eigen::Dynamic, 1> BlockDofMap::dofs(const Mesh& mesh,
-                                                       std::size_t dim) const
-{
-  multiphenics_error("BlockDofMap.cpp",
-                     "obtain list of dofs",
-                     "This method was supposedly never used by block interface, and its implementation requires some more work");
-}
-//-----------------------------------------------------------------------------
-void BlockDofMap::set(Vec x, double value) const
+void BlockDofMap::set(Eigen::Ref<Eigen::Matrix<PetscScalar, Eigen::Dynamic, 1>> x,
+                      PetscScalar value) const; const
 {
   multiphenics_error("BlockDofMap.cpp",
                      "set dof entries of a vector to a value",
@@ -731,19 +542,30 @@ std::shared_ptr<const IndexMap> BlockDofMap::sub_index_map(std::size_t b) const
   return _sub_index_map[b]; 
 }
 //-----------------------------------------------------------------------------
-int BlockDofMap::block_size() const
-{
-  return _index_map->block_size(); 
-}
-//-----------------------------------------------------------------------------
 std::string BlockDofMap::str(bool verbose) const
 {
   std::stringstream s;
   s << "<BlockDofMap with total global dimension "
-    << global_dimension()
+    << _index_map->size_global()
     << ">"
     << std::endl;
   return s.str();
+}
+//-----------------------------------------------------------------------------
+Eigen::Ref<const Eigen::Array<PetscInt, Eigen::Dynamic, 1>> BlockDofMap::dof_array() const
+{
+  multiphenics_error("BlockDofMap.cpp",
+                     "obtain list of dofs",
+                     "This method was supposedly never used by block interface, and its implementation requires some more work");
+}
+
+//-----------------------------------------------------------------------------
+Eigen::Array<PetscInt, Eigen::Dynamic, 1> BlockDofMap::dofs(const Mesh& mesh,
+                                                       std::size_t dim) const
+{
+  multiphenics_error("BlockDofMap.cpp",
+                     "obtain list of dofs",
+                     "This method was supposedly never used by block interface, and its implementation requires some more work");
 }
 //-----------------------------------------------------------------------------
 const std::vector<PetscInt> & BlockDofMap::block_owned_dofs__local_numbering(std::size_t b) const

@@ -121,9 +121,9 @@ void BlockFunction::init_block_vector()
   // Get dof map
   assert(_block_function_space);
   assert(_block_function_space->block_dofmap());
-  const DofMap& dofmap = *(_block_function_space->block_dofmap());
+  const auto dofmap = _block_function_space->block_dofmap();
   // Get index map
-  std::shared_ptr<const IndexMap> index_map = dofmap.index_map();
+  std::shared_ptr<const IndexMap> index_map = dofmap->index_map;
   assert(index_map);
   // Initialize vector
   _block_vector = create_petsc_vector(*index_map);

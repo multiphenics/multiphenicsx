@@ -190,7 +190,7 @@ std::vector<std::shared_ptr<const FunctionSpace>> BlockFunctionSpace::function_s
 std::int64_t BlockFunctionSpace::dim() const
 {
   assert(_block_dofmap);
-  return _block_dofmap->global_dimension();
+  return _block_dofmap->index_map()->size_global();
 }
 //-----------------------------------------------------------------------------
 std::shared_ptr<const FunctionSpace> BlockFunctionSpace::operator[] (std::size_t i) const

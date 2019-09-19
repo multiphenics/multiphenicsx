@@ -199,7 +199,7 @@ class BlockFunctionSpace(object):
         "Pretty-print."
         elements = [str(subspace.ufl_element()) for subspace in self]
         return "<Block function space of dimension %d (%s)>" % \
-               (self.block_dofmap().global_dimension(), str(elements))
+               (self.dim(), str(elements))
                
     def ufl_element(self):
         return self._ufl_element

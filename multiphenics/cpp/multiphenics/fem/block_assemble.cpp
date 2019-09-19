@@ -190,11 +190,6 @@ Mat multiphenics::fem::init_matrix(const BlockForm2& a)
   Mat A = create_petsc_matrix(a.mesh()->mpi_comm(), pattern);
   t1.stop();
 
-  // Insert zeros to dense rows in increasing order of column index
-  // to avoid CSR data reallocation when assembling in random order
-  // resulting in quadratic complexity; this has to be done before
-  // inserting to diagonal below
-  
   PetscErrorCode ierr;
   
   // Get size
@@ -206,32 +201,6 @@ Mat multiphenics::fem::init_matrix(const BlockForm2& a)
   std::array<PetscInt, 2> row_range;
   ierr = MatGetOwnershipRange(A, &row_range[0], &row_range[1]);
   if (ierr != 0) petsc_error(ierr, __FILE__, "MatGetOwnershipRange");
-
-  // Tabulate indices of dense rows
-  Eigen::Array<std::size_t, Eigen::Dynamic, 1> global_dofs
-      = a.block_function_spaces()[0]->block_dofmap()->tabulate_global_dofs();
-  if (global_dofs.size() > 0)
-  {
-    // Set zeros in dense rows in order of increasing column index
-    const IndexMap& index_map_0 = *index_maps[0];
-    assert(index_map_0.block_size() == 1);
-    const PetscScalar block = 0.0;
-    PetscInt IJ[2];
-    for (Eigen::Index i = 0; i < global_dofs.size(); ++i)
-    {
-      const std::int64_t I = index_map_0.local_to_global(global_dofs[i]);
-      if (I >= row_range[0] && I < row_range[1])
-      {
-        IJ[0] = I;
-        for (std::int64_t J = 0; J < size[1]; J++)
-        {
-          IJ[1] = J;
-          ierr = MatSetValue(A, IJ[0], IJ[1], block, INSERT_VALUES);
-          if (ierr != 0) petsc_error(ierr, __FILE__, "MatSetValue");
-        }
-      }
-    }
-  }
 
   // Insert zeros on the diagonal as diagonal entries may be
   // optimised away, e.g. when calling MatAssemblyBegin/MatAssemblyEnd.

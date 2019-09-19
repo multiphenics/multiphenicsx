@@ -64,8 +64,8 @@ void CondensedSLEPcEigenSolver::set_boundary_conditions(std::vector<std::shared_
     dolfin_assert(dofmap == bc->function_space()->dofmap());
   }
   #endif
-  auto local_range = dofmap->ownership_range();
-  int dofmap_block_size = dofmap->index_map()->block_size();
+  auto local_range = dofmap->index_map->local_range();
+  int dofmap_block_size = dofmap->index_map->block_size();
   
   // List all constrained local dofs
   std::set<PetscInt> constrained_local_dofs;
@@ -74,7 +74,7 @@ void CondensedSLEPcEigenSolver::set_boundary_conditions(std::vector<std::shared_
     const auto bc_local_dofs = bc->dof_indices();
     for (Eigen::Index i = 0; i < bc_local_dofs.size(); ++i)
     {
-      constrained_local_dofs.insert(dofmap->index_map()->local_to_global(bc_local_dofs[i]/dofmap_block_size)*dofmap_block_size + (bc_local_dofs[i]%dofmap_block_size));
+      constrained_local_dofs.insert(dofmap->index_map->local_to_global(bc_local_dofs[i]/dofmap_block_size)*dofmap_block_size + (bc_local_dofs[i]%dofmap_block_size));
     }
   }
   

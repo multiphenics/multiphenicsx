@@ -59,7 +59,7 @@ BlockPETScSubMatrix::BlockPETScSubMatrix(
   {
     const auto & original_to_block = block_dofmaps[i]->original_to_block(block_indices[i]);
     const auto block_index_map = block_dofmaps[i]->index_map();
-    const auto original_index_map = block_dofmaps[i]->dofmaps()[block_indices[i]]->index_map();
+    const auto original_index_map = block_dofmaps[i]->dofmaps()[block_indices[i]]->index_map;
     std::size_t unrestricted_ghosted_size = original_index_map->block_size()*(original_index_map->size_local() + original_index_map->num_ghosts());
     
     auto & map = stl_local_to_global[i];
