@@ -34,14 +34,14 @@ namespace multiphenics_wrappers
       (m, "BlockFunctionSpace", "A finite element block function space", py::dynamic_attr())
       .def(py::init<std::vector<std::shared_ptr<const dolfin::function::FunctionSpace>>>())
       .def(py::init<std::vector<std::shared_ptr<const dolfin::function::FunctionSpace>>,
-                    std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>>>())
+                    std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>>>())
       .def(py::init<std::shared_ptr<const dolfin::mesh::Mesh>,
                     std::vector<std::shared_ptr<const dolfin::fem::FiniteElement>>,
                     std::vector<std::shared_ptr<const dolfin::fem::DofMap>>>())
       .def(py::init<std::shared_ptr<const dolfin::mesh::Mesh>,
                     std::vector<std::shared_ptr<const dolfin::fem::FiniteElement>>,
                     std::vector<std::shared_ptr<const dolfin::fem::DofMap>>,
-                    std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>>>())
+                    std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>>>())
       .def(py::init<const multiphenics::function::BlockFunctionSpace&>())
       .def("__eq__", &multiphenics::function::BlockFunctionSpace::operator==)
       .def("dim", &multiphenics::function::BlockFunctionSpace::dim)

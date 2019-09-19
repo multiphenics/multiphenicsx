@@ -37,7 +37,7 @@ using dolfin::mesh::MeshRange;
 
 //-----------------------------------------------------------------------------
 BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const DofMap>> dofmaps,
-                         std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions):
+                         std::vector<std::vector<std::shared_ptr<const MeshFunction<std::size_t>>>> restrictions):
   _constructor_dofmaps(dofmaps),
   _constructor_restrictions(restrictions),
   _block_owned_dofs__local(dofmaps.size()),
@@ -53,7 +53,7 @@ BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const DofMap>> dofmaps,
 }
 //-----------------------------------------------------------------------------
 BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const DofMap>> dofmaps,
-                         std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions,
+                         std::vector<std::vector<std::shared_ptr<const MeshFunction<std::size_t>>>> restrictions,
                          const Mesh& mesh):
   BlockDofMap(dofmaps, restrictions, std::vector<std::shared_ptr<const Mesh>>(dofmaps.size(), std::shared_ptr<const Mesh>(&mesh, [](const Mesh*){})))
 {
@@ -61,7 +61,7 @@ BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const DofMap>> dofmaps,
 }
 //-----------------------------------------------------------------------------
 BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const DofMap>> dofmaps,
-                         std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions,
+                         std::vector<std::vector<std::shared_ptr<const MeshFunction<std::size_t>>>> restrictions,
                          std::vector<std::shared_ptr<const Mesh>> meshes):
   BlockDofMap(dofmaps, restrictions)
 {
@@ -101,7 +101,7 @@ BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const DofMap>> dofmaps,
 //-----------------------------------------------------------------------------
 void BlockDofMap::_extract_dofs_from_original_dofmaps(
   std::vector<std::shared_ptr<const DofMap>> dofmaps,
-  std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions,
+  std::vector<std::vector<std::shared_ptr<const MeshFunction<std::size_t>>>> restrictions,
   std::vector<std::shared_ptr<const Mesh>> meshes,
   std::vector<std::set<PetscInt>>& owned_dofs,
   std::vector<std::map<PetscInt, bool>>& owned_dofs__to__in_restriction,
@@ -121,7 +121,7 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
   for (unsigned int i = 0; i < dofmaps.size(); ++i) 
   {
     std::shared_ptr<const DofMap> dofmap = std::dynamic_pointer_cast<const DofMap>(dofmaps[i]);
-    const std::vector<std::shared_ptr<const MeshFunction<bool>>>& restriction = restrictions[i];
+    const std::vector<std::shared_ptr<const MeshFunction<std::size_t>>>& restriction = restrictions[i];
     const Mesh& mesh = *meshes[i];
     
     // Mesh dimension
@@ -163,7 +163,7 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
           bool in_restriction;
           if (restriction.size() > 0)
           {
-            in_restriction = restriction[d]->operator[](e.index());
+            in_restriction = (restriction[d]->operator[](e.index()) > 0);
           }
           else
           {

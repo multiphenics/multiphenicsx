@@ -31,7 +31,7 @@ namespace multiphenics_wrappers
     py::class_<multiphenics::fem::BlockDofMap, std::shared_ptr<multiphenics::fem::BlockDofMap>, dolfin::fem::DofMap>
       (m, "BlockDofMap", "multiphenics BlockDofMap object")
       .def(py::init<std::vector<std::shared_ptr<const dolfin::fem::DofMap>>,
-                    std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>>,
+                    std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>>,
                     const dolfin::mesh::Mesh&>())
       .def("dofmaps", &multiphenics::fem::BlockDofMap::dofmaps)
       .def("block_owned_dofs__local_numbering", &multiphenics::fem::BlockDofMap::block_owned_dofs__local_numbering)

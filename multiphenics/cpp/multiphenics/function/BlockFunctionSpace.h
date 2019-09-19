@@ -35,54 +35,34 @@ namespace multiphenics
     public:
     
       /// Create a block function space from a list of existing function spaces (on the same mesh)
-      ///
-      /// *Arguments*
-      ///     function_spaces (_FunctionSpace_)
-      ///         List of existing function spaces.
+      /// @param[in] function_spaces List of existing function spaces.
       explicit BlockFunctionSpace(std::vector<std::shared_ptr<const dolfin::function::FunctionSpace>> function_spaces);
       
       /// Create a block function space from a list of existing function spaces (on the same mesh),
       /// but keeping only a part
-      ///
-      /// *Arguments*
-      ///     function_spaces (_FunctionSpace_)
-      ///         List of existing function spaces.
-      ///     restrictions (vector (over blocks) of vector (over space dimensions) of _MeshFunction<bool>_)
-      ///         The restrictions.
+      /// @param[in] function_spaces List of existing function spaces
+      /// @param[in] restrictions Vector (over blocks) of vector (over space dimensions) representing the restrictions
       BlockFunctionSpace(std::vector<std::shared_ptr<const dolfin::function::FunctionSpace>> function_spaces,
-                         std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>> restrictions);
+                         std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> restrictions);
 
       /// Create a block function space for given mesh, vector of elements and vector of dofmaps
-      /// (shared data)
-      ///
-      /// *Arguments*
-      ///     mesh (_Mesh_)
-      ///         The mesh.
-      ///     elements (vector of _FiniteElement_)
-      ///         The elements.
-      ///     dofmaps (vector of _DofMap_)
-      ///         The dofmaps.
+      /// @param[in] mesh The mesh
+      /// @param[in] elements The elements
+      /// @param[in] dofmaps The dofmaps
       BlockFunctionSpace(std::shared_ptr<const dolfin::mesh::Mesh> mesh,
                          std::vector<std::shared_ptr<const dolfin::fem::FiniteElement>> elements,
                          std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps);
                     
       /// Create a block function space for given mesh, vector of elements and vector of dofmaps
       /// but keeping only a part 
-      /// (shared data)
-      ///
-      /// *Arguments*
-      ///     mesh (_Mesh_)
-      ///         The mesh.
-      ///     elements (vector of _FiniteElement_)
-      ///         The elements.
-      ///     dofmaps (vector of _DofMap_)
-      ///         The dofmaps.
-      ///     restrictions (vector (over blocks) of vector (over space dimensions) of _MeshFunction<bool>_)
-      ///         The restrictions.
+      /// @param[in] mesh The mesh
+      /// @param[in] elements The elements
+      /// @param[in] dofmaps The dofmaps
+      /// @param[in] restrictions Vector (over blocks) of vector (over space dimensions) representing the restrictions
       BlockFunctionSpace(std::shared_ptr<const dolfin::mesh::Mesh> mesh,
                          std::vector<std::shared_ptr<const dolfin::fem::FiniteElement>> elements,
                          std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps,
-                         std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>> restrictions);
+                         std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> restrictions);
 
       /// Copy constructor
       ///
@@ -253,7 +233,7 @@ namespace multiphenics
       std::vector<std::shared_ptr<const dolfin::fem::DofMap>> _dofmaps;
 
       // The restrictions
-      std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<bool>>>> _restrictions;
+      std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> _restrictions;
       
       // The subspaces
       std::vector<std::shared_ptr<const dolfin::function::FunctionSpace>> _function_spaces;

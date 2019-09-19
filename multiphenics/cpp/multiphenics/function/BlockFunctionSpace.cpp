@@ -40,7 +40,7 @@ BlockFunctionSpace::BlockFunctionSpace(std::vector<std::shared_ptr<const Functio
 }
 //-----------------------------------------------------------------------------
 BlockFunctionSpace::BlockFunctionSpace(std::vector<std::shared_ptr<const FunctionSpace>> function_spaces,
-                                       std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions)
+                                       std::vector<std::vector<std::shared_ptr<const MeshFunction<std::size_t>>>> restrictions)
   : _restrictions(restrictions), _function_spaces(function_spaces), _root_space_id(id())
 {
   _init_mesh_and_elements_and_dofmaps_from_function_spaces();
@@ -59,7 +59,7 @@ BlockFunctionSpace::BlockFunctionSpace(std::shared_ptr<const Mesh> mesh,
 BlockFunctionSpace::BlockFunctionSpace(std::shared_ptr<const Mesh> mesh,
                                        std::vector<std::shared_ptr<const FiniteElement>> elements,
                                        std::vector<std::shared_ptr<const DofMap>> dofmaps,
-                                       std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> restrictions)
+                                       std::vector<std::vector<std::shared_ptr<const MeshFunction<std::size_t>>>> restrictions)
   : _mesh(mesh), _elements(elements), _dofmaps(dofmaps), _restrictions(restrictions), _root_space_id(id())
 {
   _init_function_spaces_from_elements_and_dofmaps();
@@ -230,7 +230,7 @@ BlockFunctionSpace::extract_block_sub_space(const std::vector<std::size_t>& comp
       sub_dofmaps.push_back(_dofmaps[c]);
 
     // Extract restrictions, if required
-    std::vector<std::vector<std::shared_ptr<const MeshFunction<bool>>>> sub_restrictions;
+    std::vector<std::vector<std::shared_ptr<const MeshFunction<std::size_t>>>> sub_restrictions;
     if (with_restrictions)
       for (auto c: component)
         sub_restrictions.push_back(_restrictions[c]);
