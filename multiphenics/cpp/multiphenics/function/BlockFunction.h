@@ -31,71 +31,63 @@ namespace multiphenics
     {
     public:
 
-      /// Create function on given block function space (shared data)
-      ///
-      /// @param  V (_BlockFunctionSpace_)
-      ///         The block function space.
+      /// Create function on given block function space
+      /// @param[in] V The block function space
       explicit BlockFunction(std::shared_ptr<const BlockFunctionSpace> V);
       
-      /// Create function on given block function space and with given subfunctions (shared data)
-      ///
-      /// @param  V (_BlockFunctionSpace_)
-      ///         The block function space.
+      /// Create function on given block function space and with given subfunctions
+      /// @param[in] V The block function space
+      /// @param[in] sub_functions Existing subfunctions
       BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
                     std::vector<std::shared_ptr<dolfin::function::Function>> sub_functions);
 
       /// Create function on given function space with a given vector
-      /// (shared data)
       ///
       /// *Warning: This constructor is intended for internal library use only*
       ///
-      /// @param  V (_BlockFunctionSpace_)
-      ///         The block function space.
-      /// @param  x (_Vec_)
-      ///         The block vector.
+      /// @param[in] V The block function space
+      /// @param[in] x The block vector
       BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
                     Vec x);
                     
       /// Create function on given function space with a given vector
-      /// and given subfunctions (shared data)
+      /// and given subfunctions
       ///
       /// *Warning: This constructor is intended for internal library use only*
       ///
-      /// @param  V (_BlockFunctionSpace_)
-      ///         The block function space.
-      /// @param  x (_Vec_)
-      ///         The block vector.
+      /// @param[in] V The block function space
+      /// @param[in] x The block vector
+      /// @param[in] sub_functions Existing subfunctions
       BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
                     Vec x,
                     std::vector<std::shared_ptr<dolfin::function::Function>> sub_functions);
 
-      /// Copy constructor
-      ///
-      /// @param  v (_BlockFunction_)
-      ///         The object to be copied.
-      BlockFunction(const BlockFunction& v);
+      // Copy constructor
+      BlockFunction(const BlockFunction& v) = delete;
+
+      /// Move constructor
+      BlockFunction(BlockFunction&& v) = default;
 
       /// Destructor
-      virtual ~BlockFunction();
+      virtual ~BlockFunction() = default;
+      
+      /// Move assignment
+      BlockFunction& operator=(BlockFunction&& v) = default;
+
+      // Assignment
+      BlockFunction& operator=(const BlockFunction& v) = delete;
 
       /// Extract subfunction
-      ///
-      /// @param i (std::size_t)
-      ///         Index of subfunction.
-      /// @returns    _Function_
-      ///         The subfunction.
-      std::shared_ptr<dolfin::function::Function> operator[] (std::size_t i) const;
+      /// @param[in] i Index of subfunction
+      /// @return The subfunction
+      std::shared_ptr<dolfin::function::Function> operator[](std::size_t i) const;
 
-      /// Return shared pointer to function space
-      ///
-      /// @returns _FunctionSpace_
-      ///         Return the shared pointer.
-      virtual std::shared_ptr<const BlockFunctionSpace> block_function_space() const;
+      /// Return shared pointer to block function space
+      /// @returns The block function space
+      std::shared_ptr<const BlockFunctionSpace> block_function_space() const;
 
       /// Return vector of expansion coefficients (non-const version)
-      ///
-      /// @returns  _Vec_
-      ///         The vector of expansion coefficients.
+      /// @returns The vector of expansion coefficients.
       Vec block_vector();
             
       /// Sync block vector and sub functions

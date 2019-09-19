@@ -141,23 +141,21 @@ class BlockFunction(object):
                 output.append(self.sub(j))
             return output
         
+    @property
     def block_function_space(self):
         """
         Return block function space
-
-        *Returns*
-            _BlockFunctionSpace_
-                The block subspace.
         """
         
         return self._block_function_space
-        
+
+    @property
     def block_vector(self):
         """
         Return block vector
         """
         
-        return self._cpp_object.block_vector()
+        return self._cpp_object.block_vector
         
     def ufl_element(self):
         return self._block_function_space.ufl_element()

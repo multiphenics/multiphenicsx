@@ -42,7 +42,6 @@ namespace multiphenics_wrappers
                     std::vector<std::shared_ptr<const dolfin::fem::FiniteElement>>,
                     std::vector<std::shared_ptr<const dolfin::fem::DofMap>>,
                     std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>>>())
-      .def(py::init<const multiphenics::function::BlockFunctionSpace&>())
       .def("__eq__", &multiphenics::function::BlockFunctionSpace::operator==)
       .def("dim", &multiphenics::function::BlockFunctionSpace::dim)
       .def("contains", &multiphenics::function::BlockFunctionSpace::contains)
@@ -63,9 +62,8 @@ namespace multiphenics_wrappers
       .def(py::init<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>, Vec>())
       .def(py::init<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>, Vec,
                     std::vector<std::shared_ptr<Function>>>())
-      .def(py::init<multiphenics::function::BlockFunction&>())
       .def("sub", &multiphenics::function::BlockFunction::operator[])
-      .def("block_vector", &multiphenics::function::BlockFunction::block_vector, "Return the block vector associated with the finite element BlockFunction")
+      .def_property_readonly("block_vector", &multiphenics::function::BlockFunction::block_vector, "Return the block vector associated with the finite element BlockFunction")
       .def("apply", &multiphenics::function::BlockFunction::apply);
   }
 }

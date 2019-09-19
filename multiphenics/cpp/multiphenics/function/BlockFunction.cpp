@@ -76,27 +76,7 @@ BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
   apply("to subfunctions");
 }
 //-----------------------------------------------------------------------------
-BlockFunction::BlockFunction(const BlockFunction& v):
-  _block_function_space(v._block_function_space),
-  _sub_function_spaces(v._sub_function_spaces)
-{
-  // Copy block vector
-  VecDuplicate(v._block_vector, &_block_vector);
-  VecCopy(v._block_vector, _block_vector);
-  
-  // Copy sub functions
-  for (auto v_sub_function: v._sub_functions)
-  {
-    _sub_functions.push_back(std::make_shared<Function>(*v_sub_function));
-  }
-}
-//-----------------------------------------------------------------------------
-BlockFunction::~BlockFunction()
-{
-  // Do nothing
-}
-//-----------------------------------------------------------------------------
-std::shared_ptr<Function> BlockFunction::operator[] (std::size_t i) const
+std::shared_ptr<Function> BlockFunction::operator[](std::size_t i) const
 {
   return _sub_functions[i];
 }
