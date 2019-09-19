@@ -39,7 +39,8 @@ def _compile_dolfin_element(element, mesh):
     ffi = cffi.FFI()
     ufc_element = dolfin.fem.dofmap.make_ufc_finite_element(ffi.cast("uintptr_t", ufc_element))
     dolfin_element = dolfin.cpp.fem.FiniteElement(ufc_element)
-    dolfin_dofmap = dolfin.fem.dofmap.DofMap.fromufc(ffi.cast("uintptr_t", ufc_dofmap), mesh)
+    ufc_dofmap = dolfin.fem.dofmap.make_ufc_dofmap(ffi.cast("uintptr_t", ufc_dofmap_ptr))
+    dolfin_dofmap = dolfin.cpp.fem.create_dofmap(ufc_dofmap, mesh)
     
     return dolfin_element, dolfin_dofmap
     
@@ -79,10 +80,10 @@ class BlockFunctionSpace(object):
     def _init_from_function_spaces(self, function_spaces, restrict=None):
         # Get the common mesh
         assert isinstance(function_spaces[0], FunctionSpace)
-        mesh = function_spaces[0].mesh()
+        mesh = function_spaces[0].mesh
         for function_space in function_spaces:
             assert isinstance(function_space, FunctionSpace)
-            assert function_space.mesh().ufl_domain() == mesh.ufl_domain()
+            assert function_space.mesh.ufl_domain() == mesh.ufl_domain()
         # Initialize the BlockFunctionSpace_Base
         if restrict is None:
             self._cpp_object = BlockFunctionSpace_Base([function_space._cpp_object for function_space in function_spaces])
@@ -215,8 +216,9 @@ class BlockFunctionSpace(object):
     def tabulate_dof_coordinates(self):
         return self._cpp_object.tabulate_dof_coordinates()
         
-    def dim(self):
-        return self._cpp_object.dim()
+    @property
+    def dim(self) -> int:
+        return self._cpp_object.dim
 
     def num_sub_spaces(self):
         "Return the number of sub spaces"
