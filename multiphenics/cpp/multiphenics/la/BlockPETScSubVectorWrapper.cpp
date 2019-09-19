@@ -16,6 +16,7 @@
 // along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <dolfin/la/utils.h>
 #include <multiphenics/la/BlockPETScSubVectorWrapper.h>
 
 using namespace multiphenics;

@@ -18,6 +18,8 @@
 
 #ifdef HAS_SLEPC
 
+#include <dolfin/common/IndexMap.h>
+#include <dolfin/la/utils.h>
 #include <multiphenics/la/CondensedBlockSLEPcEigenSolver.h>
 
 using namespace multiphenics;

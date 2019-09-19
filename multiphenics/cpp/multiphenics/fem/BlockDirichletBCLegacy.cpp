@@ -16,6 +16,8 @@
 // along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <dolfin/common/IndexMap.h>
+#include <dolfin/la/utils.h>
 #include <multiphenics/fem/BlockDirichletBCLegacy.h>
 #include <multiphenics/fem/DirichletBCLegacy.h>
 #include <multiphenics/la/BlockPETScSubVectorReadWrapper.h>
