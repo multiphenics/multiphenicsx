@@ -124,7 +124,7 @@ Vec multiphenics::fem::init_vector(const BlockForm1& L)
 Mat multiphenics::fem::init_matrix(const BlockForm2& a)
 {
   // This method is adapted from
-  //    dolfin::fem::init_matrix in dolfin/fem/utils.cpp
+  //    dolfin::fem::create_matrix in dolfin/fem/utils.cpp
   
   // Get mesh
   assert(a.mesh());
