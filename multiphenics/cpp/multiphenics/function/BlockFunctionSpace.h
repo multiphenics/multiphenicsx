@@ -64,15 +64,14 @@ namespace multiphenics
                          std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps,
                          std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> restrictions);
 
-      /// Copy constructor
-      ///
-      /// *Arguments*
-      ///     V (_BlockFunctionSpace_)
-      ///         The object to be copied.
-      BlockFunctionSpace(const BlockFunctionSpace& V);
+      /// Copy constructor (deleted)
+      BlockFunctionSpace(const BlockFunctionSpace& V) = delete;
+      
+      /// Move constructor
+      BlockFunctionSpace(BlockFunctionSpace&& V) = default;
 
       /// Destructor
-      virtual ~BlockFunctionSpace();
+      virtual ~BlockFunctionSpace() = default;
       
     private:
                                            
@@ -87,98 +86,57 @@ namespace multiphenics
 
     public:
       
-      /// Assignment operator
-      ///
-      /// *Arguments*
-      ///     V (_BlockFunctionSpace_)
-      ///         Another block function space.
-      const BlockFunctionSpace& operator= (const BlockFunctionSpace& V);
+      /// Assignment operator (deleted)
+      BlockFunctionSpace& operator=(const BlockFunctionSpace& V) = delete;
+      
+      /// Move assignment operator
+      BlockFunctionSpace& operator=(BlockFunctionSpace&& V) = default;
 
       /// Equality operator
-      ///
-      /// *Arguments*
-      ///     V (_BlockFunctionSpace_)
-      ///         Another block function space.
+      /// @param[in] V Another block function space.
       bool operator== (const BlockFunctionSpace& V) const;
 
       /// Inequality operator
-      ///
-      /// *Arguments*
-      ///     V (_BlockFunctionSpace_)
-      ///         Another block function space.
+      /// @param[in] V Another block function space.
       bool operator!= (const BlockFunctionSpace& V) const;
 
       /// Return mesh
-      ///
-      /// *Returns*
-      ///     _Mesh_
-      ///         The mesh.
+      /// @return The mesh.
       std::shared_ptr<const dolfin::mesh::Mesh> mesh() const;
 
       /// Return finite elements
-      ///
-      /// *Returns*
-      ///     vector of _FiniteElement_
-      ///         The vector of finite elements.
+      /// @return The vector of finite elements.
       std::vector<std::shared_ptr<const dolfin::fem::FiniteElement>> elements() const;
       
       /// Return dofmaps
-      ///
-      /// *Returns*
-      ///     vector of _DofMap_
-      ///         The vector of dofmaps.
+      /// @return The vector of dofmaps.
       std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps() const;
 
       /// Return block dofmap
-      ///
-      /// *Returns*
-      ///     _multiphenics::fem::BlockDofMap_
-      ///         The block dofmap.
+      /// @return The block dofmap.
       std::shared_ptr<const multiphenics::fem::BlockDofMap> block_dofmap() const;
       
       /// Return function spaces
-      ///
-      /// *Returns*
-      ///     vector of _FunctionSpace_
-      ///         The vector of function spaces.
+      /// @return The vector of function spaces.
       std::vector<std::shared_ptr<const dolfin::function::FunctionSpace>> function_spaces() const;
 
       /// Return dimension of function space
-      ///
-      /// *Returns*
-      ///     std::size_t
-      ///         The dimension of the function space.
+      /// @return The dimension of the block function space.
       std::int64_t dim() const;
 
       /// Extract subspace for component, *neglecting* restrictions
-      ///
-      /// *Arguments*
-      ///     i (std::size_t)
-      ///         Index of the subspace.
-      /// *Returns*
-      ///     _FunctionSpace_
-      ///         The subspace.
+      /// @param[in] i Index of the subspace.
+      /// @return The subspace.
       std::shared_ptr<const dolfin::function::FunctionSpace> operator[] (std::size_t i) const;
 
       /// Extract subspace for component, *neglecting* restrictions
-      ///
-      /// *Arguments*
-      ///     component (std::size_t)
-      ///         Index of the subspace.
-      /// *Returns*
-      ///     _FunctionSpace_
-      ///         The subspace.
+      /// @param[in] i Index of the subspace.
+      /// @return The subspace.
       std::shared_ptr<const dolfin::function::FunctionSpace> sub(std::size_t component) const;
 
       /// Extract block subspace for component, possibly considering restrictions
-      ///
-      /// *Arguments*
-      ///     component (std::vector<std::size_t>)
-      ///         The component.
-      ///
-      /// *Returns*
-      ///     _BlockFunctionSpace_
-      ///         The block subspace.
+      /// @param[in] component Indices of the subspaces.
+      /// @return The block subspace.
       std::shared_ptr<BlockFunctionSpace>
       extract_block_sub_space(const std::vector<std::size_t>& component, bool with_restrictions=true) const;
 

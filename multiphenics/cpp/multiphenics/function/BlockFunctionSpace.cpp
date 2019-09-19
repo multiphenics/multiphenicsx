@@ -17,11 +17,13 @@
 //
 
 #include <dolfin/common/IndexMap.h>
+#include <dolfin/common/UniqueIdGenerator.h>
 #include <multiphenics/function/BlockFunctionSpace.h>
 
 using namespace multiphenics;
 using namespace multiphenics::function;
 
+using dolfin::common::UniqueIdGenerator::id;
 using dolfin::EigenRowArrayXXd;
 using dolfin::fem::DofMap;
 using dolfin::fem::FiniteElement;
@@ -65,17 +67,6 @@ BlockFunctionSpace::BlockFunctionSpace(std::shared_ptr<const Mesh> mesh,
   _init_block_dofmap_from_dofmaps_and_restrictions();
 }
 //-----------------------------------------------------------------------------
-BlockFunctionSpace::BlockFunctionSpace(const BlockFunctionSpace& V)
-{
-  // Assign data (will be shared)
-  *this = V;
-}
-//-----------------------------------------------------------------------------
-BlockFunctionSpace::~BlockFunctionSpace()
-{
-  // Do nothing
-}
-//-----------------------------------------------------------------------------
 void BlockFunctionSpace::_init_mesh_and_elements_and_dofmaps_from_function_spaces() {
   _mesh = _function_spaces[0]->mesh();
   for (auto& function_space : _function_spaces) 
@@ -97,23 +88,6 @@ void BlockFunctionSpace::_init_function_spaces_from_elements_and_dofmaps() {
 //-----------------------------------------------------------------------------
 void BlockFunctionSpace::_init_block_dofmap_from_dofmaps_and_restrictions() {
   _block_dofmap = std::make_shared<BlockDofMap>(_dofmaps, _restrictions, *_mesh);
-}
-//-----------------------------------------------------------------------------
-const BlockFunctionSpace& BlockFunctionSpace::operator=(const BlockFunctionSpace& V)
-{
-  // Assign data (will be shared)
-  _mesh            = V._mesh;
-  _elements        = V._elements;
-  _dofmaps         = V._dofmaps;
-  _restrictions    = V._restrictions;
-  _function_spaces = V._function_spaces;
-  _block_dofmap    = V._block_dofmap;
-  _component       = V._component;
-
-  // Call assignment operator for base class
-  Variable::operator=(V);
-
-  return *this;
 }
 //-----------------------------------------------------------------------------
 bool BlockFunctionSpace::operator==(const BlockFunctionSpace& V) const
