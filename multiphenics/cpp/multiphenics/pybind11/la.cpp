@@ -19,6 +19,12 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <dolfin/function/Function.h>
+#include <dolfin/la/SLEPcEigenSolver.h>
+#include <dolfin/la/utils.h>
+#include <multiphenics/function/BlockFunction.h>
+#include <multiphenics/la/CondensedBlockSLEPcEigenSolver.h>
+#include <multiphenics/la/CondensedSLEPcEigenSolver.h>
 #include <multiphenics/pybind11/mpi_casters.h> // TODO remove local copy of DOLFIN's pybind11 files
 #include <multiphenics/pybind11/petsc_casters.h> // TODO remove local copy of DOLFIN's pybind11 files
 
@@ -51,13 +57,13 @@ namespace multiphenics_wrappers
              self.get_eigenpair(lr, lc, r.vector().vec(), c.vector().vec(), i);
              PetscErrorCode ierr;
              ierr = VecGhostUpdateBegin(r.vector().vec(), INSERT_VALUES, SCATTER_FORWARD);
-             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateBegin");
+             if (ierr != 0) dolfin::la::petsc_error(ierr, __FILE__, "VecGhostUpdateBegin");
              ierr = VecGhostUpdateBegin(c.vector().vec(), INSERT_VALUES, SCATTER_FORWARD);
-             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateBegin");
+             if (ierr != 0) dolfin::la::petsc_error(ierr, __FILE__, "VecGhostUpdateBegin");
              ierr = VecGhostUpdateEnd(r.vector().vec(), INSERT_VALUES, SCATTER_FORWARD);
-             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
+             if (ierr != 0) dolfin::la::petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
              ierr = VecGhostUpdateEnd(c.vector().vec(), INSERT_VALUES, SCATTER_FORWARD);
-             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
+             if (ierr != 0) dolfin::la::petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
              return py::make_tuple(lr, lc);
            });
            
@@ -75,13 +81,13 @@ namespace multiphenics_wrappers
              self.get_eigenpair(lr, lc, r.vector().vec(), c.vector().vec(), i);
              PetscErrorCode ierr;
              ierr = VecGhostUpdateBegin(r.vector().vec(), INSERT_VALUES, SCATTER_FORWARD);
-             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateBegin");
+             if (ierr != 0) dolfin::la::petsc_error(ierr, __FILE__, "VecGhostUpdateBegin");
              ierr = VecGhostUpdateBegin(c.vector().vec(), INSERT_VALUES, SCATTER_FORWARD);
-             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateBegin");
+             if (ierr != 0) dolfin::la::petsc_error(ierr, __FILE__, "VecGhostUpdateBegin");
              ierr = VecGhostUpdateEnd(r.vector().vec(), INSERT_VALUES, SCATTER_FORWARD);
-             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
+             if (ierr != 0) dolfin::la::petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
              ierr = VecGhostUpdateEnd(c.vector().vec(), INSERT_VALUES, SCATTER_FORWARD);
-             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
+             if (ierr != 0) dolfin::la::petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
              return py::make_tuple(lr, lc);
            });
     
@@ -100,13 +106,13 @@ namespace multiphenics_wrappers
              self.get_eigenpair(lr, lc, r.block_vector(), c.block_vector(), i);
              PetscErrorCode ierr;
              ierr = VecGhostUpdateBegin(r.block_vector(), INSERT_VALUES, SCATTER_FORWARD);
-             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateBegin");
+             if (ierr != 0) dolfin::la::petsc_error(ierr, __FILE__, "VecGhostUpdateBegin");
              ierr = VecGhostUpdateBegin(c.block_vector(), INSERT_VALUES, SCATTER_FORWARD);
-             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateBegin");
+             if (ierr != 0) dolfin::la::petsc_error(ierr, __FILE__, "VecGhostUpdateBegin");
              ierr = VecGhostUpdateEnd(r.block_vector(), INSERT_VALUES, SCATTER_FORWARD);
-             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
+             if (ierr != 0) dolfin::la::petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
              ierr = VecGhostUpdateEnd(c.block_vector(), INSERT_VALUES, SCATTER_FORWARD);
-             if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
+             if (ierr != 0) dolfin::la::petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
              r.apply("to subfunctions");
              c.apply("to subfunctions");
              return py::make_tuple(lr, lc);

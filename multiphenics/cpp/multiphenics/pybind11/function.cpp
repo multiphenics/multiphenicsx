@@ -21,6 +21,8 @@
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 
+#include <multiphenics/function/BlockFunction.h>
+#include <multiphenics/function/BlockFunctionSpace.h>
 #include <multiphenics/pybind11/petsc_casters.h> // TODO remove local copy of DOLFIN's pybind11 files
 
 namespace py = pybind11;
@@ -61,7 +63,7 @@ namespace multiphenics_wrappers
       .def(py::init<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>, std::vector<std::shared_ptr<dolfin::function::Function>>>())
       .def(py::init<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>, Vec>())
       .def(py::init<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>, Vec,
-                    std::vector<std::shared_ptr<Function>>>())
+                    std::vector<std::shared_ptr<dolfin::function::Function>>>())
       .def("sub", &multiphenics::function::BlockFunction::operator[])
       .def_property_readonly("block_vector", &multiphenics::function::BlockFunction::block_vector, "Return the block vector associated with the finite element BlockFunction")
       .def("apply", &multiphenics::function::BlockFunction::apply);

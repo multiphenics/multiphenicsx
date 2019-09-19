@@ -19,6 +19,14 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <dolfin/common/IndexMap.h>
+#include <multiphenics/fem/block_assemble.h>
+#include <multiphenics/fem/BlockDirichletBC.h>
+#include <multiphenics/fem/BlockDirichletBCLegacy.h>
+#include <multiphenics/fem/BlockDofMap.h>
+#include <multiphenics/fem/BlockForm1.h>
+#include <multiphenics/fem/BlockForm2.h>
+#include <multiphenics/fem/DirichletBCLegacy.h>
 #include <multiphenics/pybind11/petsc_casters.h> // TODO remove local copy of DOLFIN's pybind11 files
 
 namespace py = pybind11;
@@ -28,7 +36,7 @@ namespace multiphenics_wrappers
   void fem(py::module& m)
   {
     // multiphenics::fem::BlockDofMap
-    py::class_<multiphenics::fem::BlockDofMap, std::shared_ptr<multiphenics::fem::BlockDofMap>, dolfin::fem::DofMap>
+    py::class_<multiphenics::fem::BlockDofMap, std::shared_ptr<multiphenics::fem::BlockDofMap>>
       (m, "BlockDofMap", "multiphenics BlockDofMap object")
       .def(py::init<std::vector<std::shared_ptr<const dolfin::fem::DofMap>>,
                     std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>>,
@@ -83,8 +91,8 @@ namespace multiphenics_wrappers
     // multiphenics::fem::BlockDirichletBC
     py::class_<multiphenics::fem::BlockDirichletBC, std::shared_ptr<multiphenics::fem::BlockDirichletBC>>
       (m, "BlockDirichletBC", "multiphenics BlockDirichletBC object")
-      .def(py::init<std::vector<std::vector<std::shared_ptr<const DirichletBC>>>,
-                    std::shared_ptr<const BlockFunctionSpace>>())
+      .def(py::init<std::vector<std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>>,
+                    std::shared_ptr<const multiphenics::function::BlockFunctionSpace>>())
       .def("block_function_space", &multiphenics::fem::BlockDirichletBC::block_function_space);
            
     // dolfin::fem::DirichletBCLegacy
