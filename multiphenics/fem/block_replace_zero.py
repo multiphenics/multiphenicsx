@@ -18,8 +18,8 @@
 
 from numpy import ndarray as array
 from ufl import Form
-from dolfin import compile_cpp_code
 from dolfin.cpp.fem import Form as cpp_Form
+from multiphenics.cpp.compile_code import compile_code
 
 zeros = (0, 0.)
 
@@ -78,7 +78,7 @@ def _is_zero(form_or_block_form):
                 m.def("is_zero_form", &is_zero_form);
             }
             """
-        is_zero_form = compile_cpp_code(_is_zero_form_cpp_code).is_zero_form
+        is_zero_form = compile_code("is_zero_form", _is_zero_form_cpp_code).is_zero_form
         return is_zero_form(form_or_block_form)
     elif isinstance(form_or_block_form, (array, list)):
         block_form_rank = _get_block_form_rank(form_or_block_form)

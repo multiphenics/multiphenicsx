@@ -16,14 +16,15 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os
 import glob
 import mpi4py
+import os
 import petsc4py
-import dolfin.jit
-from dolfin import compile_cpp_code as dolfin_compile_cpp_code
+from dolfin.jit import mpi_jit_decorator
+from multiphenics.cpp.compile_code import compile_code
 
-def compile_package(package_name, package_root, *args, **kwargs):
+@mpi_jit_decorator
+def compile_package(package_name, package_root, *args):
     # Remove extension from files
     files = [os.path.splitext(f)[0] for f in args]
     
@@ -57,49 +58,25 @@ def compile_package(package_name, package_root, *args, **kwargs):
         package_pybind11_sources.append(os.path.join(package_root, package_name, "pybind11", package_submodule + ".cpp"))
     if os.path.isfile(os.path.join(package_root, package_name, "pybind11", "MPICommWrapper.cpp")):
         package_pybind11_sources.append(os.path.join(package_root, package_name, "pybind11", "MPICommWrapper.cpp")) # TODO remove local copy of DOLFIN's pybind11 files
-    package_pybind11_sources.append(os.path.join(package_root, package_name, "pybind11", package_name + ".cpp"))
     
-    # Read in the code
-    package_code = ""
-    package_code += "\n".join([open(h).read() for h in package_sources])
-    package_code += "\n".join([open(h).read() for h in package_pybind11_sources])
+    # Read in content of main package file
+    package_code = open(os.path.join(package_root, package_name, "pybind11", package_name + ".cpp")).read()
     
-    # Move all includes to the top
-    package_code_includes = ""
-    package_code_rest = ""
-    for line in package_code.splitlines():
-        if line.startswith("#include"):
-            package_code_includes += line + "\n"
-        else:
-            package_code_rest += line + "\n"
-    package_code = package_code_includes + "\n\n" + package_code_rest
+    # Prepare kwargs to be passed to cppimport
+    kwargs = dict()
     
-    # Require C++14 # TODO will this be fixed in djitso when dolfinx is released?
-    cxxflags = ["-std=c++14"]
+    # Setup sources for compilation
+    kwargs["sources"] = package_sources + package_pybind11_sources
+    
+    # Setup headers for compilation
+    kwargs["dependencies"] = package_headers
     
     # Setup include directories for compilation
-    include_dirs = list()
+    include_dirs = []
     include_dirs.append(package_root)
     include_dirs.append(mpi4py.get_include())
     include_dirs.append(petsc4py.get_include())
-    if "include_dirs" in kwargs:
-        include_dirs.extend(kwargs["include_dirs"])
+    kwargs["include_dirs"] = include_dirs
     
     # Compile C++ module and return
-    return compile_cpp_code(package_name, package_code, cxxflags=cxxflags, include_dirs=include_dirs)
-    
-def compile_cpp_code(package_name, package_code, **kwargs):
-    # Patch dijitso to generate package with a custom prefix
-    original_dijitso_jit = dolfin.pybind11jit.dijitso_jit
-    def dijitso_jit(jitable, name, params, generate=None, send=None, receive=None, wait=None):
-        return original_dijitso_jit(jitable, name.replace("dolfin", package_name), params, generate, send, receive, wait)
-    dolfin.pybind11jit.dijitso_jit = dijitso_jit
-    
-    # Call DOLFIN's compile_cpp_code
-    cpp = dolfin_compile_cpp_code(package_code, **kwargs)
-    
-    # Undo dijitso patch
-    dolfin.pybind11jit.dijitso_jit = original_dijitso_jit
-    
-    # Return compiled module
-    return cpp
+    return compile_code(package_name, package_code, **kwargs)

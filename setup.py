@@ -41,6 +41,7 @@ setup(name="multiphenics",
       packages=find_packages(),
       include_package_data=True,
       install_requires=[
+          "cppimport",
           "pytest-runner"
       ],
       tests_require=[
