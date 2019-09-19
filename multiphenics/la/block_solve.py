@@ -39,7 +39,7 @@ def block_solve(block_lhs, block_x, block_rhs, block_bcs=None, petsc_options=Non
         BlockDirichletBCLegacy.apply(block_bcs, block_A, 1.0)
         BlockDirichletBCLegacy.apply(block_bcs, block_b)
     # Solve
-    solver = PETScKrylovSolver(block_x.block_function_space().mesh().mpi_comm())
+    solver = PETScKrylovSolver(block_x.block_function_space().mesh.mpi_comm())
     solver.set_options_prefix("multiphenics_solve_")
     if petsc_options is not None:
         for k, v in petsc_options.items():

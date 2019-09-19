@@ -44,7 +44,7 @@ std::vector<std::shared_ptr<const BlockFunctionSpace>> BlockForm1::block_functio
 //-----------------------------------------------------------------------------
 std::shared_ptr<const Mesh> BlockForm1::mesh() const
 {
-  return _block_function_spaces[0]->mesh();
+  return _block_function_spaces[0]->mesh;
 }
 //-----------------------------------------------------------------------------
 unsigned int BlockForm1::block_size(unsigned int d) const

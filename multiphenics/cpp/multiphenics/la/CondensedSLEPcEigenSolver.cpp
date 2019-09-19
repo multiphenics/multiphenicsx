@@ -55,13 +55,13 @@ CondensedSLEPcEigenSolver::~CondensedSLEPcEigenSolver()
 void CondensedSLEPcEigenSolver::set_boundary_conditions(std::vector<std::shared_ptr<const DirichletBC>> bcs)
 {
   // Get dofmap and related quantities
-  auto comm = bcs[0]->function_space()->mesh()->mpi_comm();
-  auto dofmap = bcs[0]->function_space()->dofmap();
+  auto comm = bcs[0]->function_space()->mesh->mpi_comm();
+  auto dofmap = bcs[0]->function_space()->dofmap;
   #ifdef DEBUG
   for (auto & bc : bcs)
   {
-    dolfin_assert(comm == bc->function_space()->mesh()->mpi_comm());
-    dolfin_assert(dofmap == bc->function_space()->dofmap());
+    dolfin_assert(comm == bc->function_space()->mesh->mpi_comm());
+    dolfin_assert(dofmap == bc->function_space()->dofmap);
   }
   #endif
   auto local_range = dofmap->index_map->local_range();

@@ -204,11 +204,13 @@ class BlockFunctionSpace(object):
     def ufl_element(self):
         return self._ufl_element
         
+    @property
     def mesh(self):
-        return self._cpp_object.mesh()
+        return self._cpp_object.mesh
         
+    @property
     def block_dofmap(self):
-        return self._cpp_object.block_dofmap()
+        return self._cpp_object.block_dofmap
         
     def tabulate_dof_coordinates(self):
         return self._cpp_object.tabulate_dof_coordinates()

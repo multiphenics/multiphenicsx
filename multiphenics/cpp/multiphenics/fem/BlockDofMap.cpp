@@ -38,8 +38,8 @@ using dolfin::mesh::MeshRange;
 //-----------------------------------------------------------------------------
 BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const DofMap>> dofmaps,
                          std::vector<std::vector<std::shared_ptr<const MeshFunction<std::size_t>>>> restrictions):
-  _constructor_dofmaps(dofmaps),
-  _constructor_restrictions(restrictions),
+  dofmaps(dofmaps),
+  restrictions(restrictions),
   _block_owned_dofs__local(dofmaps.size()),
   _block_unowned_dofs__local(dofmaps.size()),
   _block_owned_dofs__global(dofmaps.size()),
@@ -481,11 +481,6 @@ void BlockDofMap::_precompute_views(
     _views.push_back(
       std::make_shared<BlockDofMap>(*this, i)
     );
-}
-//-----------------------------------------------------------------------------
-std::vector<std::shared_ptr<const DofMap>> BlockDofMap::dofmaps() const
-{
-  return _constructor_dofmaps;
 }
 //-----------------------------------------------------------------------------
 const BlockDofMap & BlockDofMap::view(std::size_t i) const

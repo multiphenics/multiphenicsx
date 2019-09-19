@@ -106,10 +106,6 @@ namespace multiphenics
       /// Move assignment
       BlockDofMap& operator=(BlockDofMap&& dofmap) = default;
       
-      /// Return dofmaps *neglecting* restrictions
-      /// @return The vector of dofmaps *neglecting* restrictions
-      std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps() const;
-
       /// Returns a view of the i-th block
       const BlockDofMap & view(std::size_t i) const;
       
@@ -143,6 +139,10 @@ namespace multiphenics
       /// @param[in] value The value to set on the vector
       void set(Eigen::Ref<Eigen::Matrix<PetscScalar, Eigen::Dynamic, 1>> x,
                PetscScalar value) const;
+               
+      // Constructor arguments
+      std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps;
+      std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> restrictions;
 
       // Index Map from local to global
       std::shared_ptr<dolfin::common::IndexMap> index_map;
@@ -175,10 +175,6 @@ namespace multiphenics
 
     protected:
       
-      // Constructor arguments
-      std::vector<std::shared_ptr<const dolfin::fem::DofMap>> _constructor_dofmaps;
-      std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> _constructor_restrictions;
-
       // Cell-local-to-dof map
       std::map<PetscInt, std::vector<PetscInt>> _dofmap;
       std::vector<PetscInt> _empty_vector;

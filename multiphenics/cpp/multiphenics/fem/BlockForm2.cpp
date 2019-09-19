@@ -46,8 +46,8 @@ std::vector<std::shared_ptr<const BlockFunctionSpace>> BlockForm2::block_functio
 //-----------------------------------------------------------------------------
 std::shared_ptr<const Mesh> BlockForm2::mesh() const
 {
-  std::shared_ptr<const Mesh> mesh = _block_function_spaces[0]->mesh();
-  assert(_block_function_spaces[1]->mesh() == mesh);
+  std::shared_ptr<const Mesh> mesh = _block_function_spaces[0]->mesh;
+  assert(_block_function_spaces[1]->mesh == mesh);
   return mesh;
 }
 //-----------------------------------------------------------------------------

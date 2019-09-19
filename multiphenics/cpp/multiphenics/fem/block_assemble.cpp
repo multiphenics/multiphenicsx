@@ -67,7 +67,7 @@ void multiphenics::fem::block_assemble(Vec b, const BlockForm1& L)
       L_i.integrals().num_integrals(FormIntegrals::Type::exterior_facet) > 0
     )
     {
-      BlockPETScSubVectorWrapper b_i(b, i, L.block_function_spaces()[0]->block_dofmap(), ADD_VALUES);
+      BlockPETScSubVectorWrapper b_i(b, i, L.block_function_spaces()[0]->block_dofmap, ADD_VALUES);
       assemble_vector(b_i.content, L_i);
     }
   }
@@ -102,7 +102,7 @@ void multiphenics::fem::block_assemble(Mat A, const BlockForm2& a)
         a_ij.integrals().num_integrals(FormIntegrals::Type::exterior_facet) > 0
       )
       {
-        BlockPETScSubMatrix A_ij(A, {{i, j}}, {{a.block_function_spaces()[0]->block_dofmap(), a.block_function_spaces()[1]->block_dofmap()}});
+        BlockPETScSubMatrix A_ij(A, {{i, j}}, {{a.block_function_spaces()[0]->block_dofmap, a.block_function_spaces()[1]->block_dofmap}});
         assemble_matrix(A_ij.mat(), a(i, j), {}, {});
       }
     }
@@ -117,8 +117,8 @@ void multiphenics::fem::block_assemble(Mat A, const BlockForm2& a)
 //-----------------------------------------------------------------------------
 Vec multiphenics::fem::init_vector(const BlockForm1& L)
 {
-  assert(L.block_function_spaces()[0]->block_dofmap()->index_map);
-  return create_petsc_vector(*L.block_function_spaces()[0]->block_dofmap()->index_map);
+  assert(L.block_function_spaces()[0]->block_dofmap->index_map);
+  return create_petsc_vector(*L.block_function_spaces()[0]->block_dofmap->index_map);
 }
 //-----------------------------------------------------------------------------
 Mat multiphenics::fem::init_matrix(const BlockForm2& a)
@@ -134,8 +134,8 @@ Mat multiphenics::fem::init_matrix(const BlockForm2& a)
 
   // Get IndexMaps for each dimension
   std::array<std::shared_ptr<const IndexMap>, 2> index_maps{{
-    a.block_function_spaces()[0]->block_dofmap()->index_map,
-    a.block_function_spaces()[1]->block_dofmap()->index_map
+    a.block_function_spaces()[0]->block_dofmap->index_map,
+    a.block_function_spaces()[1]->block_dofmap->index_map
   }};
       
   // Create sparsity pattern
@@ -148,8 +148,8 @@ Mat multiphenics::fem::init_matrix(const BlockForm2& a)
     {
       const Form & a_ij(a(i, j));
       std::array<const DofMap*, 2> dofmaps_ij{{
-        &a.block_function_spaces()[0]->block_dofmap()->view(i),
-        &a.block_function_spaces()[1]->block_dofmap()->view(j)
+        &a.block_function_spaces()[0]->block_dofmap->view(i),
+        &a.block_function_spaces()[1]->block_dofmap->view(j)
       }};
       if (
         a_ij.integrals().num_integrals(FormIntegrals::Type::cell) > 0

@@ -36,7 +36,7 @@ using multiphenics::la::BlockPETScSubVectorWrapper;
 
 //-----------------------------------------------------------------------------
 BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V)
-  : _block_function_space(V), _sub_function_spaces(V->function_spaces())
+  : _block_function_space(V), _sub_function_spaces(V->function_spaces)
 {
   // Initialize block vector
   init_block_vector();
@@ -47,7 +47,7 @@ BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V)
 //-----------------------------------------------------------------------------
 BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
                              std::vector<std::shared_ptr<Function>> sub_functions)
-  : _block_function_space(V), _sub_function_spaces(V->function_spaces()), _sub_functions(sub_functions)
+  : _block_function_space(V), _sub_function_spaces(V->function_spaces), _sub_functions(sub_functions)
 {
   // Initialize block vector
   init_block_vector();
@@ -58,7 +58,7 @@ BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
 //-----------------------------------------------------------------------------
 BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
                              Vec x)
-  : _block_function_space(V), _block_vector(x), _sub_function_spaces(V->function_spaces())
+  : _block_function_space(V), _block_vector(x), _sub_function_spaces(V->function_spaces)
 {
   // Initialize sub functions
   init_sub_functions();
@@ -70,7 +70,7 @@ BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
 BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
                              Vec x,
                              std::vector<std::shared_ptr<Function>> sub_functions)
-  : _block_function_space(V), _block_vector(x), _sub_function_spaces(V->function_spaces()), _sub_functions(sub_functions)
+  : _block_function_space(V), _block_vector(x), _sub_function_spaces(V->function_spaces), _sub_functions(sub_functions)
 {
   // Apply to subfunctions
   apply("to subfunctions");
@@ -120,8 +120,8 @@ void BlockFunction::init_block_vector()
   
   // Get dof map
   assert(_block_function_space);
-  assert(_block_function_space->block_dofmap());
-  const auto dofmap = _block_function_space->block_dofmap();
+  assert(_block_function_space->block_dofmap);
+  const auto dofmap = _block_function_space->block_dofmap;
   // Get index map
   std::shared_ptr<const IndexMap> index_map = dofmap->index_map;
   assert(index_map);
@@ -139,7 +139,7 @@ void BlockFunction::init_sub_functions()
 void BlockFunction::apply(std::string mode, int only)
 {
   PetscErrorCode ierr;
-  auto block_dofmap(_block_function_space->block_dofmap());
+  auto block_dofmap(_block_function_space->block_dofmap);
   unsigned int i(0);
   unsigned int i_max(_sub_functions.size());
   if (only >= 0) {
@@ -152,7 +152,7 @@ void BlockFunction::apply(std::string mode, int only)
     if (mode == "to subfunctions")
     {
       {
-        BlockPETScSubVectorReadWrapper block_vector_i(_block_vector, i, _block_function_space->block_dofmap());
+        BlockPETScSubVectorReadWrapper block_vector_i(_block_vector, i, _block_function_space->block_dofmap);
         VecWrapper sub_vector_i_(sub_vector_i);
         sub_vector_i_.x = block_vector_i.content;
       } // assignment of values in Vec occurs when VecWrapper gets out of scope. Afterwards, update ghosts:
@@ -163,7 +163,7 @@ void BlockFunction::apply(std::string mode, int only)
     }
     else if (mode == "from subfunctions")
     {
-      BlockPETScSubVectorWrapper block_vector_i(_block_vector, i, _block_function_space->block_dofmap(), INSERT_VALUES);
+      BlockPETScSubVectorWrapper block_vector_i(_block_vector, i, _block_function_space->block_dofmap, INSERT_VALUES);
       VecReadWrapper sub_vector_i_(sub_vector_i);
       block_vector_i.content = sub_vector_i_.x;
     }

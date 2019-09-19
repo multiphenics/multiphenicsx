@@ -76,8 +76,8 @@ def get_local_dofs(W, component):
     multiphenics solution block_vector. Note that this list *considers* restrictions.
     """
     return (
-        list(range(0, W[component].dofmap().ownership_range()[1] - W[component].dofmap().ownership_range()[0])),
-        W.block_dofmap().block_owned_dofs__local_numbering(component)
+        list(range(0, W[component].dofmap.ownership_range()[1] - W[component].dofmap.ownership_range()[0])),
+        W.block_dofmap.block_owned_dofs__local_numbering(component)
     )
 
 def get_local_dofs_on_restriction(W, component, restriction):
@@ -98,13 +98,13 @@ def get_local_dofs_on_restriction(W, component, restriction):
     # [1, 2, ..., # local dofs on the restriction]
     (_, restricted_dofs) = get_local_dofs(W_restricted, component_restricted)
     # Get the mapping of local dofs numbering from W_restricted[0] to V
-    restricted_to_original = W_restricted.block_dofmap().block_to_original(component_restricted)
+    restricted_to_original = W_restricted.block_dofmap.block_to_original(component_restricted)
     # Get list of all local dofs on the restriction, but numbered according to V. Note that this list will not be
     # contiguous anymore, because there are DOFs on V other than the ones in the restriction (i.e., the ones in the
     # interior)
     original_dofs = [restricted_to_original[restricted] for restricted in restricted_dofs]
     # Get the mapping of local dofs numbering from V to W[b].
-    original_to_block = W.block_dofmap().original_to_block(component)
+    original_to_block = W.block_dofmap.original_to_block(component)
     # Get list of all local dofs on the restriction, but numbered according to W. Note again that this list will not
     # be contiguous, and, in case of space W with multiple blocks, it will not be the same as original_dofs.
     block_dofs = [original_to_block[original] for original in original_dofs]

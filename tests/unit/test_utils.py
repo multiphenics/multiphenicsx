@@ -120,12 +120,12 @@ def assert_block_vectors_equal(rhs, block_rhs, block_V):
         rhs2 = None
     comm = block_rhs.getComm().tompi4py()
     if rhs2 is not None:
-        map_block_to_original = allgather((block_V.block_dofmap().block_to_original(0), block_V.block_dofmap().block_to_original(1)), comm, block_dofmap=block_V.block_dofmap(), dofmap=(block_V[0].dofmap(), block_V[1].dofmap()))
+        map_block_to_original = allgather((block_V.block_dofmap.block_to_original(0), block_V.block_dofmap.block_to_original(1)), comm, block_dofmap=block_V.block_dofmap, dofmap=(block_V[0].dofmap, block_V[1].dofmap))
         rhs1g = allgather(rhs1, comm)
         rhs2g = allgather(rhs2, comm)
         rhsg = bvec([rhs1g, rhs2g])
     else:
-        map_block_to_original = allgather(block_V.block_dofmap().block_to_original(0), comm, block_dofmap=block_V.block_dofmap(), dofmap=block_V[0].dofmap())
+        map_block_to_original = allgather(block_V.block_dofmap.block_to_original(0), comm, block_dofmap=block_V.block_dofmap, dofmap=block_V[0].dofmap)
         rhs1g = allgather(rhs1, comm)
         rhsg = rhs1g
     block_rhsg = allgather(block_rhs, comm)
@@ -150,14 +150,14 @@ def assert_block_matrices_equal(lhs, block_lhs, block_V):
         lhs22 = None
     comm = block_lhs.getComm().tompi4py()
     if lhs22 is not None:
-        map_block_to_original = allgather((block_V.block_dofmap().block_to_original(0), block_V.block_dofmap().block_to_original(1)), comm, block_dofmap=block_V.block_dofmap(), dofmap=(block_V[0].dofmap(), block_V[1].dofmap()))
+        map_block_to_original = allgather((block_V.block_dofmap.block_to_original(0), block_V.block_dofmap.block_to_original(1)), comm, block_dofmap=block_V.block_dofmap, dofmap=(block_V[0].dofmap, block_V[1].dofmap))
         lhs11g = allgather(lhs11, comm)
         lhs12g = allgather(lhs12, comm)
         lhs21g = allgather(lhs21, comm)
         lhs22g = allgather(lhs22, comm)
         lhsg = bmat([[lhs11g, lhs12g], [lhs21g, lhs22g]])
     else:
-        map_block_to_original = allgather(block_V.block_dofmap().block_to_original(0), comm, block_dofmap=block_V.block_dofmap(), dofmap=block_V[0].dofmap())
+        map_block_to_original = allgather(block_V.block_dofmap.block_to_original(0), comm, block_dofmap=block_V.block_dofmap, dofmap=block_V[0].dofmap)
         lhs11g = allgather(lhs11, comm)
         lhsg = lhs11g
     block_lhsg = allgather(block_lhs, comm)
@@ -347,7 +347,7 @@ def get_restrictions_2():
 # Computation of block bcs for single block
 def get_block_bcs_1():
     def _get_bc_1(block_V):
-        mesh = block_V.mesh()
+        mesh = block_V.mesh
         boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
         OnBoundary().mark(boundaries, 1)
         boundaries_1 = where(boundaries.array() == 1)[0]
@@ -374,7 +374,7 @@ def get_block_bcs_1():
 # Computation of block bcs for two blocks
 def get_block_bcs_2():
     def _get_bc_1(block_V):
-        mesh = block_V.mesh()
+        mesh = block_V.mesh
         boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
         OnBoundary().mark(boundaries, 1)
         boundaries_1 = where(boundaries.array() == 1)[0]
@@ -393,7 +393,7 @@ def get_block_bcs_2():
                 bc1.append(DirichletBC(block_V[0].sub(i), bc1_fun, boundaries_1))
             return bc1
     def _get_bc_2(block_V):
-        mesh = block_V.mesh()
+        mesh = block_V.mesh
         boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
         OnBoundary().mark(boundaries, 1)
         boundaries_1 = where(boundaries.array() == 1)[0]
@@ -424,7 +424,7 @@ def get_block_bcs_2():
 def get_rhs_block_form_1(block_V):
     block_v = BlockTestFunction(block_V)
     (v, ) = block_split(block_v)
-    x = SpatialCoordinate(block_V.mesh())
+    x = SpatialCoordinate(block_V.mesh)
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) == 0:
         f = 2*x[0] + 4*x[1]*x[1]
@@ -445,7 +445,7 @@ def get_rhs_block_form_1(block_V):
 def get_rhs_block_form_2(block_V):
     block_v = BlockTestFunction(block_V)
     (v1, v2) = block_split(block_v)
-    x = SpatialCoordinate(block_V.mesh())
+    x = SpatialCoordinate(block_V.mesh)
     block_form = [None, None]
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) == 0:
@@ -484,7 +484,7 @@ def get_lhs_block_form_1(block_V):
     block_v = BlockTestFunction(block_V)
     (u, ) = block_split(block_u)
     (v, ) = block_split(block_v)
-    x = SpatialCoordinate(block_V.mesh())
+    x = SpatialCoordinate(block_V.mesh)
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) == 0:
         f = 2*x[0] + 4*x[1]*x[1]
@@ -507,7 +507,7 @@ def get_lhs_block_form_2(block_V):
     block_v = BlockTestFunction(block_V)
     (u1, u2) = block_split(block_u)
     (v1, v2) = block_split(block_v)
-    x = SpatialCoordinate(block_V.mesh())
+    x = SpatialCoordinate(block_V.mesh)
     block_form = [[None, None], [None, None]]
     # (1, 1) block
     shape_1 = block_V[0].ufl_element().value_shape()
@@ -641,7 +641,7 @@ def apply_bc_and_block_bc_matrix(lhs, block_lhs, block_bcs):
 # ================ BLOCK FUNCTIONS GENERATOR ================ #
 # Computation of block function for single block
 def get_list_of_functions_1(block_V):
-    x = SpatialCoordinate(block_V.mesh())
+    x = SpatialCoordinate(block_V.mesh)
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) == 0:
         f = 2*x[0] + 4*x[1]*x[1]
@@ -656,7 +656,7 @@ def get_list_of_functions_1(block_V):
     
 # Computation of block function for two blocks
 def get_list_of_functions_2(block_V):
-    x = SpatialCoordinate(block_V.mesh())
+    x = SpatialCoordinate(block_V.mesh)
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) == 0:
         f1 = 2*x[0] + 4*x[1]*x[1]
