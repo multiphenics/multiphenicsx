@@ -110,7 +110,7 @@ def run_monolithic():
                     f_local.set(0.0)
                 assemble_vector(self._F_vec, self._F)
             self._F_vec.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
-            DirichletBCLegacy.apply(self._bc, self._F_vec, self._up.vector())
+            DirichletBCLegacy.apply(self._bc, self._F_vec, self._up.vector)
             return self._F_vec
 
         def J(self, _):
@@ -127,7 +127,7 @@ def run_monolithic():
     problem = NavierStokesProblem(F, up, bc, J)
     solver = NewtonSolver(mesh.mpi_comm())
     set_solver_parameters(solver)
-    solver.solve(problem, up.vector())
+    solver.solve(problem, up.vector)
 
     # Extract solutions
     return up
@@ -165,7 +165,7 @@ def run_block():
     problem = BlockNonlinearProblem(F, up, bc, J)
     solver = BlockNewtonSolver(mesh.mpi_comm())
     set_solver_parameters(solver)
-    solver.solve(problem, up.block_vector())
+    solver.solve(problem, up.block_vector)
 
     # Extract solutions
     return up

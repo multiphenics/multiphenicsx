@@ -37,7 +37,7 @@ class BlockNonlinearProblem(NonlinearProblem):
         
     def F(self, _):
         # Update block solution subfunctions based on the last argument, which has already been
-        # stored in self.block_solution.block_vector()
+        # stored in self.block_solution.block_vector
         self.block_solution.apply("to subfunctions")
         # Assemble the block residual
         if self.residual_block_vector is None:
@@ -48,7 +48,7 @@ class BlockNonlinearProblem(NonlinearProblem):
             block_assemble(self.residual_block_form, block_tensor=self.residual_block_vector)
         # Apply boundary conditions
         if self.bcs is not None:
-            BlockDirichletBCLegacy.apply(self.bcs, self.residual_block_vector, self.block_solution.block_vector())
+            BlockDirichletBCLegacy.apply(self.bcs, self.residual_block_vector, self.block_solution.block_vector)
         # Return
         return self.residual_block_vector
         

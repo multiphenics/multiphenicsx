@@ -46,6 +46,6 @@ def block_solve(block_lhs, block_x, block_rhs, block_bcs=None, petsc_options=Non
             PETScOptions.set("multiphenics_solve_" + k, v)
     solver.set_from_options()
     solver.set_operator(block_A)
-    solver.solve(block_x.block_vector(), block_b)
+    solver.solve(block_x.block_vector, block_b)
     # Keep subfunctions up to date
     block_x.apply("to subfunctions")

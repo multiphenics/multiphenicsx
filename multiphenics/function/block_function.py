@@ -108,7 +108,7 @@ class BlockFunction(object):
         self._sub_functions = list()
         for i in range(self._num_sub_spaces):
             # Extend with the python layer of dolfin's Function
-            sub_function = Function(self.block_function_space().sub(i), self._cpp_object.sub(i).vector())
+            sub_function = Function(self.block_function_space().sub(i), self._cpp_object.sub(i).vector)
             
             # Extend with block function and block index methods
             extend_sub_function(sub_function, i)
@@ -194,7 +194,7 @@ class BlockFunction(object):
              _BlockFunction_
                  The BlockFunction
         """
-        return BlockFunction(self.block_function_space(), self.block_vector().copy())
+        return BlockFunction(self.block_function_space(), self.block_vector.copy())
         
     def __str__(self):
         return str([str(subf) for subf in self._sub_functions])
@@ -208,8 +208,8 @@ class BlockFunction(object):
         if isinstance(other, BlockFunction):
             output = self.copy()
             for (block_fun_output, block_fun_other) in zip(output, other):
-                block_fun_output.vector().add_local(block_fun_other.vector().get_local())
-                block_fun_output.vector().apply("add")
+                block_fun_output.vector.add_local(block_fun_other.vector.get_local())
+                block_fun_output.vector.apply("add")
             output.apply("from subfunctions")
             return output
         else:
@@ -219,8 +219,8 @@ class BlockFunction(object):
         if isinstance(other, BlockFunction):
             output = self.copy()
             for (block_fun_output, block_fun_other) in zip(output, other):
-                block_fun_output.vector().add_local(- block_fun_other.vector().get_local())
-                block_fun_output.vector().apply("add")
+                block_fun_output.vector.add_local(- block_fun_other.vector.get_local())
+                block_fun_output.vector.apply("add")
             output.apply("from subfunctions")
             return output
         else:
@@ -230,7 +230,7 @@ class BlockFunction(object):
         if isinstance(other, float):
             output = self.copy()
             for block_fun_output in output:
-                block_fun_output.vector()[:] *= other
+                block_fun_output.vector[:] *= other
             output.apply("from subfunctions")
             return output
         else:
@@ -240,7 +240,7 @@ class BlockFunction(object):
         if isinstance(other, float):
             output = self.copy()
             for block_fun_output in output:
-                block_fun_output.vector()[:] /= other
+                block_fun_output.vector[:] /= other
             output.apply("from subfunctions")
             return output
         else:
@@ -266,8 +266,8 @@ class BlockFunction(object):
     def __iadd__(self, other):
         if isinstance(other, BlockFunction):
             for (block_fun_output, block_fun_other) in zip(self, other):
-                block_fun_output.vector().add_local(block_fun_other.vector().get_local())
-                block_fun_output.vector().apply("add")
+                block_fun_output.vector.add_local(block_fun_other.vector.get_local())
+                block_fun_output.vector.apply("add")
             self.apply("from subfunctions")
             return self
         else:
@@ -276,8 +276,8 @@ class BlockFunction(object):
     def __isub__(self, other):
         if isinstance(other, BlockFunction):
             for (block_fun_output, block_fun_other) in zip(self, other):
-                block_fun_output.vector().add_local(- block_fun_other.vector().get_local())
-                block_fun_output.vector().apply("add")
+                block_fun_output.vector.add_local(- block_fun_other.vector.get_local())
+                block_fun_output.vector.apply("add")
             self.apply("from subfunctions")
             return self
         else:
@@ -286,7 +286,7 @@ class BlockFunction(object):
     def __imul__(self, other):
         if isinstance(other, float):
             for block_fun_output in self:
-                block_fun_output.vector()[:] *= other
+                block_fun_output.vector[:] *= other
             self.apply("from subfunctions")
             return self
         else:
@@ -295,7 +295,7 @@ class BlockFunction(object):
     def __itruediv__(self, other):
         if isinstance(other, float):
             for block_fun_output in self:
-                block_fun_output.vector()[:] /= other
+                block_fun_output.vector[:] /= other
             self.apply("from subfunctions")
             return self
         else:

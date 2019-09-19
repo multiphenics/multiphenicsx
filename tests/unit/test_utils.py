@@ -177,9 +177,9 @@ def assert_block_functions_equal(functions, block_function, block_V):
         assert isinstance(functions, tuple)
         assert len(functions) in (1, 2)
         if len(functions) == 2:
-            assert_block_vectors_equal((functions[0].vector(), functions[1].vector()), block_function.block_vector(), block_V)
+            assert_block_vectors_equal((functions[0].vector, functions[1].vector), block_function.block_vector, block_V)
         elif len(functions) == 1:
-            assert_block_vectors_equal((functions[0].vector(), ), block_function.block_vector(), block_V)
+            assert_block_vectors_equal((functions[0].vector, ), block_function.block_vector, block_V)
     
 def assert_functions_manipulations(functions, block_V):
     n_blocks = len(functions)
@@ -187,8 +187,8 @@ def assert_functions_manipulations(functions, block_V):
     # a) Convert from a list of Functions to a BlockFunction
     block_function_a = BlockFunction(block_V)
     for (index, function) in enumerate(functions):
-        function.vector().copy(result=block_function_a.sub(index).vector())
-        block_function_a.sub(index).vector().ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
+        function.vector.copy(result=block_function_a.sub(index).vector)
+        block_function_a.sub(index).vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
     block_function_a.apply("from subfunctions")
     # Block vector should have received the data stored in the list of Functions
     if n_blocks == 1:
@@ -199,19 +199,19 @@ def assert_functions_manipulations(functions, block_V):
     # their values (only on restrictions) from the block_vector. This is not needed in general,
     # but it is required in order to simplify the test b).
     for index in range(n_blocks):
-        with block_function_a.sub(index).vector().localForm() as local_form:
+        with block_function_a.sub(index).vector.localForm() as local_form:
             local_form.set(0.)
     block_function_a.apply("to subfunctions")
     # b) Test assignment of BlockFunctions
     block_function_b = BlockFunction(block_V)
-    block_function_a.block_vector().copy(result=block_function_b.block_vector())
-    block_function_b.sub(index).vector().ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
+    block_function_a.block_vector.copy(result=block_function_b.block_vector)
+    block_function_b.sub(index).vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
     block_function_b.apply("to subfunctions")
     # Each sub function should now contain the same data as the original block function
     for index in range(n_blocks):
-        assert array_equal(block_function_b.sub(index).vector().getArray(), block_function_a.sub(index).vector().getArray())
+        assert array_equal(block_function_b.sub(index).vector.getArray(), block_function_a.sub(index).vector.getArray())
     # The two block vectors should store the same data
-    assert array_equal(block_function_b.block_vector().getArray(), block_function_a.block_vector().getArray())
+    assert array_equal(block_function_b.block_vector.getArray(), block_function_a.block_vector.getArray())
     
 # ================ EQUALITY BETWEEN FORMS ================ #
 def assert_forms_equal(form1, form2):
@@ -354,14 +354,14 @@ def get_block_bcs_1():
         num_sub_elements = block_V[0].ufl_element().num_sub_elements()
         if num_sub_elements == 0:
             bc1_fun = Function(block_V[0])
-            with bc1_fun.vector().localForm() as local_form:
+            with bc1_fun.vector.localForm() as local_form:
                 local_form.set(1.)
             return [DirichletBC(block_V[0], bc1_fun, boundaries_1)]
         else:
             bc1 = list()
             for i in range(num_sub_elements):
                 bc1_fun = Function(block_V[0].sub(i).collapse())
-                with bc1_fun.vector().localForm() as local_form:
+                with bc1_fun.vector.localForm() as local_form:
                     local_form.set(i + 1.)
                 bc1.append(DirichletBC(block_V[0].sub(i), bc1_fun, boundaries_1))
             return bc1
@@ -381,14 +381,14 @@ def get_block_bcs_2():
         num_sub_elements = block_V[0].ufl_element().num_sub_elements()
         if num_sub_elements == 0:
             bc1_fun = Function(block_V[0])
-            with bc1_fun.vector().localForm() as local_form:
+            with bc1_fun.vector.localForm() as local_form:
                 local_form.set(1.)
             return [DirichletBC(block_V[0], bc1_fun, boundaries_1)]
         else:
             bc1 = list()
             for i in range(num_sub_elements):
                 bc1_fun = Function(block_V[0].sub(i).collapse())
-                with bc1_fun.vector().localForm() as local_form:
+                with bc1_fun.vector.localForm() as local_form:
                     local_form.set(i + 1.)
                 bc1.append(DirichletBC(block_V[0].sub(i), bc1_fun, boundaries_1))
             return bc1
@@ -400,14 +400,14 @@ def get_block_bcs_2():
         num_sub_elements = block_V[1].ufl_element().num_sub_elements()
         if num_sub_elements == 0:
             bc2_fun = Function(block_V[1])
-            with bc2_fun.vector().localForm() as local_form:
+            with bc2_fun.vector.localForm() as local_form:
                 local_form.set(11.)
             return [DirichletBC(block_V[1], bc2_fun, boundaries_1)]
         else:
             bc2 = list()
             for i in range(num_sub_elements):
                 bc2_fun = Function(block_V[1].sub(i).collapse())
-                with bc2_fun.vector().localForm() as local_form:
+                with bc2_fun.vector.localForm() as local_form:
                     local_form.set(i + 11.)
                 bc2.append(DirichletBC(block_V[1].sub(i), bc2_fun, boundaries_1))
             return bc2
@@ -611,10 +611,10 @@ def apply_bc_and_block_bc_vector(rhs, block_rhs, block_bcs):
 def apply_bc_and_block_bc_vector_non_linear(rhs, block_rhs, block_bcs, block_V):
     if block_bcs is not None:
         block_function = BlockFunction(block_V)
-        BlockDirichletBCLegacy.apply(block_bcs, block_rhs, block_function.block_vector())
+        BlockDirichletBCLegacy.apply(block_bcs, block_rhs, block_function.block_vector)
         N = len(block_bcs)
         function = [Function(block_V[i]) for i in range(N)]
-        [DirichletBCLegacy.apply(block_bcs[i], rhs[i], function[i].vector()) for i in range(N)]
+        [DirichletBCLegacy.apply(block_bcs[i], rhs[i], function[i].vector) for i in range(N)]
         return tuple(function), block_function
     else:
         return (None, None)

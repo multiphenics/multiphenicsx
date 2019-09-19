@@ -134,14 +134,14 @@ def generate_penalty_system(W, component, restriction, penalty, g):
     # Note that here we are using fenics_*_dofs variables, because project() returns a FEniCS vector.
     q_function = BlockFunction(W)
     project(penalty*g, W[component], function=q_function.sub(component))
-    q_array = q_function.sub(component).vector().get_local()
+    q_array = q_function.sub(component).vector.get_local()
     for dof in fenics_interior_dofs:
         q_array[dof] = 0.
-    q_function.sub(component).vector().set_local(q_array)
-    q_function.sub(component).vector().apply("insert")
+    q_function.sub(component).vector.set_local(q_array)
+    q_function.sub(component).vector.apply("insert")
     q_function.apply("from subfunctions", component)
     # Return matrix and vector
-    return P, q_function.block_vector()
+    return P, q_function.block_vector
 
 # ASSEMBLE #
 g = Expression("sin(3*x[0] + 1)*sin(3*x[1] + 1)", element=V.ufl_element())
@@ -154,7 +154,7 @@ F = block_assemble(f)
 (P, Q) = generate_penalty_system(W, 0, boundary_restriction, 1.e10, g)
 
 U = BlockFunction(W)
-block_solve(A + P, U.block_vector(), F + Q)
+block_solve(A + P, U.block_vector, F + Q)
 
 # ERROR #
 A_ex = assemble(a[0][0])
@@ -163,11 +163,11 @@ bc_ex = DirichletBC(V, g, boundaries, 1)
 bc_ex.apply(A_ex)
 bc_ex.apply(F_ex)
 U_ex = Function(V)
-solve(A_ex, U_ex.vector(), F_ex)
+solve(A_ex, U_ex.vector, F_ex)
 err = Function(V)
-err.vector().add_local(+ U_ex.vector().get_local())
-err.vector().add_local(- U[0].vector().get_local())
-err.vector().apply("")
+err.vector.add_local(+ U_ex.vector.get_local())
+err.vector.add_local(- U[0].vector.get_local())
+err.vector.apply("")
 U_ex_norm = sqrt(assemble(inner(grad(U_ex), grad(U_ex))*dx))
 err_norm = sqrt(assemble(inner(grad(err), grad(err))*dx))
 print("Relative error is equal to", err_norm/U_ex_norm)

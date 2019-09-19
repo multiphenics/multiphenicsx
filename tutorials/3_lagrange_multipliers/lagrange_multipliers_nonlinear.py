@@ -78,7 +78,7 @@ def set_solver_parameters(solver):
 problem = BlockNonlinearProblem(F, ul, None, J)
 solver = BlockNewtonSolver(mesh.mpi_comm())
 set_solver_parameters(solver)
-solver.solve(problem, ul.block_vector())
+solver.solve(problem, ul.block_vector)
 
 # ERROR #
 # Class for interfacing with the Newton solver
@@ -103,7 +103,7 @@ class LagrangeMultipliersNonlinearProblem(NonlinearProblem):
                 f_local.set(0.0)
             assemble_vector(self._F_vec, self._F)
         self._F_vec.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
-        DirichletBCLegacy.apply(self._bc, self._F_vec, self._up.vector())
+        DirichletBCLegacy.apply(self._bc, self._F_vec, self._up.vector)
         return self._F_vec
 
     def J(self, _):
@@ -124,7 +124,7 @@ bc_ex = [DirichletBC(V, g, boundaries_1)]
 problem_ex = LagrangeMultipliersNonlinearProblem(F_ex, u_ex, bc_ex, J_ex)
 solver_ex = NewtonSolver(mesh.mpi_comm())
 set_solver_parameters(solver_ex)
-solver_ex.solve(problem_ex, u_ex.vector())
+solver_ex.solve(problem_ex, u_ex.vector)
 u_ex_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u_ex), grad(u_ex))*dx)))
 err_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u_ex - ul[0]), grad(u_ex - ul[0]))*dx)))
 print("Relative error is equal to", err_norm/u_ex_norm)

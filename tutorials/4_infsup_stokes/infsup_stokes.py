@@ -52,12 +52,12 @@ def zero_eval(values, x, cell):
     values[:, 1] = 0.0
 
 def normalize(u1, u2, p):
-    u1.vector()[:] /= assemble(inner(grad(u1), grad(u1))*dx)
-    u1.vector().apply("insert")
-    u2.vector()[:] /= assemble(inner(grad(u2), grad(u2))*dx)
-    u2.vector().apply("insert")
-    p.vector()[:] /= assemble(p*p*dx)
-    p.vector().apply("insert")
+    u1.vector[:] /= assemble(inner(grad(u1), grad(u1))*dx)
+    u1.vector.apply("insert")
+    u2.vector[:] /= assemble(inner(grad(u2), grad(u2))*dx)
+    u2.vector.apply("insert")
+    p.vector[:] /= assemble(p*p*dx)
+    p.vector.apply("insert")
 
 # -------------------------------------------------- #
 

@@ -106,7 +106,7 @@ F_state = assemble(f[3])
 bc_state = [DirichletBC(W.sub(0), bc0, boundaries, idx) for idx in (2, 4)]
 [bc_state_.apply(A_state) for bc_state_ in bc_state]
 [bc_state_.apply(F_state) for bc_state_ in bc_state]
-solve(A_state, y.vector(), F_state)
+solve(A_state, y.vector, F_state)
 print("Uncontrolled J =", assemble(J))
 assert isclose(assemble(J), 0.5038976)
 plt.figure()
@@ -118,7 +118,7 @@ A = block_assemble(a, keep_diagonal=True)
 F = block_assemble(f)
 bc.apply(A)
 bc.apply(F)
-block_solve(A, yulp.block_vector(), F)
+block_solve(A, yulp.block_vector, F)
 print("Optimal J =", assemble(J))
 assert isclose(assemble(J), 0.1281223)
 plt.figure()

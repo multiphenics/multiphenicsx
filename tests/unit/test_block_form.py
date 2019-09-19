@@ -600,10 +600,10 @@ def test_case_0j(mesh):
     # Solutions
     (U_in, P_in) = get_list_of_functions_2(W)
     UP = BlockFunction(W)
-    U_in.vector().copy(result=UP.sub(0).vector())
-    U_in.vector().ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
-    P_in.vector().copy(result=UP.sub(1).vector())
-    P_in.vector().ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
+    U_in.vector.copy(result=UP.sub(0).vector)
+    U_in.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
+    P_in.vector.copy(result=UP.sub(1).vector)
+    P_in.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
     UP.apply("from subfunctions")
     (U, P) = block_split(UP)
     # Forms

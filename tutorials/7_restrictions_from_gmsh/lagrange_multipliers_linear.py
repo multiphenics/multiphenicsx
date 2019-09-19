@@ -74,7 +74,7 @@ A = block_assemble(a)
 F = block_assemble(f)
 
 U = BlockFunction(W)
-block_solve(A, U.block_vector(), F)
+block_solve(A, U.block_vector, F)
 
 # ERROR #
 g_norm = sqrt(assemble(inner(g, g)*dx(2, domain=mesh)))

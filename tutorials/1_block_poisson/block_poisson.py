@@ -81,7 +81,7 @@ def run_standard():
 
     # Define boundary conditions
     zero = Function(V)
-    with zero.vector().localForm() as zero_local:
+    with zero.vector.localForm() as zero_local:
         zero_local.set(0.0)
     bc = DirichletBC(V, zero, boundaries_1)
     
@@ -111,7 +111,7 @@ def run_block():
     
     # Define block boundary conditions
     zero = Function(V)
-    with zero.vector().localForm() as zero_local:
+    with zero.vector.localForm() as zero_local:
         zero_local.set(0.0)
     bc1 = DirichletBC(VV.sub(0), zero, boundaries_1)
     bc2 = DirichletBC(VV.sub(1), zero, boundaries_1)
