@@ -117,8 +117,8 @@ void multiphenics::fem::block_assemble(Mat A, const BlockForm2& a)
 //-----------------------------------------------------------------------------
 Vec multiphenics::fem::init_vector(const BlockForm1& L)
 {
-  assert(L.block_function_spaces()[0]->block_dofmap()->index_map());
-  return create_petsc_vector(*L.block_function_spaces()[0]->block_dofmap()->index_map());
+  assert(L.block_function_spaces()[0]->block_dofmap()->index_map);
+  return create_petsc_vector(*L.block_function_spaces()[0]->block_dofmap()->index_map);
 }
 //-----------------------------------------------------------------------------
 Mat multiphenics::fem::init_matrix(const BlockForm2& a)
@@ -134,8 +134,8 @@ Mat multiphenics::fem::init_matrix(const BlockForm2& a)
 
   // Get IndexMaps for each dimension
   std::array<std::shared_ptr<const IndexMap>, 2> index_maps{{
-    a.block_function_spaces()[0]->block_dofmap()->index_map(),
-    a.block_function_spaces()[1]->block_dofmap()->index_map()
+    a.block_function_spaces()[0]->block_dofmap()->index_map,
+    a.block_function_spaces()[1]->block_dofmap()->index_map
   }};
       
   // Create sparsity pattern

@@ -220,8 +220,8 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
               if (in_restriction)
               {
                 unowned_dofs_in_restriction[i].insert(cell_dof);
-                int dofmap_block_size = dofmap->index_map()->block_size();
-                std::size_t cell_global_dof = dofmap->index_map()->local_to_global(cell_dof/dofmap_block_size)*dofmap_block_size + (cell_dof%dofmap_block_size);
+                int dofmap_block_size = dofmap->index_map->block_size();
+                std::size_t cell_global_dof = dofmap->index_map->local_to_global(cell_dof/dofmap_block_size)*dofmap_block_size + (cell_dof%dofmap_block_size);
                 unowned_dofs_in_restriction__local_to_global[i][cell_dof] = cell_global_dof;
                 for (auto c : cell_indices)
                   unowned_dofs_in_restriction__to__cell_indices[i][cell_dof].insert(c);
@@ -274,11 +274,11 @@ void BlockDofMap::_assign_owned_dofs_to_block_dofmap(
   
   // Prepare temporary index map, neglecting ghosts
   std::vector<std::size_t> empty_ghosts;
-  _index_map.reset(new IndexMap(comm, block_dofmap_local_size, empty_ghosts, 1));
+  index_map.reset(new IndexMap(comm, block_dofmap_local_size, empty_ghosts, 1));
   for (unsigned int i = 0; i < dofmaps.size(); ++i) 
   {
     auto index_map_i = std::make_shared<IndexMap>(comm, sub_block_dofmap_local_size[i], empty_ghosts, 1);
-    _sub_index_map.push_back(index_map_i);
+    sub_index_map.push_back(index_map_i);
   }
   
   // Fill in private attributes related to global indices of owned dofs
@@ -286,7 +286,7 @@ void BlockDofMap::_assign_owned_dofs_to_block_dofmap(
   {
     for (auto local_dof : _block_owned_dofs__local[i])
     {
-      _block_owned_dofs__global[i].push_back(_index_map->local_to_global(local_dof));
+      _block_owned_dofs__global[i].push_back(index_map->local_to_global(local_dof));
     }
   }
 }
@@ -343,7 +343,7 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
   {
     sub_local_to_sub_global_unowned[i].resize(sub_block_dofmap_unowned_size[i]);
     std::shared_ptr<const DofMap> dofmap = std::dynamic_pointer_cast<const DofMap>(dofmaps[i]);
-    int dofmap_block_size = dofmap->index_map()->block_size();
+    int dofmap_block_size = dofmap->index_map->block_size();
     
     // In order to fill in the (block) local to (block) global map of unowned dofs,
     // we need to proceed as follows:
@@ -367,7 +367,7 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
     for (auto original_local_dof : unowned_dofs_in_restriction[i])
     {
       auto original_global_dof = unowned_dofs_in_restriction__local_to_global[i].at(original_local_dof);
-      const int index_owner = dofmap->index_map()->owner(original_global_dof/dofmap_block_size);
+      const int index_owner = dofmap->index_map->owner(original_global_dof/dofmap_block_size);
       assert(index_owner != mpi_rank);
       send_buffer[index_owner].push_back(original_global_dof);
       send_buffer[index_owner].push_back(mpi_rank);
@@ -396,8 +396,8 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
         const std::size_t original_local_dof = original_global_dof - dofmap->index_map->local_range()[0];
         PetscInt block_local_dof = _original_to_block__local_to_local[i].at(original_local_dof);
         PetscInt sub_block_local_dof = _original_to_sub_block__local_to_local[i].at(original_local_dof);
-        send_buffer[sender_rank].push_back(_index_map->local_to_global(block_local_dof));
-        send_buffer[sender_rank].push_back(_sub_index_map[i]->local_to_global(sub_block_local_dof));
+        send_buffer[sender_rank].push_back(index_map->local_to_global(block_local_dof));
+        send_buffer[sender_rank].push_back(sub_index_map[i]->local_to_global(sub_block_local_dof));
         send_buffer[sender_rank].push_back(original_global_dof);
       }
     }
@@ -429,11 +429,11 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
   }
   
   // Replace temporary index map with a new one, which now includes ghost local_to_global map
-  _index_map.reset(new IndexMap(comm, block_dofmap_local_size, local_to_global_unowned, 1));
+  index_map.reset(new IndexMap(comm, block_dofmap_local_size, local_to_global_unowned, 1));
   for (unsigned int i = 0; i < dofmaps.size(); ++i) 
   {
     auto index_map_i = std::make_shared<IndexMap>(comm, sub_block_dofmap_local_size[i], sub_local_to_sub_global_unowned[i], 1);
-    _sub_index_map.push_back(index_map_i);
+    sub_index_map.push_back(index_map_i);
   }
   
   // Fill in private attributes related to global indices of unowned dofs
@@ -441,7 +441,7 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
   {
     for (auto local_dof : _block_unowned_dofs__local[i])
     {
-      _block_unowned_dofs__global[i].push_back(_index_map->local_to_global(local_dof));
+      _block_unowned_dofs__global[i].push_back(index_map->local_to_global(local_dof));
     }
   }
 }
@@ -467,7 +467,7 @@ BlockDofMap::BlockDofMap(const BlockDofMap& block_dofmap, std::size_t i)
   }
   
   // Copy index map from local to global from parent
-  _index_map = block_dofmap._index_map;
+  index_map = block_dofmap.index_map;
   
   // Skip initalizing the rest of the private attributes, as this is the bare minimum
   // required by SparsityPatternBuilder::build()
@@ -532,21 +532,11 @@ void BlockDofMap::set(Eigen::Ref<Eigen::Matrix<PetscScalar, Eigen::Dynamic, 1>> 
                      "This method was supposedly never used by block interface, and its implementation requires some more work");
 }
 //-----------------------------------------------------------------------------
-std::shared_ptr<const IndexMap> BlockDofMap::index_map() const
-{
-  return _index_map; 
-}
-//-----------------------------------------------------------------------------
-std::shared_ptr<const IndexMap> BlockDofMap::sub_index_map(std::size_t b) const
-{
-  return _sub_index_map[b]; 
-}
-//-----------------------------------------------------------------------------
 std::string BlockDofMap::str(bool verbose) const
 {
   std::stringstream s;
   s << "<BlockDofMap with total global dimension "
-    << _index_map->size_global()
+    << index_map->size_global()
     << ">"
     << std::endl;
   return s.str();

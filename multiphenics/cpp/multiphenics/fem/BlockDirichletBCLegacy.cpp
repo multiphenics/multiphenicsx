@@ -41,7 +41,7 @@ void BlockDirichletBCLegacy::apply(const BlockDirichletBC& bcs, Mat A, PetscScal
   // DirichletBCLegacy::apply(bcs[I], A_{IJ}, diag*\delta_{IJ}). 
   // We will thus operator directly on the global matrix A.  
   const auto block_dofmap = bcs.block_function_space()->block_dofmap();
-  const auto block_index_map = block_dofmap->index_map();
+  const auto block_index_map = block_dofmap->index_map;
   for (std::size_t I(0); I < bcs.size(); ++I)
   {
     // Extract global indices associated to bcs[I]

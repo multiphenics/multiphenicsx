@@ -690,10 +690,10 @@ def allgather(obj, comm, **kwargs):
             assert isinstance(kwargs["dofmap"], tuple)
             all_block_to_original1 = comm.allgather(obj[0])
             all_ownership_ranges1 = comm.allgather(kwargs["dofmap"][0].ownership_range())
-            all_block_ownership_ranges1 = comm.allgather(kwargs["block_dofmap"].sub_index_map(0).local_range())
+            all_block_ownership_ranges1 = comm.allgather(kwargs["block_dofmap"].sub_index_map[0].local_range())
             all_block_to_original2 = comm.allgather(obj[1])
             all_ownership_ranges2 = comm.allgather(kwargs["dofmap"][1].ownership_range())
-            all_block_ownership_ranges2 = comm.allgather(kwargs["block_dofmap"].sub_index_map(1).local_range())
+            all_block_ownership_ranges2 = comm.allgather(kwargs["block_dofmap"].sub_index_map[1].local_range())
             base_index1 = [None]*comm.Get_size()
             block_base_index1 = [None]*comm.Get_size()
             base_index2 = [None]*comm.Get_size()
@@ -723,7 +723,7 @@ def allgather(obj, comm, **kwargs):
             assert isinstance(obj, dict)
             all_block_to_original1 = comm.allgather(obj)
             all_ownership_ranges1 = comm.allgather(kwargs["dofmap"].ownership_range())
-            all_block_ownership_ranges1 = comm.allgather(kwargs["block_dofmap"].sub_index_map(0).local_range())
+            all_block_ownership_ranges1 = comm.allgather(kwargs["block_dofmap"].sub_index_map[0].local_range())
             base_index1 = [ownr[0] for ownr in all_ownership_ranges1]
             block_base_index1 = [ownr[0] for ownr in all_block_ownership_ranges1]
             output = dict()

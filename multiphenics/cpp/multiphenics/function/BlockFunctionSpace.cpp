@@ -163,7 +163,7 @@ std::vector<std::shared_ptr<const FunctionSpace>> BlockFunctionSpace::function_s
 std::int64_t BlockFunctionSpace::dim() const
 {
   assert(_block_dofmap);
-  return _block_dofmap->index_map()->size_global();
+  return _block_dofmap->index_map->size_global();
 }
 //-----------------------------------------------------------------------------
 std::shared_ptr<const FunctionSpace> BlockFunctionSpace::operator[] (std::size_t i) const
@@ -278,7 +278,7 @@ EigenRowArrayXXd BlockFunctionSpace::tabulate_dof_coordinates() const
   
   // Get local size
   assert(_block_dofmap);
-  std::size_t local_size = _block_dofmap->index_map()->size_local();
+  std::size_t local_size = _block_dofmap->index_map->size_local();
   
   // Vector to hold coordinates and return
   EigenRowArrayXXd dof_coordinates(local_size, gdim);

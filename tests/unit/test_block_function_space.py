@@ -54,19 +54,19 @@ def assert_dof_map_single_block_no_restriction(V, block_V):
     global_dimension = V.dofmap().global_dimension()
     block_global_dimension = block_V.block_dofmap().global_dimension()
     assert global_dimension == block_global_dimension
-    V_ghosts = V.dofmap().index_map().ghosts()
-    block_V_ghosts = block_V.block_dofmap().index_map().ghosts()
-    block_V_ghosts = unique([b//V.dofmap().index_map().block_size() for b in block_V_ghosts])
+    V_ghosts = V.dofmap().index_map.ghosts()
+    block_V_ghosts = block_V.block_dofmap().index_map.ghosts()
+    block_V_ghosts = unique([b//V.dofmap().index_map.block_size() for b in block_V_ghosts])
     assert array_sorted_equal(V_ghosts, block_V_ghosts)
     for c in Cells(block_V.mesh()):
         V_cell_dofs = V.dofmap().cell_dofs(c.index())
         V_cell_owned_local_dofs = [a for a in V_cell_dofs if a < local_dimension]
         V_cell_unowned_local_dofs = [a for a in V_cell_dofs if a >= local_dimension]
-        V_cell_global_dofs = [_local_to_global(V.dofmap().index_map(), a) for a in V_cell_dofs]
+        V_cell_global_dofs = [_local_to_global(V.dofmap().index_map, a) for a in V_cell_dofs]
         block_V_cell_dofs = block_V.block_dofmap().cell_dofs(c.index())
         block_V_cell_owned_local_dofs = [b for b in block_V_cell_dofs if b < block_local_dimension]
         block_V_cell_unowned_local_dofs = [b for b in block_V_cell_dofs if b >= block_local_dimension]
-        block_V_cell_global_dofs = [_local_to_global(block_V.block_dofmap().index_map(), b) for b in block_V_cell_dofs]
+        block_V_cell_global_dofs = [_local_to_global(block_V.block_dofmap().index_map, b) for b in block_V_cell_dofs]
         assert_owned_local_dofs(V_cell_owned_local_dofs, block_V_cell_owned_local_dofs)
         assert_unowned_local_dofs(V_cell_unowned_local_dofs, block_V_cell_unowned_local_dofs)
         assert_global_dofs(V_cell_global_dofs, block_V_cell_global_dofs)

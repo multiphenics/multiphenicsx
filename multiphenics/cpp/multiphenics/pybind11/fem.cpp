@@ -40,7 +40,7 @@ namespace multiphenics_wrappers
       .def("block_unowned_dofs__global_numbering", &multiphenics::fem::BlockDofMap::block_unowned_dofs__global_numbering)
       .def("original_to_block", &multiphenics::fem::BlockDofMap::original_to_block)
       .def("block_to_original", &multiphenics::fem::BlockDofMap::block_to_original)
-      .def("sub_index_map", &multiphenics::fem::BlockDofMap::sub_index_map);
+      .def_readonly("sub_index_map", &multiphenics::fem::BlockDofMap::sub_index_map);
       
     // multiphenics::fem::BlockForm1
     py::class_<multiphenics::fem::BlockForm1, std::shared_ptr<multiphenics::fem::BlockForm1>>

@@ -144,11 +144,11 @@ namespace multiphenics
       void set(Eigen::Ref<Eigen::Matrix<PetscScalar, Eigen::Dynamic, 1>> x,
                PetscScalar value) const;
 
-      /// Return the map from local to global (const access)
-      std::shared_ptr<const dolfin::common::IndexMap> index_map() const;
+      // Index Map from local to global
+      std::shared_ptr<dolfin::common::IndexMap> index_map;
       
-      /// Return the map from sub local to sub global (const access)
-      std::shared_ptr<const dolfin::common::IndexMap> sub_index_map(std::size_t b) const;
+      // Index Map from sub local to sub global
+      std::vector<std::shared_ptr<dolfin::common::IndexMap>> sub_index_map;
       
       /// Return informal string representation (pretty-print)
       /// @param[in] verbose Flag to turn on additional output.
@@ -182,12 +182,6 @@ namespace multiphenics
       // Cell-local-to-dof map
       std::map<PetscInt, std::vector<PetscInt>> _dofmap;
       std::vector<PetscInt> _empty_vector;
-      
-      // Index Map from local to global
-      std::shared_ptr<dolfin::common::IndexMap> _index_map;
-      
-      // Index Map from sub local to sub global
-      std::vector<std::shared_ptr<dolfin::common::IndexMap>> _sub_index_map;
       
       // List of block dofs, for each component, with local numbering
       std::vector<std::vector<PetscInt>> _block_owned_dofs__local;
