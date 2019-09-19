@@ -25,7 +25,6 @@ namespace multiphenics_wrappers
   void function(py::module& m);
   void fem(py::module& m);
   void la(py::module& m);
-  void log(py::module& m);
 }
 
 PYBIND11_MODULE(SIGNATURE, m)
@@ -33,10 +32,6 @@ PYBIND11_MODULE(SIGNATURE, m)
   // Create module for C++ wrappers
   m.doc() = "multiphenics Python interface";
   
-  // Create log submodule
-  py::module log = m.def_submodule("log", "Logging module");
-  multiphenics_wrappers::log(log);
-
   // Create function submodule
   py::module function = m.def_submodule("function", "Function module");
   multiphenics_wrappers::function(function);

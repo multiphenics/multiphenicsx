@@ -22,7 +22,6 @@
 #include <dolfin/mesh/Mesh.h>
 #include <dolfin/mesh/MeshIterator.h>
 #include <multiphenics/fem/BlockDofMap.h>
-#include <multiphenics/log/log.h>
 
 using namespace multiphenics;
 using namespace multiphenics::fem;
@@ -130,9 +129,8 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
     // Consistency check
     if (restriction.size() != 0 && restriction.size() != D + 1)
     {
-      multiphenics_error("BlockDofMap.cpp",
-                         "initialize block dof map",
-                         "Invalid length of restriction array");
+      throw std::runtime_error("Cannot initialize block dof map. "
+                               "Invalid length of restriction array.");
     }
     
     // Local size
@@ -145,9 +143,8 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
       {
         if (restriction[d]->dim() != d)
         {
-          multiphenics_error("BlockDofMap.cpp",
-                             "initialize block dof map",
-                             "Invalid dimension of restriction mesh function");
+          throw std::runtime_error("Cannot initialize block dof map."
+                                   "Invalid dimension of restriction mesh function.");
         }
       }
       
@@ -506,25 +503,19 @@ DofMap
 BlockDofMap::extract_sub_dofmap(const std::vector<std::size_t>& component,
                                 const Mesh& mesh) const
 {
-  multiphenics_error("BlockDofMap.cpp",
-                     "extract sub dofmap",
-                     "This method was supposedly never used by block interface, and its implementation requires some more work");
+  throw std::runtime_error("This method was supposedly never used by block interface, and its implementation requires some more work");
 }
 //-----------------------------------------------------------------------------
 std::pair<std::shared_ptr<DofMap>, std::vector<PetscInt>>
 BlockDofMap::collapse(const Mesh& mesh) const
 {
-  multiphenics_error("BlockDofMap.cpp",
-                     "collapse sub dofmap",
-                     "This method was supposedly never used by block interface, and its implementation requires some more work");
+  throw std::runtime_error("This method was supposedly never used by block interface, and its implementation requires some more work");
 }
 //-----------------------------------------------------------------------------
 void BlockDofMap::set(Eigen::Ref<Eigen::Matrix<PetscScalar, Eigen::Dynamic, 1>> x,
                       PetscScalar value) const; const
 {
-  multiphenics_error("BlockDofMap.cpp",
-                     "set dof entries of a vector to a value",
-                     "This method was supposedly never used by block interface, and its implementation requires some more work");
+  throw std::runtime_error("This method was supposedly never used by block interface, and its implementation requires some more work");
 }
 //-----------------------------------------------------------------------------
 std::string BlockDofMap::str(bool verbose) const
@@ -539,18 +530,14 @@ std::string BlockDofMap::str(bool verbose) const
 //-----------------------------------------------------------------------------
 Eigen::Ref<const Eigen::Array<PetscInt, Eigen::Dynamic, 1>> BlockDofMap::dof_array() const
 {
-  multiphenics_error("BlockDofMap.cpp",
-                     "obtain list of dofs",
-                     "This method was supposedly never used by block interface, and its implementation requires some more work");
+  throw std::runtime_error("This method was supposedly never used by block interface, and its implementation requires some more work");
 }
 
 //-----------------------------------------------------------------------------
 Eigen::Array<PetscInt, Eigen::Dynamic, 1> BlockDofMap::dofs(const Mesh& mesh,
                                                        std::size_t dim) const
 {
-  multiphenics_error("BlockDofMap.cpp",
-                     "obtain list of dofs",
-                     "This method was supposedly never used by block interface, and its implementation requires some more work");
+  throw std::runtime_error("This method was supposedly never used by block interface, and its implementation requires some more work");
 }
 //-----------------------------------------------------------------------------
 const std::vector<PetscInt> & BlockDofMap::block_owned_dofs__local_numbering(std::size_t b) const

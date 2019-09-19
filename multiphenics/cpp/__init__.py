@@ -24,7 +24,6 @@ cpp = compile_package(
     "multiphenics",
     os.path.dirname(os.path.abspath(__file__)),
     # Files are manually sorted to handle dependencies
-    "log/log.cpp",
     "fem/BlockDofMap.cpp",
     "function/BlockFunctionSpace.cpp",
     "fem/BlockForm1.cpp",

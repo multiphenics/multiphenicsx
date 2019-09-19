@@ -153,9 +153,8 @@ void CondensedSLEPcEigenSolver::get_eigenpair(double& lr, double& lc,
   }
   else
   {
-    multiphenics_error("SLEPcEigenSolver.cpp",
-                       "extract eigenpair from SLEPc eigenvalue solver",
-                       "Requested eigenpair has not been computed");
+    throw std::runtime_error("Cannot extract eigenpair from SLEPc eigenvalue solver. "
+                             "Requested eigenpair has not been computed");
   }
 }
 //-----------------------------------------------------------------------------

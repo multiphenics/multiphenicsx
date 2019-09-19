@@ -19,7 +19,6 @@
 #include <multiphenics/function/BlockFunction.h>
 #include <multiphenics/la/BlockPETScSubVectorReadWrapper.h>
 #include <multiphenics/la/BlockPETScSubVectorWrapper.h>
-#include <multiphenics/log/log.h>
 
 using namespace multiphenics;
 using namespace multiphenics::function;
@@ -148,9 +147,7 @@ void BlockFunction::apply(std::string mode, int only)
       block_vector_i.content = sub_vector_i_.x;
     }
     else
-      multiphenics_error("BlockFunction.cpp",
-                         "apply to block function",
-                         "Invalid mode");
+      throw std::runtime_error("Invalid mode when calling apply in block function");
   }
   if (mode == "from subfunctions")
   {

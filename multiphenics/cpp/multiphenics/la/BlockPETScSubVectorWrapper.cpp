@@ -17,7 +17,6 @@
 //
 
 #include <multiphenics/la/BlockPETScSubVectorWrapper.h>
-#include <multiphenics/log/log.h>
 
 using namespace multiphenics;
 using namespace multiphenics::la;
