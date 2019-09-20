@@ -32,6 +32,7 @@ cpp = compile_package(
     "la/BlockPETScSubVectorReadWrapper.cpp",
     "la/BlockPETScSubVectorWrapper.cpp",
     "function/BlockFunction.cpp",
+    "fem/BlockSparsityPatternBuilder.cpp",
     "fem/block_assemble.cpp",
     "fem/DirichletBCLegacy.cpp",
     "fem/BlockDirichletBC.cpp",

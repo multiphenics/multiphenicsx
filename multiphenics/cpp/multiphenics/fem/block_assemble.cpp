@@ -20,10 +20,10 @@
 #include <dolfin/common/Timer.h>
 #include <dolfin/fem/assemble_matrix_impl.h>
 #include <dolfin/fem/assemble_vector_impl.h>
-#include <dolfin/fem/SparsityPatternBuilder.h>
 #include <dolfin/la/utils.h>
 #include <multiphenics/fem/block_assemble.h>
 #include <multiphenics/fem/BlockDofMap.h>
+#include <multiphenics/fem/BlockSparsityPatternBuilder.h>
 #include <multiphenics/la/BlockPETScSubMatrix.h>
 #include <multiphenics/la/BlockPETScSubVectorWrapper.h>
 
@@ -37,7 +37,6 @@ using dolfin::fem::Form;
 using dolfin::fem::FormIntegrals;
 using dolfin::fem::impl::assemble_vector;
 using dolfin::fem::impl::assemble_matrix;
-using dolfin::fem::SparsityPatternBuilder;
 using dolfin::la::create_petsc_matrix;
 using dolfin::la::create_petsc_vector;
 using dolfin::la::petsc_error;
@@ -148,7 +147,7 @@ Mat multiphenics::fem::init_matrix(const BlockForm2& a)
     for (std::size_t j = 0; j < a.block_size(1); j++)
     {
       const Form & a_ij(a(i, j));
-      std::array<const DofMap*, 2> dofmaps_ij{{
+      std::array<const BlockDofMap*, 2> dofmaps_ij{{
         &a.block_function_spaces()[0]->block_dofmap->view(i),
         &a.block_function_spaces()[1]->block_dofmap->view(j)
       }};
@@ -161,11 +160,11 @@ Mat multiphenics::fem::init_matrix(const BlockForm2& a)
       )
       {
         if (a_ij.integrals().num_integrals(FormIntegrals::Type::cell) > 0)
-          SparsityPatternBuilder::cells(pattern, mesh, dofmaps_ij);
+          BlockSparsityPatternBuilder::cells(pattern, mesh, dofmaps_ij);
         if (a_ij.integrals().num_integrals(FormIntegrals::Type::interior_facet) > 0)
-          SparsityPatternBuilder::interior_facets(pattern, mesh, dofmaps_ij);
+          BlockSparsityPatternBuilder::interior_facets(pattern, mesh, dofmaps_ij);
         if (a_ij.integrals().num_integrals(FormIntegrals::Type::exterior_facet) > 0)
-          SparsityPatternBuilder::exterior_facets(pattern, mesh, dofmaps_ij);
+          BlockSparsityPatternBuilder::exterior_facets(pattern, mesh, dofmaps_ij);
       }
       else if (i == j)
       {
