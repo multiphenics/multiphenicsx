@@ -17,7 +17,7 @@
 #
 
 from numpy import ndarray as array
-from dolfin.la import PETScKrylovSolver, PETScOptions
+from petsc4py import PETSc
 from multiphenics.fem import block_assemble, BlockDirichletBC, BlockDirichletBCLegacy, BlockForm, BlockForm1, BlockForm2
 from multiphenics.function import BlockFunction
 
@@ -38,14 +38,16 @@ def block_solve(block_lhs, block_x, block_rhs, block_bcs=None, petsc_options=Non
     if block_bcs is not None:
         BlockDirichletBCLegacy.apply(block_bcs, block_A, 1.0)
         BlockDirichletBCLegacy.apply(block_bcs, block_b)
-    # Solve
-    solver = PETScKrylovSolver(block_x.block_function_space().mesh.mpi_comm())
-    solver.set_options_prefix("multiphenics_solve_")
+    # Store options
+    options = PETSc.Options()
     if petsc_options is not None:
         for k, v in petsc_options.items():
-            PETScOptions.set("multiphenics_solve_" + k, v)
-    solver.set_from_options()
-    solver.set_operator(block_A)
-    solver.solve(block_x.block_vector, block_b)
+            options.setValue("multiphenics_solve_" + k, v)
+    # Solve
+    solver = PETSc.KSP().create(block_x.block_function_space().mesh.mpi_comm())
+    solver.setOptionsPrefix("multiphenics_solve_")
+    solver.setFromOptions()
+    solver.setOperators(block_A)
+    solver.solve(block_b, block_x.block_vector)
     # Keep subfunctions up to date
     block_x.apply("to subfunctions")
