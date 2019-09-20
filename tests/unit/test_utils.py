@@ -306,8 +306,7 @@ def UnitSquareInterface(X=None, Y=None, on_boundary=False):
                 return full(x.shape[0], on_boundary_)
     return CustomSubDomain()
     
-def OnBoundary():
-    return UnitSquareInterface(on_boundary=True)
+OnBoundary = UnitSquareInterface(on_boundary=True)
     
 def get_restrictions_1():
     return (
@@ -349,7 +348,7 @@ def get_block_bcs_1():
     def _get_bc_1(block_V):
         mesh = block_V.mesh
         boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
-        OnBoundary().mark(boundaries, 1)
+        boundaries.mark(OnBoundary, 1)
         boundaries_1 = where(boundaries.array() == 1)[0]
         num_sub_elements = block_V[0].ufl_element().num_sub_elements()
         if num_sub_elements == 0:
@@ -376,7 +375,7 @@ def get_block_bcs_2():
     def _get_bc_1(block_V):
         mesh = block_V.mesh
         boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
-        OnBoundary().mark(boundaries, 1)
+        boundaries.mark(OnBoundary, 1)
         boundaries_1 = where(boundaries.array() == 1)[0]
         num_sub_elements = block_V[0].ufl_element().num_sub_elements()
         if num_sub_elements == 0:
@@ -395,7 +394,7 @@ def get_block_bcs_2():
     def _get_bc_2(block_V):
         mesh = block_V.mesh
         boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
-        OnBoundary().mark(boundaries, 1)
+        boundaries.mark(OnBoundary, 1)
         boundaries_1 = where(boundaries.array() == 1)[0]
         num_sub_elements = block_V[1].ufl_element().num_sub_elements()
         if num_sub_elements == 0:

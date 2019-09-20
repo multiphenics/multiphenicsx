@@ -16,31 +16,32 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import Mesh, MeshFunction, SubDomain
+import types
+from dolfin import Mesh, MeshFunction
 
 class MeshRestriction(list):
     """
-    This type converts a SubDomain into a hierarchy of MeshFunctions.
+    This type converts a function defining a subdomain into a hierarchy of MeshFunctions.
     """
     def __init__(self, mesh, arg=None):
         # Initialize empty list
         list.__init__(self)
         # Process depending on the second argument
         assert isinstance(mesh, Mesh)
-        assert isinstance(arg, (list, SubDomain)) or arg is None
+        assert isinstance(arg, (list, types.FunctionType)) or arg is None
         if isinstance(arg, list):
-            assert all([isinstance(arg_i, SubDomain) for arg_i in arg])
+            assert all([isinstance(arg_i, types.FunctionType) for arg_i in arg])
         if arg is None:
             pass # leave the list empty
-        elif isinstance(arg, (list, SubDomain)):
+        elif isinstance(arg, (list, types.FunctionType)):
             D = mesh.topology.dim
             for d in range(D + 1):
-                mesh_function_d = MeshFunction("bool", mesh, d, False)
-                if isinstance(arg, SubDomain):
-                    arg.mark(mesh_function_d, True)
+                mesh_function_d = MeshFunction("size_t", mesh, d, 0)
+                if isinstance(arg, types.FunctionType):
+                    mesh_function_d.mark(arg, 1)
                 else:
                     for arg_i in arg:
-                        arg_i.mark(mesh_function_d, True)
+                        mesh_function_d.mark(arg_i, 1)
                 self.append(mesh_function_d)
         else:
             raise TypeError("Invalid second argument provided to MeshRestriction")

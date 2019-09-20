@@ -109,11 +109,6 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
   std::vector<std::map<PetscInt, std::set<std::size_t>>>& unowned_dofs_in_restriction__to__cell_indices
 ) const
 {
-  // Parts of this code have been adapted from
-  //    PeriodicBoundaryComputation::compute_periodic_pairs
-  //    DofMap::entity_dofs
-  //    SubDomain::apply_markers
-  
   assert(dofmaps.size() == restrictions.size());
   assert(dofmaps.size() == meshes.size());
   for (unsigned int i = 0; i < dofmaps.size(); ++i) 

@@ -20,9 +20,9 @@ import types
 import numpy
 import cffi
 from ufl.finiteelement import FiniteElementBase
-from dolfin import FunctionSpace, Mesh, MeshFunction, SubDomain
+from dolfin import FunctionSpace, Mesh, MeshFunction
 import dolfin.cpp
-from dolfin.cpp.mesh import MeshFunctionBool
+from dolfin.cpp.mesh import MeshFunctionSizet
 import dolfin.fem.dofmap
 from dolfin.jit import ffc_jit
 from multiphenics.cpp import cpp
@@ -127,11 +127,11 @@ class BlockFunctionSpace(object):
     def _init_restriction(mesh, subdomains):
         assert isinstance(subdomains, (list, tuple))
         all_none = all([subdomain is None for subdomain in subdomains])
-        at_least_one_subdomain = any([isinstance(subdomain, SubDomain) for subdomain in subdomains])
+        at_least_one_subdomain = any([isinstance(subdomain, types.FunctionType) for subdomain in subdomains])
         at_least_one_mesh_function = any([(
                 isinstance(subdomain, (list, tuple))
                     and
-                all([isinstance(mesh_function, MeshFunctionBool) for mesh_function in subdomain])
+                all([isinstance(mesh_function, MeshFunctionSizet) for mesh_function in subdomain])
             ) for subdomain in subdomains])
         assert all_none or at_least_one_subdomain or at_least_one_mesh_function
         if all_none:
@@ -141,14 +141,14 @@ class BlockFunctionSpace(object):
                 mesh_functions_for_subdomains.append(empty_mesh_functions_for_current_subdomain)
             return mesh_functions_for_subdomains
         elif at_least_one_subdomain:
-            assert not at_least_one_mesh_function, "Please do not mix SubDomains and MeshFunctions, rather provide only MeshFunctions"
+            assert not at_least_one_mesh_function, "Please do not mix functions defining subdomains and MeshFunctions, rather provide only MeshFunctions"
             mesh_functions_for_subdomains = list()
             for subdomain in subdomains:
                 mesh_functions_for_current_subdomain = MeshRestriction(mesh, subdomain)
                 mesh_functions_for_subdomains.append(mesh_functions_for_current_subdomain)
             return mesh_functions_for_subdomains
         elif at_least_one_mesh_function:
-            assert not at_least_one_subdomain, "Please do not mix SubDomains and MeshFunctions, rather provide only MeshFunctions"
+            assert not at_least_one_subdomain, "Please do not mix functions defining subdomains and MeshFunctions, rather provide only MeshFunctions"
             mesh_functions_for_subdomains = list()
             for mesh_functions in subdomains:
                 if mesh_functions is not None:
