@@ -34,50 +34,28 @@ def pytest_mark_slow(item):
 
 def pytest_mark_slow_for_cartesian_product(generator_1, generator_2):
     for i in generator_1():
-        broken_i = False # TODO remove when pytest_mark_broken_by_dolfinx is removed
         slow_i = False
         if isinstance(i, ParameterSet):
             assert len(i.marks) == 1
-            if i.marks[0].name == "skip": # TODO remove when pytest_mark_broken_by_dolfinx is removed
-                assert len(i.values) == 1
-                i = i.values[0]
-                broken_i = True
-            else:
-                assert i.marks[0].name == "slow"
-                assert len(i.values) == 1
-                i = i.values[0]
-                slow_i = True
+            assert i.marks[0].name == "slow"
+            assert len(i.values) == 1
+            i = i.values[0]
+            slow_i = True
         for j in generator_2():
-            broken_j = False # TODO remove when pytest_mark_broken_by_dolfinx is removed
             slow_j = False
             if isinstance(j, ParameterSet):
                 assert len(j.marks) == 1
-                if j.marks[0].name == "skip": # TODO remove when pytest_mark_broken_by_dolfinx is removed
-                    assert len(j.values) == 1
-                    j = j.values[0]
-                    broken_j = True
-                else:
-                    assert j.marks[0].name == "slow"
-                    assert len(j.values) == 1
-                    j = j.values[0]
-                    slow_j = True
+                assert j.marks[0].name == "slow"
+                assert len(j.values) == 1
+                j = j.values[0]
+                slow_j = True
             assert not isinstance(i, ParameterSet)
             assert not isinstance(j, ParameterSet)
-            if broken_i or broken_j: # TODO remove when pytest_mark_broken_by_dolfinx is removed
-                yield pytest_mark_broken_by_dolfinx((i, j), -1)
-            elif slow_i or slow_j:
+            if slow_i or slow_j:
                 yield pytest_mark_slow((i, j))
             else:
                 yield (i, j)
                 
-def pytest_mark_broken_by_dolfinx(item, dolfinx_issue_number): # TODO remove when dolfinx issue is fixed
-    if isinstance(item, ParameterSet):
-        assert len(item.marks) == 1
-        assert item.marks[0].name == "slow"
-        assert len(item.values) == 1
-        item = item.values[0]
-    return pytest.param(item, marks=pytest.mark.skip)
-
 # ================ EQUALITY BETWEEN ARRAYS ================ #
 # Floating point equality check
 def array_equal(array1, array2):
