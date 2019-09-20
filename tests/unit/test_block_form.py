@@ -18,7 +18,8 @@
 
 import pytest
 from petsc4py import PETSc
-from dolfin import div, ds, dx, grad, FunctionSpace, inner, MPI, UnitSquareMesh, VectorFunctionSpace
+from ufl import div, ds, dx, grad, inner
+from dolfin import FunctionSpace, MPI, UnitSquareMesh, VectorFunctionSpace
 from dolfin_utils.test.fixtures import fixture as module_fixture
 from multiphenics import block_adjoint, block_derivative, BlockForm, BlockFunction, BlockFunctionSpace, block_restrict, block_split, BlockTestFunction, BlockTrialFunction
 from test_utils import assert_forms_equal, get_list_of_functions_2
