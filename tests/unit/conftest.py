@@ -18,6 +18,9 @@
 
 from dolfin import MPI
 
+def pytest_configure(config):
+    config.addinivalue_line("markers", "slow: Tests that are slow.")
+
 def pytest_runtest_teardown(item, nextitem):
     # Do the normal teardown
     item.teardown()
