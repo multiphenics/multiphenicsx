@@ -349,7 +349,7 @@ def get_block_bcs_1():
         mesh = block_V.mesh
         boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
         boundaries.mark(OnBoundary, 1)
-        boundaries_1 = where(boundaries.array() == 1)[0]
+        boundaries_1 = where(boundaries.values == 1)[0]
         num_sub_elements = block_V[0].ufl_element().num_sub_elements()
         if num_sub_elements == 0:
             bc1_fun = Function(block_V[0])
@@ -376,7 +376,7 @@ def get_block_bcs_2():
         mesh = block_V.mesh
         boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
         boundaries.mark(OnBoundary, 1)
-        boundaries_1 = where(boundaries.array() == 1)[0]
+        boundaries_1 = where(boundaries.values == 1)[0]
         num_sub_elements = block_V[0].ufl_element().num_sub_elements()
         if num_sub_elements == 0:
             bc1_fun = Function(block_V[0])
@@ -395,7 +395,7 @@ def get_block_bcs_2():
         mesh = block_V.mesh
         boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
         boundaries.mark(OnBoundary, 1)
-        boundaries_1 = where(boundaries.array() == 1)[0]
+        boundaries_1 = where(boundaries.values == 1)[0]
         num_sub_elements = block_V[1].ufl_element().num_sub_elements()
         if num_sub_elements == 0:
             bc2_fun = Function(block_V[1])
