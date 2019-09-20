@@ -17,6 +17,8 @@
 //
 
 #include <pybind11/pybind11.h>
+#include <pybind11/eigen.h>
+#include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 
 #include <dolfin/common/IndexMap.h>
@@ -48,6 +50,8 @@ namespace multiphenics_wrappers
       .def("block_unowned_dofs__global_numbering", &multiphenics::fem::BlockDofMap::block_unowned_dofs__global_numbering)
       .def("original_to_block", &multiphenics::fem::BlockDofMap::original_to_block)
       .def("block_to_original", &multiphenics::fem::BlockDofMap::block_to_original)
+      .def("cell_dofs", &multiphenics::fem::BlockDofMap::cell_dofs)
+      .def_readonly("index_map", &multiphenics::fem::BlockDofMap::index_map)
       .def_readonly("sub_index_map", &multiphenics::fem::BlockDofMap::sub_index_map);
       
     // multiphenics::fem::BlockForm1

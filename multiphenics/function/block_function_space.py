@@ -31,7 +31,7 @@ from multiphenics.mesh import MeshRestriction
 
 def _compile_dolfin_element(element, mesh):
     # Compile dofmap and element and create DOLFIN objects
-    ufc_element, ufc_dofmap = ffc_jit(
+    ufc_element, ufc_dofmap_ptr = ffc_jit(
         element,
         form_compiler_parameters=None,
         mpi_comm=mesh.mpi_comm())
@@ -114,11 +114,11 @@ class BlockFunctionSpace(object):
             
         # Initialize the BlockFunctionSpace_Base
         if restrict is None:
-            self._cpp_object = BlockFunctionSpace_Base(mesh, dolfin_elements, [dolfin_dofmap._cpp_object for dolfin_dofmap in dolfin_dofmaps])
+            self._cpp_object = BlockFunctionSpace_Base(mesh, dolfin_elements, dolfin_dofmaps)
         else:
             restrict = self._init_restriction(mesh, restrict)
             assert len(restrict) == len(elements)
-            self._cpp_object = BlockFunctionSpace_Base(mesh, dolfin_elements, [dolfin_dofmap._cpp_object for dolfin_dofmap in dolfin_dofmaps], restrict)
+            self._cpp_object = BlockFunctionSpace_Base(mesh, dolfin_elements, dolfin_dofmaps, restrict)
         
         # Fill in subspaces
         self._init_sub_spaces(elements)

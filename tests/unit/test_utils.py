@@ -19,10 +19,11 @@
 import numbers
 import pytest
 from _pytest.mark import ParameterSet
-from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, finfo, full, hstack, hstack as bvec, logical_and, sort, unique, vstack, where
+from numpy import allclose as float_array_equal, array_equal as integer_array_equal, bmat, finfo, full, hstack, hstack as bvec, logical_and, logical_or, sort, unique, vstack, where
 from scipy.sparse import csr_matrix
 from petsc4py import PETSc
-from dolfin import as_matrix, as_tensor, as_vector, dx, FiniteElement, Function, FunctionSpace, inner, MeshFunction, MixedElement, project, SpatialCoordinate, SubDomain, TensorElement, TensorFunctionSpace, VectorElement, VectorFunctionSpace
+from ufl import as_matrix, as_tensor, as_vector, dx, FiniteElement, inner, MixedElement, SpatialCoordinate, TensorElement, VectorElement
+from dolfin import Function, FunctionSpace, interpolate, MeshFunction, TensorFunctionSpace, VectorFunctionSpace
 from dolfin.fem import assemble_matrix, assemble_vector
 from multiphenics import BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
 from multiphenics.fem import block_assemble, BlockDirichletBCLegacy, DirichletBCLegacy
@@ -279,10 +280,9 @@ def get_elements_2():
     
 # ================ SUBDOMAIN GENERATOR ================ #
 def UnitSquareSubDomain(X, Y):
-    class CustomSubDomain(SubDomain):
-        def inside(self, x, on_boundary):
-            return logical_and(x[:, 0] <= X, x[:, 1] <= Y)
-    return CustomSubDomain()
+    def unit_square_subdomain(x):
+        return logical_and(x[:, 0] <= X, x[:, 1] <= Y)
+    return unit_square_subdomain
 
 def UnitSquareInterface(X=None, Y=None, on_boundary=False):
     assert (
@@ -293,18 +293,18 @@ def UnitSquareInterface(X=None, Y=None, on_boundary=False):
         (X is None and Y is None and on_boundary is True)
     )
     if X is not None:
-        class CustomSubDomain(SubDomain):
-            def inside(self, x, on_boundary_):
-                return logical_and(x[:, 0] >= X - finfo(float).eps, x[:, 0] <= X + finfo(float).eps)
+        def unit_square_interface(x):
+            return logical_and(x[:, 0] >= X - finfo(float).eps, x[:, 0] <= X + finfo(float).eps)
     elif Y is not None:
-        class CustomSubDomain(SubDomain):
-            def inside(self, x, on_boundary_):
-                return logical_and(x[:, 1] >= Y - finfo(float).eps, x[:, 1] <= Y + finfo(float).eps)
+        def unit_square_interface(x):
+            return logical_and(x[:, 1] >= Y - finfo(float).eps, x[:, 1] <= Y + finfo(float).eps)
     elif on_boundary is True:
-        class CustomSubDomain(SubDomain):
-            def inside(self, x, on_boundary_):
-                return full(x.shape[0], on_boundary_)
-    return CustomSubDomain()
+        def unit_square_interface(x):
+            return logical_or(
+                logical_or(x[:, 0] <= finfo(float).eps, x[:, 0] >= 1. - finfo(float).eps),
+                logical_or(x[:, 1] <= finfo(float).eps, x[:, 1] >= 1. - finfo(float).eps)
+            )
+    return unit_square_interface
     
 OnBoundary = UnitSquareInterface(on_boundary=True)
     
@@ -651,7 +651,7 @@ def get_list_of_functions_1(block_V):
     elif len(shape_1) == 2:
         f = as_matrix(((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]),
                        (7*x[0] + 11*x[1]*x[1], 13*x[0] + 17*x[1]*x[1])))
-    return [project(f, block_V[0])]
+    return [interpolate(f, block_V[0])]
     
 # Computation of block function for two blocks
 def get_list_of_functions_2(block_V):
@@ -676,7 +676,7 @@ def get_list_of_functions_2(block_V):
     elif len(shape_2) == 2:
         f2 = as_matrix(((2*x[1] + 4*x[0]*x[0], 3*x[1] + 5*x[0]*x[0]),
                         (7*x[1] + 11*x[0]*x[0], 13*x[1] + 17*x[0]*x[0])))
-    return [project(f1, block_V[0]), project(f2, block_V[1])]
+    return [interpolate(f1, block_V[0]), interpolate(f2, block_V[1])]
     
 # ================ PARALLEL SUPPORT ================ #
 # Gather matrices, vector and dicts on zero-th process
@@ -688,10 +688,14 @@ def allgather(obj, comm, **kwargs):
         if isinstance(obj, tuple):
             assert isinstance(kwargs["dofmap"], tuple)
             all_block_to_original1 = comm.allgather(obj[0])
-            all_ownership_ranges1 = comm.allgather(kwargs["dofmap"][0].ownership_range())
+            all_ownership_ranges1 = comm.allgather(kwargs["dofmap"][0].index_map.local_range)
+            for r in range(comm.Get_size() + 1):
+                all_ownership_ranges1[r][:] *= kwargs["dofmap"][0].index_map.block_size
             all_block_ownership_ranges1 = comm.allgather(kwargs["block_dofmap"].sub_index_map[0].local_range())
             all_block_to_original2 = comm.allgather(obj[1])
-            all_ownership_ranges2 = comm.allgather(kwargs["dofmap"][1].ownership_range())
+            all_ownership_ranges2 = comm.allgather(kwargs["dofmap"][1].index_map.local_range)
+            for r in range(comm.Get_size() + 1):
+                all_ownership_ranges2[r][:] *= kwargs["dofmap"][1].index_map.block_size
             all_block_ownership_ranges2 = comm.allgather(kwargs["block_dofmap"].sub_index_map[1].local_range())
             base_index1 = [None]*comm.Get_size()
             block_base_index1 = [None]*comm.Get_size()
@@ -721,7 +725,7 @@ def allgather(obj, comm, **kwargs):
         else:
             assert isinstance(obj, dict)
             all_block_to_original1 = comm.allgather(obj)
-            all_ownership_ranges1 = comm.allgather(kwargs["dofmap"].ownership_range())
+            all_ownership_ranges1 = comm.allgather(kwargs["dofmap"].index_map.local_range)
             all_block_ownership_ranges1 = comm.allgather(kwargs["block_dofmap"].sub_index_map[0].local_range())
             base_index1 = [ownr[0] for ownr in all_ownership_ranges1]
             block_base_index1 = [ownr[0] for ownr in all_block_ownership_ranges1]

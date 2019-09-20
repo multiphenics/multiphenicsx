@@ -128,7 +128,8 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
     }
     
     // Local size
-    const std::int64_t dofmap_local_size = dofmap->index_map->local_range()[1] - dofmap->index_map->local_range()[0];
+    int dofmap_block_size = dofmap->index_map->block_size;
+    const std::int64_t dofmap_local_size = dofmap_block_size*(dofmap->index_map->local_range()[1] - dofmap->index_map->local_range()[0]);
     
     // Loop over entity dimension
     for (std::size_t d = 0; d <= D; ++d)
@@ -213,7 +214,6 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
               if (in_restriction)
               {
                 unowned_dofs_in_restriction[i].insert(cell_dof);
-                int dofmap_block_size = dofmap->index_map->block_size;
                 std::size_t cell_global_dof = dofmap->index_map->local_to_global(cell_dof/dofmap_block_size)*dofmap_block_size + (cell_dof%dofmap_block_size);
                 unowned_dofs_in_restriction__local_to_global[i][cell_dof] = cell_global_dof;
                 for (auto c : cell_indices)

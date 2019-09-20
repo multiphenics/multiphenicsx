@@ -76,7 +76,7 @@ def get_local_dofs(W, component):
     multiphenics solution block_vector. Note that this list *considers* restrictions.
     """
     return (
-        list(range(0, W[component].dofmap.ownership_range()[1] - W[component].dofmap.ownership_range()[0])),
+        list(range(0, W[component].dofmap.index_map.block_size*(W[component].dofmap.index_map.local_range[1] - W[component].dofmap.index_map.local_range[0]))),
         W.block_dofmap.block_owned_dofs__local_numbering(component)
     )
 
