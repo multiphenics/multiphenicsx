@@ -104,11 +104,11 @@ class BlockFunction(object):
                 return output
             sub_function.sub = types.MethodType(sub, sub_function)
             
-        self._num_sub_spaces = self.block_function_space().num_sub_spaces()
+        self._num_sub_spaces = self.block_function_space.num_sub_spaces()
         self._sub_functions = list()
         for i in range(self._num_sub_spaces):
             # Extend with the python layer of dolfin's Function
-            sub_function = Function(self.block_function_space().sub(i), self._cpp_object.sub(i).vector)
+            sub_function = Function(self.block_function_space.sub(i), self._cpp_object.sub(i).vector)
             
             # Extend with block function and block index methods
             extend_sub_function(sub_function, i)
@@ -194,7 +194,7 @@ class BlockFunction(object):
              _BlockFunction_
                  The BlockFunction
         """
-        return BlockFunction(self.block_function_space(), self.block_vector.copy())
+        return BlockFunction(self.block_function_space, self.block_vector.copy())
         
     def __str__(self):
         return str([str(subf) for subf in self._sub_functions])

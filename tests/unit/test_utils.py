@@ -640,42 +640,67 @@ def apply_bc_and_block_bc_matrix(lhs, block_lhs, block_bcs):
 # ================ BLOCK FUNCTIONS GENERATOR ================ #
 # Computation of block function for single block
 def get_list_of_functions_1(block_V):
-    x = SpatialCoordinate(block_V.mesh)
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) == 0:
-        f = 2*x[0] + 4*x[1]*x[1]
+        def f(values, x):
+            values[:, 0] = 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
     elif len(shape_1) == 1 and shape_1[0] == 2:
-        f = as_vector((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]))
+        def f(values, x):
+            values[:, 0] = 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
+            values[:, 1] = 3*x[:, 0] + 5*x[:, 1]*x[:, 1]
     elif len(shape_1) == 1 and shape_1[0] == 3:
-        f = as_vector((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1], 7*x[0] + 11*x[1]*x[1]))
+        def f(values, x):
+            values[:, 0] = 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
+            values[:, 1] = 3*x[:, 0] + 5*x[:, 1]*x[:, 1]
+            values[:, 2] = 7*x[:, 0] + 11*x[:, 1]*x[:, 1]
     elif len(shape_1) == 2:
-        f = as_matrix(((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]),
-                       (7*x[0] + 11*x[1]*x[1], 13*x[0] + 17*x[1]*x[1])))
+        def f(values, x):
+            values[:, 0] = 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
+            values[:, 1] = 3*x[:, 0] + 5*x[:, 1]*x[:, 1]
+            values[:, 2] = 7*x[:, 0] + 11*x[:, 1]*x[:, 1]
+            values[:, 3] = 13*x[:, 0] + 17*x[:, 1]*x[:, 1]
     return [interpolate(f, block_V[0])]
     
 # Computation of block function for two blocks
 def get_list_of_functions_2(block_V):
-    x = SpatialCoordinate(block_V.mesh)
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) == 0:
-        f1 = 2*x[0] + 4*x[1]*x[1]
+        def f1(values, x):
+            values[:, 0] = 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
     elif len(shape_1) == 1 and shape_1[0] == 2:
-        f1 = as_vector((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]))
+        def f1(values, x):
+            values[:, 0] = 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
+            values[:, 1] = 3*x[:, 0] + 5*x[:, 1]*x[:, 1]
     elif len(shape_1) == 1 and shape_1[0] == 3:
-        f1 = as_vector((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1], 7*x[0] + 11*x[1]*x[1]))
+        def f1(values, x):
+            values[:, 0] = 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
+            values[:, 1] = 3*x[:, 0] + 5*x[:, 1]*x[:, 1]
+            values[:, 2] = 7*x[:, 0] + 11*x[:, 1]*x[:, 1]
     elif len(shape_1) == 2:
-        f1 = as_matrix(((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]),
-                        (7*x[0] + 11*x[1]*x[1], 13*x[0] + 17*x[1]*x[1])))
+        def f1(values, x):
+            values[:, 0] = 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
+            values[:, 1] = 3*x[:, 0] + 5*x[:, 1]*x[:, 1]
+            values[:, 2] = 7*x[:, 0] + 11*x[:, 1]*x[:, 1]
+            values[:, 3] = 13*x[:, 0] + 17*x[:, 1]*x[:, 1]
     shape_2 = block_V[1].ufl_element().value_shape()
     if len(shape_2) == 0:
-        f2 = 2*x[1] + 4*x[0]*x[0]
+        def f2(values, x):
+            values[:, 0] = 2*x[:, 1] + 4*x[:, 0]*x[:, 0]
     elif len(shape_2) == 1 and shape_2[0] == 2:
-        f2 = as_vector((2*x[1] + 4*x[0]*x[0], 3*x[1] + 5*x[0]*x[0]))
+        def f2(values, x):
+            values[:, 0] = 2*x[:, 1] + 4*x[:, 0]*x[:, 0]
+            values[:, 1] = 3*x[:, 1] + 5*x[:, 0]*x[:, 0]
     elif len(shape_2) == 1 and shape_2[0] == 3:
-        f2 = as_vector((2*x[1] + 4*x[0]*x[0], 3*x[1] + 5*x[0]*x[0], 7*x[1] + 11*x[0]*x[0]))
+        def f2(values, x):
+            values[:, 0] = 2*x[:, 1] + 4*x[:, 0]*x[:, 0]
+            values[:, 1] = 3*x[:, 1] + 5*x[:, 0]*x[:, 0]
+            values[:, 2] = 7*x[:, 1] + 11*x[:, 0]*x[:, 0]
     elif len(shape_2) == 2:
-        f2 = as_matrix(((2*x[1] + 4*x[0]*x[0], 3*x[1] + 5*x[0]*x[0]),
-                        (7*x[1] + 11*x[0]*x[0], 13*x[1] + 17*x[0]*x[0])))
+        def f2(values, x):
+            values[:, 0] = 2*x[:, 1] + 4*x[:, 0]*x[:, 0]
+            values[:, 1] = 3*x[:, 1] + 5*x[:, 0]*x[:, 0]
+            values[:, 2] = 7*x[:, 1] + 11*x[:, 0]*x[:, 0]
+            values[:, 3] = 13*x[:, 1] + 17*x[:, 0]*x[:, 0]
     return [interpolate(f1, block_V[0]), interpolate(f2, block_V[1])]
     
 # ================ PARALLEL SUPPORT ================ #
@@ -688,15 +713,11 @@ def allgather(obj, comm, **kwargs):
         if isinstance(obj, tuple):
             assert isinstance(kwargs["dofmap"], tuple)
             all_block_to_original1 = comm.allgather(obj[0])
-            all_ownership_ranges1 = comm.allgather(kwargs["dofmap"][0].index_map.local_range)
-            for r in range(comm.Get_size() + 1):
-                all_ownership_ranges1[r][:] *= kwargs["dofmap"][0].index_map.block_size
-            all_block_ownership_ranges1 = comm.allgather(kwargs["block_dofmap"].sub_index_map[0].local_range())
+            all_ownership_ranges1 = comm.allgather([lr*kwargs["dofmap"][0].index_map.block_size for lr in kwargs["dofmap"][0].index_map.local_range])
+            all_block_ownership_ranges1 = comm.allgather(kwargs["block_dofmap"].sub_index_map[0].local_range)
             all_block_to_original2 = comm.allgather(obj[1])
-            all_ownership_ranges2 = comm.allgather(kwargs["dofmap"][1].index_map.local_range)
-            for r in range(comm.Get_size() + 1):
-                all_ownership_ranges2[r][:] *= kwargs["dofmap"][1].index_map.block_size
-            all_block_ownership_ranges2 = comm.allgather(kwargs["block_dofmap"].sub_index_map[1].local_range())
+            all_ownership_ranges2 = comm.allgather([lr*kwargs["dofmap"][1].index_map.block_size for lr in kwargs["dofmap"][1].index_map.local_range])
+            all_block_ownership_ranges2 = comm.allgather(kwargs["block_dofmap"].sub_index_map[1].local_range)
             base_index1 = [None]*comm.Get_size()
             block_base_index1 = [None]*comm.Get_size()
             base_index2 = [None]*comm.Get_size()
@@ -725,8 +746,8 @@ def allgather(obj, comm, **kwargs):
         else:
             assert isinstance(obj, dict)
             all_block_to_original1 = comm.allgather(obj)
-            all_ownership_ranges1 = comm.allgather(kwargs["dofmap"].index_map.local_range)
-            all_block_ownership_ranges1 = comm.allgather(kwargs["block_dofmap"].sub_index_map[0].local_range())
+            all_ownership_ranges1 = comm.allgather([lr*kwargs["dofmap"].index_map.block_size for lr in kwargs["dofmap"].index_map.local_range])
+            all_block_ownership_ranges1 = comm.allgather(kwargs["block_dofmap"].sub_index_map[0].local_range)
             base_index1 = [ownr[0] for ownr in all_ownership_ranges1]
             block_base_index1 = [ownr[0] for ownr in all_block_ownership_ranges1]
             output = dict()
