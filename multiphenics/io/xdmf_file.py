@@ -33,7 +33,7 @@ class MeshRestrictionXDMFFile(object):
         for d in range(D + 1):
             mesh_function_d_filename = self.filename + "/mesh_function_" + str(d) + ".xdmf"
             xdmf_file = XDMFFile(mesh.mpi_comm(), mesh_function_d_filename, self.encoding)
-            mesh_function_d = xdmf_file.read_mf_bool(mesh)
+            mesh_function_d = xdmf_file.read_mf_size_t(mesh)
             assert mesh_function_d.dim == d
             content.append(mesh_function_d)
         # Return

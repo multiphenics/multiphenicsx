@@ -18,6 +18,8 @@
 
 import numpy
 from numpy import isclose, where
+from petsc4py import PETSc
+from ufl import *
 from dolfin import *
 from dolfin.cpp.mesh import GhostMode
 from dolfin.fem import assemble_scalar
@@ -42,7 +44,7 @@ see data/generate_mesh.py
 
 # MESHES #
 # Mesh
-mesh = XDMFFile(MPI.comm_world, "data/circle.xdmf").read_mesh(MPI.comm_world, GhostMode.none)
+mesh = XDMFFile(MPI.comm_world, "data/circle.xdmf").read_mesh(GhostMode.none)
 subdomains = XDMFFile(MPI.comm_world, "data/circle_physical_region.xdmf").read_mf_size_t(mesh)
 boundaries = XDMFFile(MPI.comm_world, "data/circle_facet_region.xdmf").read_mf_size_t(mesh)
 # Dirichlet boundary
@@ -65,10 +67,9 @@ dx = Measure("dx")(subdomain_data=subdomains)
 ds = Measure("ds")(subdomain_data=boundaries)
 
 # ASSEMBLE #
-@function.expression.numba_eval
-def g_eval(values, x, cell):
+def g_eval(values, x):
     values[:, 0] = numpy.sin(3*x[:, 0] + 1)*numpy.sin(3*x[:, 1] + 1)
-g = interpolate(Expression(g_eval), V)
+g = interpolate(g_eval, V)
 a = [[inner(grad(u), grad(v))*dx, l*v*ds],
      [u*m*ds                    , 0     ]]
 f =  [v*dx                      , g*m*ds]
@@ -79,10 +80,11 @@ solver_parameters = {"ksp_type": "preonly", "pc_type": "lu", "pc_factor_mat_solv
 block_solve(a, ul, f, petsc_options=solver_parameters)
 
 # ERROR #
-boundaries_1 = where(boundaries.array() == 1)[0]
+boundaries_1 = where(boundaries.values == 1)[0]
 bc_ex = DirichletBC(V, g, boundaries_1)
 u_ex = Function(V)
 solve(a[0][0] == f[0], u_ex, bc_ex, petsc_options=solver_parameters)
+u_ex.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
 u_ex_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u_ex), grad(u_ex))*dx)))
 err_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u_ex - ul[0]), grad(u_ex - ul[0]))*dx)))
 print("Relative error is equal to", err_norm/u_ex_norm)

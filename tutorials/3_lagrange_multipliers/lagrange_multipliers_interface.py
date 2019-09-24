@@ -16,10 +16,12 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import isclose
+from numpy import isclose, where
+from petsc4py import PETSc
+from ufl import *
 from dolfin import *
-from dolfin import function
 from dolfin.cpp.mesh import GhostMode
+from dolfin.fem import assemble_scalar
 from multiphenics import *
 from multiphenics.io import XDMFFile
 
@@ -46,7 +48,11 @@ where boundary conditions on \partial\Omega are embedded in V(.)
 
 # MESHES #
 # Mesh
-mesh = XDMFFile(MPI.comm_world, "data/circle.xdmf").read_mesh(MPI.comm_world, GhostMode.shared_facet) # shared_facet ghost mode is required by dS
+if MPI.size(MPI.comm_world) > 1:
+    mesh_ghost_mode = GhostMode.shared_facet # shared_facet ghost mode is required by dS
+else:
+    mesh_ghost_mode = GhostMode.none
+mesh = XDMFFile(MPI.comm_world, "data/circle.xdmf").read_mesh(mesh_ghost_mode)
 subdomains = XDMFFile(MPI.comm_world, "data/circle_physical_region.xdmf").read_mf_size_t(mesh)
 boundaries = XDMFFile(MPI.comm_world, "data/circle_facet_region.xdmf").read_mf_size_t(mesh)
 # Restrictions
@@ -56,7 +62,7 @@ interface = XDMFFile(MPI.comm_world, "data/circle_restriction_interface.rtc.xdmf
 
 # FUNCTION SPACES #
 # Function space
-V = FunctionSpace(mesh, "Lagrange", 2)
+V = FunctionSpace(mesh, ("Lagrange", 2))
 # Block function space
 W = BlockFunctionSpace([V, V, V], restrict=[left, right, interface])
 
@@ -78,42 +84,35 @@ a = [[inner(grad(u1), grad(v1))*dx(1), 0                              ,   l("-")
      [m("-")*u1("-")*dS              , - m("+")*u2("+")*dS            , 0                   ]]
 f =  [v1*dx(1)                       , v2*dx(2)                       , 0                   ]
 
-@function.expression.numba_eval
-def zero_eval(values, x, cell):
+def zero_eval(values, x):
     values[:] = 0.0
-zero = interpolate(Expression(zero_eval), V)
-bc1 = DirichletBC(W.sub(0), zero, boundaries, 1)
-bc2 = DirichletBC(W.sub(1), zero, boundaries, 1)
+zero = interpolate(zero_eval, V)
+boundaries_1 = where(boundaries.values == 1)[0]
+bc1 = DirichletBC(W.sub(0), zero, boundaries_1)
+bc2 = DirichletBC(W.sub(1), zero, boundaries_1)
 bcs = BlockDirichletBC([bc1,
                         bc2,
                         None])
 
 # SOLVE #
-u = BlockFunction(W)
+uu = BlockFunction(W)
 solver_parameters = {"ksp_type": "preonly", "pc_type": "lu", "pc_factor_mat_solver_type": "mumps"}
-block_solve(a, u.block_vector, f, bcs, petsc_options=solver_parameters)
+block_solve(a, uu, f, bcs, petsc_options=solver_parameters)
 
 # ERROR #
 u = TrialFunction(V)
 v = TestFunction(V)
-A_ex = assemble(inner(grad(u), grad(v))*dx)
-F_ex = assemble(v*dx)
-bc_ex = DirichletBC(V, zero, boundaries, 1)
-bc_ex.apply(A_ex)
-bc_ex.apply(F_ex)
+a_ex = inner(grad(u), grad(v))*dx
+f_ex = v*dx
+bc_ex = DirichletBC(V, zero, boundaries_1)
 u_ex = Function(V)
-solve(A_ex, u_ex.vector, F_ex)
-err1 = Function(V)
-err1.vector.add_local(+ u_ex.vector.get_local())
-err1.vector.add_local(- u[0].vector.get_local())
-err1.vector.apply("")
-err2 = Function(V)
-err2.vector.add_local(+ u_ex.vector.get_local())
-err2.vector.add_local(- u[1].vector.get_local())
-err2.vector.apply("")
-err1_norm = sqrt(assemble(err1*err1*dx(1))/assemble(u_ex*u_ex*dx(1)))
-err2_norm = sqrt(assemble(err2*err2*dx(2))/assemble(u_ex*u_ex*dx(2)))
-print("Relative error on subdomain 1", err1_norm)
-print("Relative error on subdomain 2", err2_norm)
-assert isclose(err1_norm, 0., atol=1.e-10)
-assert isclose(err2_norm, 0., atol=1.e-10)
+solve(a_ex == f_ex, u_ex, bc_ex, petsc_options=solver_parameters)
+u_ex.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
+u_ex1_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(u_ex, u_ex)*dx(1))))
+u_ex2_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(u_ex, u_ex)*dx(2))))
+err1_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(u_ex - uu[0], u_ex - uu[0])*dx(1))))
+err2_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(u_ex - uu[1], u_ex - uu[1])*dx(2))))
+print("Relative error on subdomain 1", err1_norm/u_ex1_norm)
+print("Relative error on subdomain 2", err2_norm/u_ex2_norm)
+assert isclose(err1_norm/u_ex1_norm, 0., atol=1.e-10)
+assert isclose(err2_norm/u_ex2_norm, 0., atol=1.e-10)

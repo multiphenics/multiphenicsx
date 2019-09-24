@@ -18,7 +18,7 @@
 
 import numpy
 from numpy import isclose, where
-from ufl import replace
+from ufl import *
 from petsc4py import PETSc
 from dolfin import *
 from dolfin.cpp.mesh import GhostMode
@@ -38,7 +38,7 @@ using a Lagrange multiplier to handle non-homogeneous Dirichlet boundary conditi
 
 # MESHES #
 # Mesh
-mesh = XDMFFile(MPI.comm_world, "data/circle.xdmf").read_mesh(MPI.comm_world, GhostMode.none)
+mesh = XDMFFile(MPI.comm_world, "data/circle.xdmf").read_mesh(GhostMode.none)
 subdomains = XDMFFile(MPI.comm_world, "data/circle_physical_region.xdmf").read_mf_size_t(mesh)
 boundaries = XDMFFile(MPI.comm_world, "data/circle_facet_region.xdmf").read_mf_size_t(mesh)
 # Dirichlet boundary
@@ -63,10 +63,9 @@ dx = Measure("dx")(subdomain_data=subdomains)
 ds = Measure("ds")(subdomain_data=boundaries)
 
 # ASSEMBLE #
-@function.expression.numba_eval
-def g_eval(values, x, cell):
+def g_eval(values, x):
     values[:, 0] = numpy.sin(3*x[:, 0] + 1)*numpy.sin(3*x[:, 1] + 1)
-g = interpolate(Expression(g_eval), V)
+g = interpolate(g_eval, V)
 F = [inner((1+u**2)*grad(u), grad(v))*dx + u*v*inner(grad(u), grad(u))*dx + l*v*ds - v*dx,
      u*m*ds - g*m*ds]
 J = block_derivative(F, ul, dul)
@@ -119,7 +118,7 @@ class LagrangeMultipliersNonlinearProblem(NonlinearProblem):
 u_ex = Function(V)
 F_ex = replace(F[0], {u: u_ex, l: 0})
 J_ex = derivative(F_ex, u_ex, du)
-boundaries_1 = where(boundaries.array() == 1)[0]
+boundaries_1 = where(boundaries.values == 1)[0]
 bc_ex = [DirichletBC(V, g, boundaries_1)]
 problem_ex = LagrangeMultipliersNonlinearProblem(F_ex, u_ex, bc_ex, J_ex)
 solver_ex = NewtonSolver(mesh.mpi_comm())
