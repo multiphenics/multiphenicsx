@@ -24,7 +24,7 @@ import:
     name: $TESTING_IMAGE
   stage: import
   before_script:
-    - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
+    - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
   script:
     - python3 -c "import multiphenics"
   artifacts:
@@ -37,7 +37,7 @@ flake8:
     name: $TESTING_IMAGE
   stage: test
   before_script:
-    - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
+    - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
     - python3 -c "import multiphenics"
   script:
     - find . -type f -name "__init__.py" -exec bash -c 'mv "$0" "`echo \"$0\" | sed s/__init__/___init___/`"' {} \;
@@ -55,7 +55,7 @@ flake8:
     name: $TESTING_IMAGE
   stage: test
   before_script:
-    - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
+    - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
     - python3 -c "import multiphenics"
   script:
     - pytest -n auto -vv --html=pytest_tutorials_serial.html --self-contained-html tutorials
@@ -69,7 +69,7 @@ tests_serial:
     name: $TESTING_IMAGE
   stage: test
   before_script:
-    - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
+    - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
     - python3 -c "import multiphenics"
   script:
     - pytest -n auto -vv --html=pytest_tests_serial.html --self-contained-html tests
@@ -83,7 +83,7 @@ tests_serial:
     name: $TESTING_IMAGE
   stage: test
   before_script:
-    - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
+    - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
     - python3 -c "import multiphenics"
   script:
     - mpirun -n 2 pytest -vv --html=pytest_tutorials_parallel.html --self-contained-html tutorials
@@ -97,7 +97,7 @@ tests_serial:
     name: $TESTING_IMAGE
   stage: test
   before_script:
-    - export DIJITSO_CACHE_DIR=$CI_PROJECT_DIR/.dijitso
+    - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
     - python3 -c "import multiphenics"
   script:
     - mpirun -n 2 pytest -vv --html=pytest_tests_parallel.html --self-contained-html tests

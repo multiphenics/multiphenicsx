@@ -19,8 +19,6 @@
 FROM quay.io/fenicsproject/dolfinx:real
 MAINTAINER Francesco Ballarin <francesco.ballarin@sissa.it>
 
-RUN sed -i 's|"cache_dir": "~/.cache/fenics"|"cache_dir": os.path.join(os.getenv("DIJITSO_CACHE_DIR", "~/.cache/fenics"), "ffcx")|g' /usr/local/lib/python3.6/dist-packages/ffc/parameters.py
-
 RUN apt-get -qq update && \
     apt-get -qq remove python3-pytest && \
     apt-get clean && \
