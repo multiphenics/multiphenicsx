@@ -95,6 +95,7 @@ cfg['linker_args'] += {str(linker_args)}
     
     # Write to cache directory
     cache_dir = str(get_cache_path(default_parameters()))
+    os.makedirs(cache_dir, exist_ok=True)
     open(
         os.path.join(cache_dir, package_name_with_hash + ".cpp"), "w"
     ).write(
