@@ -19,7 +19,7 @@
 import numbers
 import pytest
 from _pytest.mark import ParameterSet
-from numpy import allclose as float_array_equal, array_equal as integer_array_equal, block as bmat, finfo, full, hstack, hstack as bvec, logical_and, logical_or, sort, unique, vstack, where
+from numpy import allclose as float_array_equal, array_equal as integer_array_equal, block as bmat, finfo, hstack, hstack as bvec, logical_and, logical_or, sort, unique, vstack, where
 from scipy.sparse import csr_matrix
 from petsc4py import PETSc
 from ufl import as_matrix, as_tensor, as_vector, dx, FiniteElement, inner, MixedElement, SpatialCoordinate, TensorElement, VectorElement
