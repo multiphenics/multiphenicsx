@@ -21,6 +21,8 @@ from dolfin import *
 import matplotlib.pyplot as plt
 from multiphenics import *
 
+PETScOptions.set("mat_mumps_icntl_7", 3)
+
 r"""
 In this tutorial we solve the optimal control problem
 
@@ -122,3 +124,5 @@ plot(l, title="lambda")
 plt.figure()
 plot(p, title="adjoint")
 plt.show()
+
+PETScOptions.clear("mat_mumps_icntl_7")
