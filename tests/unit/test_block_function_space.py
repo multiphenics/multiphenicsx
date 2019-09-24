@@ -115,7 +115,9 @@ def assert_dof_map_two_blocks_no_restriction(V1, V2, block_V):
         block_V_cell_unowned_local_dofs = [b for b in block_V_cell_dofs if b >= block_local_dimension]
         assert_owned_local_dofs(V_cell_owned_local_dofs, block_V_cell_owned_local_dofs)
         assert_unowned_local_dofs(V_cell_unowned_local_dofs, block_V_cell_unowned_local_dofs)
-    V_dof_coordinates = concatenate((V1.tabulate_dof_coordinates(), V2.tabulate_dof_coordinates()))
+    V1_dof_coordinates = V1.tabulate_dof_coordinates()
+    V2_dof_coordinates = V2.tabulate_dof_coordinates()
+    V_dof_coordinates = concatenate((V1_dof_coordinates[:local_dimension1, :], V2_dof_coordinates[:local_dimension2, :], V1_dof_coordinates[local_dimension1:, :], V2_dof_coordinates[local_dimension2:, :]))
     block_V_dof_coordinates = block_V.tabulate_dof_coordinates()
     assert_tabulated_dof_coordinates(V_dof_coordinates, block_V_dof_coordinates)
         
