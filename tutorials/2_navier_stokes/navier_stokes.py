@@ -18,6 +18,7 @@
 
 from numpy import isclose, where
 from petsc4py import PETSc
+from ufl import *
 from dolfin import *
 from dolfin.cpp.mesh import GhostMode
 from dolfin.fem import assemble_matrix, assemble_scalar, assemble_vector
@@ -33,25 +34,23 @@ MixedElement class) and multiphenics code.
 
 # Constitutive parameters
 nu = 0.01
-@function.expression.numba_eval
-def u_in_eval(values, x, cell):
+def u_in_eval(values, x):
     values[:, 0] = 1.0
     values[:, 1] = 0.0
-@function.expression.numba_eval
-def u_wall_eval(values, x, cell):
+def u_wall_eval(values, x):
     values[:, 0] = 0.0
     values[:, 1] = 0.0
 
 # Solver parameters
 def set_solver_parameters(solver):
     solver.max_it = 20
-                                          
+    
 # Mesh
-mesh = XDMFFile(MPI.comm_world, "data/backward_facing_step.xdmf").read_mesh(MPI.comm_world, GhostMode.none)
+mesh = XDMFFile(MPI.comm_world, "data/backward_facing_step.xdmf").read_mesh(GhostMode.none)
 subdomains = XDMFFile(MPI.comm_world, "data/backward_facing_step_physical_region.xdmf").read_mf_size_t(mesh)
 boundaries = XDMFFile(MPI.comm_world, "data/backward_facing_step_facet_region.xdmf").read_mf_size_t(mesh)
-boundaries_1 = where(boundaries.array() == 1)[0]
-boundaries_2 = where(boundaries.array() == 2)[0]
+boundaries_1 = where(boundaries.values == 1)[0]
+boundaries_2 = where(boundaries.values == 2)[0]
 
 # Function spaces
 V_element = VectorElement("Lagrange", mesh.ufl_cell(), 2)
@@ -82,8 +81,8 @@ def run_monolithic():
     J = derivative(F, up, dup)
 
     # Boundary conditions
-    u_in = interpolate(Expression(u_in_eval, shape=(2,)), W.sub(0).collapse())
-    u_wall = interpolate(Expression(u_wall_eval, shape=(2,)), W.sub(0).collapse())
+    u_in = interpolate(u_in_eval, W.sub(0).collapse())
+    u_wall = interpolate(u_wall_eval, W.sub(0).collapse())
     inlet_bc = DirichletBC(W.sub(0), u_in, boundaries_1)
     wall_bc = DirichletBC(W.sub(0), u_wall, boundaries_2)
     bc = [inlet_bc, wall_bc]
@@ -155,8 +154,8 @@ def run_block():
     J = block_derivative(F, up, dup)
 
     # Boundary conditions
-    u_in = interpolate(Expression(u_in_eval, shape=(2,)), W.sub(0))
-    u_wall = interpolate(Expression(u_wall_eval, shape=(2,)), W.sub(0))
+    u_in = interpolate(u_in_eval, W.sub(0))
+    u_wall = interpolate(u_wall_eval, W.sub(0))
     inlet_bc = DirichletBC(W.sub(0), u_in, boundaries_1)
     wall_bc = DirichletBC(W.sub(0), u_wall, boundaries_2)
     bc = BlockDirichletBC([[inlet_bc, wall_bc], []])

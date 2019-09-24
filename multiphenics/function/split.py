@@ -17,10 +17,10 @@
 #
 
 import types
-import dolfin
+import ufl
 
 def split(f):
-    split_f = dolfin.split(f)
+    split_f = ufl.split(f)
     for s in split_f:
         if hasattr(f, "block_function_space"):
             # Add a block_function_space method
