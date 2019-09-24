@@ -386,7 +386,7 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
         const std::size_t original_global_dof = *q;
         const std::size_t sender_rank = *(q + 1);
 
-        const std::size_t original_local_dof = original_global_dof - dofmap->index_map->local_range()[0];
+        const std::size_t original_local_dof = original_global_dof - dofmap->index_map->block_size*dofmap->index_map->local_range()[0];
         PetscInt block_local_dof = _original_to_block__local_to_local[i].at(original_local_dof);
         PetscInt sub_block_local_dof = _original_to_sub_block__local_to_local[i].at(original_local_dof);
         send_buffer[sender_rank].push_back(index_map->local_to_global(block_local_dof));
