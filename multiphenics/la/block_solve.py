@@ -44,7 +44,7 @@ def block_solve(block_lhs, block_x, block_rhs, block_bcs=None, petsc_options=Non
         for k, v in petsc_options.items():
             options.setValue("multiphenics_solve_" + k, v)
     # Solve
-    solver = PETSc.KSP().create(block_x.block_function_space().mesh.mpi_comm())
+    solver = PETSc.KSP().create(block_x.block_function_space.mesh.mpi_comm())
     solver.setOptionsPrefix("multiphenics_solve_")
     solver.setFromOptions()
     solver.setOperators(block_A)

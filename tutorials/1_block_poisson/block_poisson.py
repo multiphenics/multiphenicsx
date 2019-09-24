@@ -16,7 +16,9 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import finfo, isclose, logical_and, where
+from numpy import finfo, isclose, where
+from petsc4py import PETSc
+from ufl import *
 from dolfin import *
 from dolfin.fem import assemble_scalar
 from multiphenics import *
@@ -49,20 +51,16 @@ to the one provided by standard FEniCS.
 # Mesh generation
 mesh = UnitIntervalMesh(MPI.comm_world, 32)
 
-class Left(SubDomain):
-    def inside(self, x, on_boundary):
-        return logical_and(abs(x[:, 0] - 0.) < finfo(float).eps, on_boundary)
+def left(x):
+    return abs(x[:, 0] - 0.) < finfo(float).eps
 
-class Right(SubDomain):
-    def inside(self, x, on_boundary):
-        return logical_and(abs(x[:, 0] - 1.) < finfo(float).eps, on_boundary)
+def right(x):
+    return abs(x[:, 0] - 1.) < finfo(float).eps
         
 boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
-left = Left()
-left.mark(boundaries, 1)
-right = Right()
-right.mark(boundaries, 1)
-boundaries_1 = where(boundaries.array() == 1)[0]
+boundaries.mark(left, 1)
+boundaries.mark(right, 1)
+boundaries_1 = where(boundaries.values == 1)[0]
 
 x0 = SpatialCoordinate(mesh)[0]
 
@@ -88,6 +86,7 @@ def run_standard():
     # Solve the linear system
     u = Function(V)
     solve(a == f, u, bc, petsc_options=solver_parameters)
+    u.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
     
     # Return the solution
     return u
