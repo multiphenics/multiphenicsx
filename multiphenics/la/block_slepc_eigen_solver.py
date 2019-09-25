@@ -17,12 +17,25 @@
 #
 
 from multiphenics.cpp import cpp
+from multiphenics.function import BlockFunction
+
+def DecorateGetEigenPair(BlockSLEPcEigenSolver):
+    class DecoratedBlockSLEPcEigenSolver(BlockSLEPcEigenSolver):
+        def get_eigenpair(self, r_fun, c_fun, i):
+            assert isinstance(r_fun, BlockFunction)
+            assert isinstance(c_fun, BlockFunction)
+            (lr, lc) = BlockSLEPcEigenSolver.get_eigenpair(self, r_fun._cpp_object, c_fun._cpp_object, i)
+            return (lr, lc)
+            
+    return DecoratedBlockSLEPcEigenSolver
 
 def BlockSLEPcEigenSolver(A, B=None, bcs=None):
     if bcs is None:
-        eigen_solver = cpp.la.SLEPcEigenSolver(A.getComm())
+        SLEPcEigenSolver = DecorateGetEigenPair(cpp.la.SLEPcEigenSolver)
+        eigen_solver = SLEPcEigenSolver(A.getComm().tompi4py())
     else:
-        eigen_solver = cpp.la.CondensedBlockSLEPcEigenSolver(A.getComm())
+        SLEPcEigenSolver = DecorateGetEigenPair(cpp.la.CondensedBlockSLEPcEigenSolver)
+        eigen_solver = SLEPcEigenSolver(A.getComm().tompi4py())
         eigen_solver.set_boundary_conditions(bcs)
         
     eigen_solver.set_operators(A, B)

@@ -16,11 +16,13 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import isclose, logical_and, logical_or
+from numpy import finfo, isclose, logical_or, where
+from petsc4py import PETSc
+from ufl import *
 from dolfin import *
-from dolfin import function
-from dolfin.fem import assemble
+from dolfin.fem import assemble_matrix, assemble_scalar
 from multiphenics import *
+from multiphenics.fem import block_assemble
 
 """
 In this tutorial we compare the computation of the inf-sup constant
@@ -34,30 +36,42 @@ of a Stokes by standard FEniCS code and multiphenics code.
 mesh = UnitSquareMesh(MPI.comm_world, 32, 32)
 
 # Create boundaries
-class Wall(SubDomain):
-    def inside(self, x, on_boundary):
-        return logical_and(logical_or(x[:, 1] < 0 + DOLFIN_EPS, x[:, 1] > 1 - DOLFIN_EPS), on_boundary)
+def wall(x):
+    return logical_or(x[:, 1] < 0 + finfo(float).eps, x[:, 1] > 1 - finfo(float).eps)
     
 boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
-wall = Wall()
-wall.mark(boundaries, 1)
+boundaries.mark(wall, 1)
+boundaries_1 = where(boundaries.values == 1)[0]
 
 # Function spaces
 V_element = VectorElement("Lagrange", mesh.ufl_cell(), 2)
 Q_element = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 
-@function.expression.numba_eval
-def zero_eval(values, x, cell):
+# PETSc options
+options = PETSc.Options()
+options_prefix = "multiphenics_eigensolver_"
+options.setValue(options_prefix + "eps_gen_non_hermitian", "")
+options.setValue(options_prefix + "eps_target_real", "")
+options.setValue(options_prefix + "eps_target", 1.e-5)
+options.setValue(options_prefix + "st_type", "sinvert")
+options.setValue(options_prefix + "st_ksp_type", "preonly")
+options.setValue(options_prefix + "st_pc_type", "lu")
+options.setValue(options_prefix + "st_pc_factor_mat_solver_type", "mumps")
+
+def zero_eval(values, x):
     values[:, 0] = 0.0
     values[:, 1] = 0.0
 
 def normalize(u1, u2, p):
-    u1.vector[:] /= assemble(inner(grad(u1), grad(u1))*dx)
-    u1.vector.apply("insert")
-    u2.vector[:] /= assemble(inner(grad(u2), grad(u2))*dx)
-    u2.vector.apply("insert")
-    p.vector[:] /= assemble(p*p*dx)
-    p.vector.apply("insert")
+    u1_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u1), grad(u1))*dx)))
+    u1.vector.scale(1./u1_norm)
+    u1.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
+    u2_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u2), grad(u2))*dx)))
+    u2.vector.scale(1./u2_norm)
+    u2.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
+    p_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(p*p*dx)))
+    p.vector.scale(1./p_norm)
+    p.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
 
 # -------------------------------------------------- #
 
@@ -78,21 +92,22 @@ def run_monolithic():
     rhs = - inner(p, q)*dx
 
     # Boundary conditions
-    zero = interpolate(Expression(zero_eval, shape=(2,)), W.sub(0).collapse())
-    bc = [DirichletBC(W.sub(0), zero, (boundaries, 1))]
+    zero = interpolate(zero_eval, W.sub(0).collapse())
+    bc = [DirichletBC(W.sub(0), zero, boundaries_1)]
 
     # Assemble lhs and rhs matrices
-    LHS = assemble(lhs)
-    RHS = assemble(rhs)
+    LHS = assemble_matrix(lhs)
+    LHS.assemble()
+    RHS = assemble_matrix(rhs)
+    RHS.assemble()
 
     # Solve
     eigensolver = SLEPcEigenSolver(LHS, RHS, bc)
-    eigensolver.parameters["problem_type"] = "gen_non_hermitian"
-    eigensolver.parameters["spectrum"] = "target real"
-    eigensolver.parameters["spectral_transform"] = "shift-and-invert"
-    eigensolver.parameters["spectral_shift"] = 1.e-5
+    eigensolver.set_options_prefix(options_prefix)
+    eigensolver.set_from_options()
     eigensolver.solve(1)
-    r, c = eigensolver.get_eigenvalue(0)
+    eigv = eigensolver.get_eigenvalue(0)
+    r, c = eigv.real, eigv.imag
     assert abs(c) < 1.e-10
     assert r > 0., "r = " + str(r) + " is not positive"
     print("Inf-sup constant (monolithic): ", sqrt(r))
@@ -100,8 +115,7 @@ def run_monolithic():
     # Extract eigenfunctions
     r_fun, c_fun = Function(W), Function(W)
     eigensolver.get_eigenpair(r_fun, c_fun, 0)
-    (u_fun, p_fun) = r_fun.split(deepcopy=True)
-    (u_fun_1, u_fun_2) = u_fun.split(deepcopy=True)
+    (u_fun_1, u_fun_2, p_fun) = (r_fun.sub(0).sub(0).collapse(), r_fun.sub(0).sub(1).collapse(), r_fun.sub(1).collapse())
     normalize(u_fun_1, u_fun_2, p_fun)
     
     return (r, u_fun_1, u_fun_2, p_fun)
@@ -128,8 +142,8 @@ def run_block():
            [0                         , - p*q*dx     ]]
 
     # Boundary conditions
-    zero = interpolate(Expression(zero_eval, shape=(2,)), W.sub(0))
-    wallc = [DirichletBC(W.sub(0), zero, boundaries, 1)]
+    zero = interpolate(zero_eval, W.sub(0))
+    wallc = [DirichletBC(W.sub(0), zero, boundaries_1)]
     bc = BlockDirichletBC([[wallc], []])
 
     # Assemble lhs and rhs matrices
@@ -138,12 +152,11 @@ def run_block():
 
     # Solve
     eigensolver = BlockSLEPcEigenSolver(LHS, RHS, bc)
-    eigensolver.parameters["problem_type"] = "gen_non_hermitian"
-    eigensolver.parameters["spectrum"] = "target real"
-    eigensolver.parameters["spectral_transform"] = "shift-and-invert"
-    eigensolver.parameters["spectral_shift"] = 1.e-5
+    eigensolver.set_options_prefix(options_prefix)
+    eigensolver.set_from_options()
     eigensolver.solve(1)
-    r, c = eigensolver.get_eigenvalue(0)
+    eigv = eigensolver.get_eigenvalue(0)
+    r, c = eigv.real, eigv.imag
     assert abs(c) < 1.e-10
     assert r > 0., "r = " + str(r) + " is not positive"
     print("Inf-sup constant (block): ", sqrt(r))
@@ -151,8 +164,7 @@ def run_block():
     # Extract eigenfunctions
     r_fun, c_fun = BlockFunction(W), BlockFunction(W)
     eigensolver.get_eigenpair(r_fun, c_fun, 0)
-    (u_fun, p_fun) = r_fun.block_split()
-    (u_fun_1, u_fun_2) = u_fun.split(deepcopy=True)
+    (u_fun_1, u_fun_2, p_fun) = (r_fun.sub(0).sub(0).collapse(), r_fun.sub(0).sub(1).collapse(), r_fun.sub(1))
     normalize(u_fun_1, u_fun_2, p_fun)
     
     return (r, u_fun_1, u_fun_2, p_fun)
@@ -174,18 +186,18 @@ def run_error(eig_m, eig_b, u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m,
     err_1_minus = u_fun_1_b - u_fun_1_m
     err_2_minus = u_fun_2_b - u_fun_2_m
     err_p_minus = p_fun_b - p_fun_m
-    err_1_plus_norm = assemble(inner(grad(err_1_plus), grad(err_1_plus))*dx)
-    err_2_plus_norm = assemble(inner(grad(err_2_plus), grad(err_2_plus))*dx)
-    err_p_plus_norm = assemble(err_p_plus*err_p_plus*dx)
-    err_1_minus_norm = assemble(inner(grad(err_1_minus), grad(err_1_minus))*dx)
-    err_2_minus_norm = assemble(inner(grad(err_2_minus), grad(err_2_minus))*dx)
-    err_p_minus_norm = assemble(err_p_minus*err_p_minus*dx)
-    u_fun_1_norm = assemble(inner(grad(u_fun_1_m), grad(u_fun_1_m))*dx)
-    u_fun_2_norm = assemble(inner(grad(u_fun_2_m), grad(u_fun_2_m))*dx)
-    p_fun_norm = assemble(p_fun_m*p_fun_m*dx)
+    err_1_plus_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(err_1_plus), grad(err_1_plus))*dx)))
+    err_2_plus_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(err_2_plus), grad(err_2_plus))*dx)))
+    err_p_plus_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(err_p_plus*err_p_plus*dx)))
+    err_1_minus_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(err_1_minus), grad(err_1_minus))*dx)))
+    err_2_minus_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(err_2_minus), grad(err_2_minus))*dx)))
+    err_p_minus_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(err_p_minus*err_p_minus*dx)))
+    u_fun_1_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u_fun_1_m), grad(u_fun_1_m))*dx)))
+    u_fun_2_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u_fun_2_m), grad(u_fun_2_m))*dx)))
+    p_fun_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(p_fun_m*p_fun_m*dx)))
     def select_error(err_plus, err_plus_norm, err_minus, err_minus_norm, vec_norm, component_name):
-        ratio_plus = sqrt(err_plus_norm/vec_norm)
-        ratio_minus = sqrt(err_minus_norm/vec_norm)
+        ratio_plus = err_plus_norm/vec_norm
+        ratio_minus = err_minus_norm/vec_norm
         if ratio_minus < ratio_plus:
             print("Relative error for ", component_name, "component of eigenvector equal to", ratio_minus, "(the one with opposite sign was", ratio_plus, ")")
             assert isclose(ratio_minus, 0., atol=1.e-6)

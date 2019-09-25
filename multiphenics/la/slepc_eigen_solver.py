@@ -16,19 +16,30 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import DirichletBC
+from dolfin import DirichletBC, Function
 from multiphenics.cpp import cpp
-    
+
+def DecorateGetEigenPair(SLEPcEigenSolver):
+    class DecoratedSLEPcEigenSolver(SLEPcEigenSolver):
+        def get_eigenpair(self, r_fun, c_fun, i):
+            assert isinstance(r_fun, Function)
+            assert isinstance(c_fun, Function)
+            return SLEPcEigenSolver.get_eigenpair(self, r_fun._cpp_object, c_fun._cpp_object, i)
+            
+    return DecoratedSLEPcEigenSolver
+
 def SLEPcEigenSolver(A, B=None, bcs=None):
     if bcs is None:
-        eigen_solver = cpp.la.SLEPcEigenSolver(A.getComm())
+        SLEPcEigenSolver = DecorateGetEigenPair(cpp.la.SLEPcEigenSolver)
+        eigen_solver = SLEPcEigenSolver(A.getComm().tompi4py())
     else:
         assert isinstance(bcs, (DirichletBC, list))
         if isinstance(bcs, DirichletBC):
             bcs = [bcs]
         else:
             assert all([isinstance(bc, DirichletBC) for bc in bcs])
-        eigen_solver = cpp.la.CondensedSLEPcEigenSolver(A.getComm())
+        SLEPcEigenSolver = DecorateGetEigenPair(cpp.la.CondensedSLEPcEigenSolver)
+        eigen_solver = SLEPcEigenSolver(A.getComm().tompi4py())
         eigen_solver.set_boundary_conditions(bcs)
         
     eigen_solver.set_operators(A, B)
