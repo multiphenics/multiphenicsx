@@ -17,8 +17,13 @@
 #
 
 from numpy import isclose
+from petsc4py import PETSc
+from ufl import *
 from dolfin import *
+from dolfin.cpp.mesh import GhostMode
 from multiphenics import *
+from multiphenics.fem import block_assemble
+from multiphenics.io import XDMFFile
 
 """
 In this tutorial we compute the inf-sup constant
@@ -28,15 +33,15 @@ Dirichlet boundary conditions imposed by Lagrange multipliers.
 
 # MESHES #
 # Mesh
-mesh = Mesh("data/circle.xml")
-subdomains = MeshFunction("size_t", mesh, "data/circle_physical_region.xml")
-boundaries = MeshFunction("size_t", mesh, "data/circle_facet_region.xml")
+mesh = XDMFFile(MPI.comm_world, "data/circle.xdmf").read_mesh(GhostMode.none)
+subdomains = XDMFFile(MPI.comm_world, "data/circle_physical_region.xdmf").read_mf_size_t(mesh)
+boundaries = XDMFFile(MPI.comm_world, "data/circle_facet_region.xdmf").read_mf_size_t(mesh)
 # Dirichlet boundary
-boundary_restriction = MeshRestriction(mesh, "data/circle_restriction_boundary.rtc.xml")
+boundary_restriction = XDMFFile(MPI.comm_world, "data/circle_restriction_boundary.rtc.xdmf").read_mesh_restriction(mesh)
 
 # FUNCTION SPACES #
 # Function space
-V = FunctionSpace(mesh, "Lagrange", 2)
+V = FunctionSpace(mesh, ("Lagrange", 2))
 # Block function space
 W = BlockFunctionSpace([V, V], restrict=[None, boundary_restriction])
 
@@ -55,23 +60,26 @@ a = [[inner(grad(u), grad(v))*dx, - l*v*ds],
      [- u*m*ds                  , 0       ]]
 b = [[0                         , 0       ],
      [0                         , - l*m*ds]]
-
-# SOLVE #
 A = block_assemble(a)
 B = block_assemble(b)
+
+# SOLVE #
+options = PETSc.Options()
+options_prefix = "multiphenics_eigensolver_"
+options.setValue(options_prefix + "eps_gen_non_hermitian", "")
+options.setValue(options_prefix + "eps_target_real", "")
+options.setValue(options_prefix + "eps_target", 1.e-5)
+options.setValue(options_prefix + "st_type", "sinvert")
+options.setValue(options_prefix + "st_ksp_type", "preonly")
+options.setValue(options_prefix + "st_pc_type", "lu")
+options.setValue(options_prefix + "st_pc_factor_mat_solver_type", "mumps")
 eigensolver = BlockSLEPcEigenSolver(A, B)
-eigensolver.parameters["problem_type"] = "gen_non_hermitian"
-eigensolver.parameters["spectrum"] = "target real"
-eigensolver.parameters["spectral_transform"] = "shift-and-invert"
-eigensolver.parameters["spectral_shift"] = 1.e-5
+eigensolver.set_options_prefix(options_prefix)
+eigensolver.set_from_options()
 eigensolver.solve(1)
-r, c = eigensolver.get_eigenvalue(0)
+eigv = eigensolver.get_eigenvalue(0)
+r, c = eigv.real, eigv.imag
 assert abs(c) < 1.e-10
 assert r > 0., "r = " + str(r) + " is not positive"
 print("Inf-sup constant: ", sqrt(r))
 assert isclose(sqrt(r), 0.088385)
-
-# Export matrices to MATLAB format to double check the result.
-# You will need to convert the matrix to dense storage and use eig()
-block_matlab_export(A, "A")
-block_matlab_export(B, "B")

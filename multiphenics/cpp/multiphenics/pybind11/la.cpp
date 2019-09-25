@@ -40,7 +40,7 @@ namespace multiphenics_wrappers
     py::class_<dolfin::la::SLEPcEigenSolver, std::shared_ptr<dolfin::la::SLEPcEigenSolver>>
       (m, "SLEPcEigenSolver", "DOLFIN SLEPcEigenSolver object")
       .def(py::init([](const dolfin_wrappers::MPICommWrapper comm) {
-        return std::make_unique<dolfin::la::CondensedSLEPcEigenSolver>(comm.get());
+        return std::make_unique<dolfin::la::SLEPcEigenSolver>(comm.get());
       }))
       .def("set_options_prefix", &dolfin::la::SLEPcEigenSolver::set_options_prefix)
       .def("set_from_options", &dolfin::la::SLEPcEigenSolver::set_from_options)
@@ -52,7 +52,7 @@ namespace multiphenics_wrappers
       .def("solve", (void (dolfin::la::SLEPcEigenSolver::*)(std::int64_t))
            &dolfin::la::SLEPcEigenSolver::solve)
       .def("get_eigenvalue", &dolfin::la::SLEPcEigenSolver::get_eigenvalue)
-      .def("get_eigenpair", [](dolfin::la::CondensedSLEPcEigenSolver& self, dolfin::function::Function& r, dolfin::function::Function& c, std::size_t i)
+      .def("get_eigenpair", [](dolfin::la::SLEPcEigenSolver& self, dolfin::function::Function& r, dolfin::function::Function& c, std::size_t i)
            {
              PetscScalar lr, lc;
              self.get_eigenpair(lr, lc, r.vector().vec(), c.vector().vec(), i);
