@@ -16,13 +16,16 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import isclose
+from numpy import isclose, isin, where
+from petsc4py import PETSc
+from ufl import *
 from dolfin import *
-from dolfin import function
+from dolfin.cpp.mesh import GhostMode
+from dolfin.fem import assemble_scalar
+from dolfin.plotting import plot
 import matplotlib.pyplot as plt
 from multiphenics import *
-
-PETScOptions.set("mat_mumps_icntl_7", 3)
+from multiphenics.io import XDMFFile
 
 r"""
 In this tutorial we solve the optimal control problem
@@ -48,15 +51,17 @@ using an adjoint formulation solved by a one shot approach
 
 # MESH #
 # Mesh
-mesh = Mesh("data/square.xml")
-boundaries = MeshFunction("size_t", mesh, "data/square_facet_region.xml")
-# Dirichlet boundary
-left = MeshRestriction(mesh, "data/square_restriction_boundary_2.rtc.xml")
+mesh = XDMFFile(MPI.comm_world, "data/square.xdmf").read_mesh(GhostMode.none)
+boundaries = XDMFFile(MPI.comm_world, "data/square_facet_region.xdmf").read_mf_size_t(mesh)
+boundaries_4 = where(boundaries.values == 4)[0]
+boundaries_24 = where(isin(boundaries.values, (2, 4)))[0]
+# Neumann boundary
+left = XDMFFile(MPI.comm_world, "data/square_restriction_boundary_2.rtc.xdmf").read_mesh_restriction(mesh)
 
 # FUNCTION SPACES #
-Y = FunctionSpace(mesh, "Lagrange", 2)
-U = FunctionSpace(mesh, "Lagrange", 2)
-L = FunctionSpace(mesh, "Lagrange", 2)
+Y = FunctionSpace(mesh, ("Lagrange", 2))
+U = FunctionSpace(mesh, ("Lagrange", 2))
+L = FunctionSpace(mesh, ("Lagrange", 2))
 Q = Y
 W = BlockFunctionSpace([Y, U, L, Q], restrict=[None, left, left, None])
 
@@ -65,10 +70,9 @@ alpha = 1.e-5
 y_d = 1.
 x = SpatialCoordinate(mesh)
 f = 10*sin(2*pi*x[0])*sin(2*pi*x[1])
-@function.expression.numba_eval
-def zero_eval(values, x, cell):
+def zero_eval(values, x):
     values[:] = 0.0
-bc0 = interpolate(Expression(zero_eval), W.sub(0))
+bc0 = interpolate(zero_eval, W.sub(0))
 
 # TRIAL/TEST FUNCTIONS #
 yulp = BlockTrialFunction(W)
@@ -88,10 +92,10 @@ f =  [y_d*z*dx,
       0       ,
       0       ,
       f*q*dx   ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), bc0, boundaries, 4)],
+bc = BlockDirichletBC([[DirichletBC(W.sub(0), bc0, boundaries_4)],
                        [],
                        [],
-                       [DirichletBC(W.sub(3), bc0, boundaries, idx) for idx in (2, 4)]])
+                       [DirichletBC(W.sub(3), bc0, boundaries_24)]])
 
 # SOLUTION #
 yulp = BlockFunction(W)
@@ -101,26 +105,24 @@ yulp = BlockFunction(W)
 J = 0.5*inner(y - y_d, y - y_d)*dx + 0.5*alpha*inner(u, u)*ds(2)
 
 # UNCONTROLLED FUNCTIONAL VALUE #
-A_state = assemble(a[3][0])
-F_state = assemble(f[3])
-bc_state = [DirichletBC(W.sub(0), bc0, boundaries, idx) for idx in (2, 4)]
-[bc_state_.apply(A_state) for bc_state_ in bc_state]
-[bc_state_.apply(F_state) for bc_state_ in bc_state]
-solve(A_state, y.vector, F_state)
-print("Uncontrolled J =", assemble(J))
-assert isclose(assemble(J), 0.5038976)
+a_state = replace(a[3][0], {q: z})
+f_state = replace(f[3], {q: z})
+bc_state = [DirichletBC(W.sub(0), bc0, boundaries_24)]
+solver_parameters = {"ksp_type": "preonly", "pc_type": "lu", "pc_factor_mat_solver_type": "mumps", "mat_mumps_icntl_7": 3}
+solve(a_state == f_state, y, bc_state, petsc_options=solver_parameters)
+y.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
+J_uncontrolled = MPI.sum(mesh.mpi_comm(), assemble_scalar(J))
+print("Uncontrolled J =", J_uncontrolled)
+assert isclose(J_uncontrolled, 0.5038977)
 plt.figure()
 plot(y, title="uncontrolled state")
 plt.show()
 
 # OPTIMAL CONTROL #
-A = block_assemble(a, keep_diagonal=True)
-F = block_assemble(f)
-bc.apply(A)
-bc.apply(F)
-block_solve(A, yulp.block_vector, F)
-print("Optimal J =", assemble(J))
-assert isclose(assemble(J), 0.1281223)
+block_solve(a, yulp, f, bc, petsc_options=solver_parameters)
+J_controlled = MPI.sum(mesh.mpi_comm(), assemble_scalar(J))
+print("Optimal J =", J_controlled)
+assert isclose(J_controlled, 0.1281224)
 plt.figure()
 plot(y, title="state")
 plt.figure()
@@ -130,5 +132,3 @@ plot(l, title="lambda")
 plt.figure()
 plot(p, title="adjoint")
 plt.show()
-
-PETScOptions.clear("mat_mumps_icntl_7")
