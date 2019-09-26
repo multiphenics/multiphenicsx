@@ -16,9 +16,14 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import isclose
+from numpy import isclose, where
+from petsc4py import PETSc
+from ufl import *
 from dolfin import *
-from dolfin import function
+from dolfin.cpp.mesh import GhostMode
+from dolfin.fem import assemble_scalar
+from dolfin.io import XDMFFile
+from dolfin.plotting import plot
 import matplotlib.pyplot as plt
 from multiphenics import *
 
@@ -46,9 +51,9 @@ using an adjoint formulation solved by a one shot approach
 """
 
 # MESH #
-mesh = Mesh("data/graetz_1.xml")
-subdomains = MeshFunction("size_t", mesh, "data/graetz_1_physical_region.xml")
-boundaries = MeshFunction("size_t", mesh, "data/graetz_1_facet_region.xml")
+mesh = XDMFFile(MPI.comm_world, "data/graetz_1.xdmf").read_mesh(GhostMode.none)
+subdomains = XDMFFile(MPI.comm_world, "data/graetz_1_physical_region.xdmf").read_mf_size_t(mesh)
+boundaries = XDMFFile(MPI.comm_world, "data/graetz_1_facet_region.xdmf").read_mf_size_t(mesh)
 
 # FUNCTION SPACES #
 Y = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
@@ -64,13 +69,12 @@ y_d_2 = 1.8
 epsilon = 1./15.
 x = SpatialCoordinate(mesh)
 beta = as_vector((x[1]*(1-x[1]), 0))
-sigma = 0.
-f = 0.
+sigma = Constant(mesh, 0.)
+f = Constant(mesh, 0.)
 def bc_generator(val):
-    @function.expression.numba_eval
-    def eval_val(values, x, cell):
+    def eval_val(values, x):
         values[:] = val
-    return interpolate(Expression(eval_val), W.sub(0))
+    return interpolate(eval_val, W.sub(0))
 
 # TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)
@@ -90,9 +94,9 @@ a = [[y*z*(dx(1) + dx(2)), 0           , adjoint_operator],
 f =  [y_d_1*z*dx(1) + y_d_2*z*dx(2),
       0                            ,
       f*q*dx                        ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), bc_generator(idx), boundaries, idx) for idx in (1, 2)],
+bc = BlockDirichletBC([[DirichletBC(W.sub(0), bc_generator(idx), where(boundaries.values == idx)[0]) for idx in (1, 2)],
                        [],
-                       [DirichletBC(W.sub(2), bc_generator(0.), boundaries, idx) for idx in (1, 2)]])
+                       [DirichletBC(W.sub(2), bc_generator(0.), where(boundaries.values == idx)[0]) for idx in (1, 2)]])
 
 # SOLUTION #
 yup = BlockFunction(W)
@@ -102,25 +106,24 @@ yup = BlockFunction(W)
 J = 0.5*inner(y - y_d_1, y - y_d_1)*dx(1) + 0.5*inner(y - y_d_2, y - y_d_2)*dx(2) + 0.5*alpha*inner(u, u)*dx
 
 # UNCONTROLLED FUNCTIONAL VALUE #
-A_state = assemble(a[2][0])
-F_state = assemble(f[2])
-[bc_state.apply(A_state) for bc_state in bc[0]]
-[bc_state.apply(F_state) for bc_state in bc[0]]
-solve(A_state, y.vector, F_state)
-print("Uncontrolled J =", assemble(J))
-assert isclose(assemble(J), 0.028050136)
+a_state = replace(a[2][0], {q: z})
+f_state = replace(f[2], {q: z})
+bc_state = bc[0]
+solver_parameters = {"ksp_type": "preonly", "pc_type": "lu", "pc_factor_mat_solver_type": "mumps"}
+solve(a_state == f_state, y, bc_state, petsc_options=solver_parameters)
+y.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
+J_uncontrolled = MPI.sum(mesh.mpi_comm(), assemble_scalar(J))
+print("Uncontrolled J =", J_uncontrolled)
+assert isclose(J_uncontrolled, 0.028050019)
 plt.figure()
 plot(y, title="uncontrolled state")
 plt.show()
 
 # OPTIMAL CONTROL #
-A = block_assemble(a, keep_diagonal=True)
-F = block_assemble(f)
-bc.apply(A)
-bc.apply(F)
-block_solve(A, yup.block_vector, F)
-print("Optimal J =", assemble(J))
-assert isclose(assemble(J), 0.001777849)
+block_solve(a, yup, f, bc, petsc_options=solver_parameters)
+J_controlled = MPI.sum(mesh.mpi_comm(), assemble_scalar(J))
+print("Optimal J =", J_controlled)
+assert isclose(J_controlled, 0.001777817)
 plt.figure()
 plot(y, title="state")
 plt.figure()

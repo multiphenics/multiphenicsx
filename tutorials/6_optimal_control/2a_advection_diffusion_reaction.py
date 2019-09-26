@@ -16,9 +16,14 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import isclose
+from numpy import isclose, isin, where
+from petsc4py import PETSc
+from ufl import *
 from dolfin import *
-from dolfin import function
+from dolfin.cpp.mesh import GhostMode
+from dolfin.fem import assemble_scalar
+from dolfin.io import XDMFFile
+from dolfin.plotting import plot
 import matplotlib.pyplot as plt
 from multiphenics import *
 
@@ -45,8 +50,9 @@ using an adjoint formulation solved by a one shot approach
 """
 
 # MESH #
-mesh = Mesh("data/square.xml")
-boundaries = MeshFunction("size_t", mesh, "data/square_facet_region.xml")
+mesh = XDMFFile(MPI.comm_world, "data/square.xdmf").read_mesh(GhostMode.none)
+boundaries = XDMFFile(MPI.comm_world, "data/square_facet_region.xdmf").read_mf_size_t(mesh)
+boundaries_1234 = where(isin(boundaries.values, (1, 2, 3, 4)))[0]
 
 # FUNCTION SPACES #
 Y = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
@@ -62,10 +68,9 @@ epsilon = 1.e-1
 beta = as_vector((-1., -2.))
 sigma = 1.
 f = 1.
-@function.expression.numba_eval
-def zero_eval(values, x, cell):
+def zero_eval(values, x):
     values[:] = 0.0
-bc0 = interpolate(Expression(zero_eval), W.sub(0))
+bc0 = interpolate(zero_eval, W.sub(0))
 
 # TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)
@@ -82,9 +87,9 @@ a = [[y*z*dx        , 0           , adjoint_operator],
 f =  [y_d*z*dx,
       0       ,
       f*q*dx   ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), bc0, boundaries, idx) for idx in (1, 2, 3, 4)],
+bc = BlockDirichletBC([[DirichletBC(W.sub(0), bc0, boundaries_1234)],
                        [],
-                       [DirichletBC(W.sub(2), bc0, boundaries, idx) for idx in (1, 2, 3, 4)]])
+                       [DirichletBC(W.sub(2), bc0, boundaries_1234)]])
 
 # SOLUTION #
 yup = BlockFunction(W)
@@ -94,25 +99,24 @@ yup = BlockFunction(W)
 J = 0.5*inner(y - y_d, y - y_d)*dx + 0.5*alpha*inner(u, u)*dx
 
 # UNCONTROLLED FUNCTIONAL VALUE #
-A_state = assemble(a[2][0])
-F_state = assemble(f[2])
-[bc_state.apply(A_state) for bc_state in bc[0]]
-[bc_state.apply(F_state) for bc_state in bc[0]]
-solve(A_state, y.vector, F_state)
-print("Uncontrolled J =", assemble(J))
-assert isclose(assemble(J), 0.37985512)
+a_state = replace(a[2][0], {q: z})
+f_state = replace(f[2], {q: z})
+bc_state = bc[0]
+solver_parameters = {"ksp_type": "preonly", "pc_type": "lu", "pc_factor_mat_solver_type": "mumps"}
+solve(a_state == f_state, y, bc_state, petsc_options=solver_parameters)
+y.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
+J_uncontrolled = MPI.sum(mesh.mpi_comm(), assemble_scalar(J))
+print("Uncontrolled J =", J_uncontrolled)
+assert isclose(J_uncontrolled, 0.37982617)
 plt.figure()
 plot(y, title="uncontrolled state")
 plt.show()
 
 # OPTIMAL CONTROL #
-A = block_assemble(a, keep_diagonal=True)
-F = block_assemble(f)
-bc.apply(A)
-bc.apply(F)
-block_solve(A, yup.block_vector, F)
-print("Optimal J =", assemble(J))
-assert isclose(assemble(J), 0.02816257)
+block_solve(a, yup, f, bc, petsc_options=solver_parameters)
+J_controlled = MPI.sum(mesh.mpi_comm(), assemble_scalar(J))
+print("Optimal J =", J_controlled)
+assert isclose(J_controlled, 0.02778140)
 plt.figure()
 plot(y, title="state")
 plt.figure()
