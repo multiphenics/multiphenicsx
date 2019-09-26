@@ -16,11 +16,15 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import isclose
+from numpy import isclose, where
+from ufl import *
 from dolfin import *
-from dolfin import function
+from dolfin.cpp.mesh import GhostMode
+from dolfin.fem import assemble_scalar
+from dolfin.plotting import plot
 import matplotlib.pyplot as plt
 from multiphenics import *
+from multiphenics.io import XDMFFile
 
 r"""
 In this tutorial we solve the optimal control problem
@@ -51,11 +55,12 @@ using an adjoint formulation solved by a one shot approach
 
 # MESH #
 # Mesh
-mesh = Mesh("data/vorticity_reduction.xml")
-subdomains = MeshFunction("size_t", mesh, "data/vorticity_reduction_physical_region.xml")
-boundaries = MeshFunction("size_t", mesh, "data/vorticity_reduction_facet_region.xml")
+mesh = XDMFFile(MPI.comm_world, "data/vorticity_reduction.xdmf").read_mesh(GhostMode.none)
+subdomains = XDMFFile(MPI.comm_world, "data/vorticity_reduction_physical_region.xdmf").read_mf_size_t(mesh)
+boundaries = XDMFFile(MPI.comm_world, "data/vorticity_reduction_facet_region.xdmf").read_mf_size_t(mesh)
+boundaries_side = {idx: where(boundaries.values == idx)[0] for idx in (1, 2, 4, 5)}
 # Dirichlet control boundary
-control_boundary = MeshRestriction(mesh, "data/vorticity_reduction_restriction_control.rtc.xml")
+control_boundary = XDMFFile(MPI.comm_world, "data/vorticity_reduction_restriction_control.rtc.xdmf").read_mesh_restriction(mesh)
 # Normal and tangent
 n = FacetNormal(mesh)
 t = as_vector([n[1], -n[0]])
@@ -73,21 +78,18 @@ W = BlockFunctionSpace(mesh, W_el, restrict=[None, None, control_boundary, contr
 # PROBLEM DATA #
 nu = 1.
 alpha = 1.e-2
-f = as_vector((0., 0.))
-@function.expression.numba_eval
-def zero_eval(values, x, cell):
+f = Constant(mesh, (0., 0.))
+def zero_eval(values, x):
     values[:, 0] = 0.0
     values[:, 1] = 0.0
-bc0 = interpolate(Expression(zero_eval, shape=(2,)), W.sub(0))
-@function.expression.numba_eval
-def zero_component_eval(values, x, cell):
+bc0 = interpolate(zero_eval, W.sub(0))
+def zero_component_eval(values, x):
     values[:] = 0.0
-bc0_component = interpolate(Expression(zero_eval), W.sub(0).sub(0))
-@function.expression.numba_eval
-def non_zero_eval(values, x, cell):
+bc0_component = interpolate(zero_component_eval, W.sub(0).sub(0).collapse())
+def non_zero_eval(values, x):
     values[:, 0] = 2.5
     values[:, 1] = 0.0
-bc1 = interpolate(Expression(non_zero_eval, shape=(2,)), W.sub(0))
+bc1 = interpolate(non_zero_eval, W.sub(0))
 
 # TRIAL/TEST FUNCTIONS #
 trial = BlockTrialFunction(W)
@@ -117,19 +119,19 @@ f =  [0,
       inner(f, s)*dx  ,
       0                ]
 bc = BlockDirichletBC([[
-                            DirichletBC(W.sub(0), bc1, boundaries, 1),
-                            DirichletBC(W.sub(0).sub(1), bc0_component, boundaries, 2),
-                            DirichletBC(W.sub(0).sub(0), bc0_component, boundaries, 4),
-                            DirichletBC(W.sub(0), bc0, boundaries, 5),
+                            DirichletBC(W.sub(0), bc1, boundaries_side[1]),
+                            DirichletBC(W.sub(0).sub(1), bc0_component, boundaries_side[2]),
+                            DirichletBC(W.sub(0).sub(0), bc0_component, boundaries_side[4]),
+                            DirichletBC(W.sub(0), bc0, boundaries_side[5]),
                         ],
                        [],
                        [],
                        [],
                        [
-                            DirichletBC(W.sub(4), bc0, boundaries, 1),
-                            DirichletBC(W.sub(4).sub(1), bc0_component, boundaries, 2),
-                            DirichletBC(W.sub(4), bc0, boundaries, 4),
-                            DirichletBC(W.sub(4), bc0, boundaries, 5),
+                            DirichletBC(W.sub(4), bc0, boundaries_side[1]),
+                            DirichletBC(W.sub(4).sub(1), bc0_component, boundaries_side[2]),
+                            DirichletBC(W.sub(4), bc0, boundaries_side[4]),
+                            DirichletBC(W.sub(4), bc0, boundaries_side[5]),
                         ],
                        []])
 
@@ -144,22 +146,20 @@ J = 0.5*vorticity(v, v)*dx(4) + 0.5*penalty(u, u)*ds(4)
 W_state_trial = W.extract_block_sub_space((0, 1))
 W_state_test = W.extract_block_sub_space((4, 5))
 a_state = block_restrict(a, [W_state_test, W_state_trial])
-A_state = block_assemble(a_state)
 f_state = block_restrict(f, W_state_test)
-F_state = block_assemble(f_state)
 bc_state = BlockDirichletBC([[
-                                  DirichletBC(W_state_trial.sub(0), bc1, boundaries, 1),
-                                  DirichletBC(W_state_trial.sub(0).sub(1), bc0_component, boundaries, 2),
-                                  DirichletBC(W_state_trial.sub(0), bc0, boundaries, 4),
-                                  DirichletBC(W_state_trial.sub(0), bc0, boundaries, 5),
+                                  DirichletBC(W_state_trial.sub(0), bc1, boundaries_side[1]),
+                                  DirichletBC(W_state_trial.sub(0).sub(1), bc0_component, boundaries_side[2]),
+                                  DirichletBC(W_state_trial.sub(0), bc0, boundaries_side[4]),
+                                  DirichletBC(W_state_trial.sub(0), bc0, boundaries_side[5]),
                               ],
                              []])
-bc_state.apply(A_state)
-bc_state.apply(F_state)
 solution_state = block_restrict(solution, W_state_trial)
-block_solve(A_state, solution_state.block_vector, F_state)
-print("Uncontrolled J =", assemble(J))
-assert isclose(assemble(J), 2.9143168)
+solver_parameters = {"ksp_type": "preonly", "pc_type": "lu", "pc_factor_mat_solver_type": "mumps"}
+block_solve(a_state, solution_state, f_state, bc_state, petsc_options=solver_parameters)
+J_uncontrolled = MPI.sum(mesh.mpi_comm(), assemble_scalar(J))
+print("Uncontrolled J =", J_uncontrolled)
+assert isclose(J_uncontrolled, 2.9377904)
 plt.figure()
 plot(v, title="uncontrolled state velocity")
 plt.figure()
@@ -167,13 +167,10 @@ plot(p, title="uncontrolled state pressure")
 plt.show()
 
 # OPTIMAL CONTROL #
-A = block_assemble(a, keep_diagonal=True)
-F = block_assemble(f)
-bc.apply(A)
-bc.apply(F)
-block_solve(A, solution.block_vector, F)
-print("Optimal J =", assemble(J))
-assert isclose(assemble(J), 1.70451173)
+block_solve(a, solution, f, bc, petsc_options=solver_parameters)
+J_controlled = MPI.sum(mesh.mpi_comm(), assemble_scalar(J))
+print("Optimal J =", J_controlled)
+assert isclose(J_controlled, 1.71502760)
 plt.figure()
 plot(v, title="state velocity")
 plt.figure()

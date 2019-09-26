@@ -16,12 +16,15 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import isclose
+from numpy import isclose, isin, where
+from ufl import *
 from dolfin import *
-from dolfin import function
+from dolfin.cpp.mesh import GhostMode
+from dolfin.fem import assemble_scalar
+from dolfin.plotting import plot
 import matplotlib.pyplot as plt
 from multiphenics import *
-parameters["ghost_mode"] = "shared_facet" # required by dS
+from multiphenics.io import XDMFFile
 
 r"""
 In this tutorial we solve the optimal control problem
@@ -50,11 +53,18 @@ using an adjoint formulation solved by a one shot approach
 
 # MESH #
 # Mesh
-mesh = Mesh("data/bifurcation.xml")
-subdomains = MeshFunction("size_t", mesh, "data/bifurcation_physical_region.xml")
-boundaries = MeshFunction("size_t", mesh, "data/bifurcation_facet_region.xml")
+if MPI.size(MPI.comm_world) > 1:
+    mesh_ghost_mode = GhostMode.shared_facet # shared_facet ghost mode is required by dS
+else:
+    mesh_ghost_mode = GhostMode.none
+mesh = XDMFFile(MPI.comm_world, "data/bifurcation.xdmf").read_mesh(mesh_ghost_mode)
+subdomains = XDMFFile(MPI.comm_world, "data/bifurcation_physical_region.xdmf").read_mf_size_t(mesh)
+boundaries = XDMFFile(MPI.comm_world, "data/bifurcation_facet_region.xdmf").read_mf_size_t(mesh)
+boundaries_1 = where(boundaries.values == 1)[0]
+boundaries_2 = where(boundaries.values == 2)[0]
+boundaries_12 = where(isin(boundaries.values, (1, 2)))[0]
 # Neumann control boundary
-control_boundary = MeshRestriction(mesh, "data/bifurcation_restriction_control.rtc.xml")
+control_boundary = XDMFFile(MPI.comm_world, "data/bifurcation_restriction_control.rtc.xdmf").read_mesh_restriction(mesh)
 # Normal and tangent
 n = FacetNormal(mesh)
 t = as_vector([n[1], -n[0]])
@@ -75,14 +85,16 @@ alpha_2 = 0.1*alpha_1
 x = SpatialCoordinate(mesh)
 a = 1.0
 b = 0.8
-v_d = as_vector((a*(b*10.0*(pow(x[1], 3) - pow(x[1], 2) - x[1] + 1.0)) + ((1.0-b)*10.0*(-pow(x[1], 3) - pow(x[1], 2) + x[1] + 1.0)), 0.0))
-f = as_vector((0., 0.))
-g = interpolate(as_vector((10.0*a*(x[1] + 1.0)*(1.0 - x[1]), 0.0)), W.sub(0))
-@function.expression.numba_eval
-def zero_eval(values, x, cell):
+v_d = as_vector((a*(b*10.0*(x[1]**3 - x[1]**2 - x[1] + 1.0)) + ((1.0-b)*10.0*(-x[1]**3 - x[1]**2 + x[1] + 1.0)), 0.0))
+f = Constant(mesh, (0., 0.))
+def g_eval(values, x):
+    values[:, 0] = 10.0*a*(x[:, 1] + 1.0)*(1.0 - x[:, 1])
+    values[:, 1] = 0.0
+g = interpolate(g_eval, W.sub(0))
+def zero_eval(values, x):
     values[:, 0] = 0.0
     values[:, 1] = 0.0
-bc0 = interpolate(Expression(zero_eval, shape=(2,)), W.sub(0))
+bc0 = interpolate(zero_eval, W.sub(0))
 
 # TRIAL/TEST FUNCTIONS #
 trial = BlockTrialFunction(W)
@@ -97,7 +109,7 @@ dS = Measure("dS")(subdomain_data=boundaries)
 
 # OPTIMALITY CONDITIONS #
 def tracking(v, w):
-    return inner(v, w)('-')
+    return inner(v, w)("-")
 def penalty(u, r):
     return alpha_1*inner(grad(u)*t, grad(r)*t) + alpha_2*inner(u, r)
 a = [[tracking(v, w)*dS(4)         , 0            , 0                  , nu*inner(grad(z), grad(w))*dx, - b*div(w)*dx],
@@ -110,10 +122,10 @@ f =  [tracking(v_d, w)*dS(4),
       0                     ,
       inner(f, s)*dx        ,
       0                      ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), g, boundaries, 1), DirichletBC(W.sub(0), bc0, boundaries, 2)],
+bc = BlockDirichletBC([[DirichletBC(W.sub(0), g, boundaries_1), DirichletBC(W.sub(0), bc0, boundaries_2)],
                        [],
                        [],
-                       [DirichletBC(W.sub(3), bc0, boundaries, idx) for idx in (1, 2)],
+                       [DirichletBC(W.sub(3), bc0, boundaries_12)],
                        []])
 
 # SOLUTION #
@@ -127,16 +139,14 @@ J = 0.5*tracking(v - v_d, v - v_d)*dS(4) + 0.5*penalty(u, u)*ds(3)
 W_state_trial = W.extract_block_sub_space((0, 1))
 W_state_test = W.extract_block_sub_space((3, 4))
 a_state = block_restrict(a, [W_state_test, W_state_trial])
-A_state = block_assemble(a_state)
 f_state = block_restrict(f, W_state_test)
-F_state = block_assemble(f_state)
 bc_state = block_restrict(bc, W_state_trial)
-bc_state.apply(A_state)
-bc_state.apply(F_state)
 solution_state = block_restrict(solution, W_state_trial)
-block_solve(A_state, solution_state.block_vector, F_state)
-print("Uncontrolled J =", assemble(J))
-assert isclose(assemble(J), 2.8509883)
+solver_parameters = {"ksp_type": "preonly", "pc_type": "lu", "pc_factor_mat_solver_type": "mumps"}
+block_solve(a_state, solution_state, f_state, bc_state, petsc_options=solver_parameters)
+J_uncontrolled = MPI.sum(mesh.mpi_comm(), assemble_scalar(J))
+print("Uncontrolled J =", J_uncontrolled)
+assert isclose(J_uncontrolled, 2.8512005)
 plt.figure()
 plot(v, title="uncontrolled state velocity")
 plt.figure()
@@ -144,13 +154,10 @@ plot(p, title="uncontrolled state pressure")
 plt.show()
 
 # OPTIMAL CONTROL #
-A = block_assemble(a, keep_diagonal=True)
-F = block_assemble(f)
-bc.apply(A)
-bc.apply(F)
-block_solve(A, solution.block_vector, F)
-print("Optimal J =", assemble(J))
-assert isclose(assemble(J), 1.7641147)
+block_solve(a, solution, f, bc, petsc_options=solver_parameters)
+J_controlled = MPI.sum(mesh.mpi_comm(), assemble_scalar(J))
+print("Optimal J =", J_controlled)
+assert isclose(J_controlled, 1.7641147)
 plt.figure()
 plot(v, title="state velocity")
 plt.figure()
