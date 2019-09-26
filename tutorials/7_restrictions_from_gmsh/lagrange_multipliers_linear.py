@@ -17,9 +17,12 @@
 #
 
 from numpy import isclose
+from ufl import *
 from dolfin import *
+from dolfin.cpp.mesh import GhostMode
+from dolfin.fem import assemble_scalar
 from multiphenics import *
-parameters["ghost_mode"] = "shared_facet" # required by dS
+from multiphenics.io import XDMFFile
 
 """
 This tutorial is very similar to tutorial 3, as it concerns a weak imposition of
@@ -38,16 +41,20 @@ on the sphere (with manufactured solution g), discarding degrees of freedom on i
 
 # MESHES #
 # Mesh
-mesh = Mesh("data/mesh.xml")
-subdomains = MeshFunction("size_t", mesh, "data/mesh_physical_region.xml")
-boundaries = MeshFunction("size_t", mesh, "data/mesh_facet_region.xml")
+if MPI.size(MPI.comm_world) > 1:
+    mesh_ghost_mode = GhostMode.shared_facet # shared_facet ghost mode is required by dS
+else:
+    mesh_ghost_mode = GhostMode.none
+mesh = XDMFFile(MPI.comm_world, "data/mesh.xdmf").read_mesh(mesh_ghost_mode)
+subdomains = XDMFFile(MPI.comm_world, "data/mesh_physical_region.xdmf").read_mf_size_t(mesh)
+boundaries = XDMFFile(MPI.comm_world, "data/mesh_facet_region.xdmf").read_mf_size_t(mesh)
 # Restrictions
-sphere_restriction = MeshRestriction(mesh, "data/mesh_sphere_restriction.rtc.xml")
-interface_restriction = MeshRestriction(mesh, "data/mesh_interface_restriction.rtc.xml")
+sphere_restriction = XDMFFile(MPI.comm_world, "data/mesh_sphere_restriction.rtc.xdmf").read_mesh_restriction(mesh)
+interface_restriction = XDMFFile(MPI.comm_world, "data/mesh_interface_restriction.rtc.xdmf").read_mesh_restriction(mesh)
 
 # FUNCTION SPACES #
 # Function space
-V = FunctionSpace(mesh, "Lagrange", 2)
+V = FunctionSpace(mesh, ("Lagrange", 2))
 # Block function space
 W = BlockFunctionSpace([V, V], restrict=[sphere_restriction, interface_restriction])
 
@@ -70,14 +77,12 @@ a = [[inner(grad(u), grad(v))*dx(2), l("+")*v("+")*dS(1)],
 f =  [f*v*dx(2)                    , g("+")*m("+")*dS(1)]
 
 # SOLVE #
-A = block_assemble(a)
-F = block_assemble(f)
-
-U = BlockFunction(W)
-block_solve(A, U.block_vector, F)
+u = BlockFunction(W)
+solver_parameters = {"ksp_type": "preonly", "pc_type": "lu", "pc_factor_mat_solver_type": "mumps"}
+block_solve(a, u, f, petsc_options=solver_parameters)
 
 # ERROR #
-g_norm = sqrt(assemble(inner(g, g)*dx(2, domain=mesh)))
-err_norm = sqrt(assemble(inner(U[0] - g, U[0] - g)*dx(2)))
+g_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(g, g)*dx(2, domain=mesh))))
+err_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(u[0] - g, u[0] - g)*dx(2))))
 print("Relative error is equal to", err_norm/g_norm)
 assert isclose(err_norm/g_norm, 0., atol=1.e-4)
