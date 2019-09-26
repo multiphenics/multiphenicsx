@@ -47,8 +47,8 @@ CondensedBlockSLEPcEigenSolver::~CondensedBlockSLEPcEigenSolver()
 void CondensedBlockSLEPcEigenSolver::set_boundary_conditions(std::shared_ptr<const BlockDirichletBC> block_bcs)
 {
   // Get dofmap and related quantities
-  const auto comm = block_bcs->block_function_space()->mesh->mpi_comm();
-  const auto block_dofmap = block_bcs->block_function_space()->block_dofmap;
+  const auto comm = block_bcs->block_function_space()->mesh()->mpi_comm();
+  const auto block_dofmap = block_bcs->block_function_space()->block_dofmap();
   assert(block_dofmap->index_map->block_size == 1);
   const auto block_index_map = block_dofmap->index_map;
   auto local_range = block_index_map->local_range();

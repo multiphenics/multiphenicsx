@@ -161,24 +161,42 @@ namespace multiphenics
       dolfin::EigenRowArrayXXd tabulate_dof_coordinates() const;
       
       // The mesh
-      std::shared_ptr<const dolfin::mesh::Mesh> mesh;
+      std::shared_ptr<const dolfin::mesh::Mesh> mesh() const;
 
       // The finite elements
-      std::vector<std::shared_ptr<const dolfin::fem::FiniteElement>> elements;
+      std::vector<std::shared_ptr<const dolfin::fem::FiniteElement>> elements() const;
 
       // The dofmaps
-      std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps;
+      std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps() const;
       
       // The block dofmap
-      std::shared_ptr<multiphenics::fem::BlockDofMap> block_dofmap;
+      std::shared_ptr<multiphenics::fem::BlockDofMap> block_dofmap() const;
       
       // The subspaces
-      std::vector<std::shared_ptr<const dolfin::function::FunctionSpace>> function_spaces;
+      std::vector<std::shared_ptr<const dolfin::function::FunctionSpace>> function_spaces() const;
       
       // The restrictions
-      std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> restrictions;
+      std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> restrictions() const;
       
     private:
+      // The mesh
+      std::shared_ptr<const dolfin::mesh::Mesh> _mesh;
+
+      // The finite elements
+      std::vector<std::shared_ptr<const dolfin::fem::FiniteElement>> _elements;
+
+      // The dofmaps
+      std::vector<std::shared_ptr<const dolfin::fem::DofMap>> _dofmaps;
+      
+      // The block dofmap
+      std::shared_ptr<multiphenics::fem::BlockDofMap> _block_dofmap;
+      
+      // The subspaces
+      std::vector<std::shared_ptr<const dolfin::function::FunctionSpace>> _function_spaces;
+      
+      // The restrictions
+      std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> _restrictions;
+      
       // The component w.r.t. to root space
       std::vector<std::size_t> _component;
 

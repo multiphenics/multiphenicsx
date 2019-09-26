@@ -113,8 +113,8 @@ namespace multiphenics
       cell_dofs(std::size_t cell_index) const;
       
       // Constructor arguments
-      std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps;
-      std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> restrictions;
+      std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps() const;
+      std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> restrictions() const;
 
       // Index Map from local to global
       std::shared_ptr<dolfin::common::IndexMap> index_map;
@@ -138,6 +138,9 @@ namespace multiphenics
       const std::map<PetscInt, PetscInt> & sub_block_to_original(std::size_t b) const;
 
     protected:
+      // Constructor arguments
+      std::vector<std::shared_ptr<const dolfin::fem::DofMap>> _dofmaps;
+      std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> _restrictions;
       
       // Cell-local-to-dof map
       std::map<PetscInt, std::vector<PetscInt>> _dofmap;

@@ -36,8 +36,8 @@ using dolfin::mesh::MeshRange;
 //-----------------------------------------------------------------------------
 BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const DofMap>> dofmaps,
                          std::vector<std::vector<std::shared_ptr<const MeshFunction<std::size_t>>>> restrictions):
-  dofmaps(dofmaps),
-  restrictions(restrictions),
+  _dofmaps(dofmaps),
+  _restrictions(restrictions),
   _block_owned_dofs__local(dofmaps.size()),
   _block_unowned_dofs__local(dofmaps.size()),
   _block_owned_dofs__global(dofmaps.size()),
@@ -179,7 +179,7 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
 
           // Find local entity number
           std::size_t local_entity_ind = 0;
-          for (int local_i = 0; local_i < cell_num_entities(mesh.cell_type, d); ++local_i)
+          for (int local_i = 0; local_i < cell_num_entities(mesh.cell_type(), d); ++local_i)
           {
             if (cell.entities(d)[local_i] == e.index())
             {
@@ -503,6 +503,16 @@ std::string BlockDofMap::str(bool verbose) const
     << ">"
     << std::endl;
   return s.str();
+}
+//-----------------------------------------------------------------------------
+std::vector<std::shared_ptr<const dolfin::fem::DofMap>> BlockDofMap::dofmaps() const
+{
+  return _dofmaps;
+}
+//-----------------------------------------------------------------------------
+std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> BlockDofMap::restrictions() const
+{
+  return _restrictions;
 }
 //-----------------------------------------------------------------------------
 const std::vector<PetscInt> & BlockDofMap::block_owned_dofs__local_numbering(std::size_t b) const

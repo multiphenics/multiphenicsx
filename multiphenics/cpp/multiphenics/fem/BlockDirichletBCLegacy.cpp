@@ -42,7 +42,7 @@ void BlockDirichletBCLegacy::apply(const BlockDirichletBC& bcs, Mat A, PetscScal
   // Submatrices A_{IJ} do not support MatZeroRowsLocal, so we cannot delegate application of BCs to the legacy 
   // DirichletBCLegacy::apply(bcs[I], A_{IJ}, diag*\delta_{IJ}). 
   // We will thus operate directly on the global matrix A.
-  const auto block_dofmap = bcs.block_function_space()->block_dofmap;
+  const auto block_dofmap = bcs.block_function_space()->block_dofmap();
   const auto block_index_map = block_dofmap->index_map;
   for (std::size_t I(0); I < bcs.size(); ++I)
   {
@@ -91,7 +91,7 @@ void BlockDirichletBCLegacy::apply(const BlockDirichletBC& bcs, Vec b)
   
   for (std::size_t I(0); I < bcs.size(); ++I)
   {
-    BlockPETScSubVectorWrapper b_I(b, I, bcs.block_function_space()->block_dofmap, INSERT_VALUES);
+    BlockPETScSubVectorWrapper b_I(b, I, bcs.block_function_space()->block_dofmap(), INSERT_VALUES);
     for (auto bc: bcs[I])
     {
       assert(bc);
@@ -113,8 +113,8 @@ void BlockDirichletBCLegacy::apply(const BlockDirichletBC& bcs, Vec b, const Vec
   
   for (std::size_t I(0); I < bcs.size(); ++I)
   {
-    BlockPETScSubVectorWrapper b_I(b, I, bcs.block_function_space()->block_dofmap, INSERT_VALUES);
-    BlockPETScSubVectorReadWrapper x_I(x, I, bcs.block_function_space()->block_dofmap);
+    BlockPETScSubVectorWrapper b_I(b, I, bcs.block_function_space()->block_dofmap(), INSERT_VALUES);
+    BlockPETScSubVectorReadWrapper x_I(x, I, bcs.block_function_space()->block_dofmap());
     for (auto bc: bcs[I])
     {
       assert(bc);
