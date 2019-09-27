@@ -16,8 +16,13 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import isclose
+from numpy import array, finfo, isclose, logical_and, where
+from petsc4py import PETSc
+from ufl import *
 from dolfin import *
+from dolfin.cpp.mesh import GhostMode
+from dolfin.fem import assemble_scalar, create_coordinate_map
+from dolfin.io import XDMFFile
 from multiphenics import *
 
 """
@@ -40,22 +45,7 @@ uS.nS + uD.nD = 0
 -(2*mu*eps(uS)-pS*I)*tS.nS = alpha*mu*k^-0.5*uS.tS
 """
 
-parameters["ghost_mode"] = "shared_facet"  # required by dS
-
-# ********* Model constants  ******* #
-
-def epsilon(vec):
-    return sym(grad(vec))
-
-mu = Constant(1.)
-alpha = Constant(1.)
-k = Constant(1.)
-fS = Constant((0., 0.))
-fD = fS
-gS = Constant(0.)
-gD = gS
-
-# ******* Construct mesh and define normal, tangent ****** #
+# ******* Subdomains and boundaries IDs ****** #
 darcy = 10
 stokes = 13
 outlet = 14
@@ -64,90 +54,117 @@ interf = 16
 wallS = 17
 wallD = 18
 
-# ******* Set subdomains, boundaries, and interface ****** #
+# ******* Construct mesh and set subdomains, boundaries, and interface ****** #
 
-mesh = RectangleMesh(Point(-1.0, -2.0), Point(1.0, 2.0), 50, 100)
-subdomains = MeshFunction("size_t", mesh, 2)
-subdomains.set_all(0)
-boundaries = MeshFunction("size_t", mesh, 1)
-boundaries.set_all(0)
+if MPI.size(MPI.comm_world) > 1:
+    mesh_ghost_mode = GhostMode.shared_facet # shared_facet ghost mode is required by dS
+else:
+    mesh_ghost_mode = GhostMode.none
+mesh = RectangleMesh(MPI.comm_world, [array([-1.0, -2.0, 0.0]), array([1.0, 2.0, 0.0])], [50, 100], ghost_mode=mesh_ghost_mode)
+mesh.geometry.coord_mapping = create_coordinate_map(mesh.ufl_domain())
+subdomains = MeshFunction("size_t", mesh, 2, 0)
+boundaries = MeshFunction("size_t", mesh, 1, 0)
 
-class Top(SubDomain):
-    def inside(self, x, on_boundary):
-        return (near(x[1], 2.0) and on_boundary)
+eps = finfo(float).eps
 
-class SRight(SubDomain):
-    def inside(self, x, on_boundary):
-        return (near(x[0], 1.0) and between(x[1], (0.0, 2.0)) and on_boundary)
-
-class SLeft(SubDomain):
-    def inside(self, x, on_boundary):
-        return (near(x[0], -1.0) and between(x[1], (0.0, 2.0)) and on_boundary)
-
-class DRight(SubDomain):
-    def inside(self, x, on_boundary):
-        return (near(x[0], 1.0) and between(x[1], (-2.0, 0.0)) and on_boundary)
-
-class DLeft(SubDomain):
-    def inside(self, x, on_boundary):
-        return (near(x[0], -1.0) and between(x[1], (-2.0, 0.0)) and on_boundary)
-   
-class Bot(SubDomain):
-    def inside(self, x, on_boundary):
-        return (near(x[1], -2.0) and on_boundary)
-
-class MStokes(SubDomain):
-    def inside(self, x, on_boundary):
-        return x[1] >= 0.
-
-class MDarcy(SubDomain):
-    def inside(self, x, on_boundary):
-        return x[1] <= 0.
+def near(x, a):
+    return abs(x - a) < eps
     
-class Interface(SubDomain):
-    def inside(self, x, on_boundary):
-        return near(x[1], 0.0)
+def above(x, a):
+    return x > a - eps
+    
+def below(x, a):
+    return x < a + eps
+    
+def between(x, interval):
+    return logical_and(above(x, interval[0]), below(x, interval[1]))
 
-MDarcy().mark(subdomains, darcy)
-MStokes().mark(subdomains, stokes)
-Interface().mark(boundaries, interf)
+def top(x):
+    return near(x[:, 1], 2.0)
 
-Top().mark(boundaries, inlet)
-SRight().mark(boundaries, wallS)
-SLeft().mark(boundaries, wallS)
-DRight().mark(boundaries, wallD)
-DLeft().mark(boundaries, wallD)
-Bot().mark(boundaries, outlet)
+def sright(x):
+    return logical_and(near(x[:, 0], 1.0), between(x[:, 1], (0.0, 2.0)))
 
+def sleft(x):
+    return logical_and(near(x[:, 0], -1.0), between(x[:, 1], (0.0, 2.0)))
+
+def dright(x):
+    return logical_and(near(x[:, 0], 1.0), between(x[:, 1], (-2.0, 0.0)))
+
+def dleft(x):
+    return logical_and(near(x[:, 0], -1.0), between(x[:, 1], (-2.0, 0.0)))
+   
+def bot(x):
+    return near(x[:, 1], -2.0)
+
+def mstokes(x):
+    return above(x[:, 1], 0.0)
+
+def mdarcy(x):
+    return below(x[:, 1], 0.0)
+    
+def interface(x):
+    return near(x[:, 1], 0.0)
+
+subdomains.mark(mdarcy, darcy)
+subdomains.mark(mstokes, stokes)
+boundaries.mark(interface, interf)
+
+boundaries.mark(top, inlet)
+boundaries.mark(sright, wallS)
+boundaries.mark(sleft, wallS)
+boundaries.mark(dright, wallD)
+boundaries.mark(dleft, wallD)
+boundaries.mark(bot, outlet)
+
+boundaries_inlet = where(boundaries.values == inlet)[0]
+boundaries_wallS = where(boundaries.values == wallS)[0]
+boundaries_wallD = where(boundaries.values == wallD)[0]
 
 n = FacetNormal(mesh)
 t = as_vector((-n[1], n[0]))
 
-# ******* Set subdomains, boundaries, and interface ****** #
+# ********* Model constants  ******* #
 
-OmS = MeshRestriction(mesh, MStokes())
-OmD = MeshRestriction(mesh, MDarcy())
-Sig = MeshRestriction(mesh, Interface())
+def epsilon(vec):
+    return sym(grad(vec))
+
+mu = 1.
+alpha = 1.
+k = 1.
+fS = Constant(mesh, (0., 0.))
+fD = fS
+gS = Constant(mesh, 0.)
+gD = gS
+
+# ******* Set subdomains, boundaries, and interface as mesh restrictions ****** #
+
+OmS = MeshRestriction(mesh, mstokes)
+OmD = MeshRestriction(mesh, mdarcy)
+Sig = MeshRestriction(mesh, interface)
 
 dx = Measure("dx", domain=mesh, subdomain_data=subdomains)
 ds = Measure("ds", domain=mesh, subdomain_data=boundaries)
 dS = Measure("dS", domain=mesh, subdomain_data=boundaries)
 
 # verifying the domain size
-areaD = assemble(1.*dx(darcy))
-areaS = assemble(1.*dx(stokes))
-lengthI = assemble(1.*dS(interf))
+areaD = MPI.sum(mesh.mpi_comm(), assemble_scalar(1.*dx(darcy)))
+areaS = MPI.sum(mesh.mpi_comm(), assemble_scalar(1.*dx(stokes)))
+lengthI = MPI.sum(mesh.mpi_comm(), assemble_scalar(1.*dS(interf)))
 print("area(Omega_D) = ", areaD)
 print("area(Omega_S) = ", areaS)
 print("length(Sigma) = ", lengthI)
+assert isclose(areaD, 4.)
+assert isclose(areaS, 4.)
+assert isclose(lengthI, 2.)
 
 # ***** Global FE spaces and their restrictions ****** #
 
-P2v = VectorFunctionSpace(mesh, "CG", 2)
-P1 = FunctionSpace(mesh, "CG", 1)
-BDM1 = FunctionSpace(mesh, "BDM", 1)
-P0 = FunctionSpace(mesh, "DG", 0)
-Pt = FunctionSpace(mesh, "DGT", 1)
+P2v = VectorFunctionSpace(mesh, ("CG", 2))
+P1 = FunctionSpace(mesh, ("CG", 1))
+BDM1 = FunctionSpace(mesh, ("BDM", 1))
+P0 = FunctionSpace(mesh, ("DG", 0))
+Pt = FunctionSpace(mesh, ("DGT", 1))
 
 # the space for uD can be RT or BDM
 # the space for lambda should be DGT, but then it cannot be
@@ -167,15 +184,21 @@ vS, vD, qS, qD, xi = block_split(test)
 
 print("DoFs = ", Hh.dim(), " -- DoFs with unified Taylor-Hood = ", P2v.dim() + P1.dim())
 
-
 # ******** Other parameters and BCs ************* #
 
-inflow = Expression(("0.0", "pow(x[0], 2)-1.0"), degree=2)
-noSlip = Constant((0., 0.))
+def inflow_eval(values, x):
+    values[:, 0] = 0.0
+    values[:, 1] = x[:, 0]**2 - 1.0
+inflow = interpolate(inflow_eval, Hh.sub(0))
+noSlip0 = Function(Hh.sub(0))
+noSlip1 = Function(Hh.sub(1))
+for noSlip in (noSlip0, noSlip1):
+    with noSlip.vector.localForm() as noSlip_local:
+        noSlip_local.set(0.0)
 
-bcUin = DirichletBC(Hh.sub(0), inflow, boundaries, inlet)
-bcUS = DirichletBC(Hh.sub(0), noSlip, boundaries, wallS)
-bcUD = DirichletBC(Hh.sub(1), noSlip, boundaries, wallD)
+bcUin = DirichletBC(Hh.sub(0), inflow, boundaries_inlet)
+bcUS = DirichletBC(Hh.sub(0), noSlip0, boundaries_wallS)
+bcUD = DirichletBC(Hh.sub(1), noSlip1, boundaries_wallD)
 
 bcs = BlockDirichletBC([bcUin, bcUS, bcUD])
 
@@ -204,38 +227,32 @@ GqD = - gD*qD * dx(darcy)
 # ****** Assembly and solution of linear system ******** #
 
 rhs = [FuS, FuD, GqS, GqD, 0]
-
-# this can be ordered arbitrarily. I've chosen
-#        uS   uD   pS   pD  la
 lhs = [[ AS,   0, B1St,    0, B2St],
        [  0,  AD,    0, B1Dt, B2Dt],
        [B1S,   0,    0,    0,    0],
        [  0, B1D,    0,    0,    0],
        [B2S, B2D,    0,    0,    0]]
 
-AA = block_assemble(lhs)
-FF = block_assemble(rhs)
-bcs.apply(AA)
-bcs.apply(FF)
-
 sol = BlockFunction(Hh)
-block_solve(AA, sol.block_vector(), FF, "mumps")
+solver_parameters = {"ksp_type": "preonly", "pc_type": "lu", "pc_factor_mat_solver_type": "mumps"}
+block_solve(lhs, sol, rhs, bcs, petsc_options=solver_parameters)
 uS_h, uD_h, pS_h, pD_h, la_h = block_split(sol)
-assert isclose(uS_h.vector().norm("l2"), 73.54915)
-assert isclose(uD_h.vector().norm("l2"), 2.713143)
-assert isclose(pS_h.vector().norm("l2"), 175.4097)
-assert isclose(pD_h.vector().norm("l2"), 54.45552)
+assert isclose(uS_h.vector.norm(PETSc.NormType.NORM_2), 73.46630)
+assert isclose(uD_h.vector.norm(PETSc.NormType.NORM_2), 2.709167)
+assert isclose(pS_h.vector.norm(PETSc.NormType.NORM_2), 174.8691)
+assert isclose(pD_h.vector.norm(PETSc.NormType.NORM_2), 54.34432)
 
 # ****** Saving data ******** #
-uS_h.rename("uS", "uS")
-pS_h.rename("pS", "pS")
-uD_h.rename("uD", "uD")
-pD_h.rename("pD", "pD")
+uS_h.name = "uS"
+pS_h.name = "pS"
+uD_h.name = "uD"
+pD_h.name = "pD"
 
-output = XDMFFile("stokes_darcy.xdmf")
-output.parameters["rewrite_function_mesh"] = False
-output.parameters["functions_share_mesh"] = True
-output.write(uS_h, 0.0)
-output.write(pS_h, 0.0)
-output.write(uD_h, 0.0)
-output.write(pD_h, 0.0)
+with XDMFFile(MPI.comm_world, "stokes_darcy_uS.xdmf") as output:
+    output.write(uS_h)
+with XDMFFile(MPI.comm_world, "stokes_darcy_pS.xdmf") as output:
+    output.write(pS_h)
+with XDMFFile(MPI.comm_world, "stokes_darcy_uD.xdmf") as output:
+    output.write(uD_h)
+with XDMFFile(MPI.comm_world, "stokes_darcy_pD.xdmf") as output:
+    output.write(pD_h)
