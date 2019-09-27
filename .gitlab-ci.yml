@@ -50,7 +50,7 @@ flake8:
       - pytest_flake8.html
     when: on_failure
     
-.tutorials_serial:
+tutorials_serial:
   image:
     name: $TESTING_IMAGE
   stage: test

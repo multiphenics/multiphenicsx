@@ -32,10 +32,7 @@ def pytest_collect_file(path, parent):
             and
         "data" not in path.dirname
     ):
-        # return TutorialFile(path, parent) # TODO restore
-        disabled_tutorial = TutorialFile(path, parent)
-        disabled_tutorial.add_marker(pytest.mark.skip)
-        return disabled_tutorial
+        return TutorialFile(path, parent)
         
 def pytest_pycollect_makemodule(path, parent):
     """
