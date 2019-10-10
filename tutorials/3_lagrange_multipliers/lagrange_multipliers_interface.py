@@ -84,9 +84,7 @@ a = [[inner(grad(u1), grad(v1))*dx(1), 0                              ,   l("-")
      [m("-")*u1("-")*dS              , - m("+")*u2("+")*dS            , 0                   ]]
 f =  [v1*dx(1)                       , v2*dx(2)                       , 0                   ]
 
-def zero_eval(values, x):
-    values[:] = 0.0
-zero = interpolate(zero_eval, V)
+zero = Function(V)
 boundaries_1 = where(boundaries.values == 1)[0]
 bc1 = DirichletBC(W.sub(0), zero, boundaries_1)
 bc2 = DirichletBC(W.sub(1), zero, boundaries_1)

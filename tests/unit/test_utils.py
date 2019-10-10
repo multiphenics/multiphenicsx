@@ -19,11 +19,11 @@
 import numbers
 import pytest
 from _pytest.mark import ParameterSet
-from numpy import allclose as float_array_equal, array_equal as integer_array_equal, block as bmat, finfo, hstack, hstack as bvec, logical_and, logical_or, sort, unique, vstack, where
+from numpy import allclose as float_array_equal, array_equal as integer_array_equal, block as bmat, finfo, hstack, hstack as bvec, logical_and, logical_or, sort, stack, unique, vstack, where
 from scipy.sparse import csr_matrix
 from petsc4py import PETSc
 from ufl import as_matrix, as_tensor, as_vector, dx, FiniteElement, inner, MixedElement, SpatialCoordinate, TensorElement, VectorElement
-from dolfin import Function, FunctionSpace, interpolate, MeshFunction, TensorFunctionSpace, VectorFunctionSpace
+from dolfin import Function, FunctionSpace, MeshFunction, TensorFunctionSpace, VectorFunctionSpace
 from dolfin.fem import assemble_matrix, assemble_vector
 from multiphenics import BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
 from multiphenics.fem import block_assemble, BlockDirichletBCLegacy, DirichletBCLegacy
@@ -620,66 +620,90 @@ def apply_bc_and_block_bc_matrix(lhs, block_lhs, block_bcs):
 def get_list_of_functions_1(block_V):
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) == 0:
-        def f(values, x):
-            values[:, 0] = 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
+        def f(x):
+            return 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
     elif len(shape_1) == 1 and shape_1[0] == 2:
-        def f(values, x):
-            values[:, 0] = 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
-            values[:, 1] = 3*x[:, 0] + 5*x[:, 1]*x[:, 1]
+        def f(x):
+            return stack([
+                2*x[:, 0] + 4*x[:, 1]*x[:, 1],
+                3*x[:, 0] + 5*x[:, 1]*x[:, 1]
+            ], axis=1)
     elif len(shape_1) == 1 and shape_1[0] == 3:
-        def f(values, x):
-            values[:, 0] = 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
-            values[:, 1] = 3*x[:, 0] + 5*x[:, 1]*x[:, 1]
-            values[:, 2] = 7*x[:, 0] + 11*x[:, 1]*x[:, 1]
+        def f(x):
+            return stack([
+                2*x[:, 0] + 4*x[:, 1]*x[:, 1],
+                3*x[:, 0] + 5*x[:, 1]*x[:, 1],
+                7*x[:, 0] + 11*x[:, 1]*x[:, 1]
+            ], axis=1)
     elif len(shape_1) == 2:
-        def f(values, x):
-            values[:, 0] = 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
-            values[:, 1] = 3*x[:, 0] + 5*x[:, 1]*x[:, 1]
-            values[:, 2] = 7*x[:, 0] + 11*x[:, 1]*x[:, 1]
-            values[:, 3] = 13*x[:, 0] + 17*x[:, 1]*x[:, 1]
-    return [interpolate(f, block_V[0])]
+        def f(x):
+            return stack([
+                2*x[:, 0] + 4*x[:, 1]*x[:, 1],
+                3*x[:, 0] + 5*x[:, 1]*x[:, 1],
+                7*x[:, 0] + 11*x[:, 1]*x[:, 1],
+                13*x[:, 0] + 17*x[:, 1]*x[:, 1]
+            ], axis=1)
+    u = Function(block_V[0])
+    u.interpolate(f)
+    return [u]
     
 # Computation of block function for two blocks
 def get_list_of_functions_2(block_V):
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) == 0:
-        def f1(values, x):
-            values[:, 0] = 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
+        def f1(x):
+            return 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
     elif len(shape_1) == 1 and shape_1[0] == 2:
-        def f1(values, x):
-            values[:, 0] = 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
-            values[:, 1] = 3*x[:, 0] + 5*x[:, 1]*x[:, 1]
+        def f1(x):
+            return stack([
+                2*x[:, 0] + 4*x[:, 1]*x[:, 1],
+                3*x[:, 0] + 5*x[:, 1]*x[:, 1]
+            ], axis=1)
     elif len(shape_1) == 1 and shape_1[0] == 3:
-        def f1(values, x):
-            values[:, 0] = 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
-            values[:, 1] = 3*x[:, 0] + 5*x[:, 1]*x[:, 1]
-            values[:, 2] = 7*x[:, 0] + 11*x[:, 1]*x[:, 1]
+        def f1(x):
+            return stack([
+                2*x[:, 0] + 4*x[:, 1]*x[:, 1],
+                3*x[:, 0] + 5*x[:, 1]*x[:, 1],
+                7*x[:, 0] + 11*x[:, 1]*x[:, 1]
+            ], axis=1)
     elif len(shape_1) == 2:
-        def f1(values, x):
-            values[:, 0] = 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
-            values[:, 1] = 3*x[:, 0] + 5*x[:, 1]*x[:, 1]
-            values[:, 2] = 7*x[:, 0] + 11*x[:, 1]*x[:, 1]
-            values[:, 3] = 13*x[:, 0] + 17*x[:, 1]*x[:, 1]
+        def f1(x):
+            return stack([
+                2*x[:, 0] + 4*x[:, 1]*x[:, 1],
+                3*x[:, 0] + 5*x[:, 1]*x[:, 1],
+                7*x[:, 0] + 11*x[:, 1]*x[:, 1],
+                13*x[:, 0] + 17*x[:, 1]*x[:, 1]
+            ], axis=1)
+    u1 = Function(block_V[0])
+    u1.interpolate(f1)
     shape_2 = block_V[1].ufl_element().value_shape()
     if len(shape_2) == 0:
-        def f2(values, x):
-            values[:, 0] = 2*x[:, 1] + 4*x[:, 0]*x[:, 0]
+        def f2(x):
+            return 2*x[:, 1] + 4*x[:, 0]*x[:, 0]
     elif len(shape_2) == 1 and shape_2[0] == 2:
-        def f2(values, x):
-            values[:, 0] = 2*x[:, 1] + 4*x[:, 0]*x[:, 0]
-            values[:, 1] = 3*x[:, 1] + 5*x[:, 0]*x[:, 0]
+        def f2(x):
+            return stack([
+                2*x[:, 1] + 4*x[:, 0]*x[:, 0],
+                3*x[:, 1] + 5*x[:, 0]*x[:, 0]
+            ], axis=1)
     elif len(shape_2) == 1 and shape_2[0] == 3:
-        def f2(values, x):
-            values[:, 0] = 2*x[:, 1] + 4*x[:, 0]*x[:, 0]
-            values[:, 1] = 3*x[:, 1] + 5*x[:, 0]*x[:, 0]
-            values[:, 2] = 7*x[:, 1] + 11*x[:, 0]*x[:, 0]
+        def f2(x):
+            return stack([
+                2*x[:, 1] + 4*x[:, 0]*x[:, 0],
+                3*x[:, 1] + 5*x[:, 0]*x[:, 0],
+                7*x[:, 1] + 11*x[:, 0]*x[:, 0]
+            ], axis=1)
     elif len(shape_2) == 2:
-        def f2(values, x):
-            values[:, 0] = 2*x[:, 1] + 4*x[:, 0]*x[:, 0]
-            values[:, 1] = 3*x[:, 1] + 5*x[:, 0]*x[:, 0]
-            values[:, 2] = 7*x[:, 1] + 11*x[:, 0]*x[:, 0]
-            values[:, 3] = 13*x[:, 1] + 17*x[:, 0]*x[:, 0]
-    return [interpolate(f1, block_V[0]), interpolate(f2, block_V[1])]
+        def f2(x):
+            return stack([
+                2*x[:, 1] + 4*x[:, 0]*x[:, 0],
+                3*x[:, 1] + 5*x[:, 0]*x[:, 0],
+                7*x[:, 1] + 11*x[:, 0]*x[:, 0],
+                13*x[:, 1] + 17*x[:, 0]*x[:, 0]
+            ], axis=1)
+    u2 = Function(block_V[1])
+    u2.interpolate(f2)
+    return [u1, u2]
     
 # ================ PARALLEL SUPPORT ================ #
 # Gather matrices, vector and dicts on zero-th process

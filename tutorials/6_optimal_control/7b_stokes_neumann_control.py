@@ -16,7 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import isclose, isin, where
+from numpy import isclose, isin, where, zeros
 from ufl import *
 from dolfin import *
 from dolfin.cpp.mesh import GhostMode
@@ -87,14 +87,13 @@ a = 1.0
 b = 0.8
 v_d = as_vector((a*(b*10.0*(x[1]**3 - x[1]**2 - x[1] + 1.0)) + ((1.0-b)*10.0*(-x[1]**3 - x[1]**2 + x[1] + 1.0)), 0.0))
 f = Constant(mesh, (0., 0.))
-def g_eval(values, x):
+def g_eval(x):
+    values = zeros((x.shape[0], 2))
     values[:, 0] = 10.0*a*(x[:, 1] + 1.0)*(1.0 - x[:, 1])
-    values[:, 1] = 0.0
-g = interpolate(g_eval, W.sub(0))
-def zero_eval(values, x):
-    values[:, 0] = 0.0
-    values[:, 1] = 0.0
-bc0 = interpolate(zero_eval, W.sub(0))
+    return values
+g = Function(W.sub(0))
+g.interpolate(g_eval)
+bc0 = Function(W.sub(0))
 
 # TRIAL/TEST FUNCTIONS #
 trial = BlockTrialFunction(W)

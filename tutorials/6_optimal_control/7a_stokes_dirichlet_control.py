@@ -16,7 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import isclose, where
+from numpy import isclose, where, zeros
 from ufl import *
 from dolfin import *
 from dolfin.cpp.mesh import GhostMode
@@ -79,17 +79,14 @@ W = BlockFunctionSpace(mesh, W_el, restrict=[None, None, control_boundary, contr
 nu = 1.
 alpha = 1.e-2
 f = Constant(mesh, (0., 0.))
-def zero_eval(values, x):
-    values[:, 0] = 0.0
-    values[:, 1] = 0.0
-bc0 = interpolate(zero_eval, W.sub(0))
-def zero_component_eval(values, x):
-    values[:] = 0.0
-bc0_component = interpolate(zero_component_eval, W.sub(0).sub(0).collapse())
-def non_zero_eval(values, x):
+bc0 = Function(W.sub(0))
+bc0_component = Function(W.sub(0).sub(0).collapse())
+def non_zero_eval(x):
+    values = zeros((x.shape[0], 2))
     values[:, 0] = 2.5
-    values[:, 1] = 0.0
-bc1 = interpolate(non_zero_eval, W.sub(0))
+    return values
+bc1 = Function(W.sub(0))
+bc1.interpolate(non_zero_eval)
 
 # TRIAL/TEST FUNCTIONS #
 trial = BlockTrialFunction(W)

@@ -16,7 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import isclose, isin, where
+from numpy import isclose, isin, stack, where
 from ufl import *
 from dolfin import *
 from dolfin.cpp.mesh import GhostMode
@@ -74,16 +74,14 @@ x, y = symbols("x[0], x[1]")
 psi_d = 10*(1-cos(0.8*pi*x))*(1-cos(0.8*pi*y))*(1-x)**2*(1-y)**2
 v_d_x = lambdify([x, y], psi_d.diff(y, 1))
 v_d_y = lambdify([x, y], -psi_d.diff(x, 1))
-def v_d_eval(values, x):
-    values[:, 0] = v_d_x(x[:, 0], x[:, 1])
-    values[:, 1] = v_d_y(x[:, 0], x[:, 1])
-v_d = interpolate(v_d_eval, W.sub(0))
+v_d = Function(W.sub(0))
+v_d.interpolate(lambda x: stack((v_d_x(x[:, 0], x[:, 1]), v_d_y(x[:, 0], x[:, 1])), axis=1))
 nu = 0.1
 f = Constant(mesh, (0., 0.))
 def zero_eval(values, x):
     values[:, 0] = 0.0
     values[:, 1] = 0.0
-bc0 = interpolate(zero_eval, W.sub(0))
+bc0 = Function(W.sub(0))
 
 # TRIAL/TEST FUNCTIONS AND SOLUTION #
 trial = BlockTrialFunction(W)

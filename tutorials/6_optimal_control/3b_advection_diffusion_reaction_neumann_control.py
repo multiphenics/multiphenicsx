@@ -16,7 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import isclose, where
+from numpy import isclose, ones, where, zeros
 from petsc4py import PETSc
 from ufl import *
 from dolfin import *
@@ -74,12 +74,10 @@ x = SpatialCoordinate(mesh)
 beta = as_vector((x[1]*(1-x[1]), 0))
 sigma = Constant(mesh, 0.)
 f = Constant(mesh, 0.)
-def zero_eval(values, x):
-    values[:] = 0.0
-bc0 = interpolate(zero_eval, W.sub(0))
-def one_eval(values, x):
-    values[:] = 1.0
-bc1 = interpolate(one_eval, W.sub(0))
+bc0 = Function(W.sub(0))
+bc0.interpolate(lambda x: zeros(x.shape[0]))
+bc1 = Function(W.sub(0))
+bc1.interpolate(lambda x: ones(x.shape[0]))
 
 # TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)

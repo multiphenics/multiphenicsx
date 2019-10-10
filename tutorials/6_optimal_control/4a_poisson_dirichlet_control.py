@@ -70,9 +70,7 @@ alpha = 1.e-5
 y_d = 1.
 x = SpatialCoordinate(mesh)
 f = 10*sin(2*pi*x[0])*sin(2*pi*x[1])
-def zero_eval(values, x):
-    values[:] = 0.0
-bc0 = interpolate(zero_eval, W.sub(0))
+bc0 = Function(W.sub(0))
 
 # TRIAL/TEST FUNCTIONS #
 yulp = BlockTrialFunction(W)

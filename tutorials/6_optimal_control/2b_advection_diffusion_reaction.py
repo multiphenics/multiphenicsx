@@ -16,7 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import isclose, where
+from numpy import isclose, ones, where
 from petsc4py import PETSc
 from ufl import *
 from dolfin import *
@@ -72,9 +72,9 @@ beta = as_vector((x[1]*(1-x[1]), 0))
 sigma = Constant(mesh, 0.)
 f = Constant(mesh, 0.)
 def bc_generator(val):
-    def eval_val(values, x):
-        values[:] = val
-    return interpolate(eval_val, W.sub(0))
+    bc = Function(W.sub(0))
+    bc.interpolate(lambda x: val*ones(x.shape[0]))
+    return bc
 
 # TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)

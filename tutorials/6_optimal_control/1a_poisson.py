@@ -62,10 +62,8 @@ W = BlockFunctionSpace(mesh, W_el)
 alpha = 1.e-5
 x = SpatialCoordinate(mesh)
 y_d = 10*x[0]*(1-x[0])*x[1]*(1-x[1])
-def zero_eval(values, x):
-    values[:] = 0.0
-f = interpolate(zero_eval, W.sub(0))
-bc0 = interpolate(zero_eval, W.sub(0))
+f = Function(W.sub(0))
+bc0 = Function(W.sub(0))
 
 # TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)

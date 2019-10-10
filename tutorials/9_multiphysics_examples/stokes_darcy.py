@@ -16,7 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import array, finfo, isclose, logical_and, where
+from numpy import array, finfo, isclose, logical_and, where, zeros
 from petsc4py import PETSc
 from ufl import *
 from dolfin import *
@@ -186,10 +186,12 @@ print("DoFs = ", Hh.dim(), " -- DoFs with unified Taylor-Hood = ", P2v.dim() + P
 
 # ******** Other parameters and BCs ************* #
 
-def inflow_eval(values, x):
-    values[:, 0] = 0.0
+def inflow_eval(x):
+    values = zeros((x.shape[0], 2))
     values[:, 1] = x[:, 0]**2 - 1.0
-inflow = interpolate(inflow_eval, Hh.sub(0))
+    return values
+inflow = Function(Hh.sub(0))
+inflow.interpolate(inflow_eval)
 noSlip0 = Function(Hh.sub(0))
 noSlip1 = Function(Hh.sub(1))
 for noSlip in (noSlip0, noSlip1):

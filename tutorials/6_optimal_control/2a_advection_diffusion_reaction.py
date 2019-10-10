@@ -68,9 +68,7 @@ epsilon = 1.e-1
 beta = as_vector((-1., -2.))
 sigma = 1.
 f = 1.
-def zero_eval(values, x):
-    values[:] = 0.0
-bc0 = interpolate(zero_eval, W.sub(0))
+bc0 = Function(W.sub(0))
 
 # TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)

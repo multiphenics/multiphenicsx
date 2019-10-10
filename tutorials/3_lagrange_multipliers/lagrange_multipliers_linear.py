@@ -67,9 +67,8 @@ dx = Measure("dx")(subdomain_data=subdomains)
 ds = Measure("ds")(subdomain_data=boundaries)
 
 # ASSEMBLE #
-def g_eval(values, x):
-    values[:, 0] = numpy.sin(3*x[:, 0] + 1)*numpy.sin(3*x[:, 1] + 1)
-g = interpolate(g_eval, V)
+g = Function(V)
+g.interpolate(lambda x: numpy.sin(3*x[:, 0] + 1)*numpy.sin(3*x[:, 1] + 1))
 a = [[inner(grad(u), grad(v))*dx, l*v*ds],
      [u*m*ds                    , 0     ]]
 f =  [v*dx                      , g*m*ds]

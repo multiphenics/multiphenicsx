@@ -16,7 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import isclose, where
+from numpy import isclose, where, zeros
 from petsc4py import PETSc
 from ufl import *
 from dolfin import *
@@ -34,12 +34,12 @@ MixedElement class) and multiphenics code.
 
 # Constitutive parameters
 nu = 0.01
-def u_in_eval(values, x):
+def u_in_eval(x):
+    values = zeros((x.shape[0], 2))
     values[:, 0] = 1.0
-    values[:, 1] = 0.0
-def u_wall_eval(values, x):
-    values[:, 0] = 0.0
-    values[:, 1] = 0.0
+    return values
+def u_wall_eval(x):
+    return zeros((x.shape[0], 2))
 
 # Solver parameters
 def set_solver_parameters(solver):
@@ -81,8 +81,10 @@ def run_monolithic():
     J = derivative(F, up, dup)
 
     # Boundary conditions
-    u_in = interpolate(u_in_eval, W.sub(0).collapse())
-    u_wall = interpolate(u_wall_eval, W.sub(0).collapse())
+    u_in = Function(W.sub(0).collapse())
+    u_in.interpolate(u_in_eval)
+    u_wall = Function(W.sub(0).collapse())
+    u_wall.interpolate(u_wall_eval)
     inlet_bc = DirichletBC(W.sub(0), u_in, boundaries_1)
     wall_bc = DirichletBC(W.sub(0), u_wall, boundaries_2)
     bc = [inlet_bc, wall_bc]
@@ -154,8 +156,10 @@ def run_block():
     J = block_derivative(F, up, dup)
 
     # Boundary conditions
-    u_in = interpolate(u_in_eval, W.sub(0))
-    u_wall = interpolate(u_wall_eval, W.sub(0))
+    u_in = Function(W.sub(0))
+    u_in.interpolate(u_in_eval)
+    u_wall = Function(W.sub(0))
+    u_wall.interpolate(u_wall_eval)
     inlet_bc = DirichletBC(W.sub(0), u_in, boundaries_1)
     wall_bc = DirichletBC(W.sub(0), u_wall, boundaries_2)
     bc = BlockDirichletBC([[inlet_bc, wall_bc], []])

@@ -58,10 +58,6 @@ options.setValue(options_prefix + "st_ksp_type", "preonly")
 options.setValue(options_prefix + "st_pc_type", "lu")
 options.setValue(options_prefix + "st_pc_factor_mat_solver_type", "mumps")
 
-def zero_eval(values, x):
-    values[:, 0] = 0.0
-    values[:, 1] = 0.0
-
 def normalize(u1, u2, p):
     u1_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u1), grad(u1))*dx)))
     u1.vector.scale(1./u1_norm)
@@ -92,7 +88,7 @@ def run_monolithic():
     rhs = - inner(p, q)*dx
 
     # Boundary conditions
-    zero = interpolate(zero_eval, W.sub(0).collapse())
+    zero = Function(W.sub(0).collapse())
     bc = [DirichletBC(W.sub(0), zero, boundaries_1)]
 
     # Assemble lhs and rhs matrices
@@ -142,7 +138,7 @@ def run_block():
            [0                         , - p*q*dx     ]]
 
     # Boundary conditions
-    zero = interpolate(zero_eval, W.sub(0))
+    zero = Function(W.sub(0))
     wallc = [DirichletBC(W.sub(0), zero, boundaries_1)]
     bc = BlockDirichletBC([[wallc], []])
 
