@@ -158,7 +158,7 @@ namespace multiphenics
       /// *Returns*
       ///     std::vector<double>
       ///         The dof coordinates (x0, y0, x1, y1, . . .)
-      dolfin::EigenRowArrayXXd tabulate_dof_coordinates() const;
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> tabulate_dof_coordinates() const;
       
       // The mesh
       std::shared_ptr<const dolfin::mesh::Mesh> mesh() const;

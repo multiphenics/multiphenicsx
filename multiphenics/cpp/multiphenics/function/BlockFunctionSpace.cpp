@@ -24,7 +24,6 @@ using namespace multiphenics;
 using namespace multiphenics::function;
 
 using dolfin::common::UniqueIdGenerator;
-using dolfin::EigenRowArrayXXd;
 using dolfin::fem::DofMap;
 using dolfin::fem::FiniteElement;
 using dolfin::function::FunctionSpace;
@@ -245,7 +244,8 @@ bool BlockFunctionSpace::contains(const BlockFunctionSpace& V) const
   return true;
 }
 //-----------------------------------------------------------------------------
-EigenRowArrayXXd BlockFunctionSpace::tabulate_dof_coordinates() const
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+BlockFunctionSpace::tabulate_dof_coordinates() const
 {
   // Geometric dimension
   assert(_mesh);
@@ -256,7 +256,7 @@ EigenRowArrayXXd BlockFunctionSpace::tabulate_dof_coordinates() const
   std::size_t local_size = _block_dofmap->index_map->size_local() + _block_dofmap->index_map->num_ghosts();
   
   // Vector to hold coordinates and return
-  EigenRowArrayXXd dof_coordinates(local_size, gdim);
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dof_coordinates(local_size, gdim);
   
   // Loop over subspaces
   for (unsigned int i(0); i < _function_spaces.size(); ++i)
