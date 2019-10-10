@@ -19,13 +19,12 @@
 import pytest
 from numpy import concatenate
 from dolfin import FunctionSpace, MPI, UnitSquareMesh
-from dolfin_utils.test.fixtures import fixture as module_fixture
 from multiphenics import BlockElement, BlockFunctionSpace
 from multiphenics.cpp.compile_code import compile_code
 from test_utils import assert_global_dofs, assert_owned_local_dofs, assert_tabulated_dof_coordinates, array_sorted_equal, assert_unowned_local_dofs, get_elements_1, get_elements_2, get_function_spaces_1, get_function_spaces_2, get_restrictions_1, get_restrictions_2, unique
 
 # Mesh
-@module_fixture
+@pytest.fixture(scope="module")
 def mesh():
     return UnitSquareMesh(MPI.comm_world, 4, 4)
     

@@ -20,12 +20,11 @@ import pytest
 from petsc4py import PETSc
 from ufl import div, ds, dx, grad, inner
 from dolfin import FunctionSpace, MPI, UnitSquareMesh, VectorFunctionSpace
-from dolfin_utils.test.fixtures import fixture as module_fixture
 from multiphenics import block_adjoint, block_derivative, BlockForm, BlockFunction, BlockFunctionSpace, block_restrict, block_split, BlockTestFunction, BlockTrialFunction
 from test_utils import assert_forms_equal, get_list_of_functions_2
 
 # Mesh
-@module_fixture
+@pytest.fixture(scope="module")
 def mesh():
     return UnitSquareMesh(MPI.comm_world, 4, 4)
     

@@ -18,12 +18,11 @@
 
 import pytest
 from dolfin import MPI, UnitSquareMesh
-from dolfin_utils.test.fixtures import fixture as module_fixture
 from multiphenics import BlockFunctionSpace
 from test_utils import assert_functions_manipulations, get_function_spaces_1, get_function_spaces_2, get_list_of_functions_1, get_list_of_functions_2, get_restrictions_1, get_restrictions_2
 
 # Mesh
-@module_fixture
+@pytest.fixture(scope="module")
 def mesh():
     return UnitSquareMesh(MPI.comm_world, 4, 4)
 
