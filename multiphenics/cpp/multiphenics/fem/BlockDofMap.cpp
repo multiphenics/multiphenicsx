@@ -32,6 +32,7 @@ using dolfin::mesh::Mesh;
 using dolfin::mesh::MeshEntity;
 using dolfin::mesh::MeshFunction;
 using dolfin::mesh::MeshRange;
+using dolfin::mesh::MeshRangeType;
 
 //-----------------------------------------------------------------------------
 BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const DofMap>> dofmaps,
@@ -149,7 +150,7 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
         mesh.create_entities(d);
         mesh.create_connectivity(d, D);
         
-        for (const auto& e : MeshRange(mesh, d))
+        for (const auto& e : MeshRange(mesh, d, MeshRangeType::ALL))
         {
           // Check if the mesh entity is in restriction
           bool in_restriction;
