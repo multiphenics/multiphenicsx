@@ -20,8 +20,7 @@ import cppimport
 import hashlib
 import os
 import sys
-from ffc import default_parameters
-from ffc.config import get_cache_path
+from pathlib import Path
 from dolfin.jit import dolfin_pc, mpi_jit_decorator
 
 @mpi_jit_decorator
@@ -94,7 +93,7 @@ cfg['linker_args'] += {str(linker_args)}
     package_name_with_hash = package_name + "_" + package_hash
     
     # Write to cache directory
-    cache_dir = str(get_cache_path(default_parameters()))
+    cache_dir = str(Path(os.getenv("FENICS_CACHE_DIR", "~/.cache/fenics")).expanduser())
     os.makedirs(cache_dir, exist_ok=True)
     open(
         os.path.join(cache_dir, package_name_with_hash + ".cpp"), "w"
