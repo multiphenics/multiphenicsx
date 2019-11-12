@@ -20,7 +20,8 @@ from numpy import finfo, isclose, where
 from petsc4py import PETSc
 from ufl import *
 from dolfin import *
-from dolfin.fem import assemble_scalar
+from dolfin.cpp.la import get_local_vectors
+from dolfin.fem import assemble_matrix_block, assemble_scalar, assemble_vector_block, create_vector_block
 from multiphenics import *
 
 """
@@ -93,7 +94,57 @@ def run_standard():
     
 u = run_standard()
 
-def run_block():
+def run_standard_block():
+    # Define a block function space
+    V1 = FunctionSpace(mesh, ("Lagrange", 2))
+    V2 = FunctionSpace(mesh, ("Lagrange", 2))
+    (u1, u2) = (TrialFunction(V1), TrialFunction(V2))
+    (v1, v2) = (TestFunction(V1), TestFunction(V2))
+
+    # Define problem block forms
+    aa = [[1*inner(grad(u1), grad(v1))*dx + 1*u1*v1*dx, 2*inner(grad(u2), grad(v1))*dx + 2*u2*v1*dx],
+          [3*inner(grad(u1), grad(v2))*dx + 3*u1*v2*dx, 4*inner(grad(u2), grad(v2))*dx + 4*u2*v2*dx]]
+    ff = [300*sin(20*x0)*v1*dx,
+          700*sin(20*x0)*v2*dx]
+    
+    # Define block boundary conditions
+    zero = Function(V1)
+    with zero.vector.localForm() as zero_local:
+        zero_local.set(0.0)
+    bc1 = DirichletBC(V1, zero, boundaries_1)
+    bc2 = DirichletBC(V2, zero, boundaries_1)
+    bcs = [bc1, bc2]
+    
+    # Assemble the block linear system
+    AA = assemble_matrix_block(aa, bcs)
+    AA.assemble()
+    FF = assemble_vector_block(ff, aa, bcs)
+    
+    # Solve the block linear system
+    uu = create_vector_block(ff)
+    ksp = PETSc.KSP()
+    ksp.create(mesh.mpi_comm())
+    ksp.setOperators(AA)
+    ksp.setType("preonly")
+    ksp.getPC().setType("lu")
+    ksp.getPC().setFactorSolverType("mumps")
+    ksp.setFromOptions()
+    ksp.solve(FF, uu)
+    (u1, u2) = (Function(V1), Function(V2))
+    with u1.vector.localForm() as u1_local, u2.vector.localForm() as u2_local:
+        (u1_local[:], u2_local[:]) = get_local_vectors(
+            uu,
+            [u1.function_space.dofmap.index_map, u2.function_space.dofmap.index_map]
+        )
+    u1.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
+    u2.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
+    
+    # Return the block solution
+    return u1, u2
+    
+u1, u2 = run_standard_block()
+
+def run_multiphenics():
     # Define a block function space
     V = FunctionSpace(mesh, ("Lagrange", 2))
     VV = BlockFunctionSpace([V, V])
@@ -125,12 +176,21 @@ def run_block():
     # Return the block solution
     return uu1, uu2
     
-uu1, uu2 = run_block()
+uu1, uu2 = run_multiphenics()
 
-u_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u), grad(u))*dx)))
-err_1_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u - uu1), grad(u - uu1))*dx)))
-err_2_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u - uu2), grad(u - uu2))*dx)))
-print("Relative error for first component is equal to", err_1_norm/u_norm)
-print("Relative error for second component is equal to", err_2_norm/u_norm)
-assert isclose(err_1_norm/u_norm, 0., atol=1.e-10)
-assert isclose(err_2_norm/u_norm, 0., atol=1.e-10)
+def compute_errors(u1, u2, uu1, uu2):
+    u_1_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u1), grad(u1))*dx)))
+    u_2_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u2), grad(u2))*dx)))
+    err_1_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u1 - uu1), grad(u1 - uu1))*dx)))
+    err_2_norm = sqrt(MPI.sum(mesh.mpi_comm(), assemble_scalar(inner(grad(u2 - uu2), grad(u2 - uu2))*dx)))
+    print("  Relative error for first component is equal to", err_1_norm/u_1_norm)
+    print("  Relative error for second component is equal to", err_2_norm/u_2_norm)
+    assert isclose(err_1_norm/u_1_norm, 0., atol=1.e-10)
+    assert isclose(err_2_norm/u_2_norm, 0., atol=1.e-10)
+
+print("Computing errors between standard and standard block")
+compute_errors(u, u, u1, u2)
+print("Computing errors between standard and multiphenics")
+compute_errors(u, u, uu1, uu2)
+print("Computing errors between standard block and multiphenics")
+compute_errors(u1, u2, uu1, uu2)
