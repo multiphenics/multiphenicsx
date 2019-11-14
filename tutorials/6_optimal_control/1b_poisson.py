@@ -67,9 +67,9 @@ y_d_1 = 1.0
 y_d_2 = 0.6
 f = Constant(mesh, 0.)
 bc0 = Function(W.sub(0))
-bc0.interpolate(lambda x: zeros(x.shape[0]))
+bc0.interpolate(lambda x: zeros(x.shape[1]))
 bc1 = Function(W.sub(0))
-bc1.interpolate(lambda x: ones(x.shape[0]))
+bc1.interpolate(lambda x: ones(x.shape[1]))
 
 # TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)

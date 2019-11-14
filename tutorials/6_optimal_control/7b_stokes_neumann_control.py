@@ -88,8 +88,8 @@ b = 0.8
 v_d = as_vector((a*(b*10.0*(x[1]**3 - x[1]**2 - x[1] + 1.0)) + ((1.0-b)*10.0*(-x[1]**3 - x[1]**2 + x[1] + 1.0)), 0.0))
 f = Constant(mesh, (0., 0.))
 def g_eval(x):
-    values = zeros((x.shape[0], 2))
-    values[:, 0] = 10.0*a*(x[:, 1] + 1.0)*(1.0 - x[:, 1])
+    values = zeros((2, x.shape[1]))
+    values[0, :] = 10.0*a*(x[1, :] + 1.0)*(1.0 - x[1, :])
     return values
 g = Function(W.sub(0))
 g.interpolate(g_eval)

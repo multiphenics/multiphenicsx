@@ -82,8 +82,8 @@ f = Constant(mesh, (0., 0.))
 bc0 = Function(W.sub(0))
 bc0_component = Function(W.sub(0).sub(0).collapse())
 def non_zero_eval(x):
-    values = zeros((x.shape[0], 2))
-    values[:, 0] = 2.5
+    values = zeros((2, x.shape[1]))
+    values[0, :] = 2.5
     return values
 bc1 = Function(W.sub(0))
 bc1.interpolate(non_zero_eval)

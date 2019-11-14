@@ -259,7 +259,7 @@ def get_elements_2():
 # ================ SUBDOMAIN GENERATOR ================ #
 def UnitSquareSubDomain(X, Y):
     def unit_square_subdomain(x):
-        return logical_and(x[:, 0] <= X, x[:, 1] <= Y)
+        return logical_and(x[0] <= X, x[1] <= Y)
     return unit_square_subdomain
 
 def UnitSquareInterface(X=None, Y=None, on_boundary=False):
@@ -272,15 +272,15 @@ def UnitSquareInterface(X=None, Y=None, on_boundary=False):
     )
     if X is not None:
         def unit_square_interface(x):
-            return logical_and(x[:, 0] >= X - finfo(float).eps, x[:, 0] <= X + finfo(float).eps)
+            return logical_and(x[0] >= X - finfo(float).eps, x[0] <= X + finfo(float).eps)
     elif Y is not None:
         def unit_square_interface(x):
-            return logical_and(x[:, 1] >= Y - finfo(float).eps, x[:, 1] <= Y + finfo(float).eps)
+            return logical_and(x[1] >= Y - finfo(float).eps, x[1] <= Y + finfo(float).eps)
     elif on_boundary is True:
         def unit_square_interface(x):
             return logical_or(
-                logical_or(x[:, 0] <= finfo(float).eps, x[:, 0] >= 1. - finfo(float).eps),
-                logical_or(x[:, 1] <= finfo(float).eps, x[:, 1] >= 1. - finfo(float).eps)
+                logical_or(x[0] <= finfo(float).eps, x[0] >= 1. - finfo(float).eps),
+                logical_or(x[1] <= finfo(float).eps, x[1] >= 1. - finfo(float).eps)
             )
     return unit_square_interface
     
@@ -621,28 +621,28 @@ def get_list_of_functions_1(block_V):
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) == 0:
         def f(x):
-            return 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
+            return 2*x[0] + 4*x[1]*x[1]
     elif len(shape_1) == 1 and shape_1[0] == 2:
         def f(x):
             return stack([
-                2*x[:, 0] + 4*x[:, 1]*x[:, 1],
-                3*x[:, 0] + 5*x[:, 1]*x[:, 1]
-            ], axis=1)
+                2*x[0] + 4*x[1]*x[1],
+                3*x[0] + 5*x[1]*x[1]
+            ], axis=0)
     elif len(shape_1) == 1 and shape_1[0] == 3:
         def f(x):
             return stack([
-                2*x[:, 0] + 4*x[:, 1]*x[:, 1],
-                3*x[:, 0] + 5*x[:, 1]*x[:, 1],
-                7*x[:, 0] + 11*x[:, 1]*x[:, 1]
-            ], axis=1)
+                2*x[0] + 4*x[1]*x[1],
+                3*x[0] + 5*x[1]*x[1],
+                7*x[0] + 11*x[1]*x[1]
+            ], axis=0)
     elif len(shape_1) == 2:
         def f(x):
             return stack([
-                2*x[:, 0] + 4*x[:, 1]*x[:, 1],
-                3*x[:, 0] + 5*x[:, 1]*x[:, 1],
-                7*x[:, 0] + 11*x[:, 1]*x[:, 1],
-                13*x[:, 0] + 17*x[:, 1]*x[:, 1]
-            ], axis=1)
+                2*x[0] + 4*x[1]*x[1],
+                3*x[0] + 5*x[1]*x[1],
+                7*x[0] + 11*x[1]*x[1],
+                13*x[0] + 17*x[1]*x[1]
+            ], axis=0)
     u = Function(block_V[0])
     u.interpolate(f)
     return [u]
@@ -652,55 +652,55 @@ def get_list_of_functions_2(block_V):
     shape_1 = block_V[0].ufl_element().value_shape()
     if len(shape_1) == 0:
         def f1(x):
-            return 2*x[:, 0] + 4*x[:, 1]*x[:, 1]
+            return 2*x[0] + 4*x[1]*x[1]
     elif len(shape_1) == 1 and shape_1[0] == 2:
         def f1(x):
             return stack([
-                2*x[:, 0] + 4*x[:, 1]*x[:, 1],
-                3*x[:, 0] + 5*x[:, 1]*x[:, 1]
-            ], axis=1)
+                2*x[0] + 4*x[1]*x[1],
+                3*x[0] + 5*x[1]*x[1]
+            ], axis=0)
     elif len(shape_1) == 1 and shape_1[0] == 3:
         def f1(x):
             return stack([
-                2*x[:, 0] + 4*x[:, 1]*x[:, 1],
-                3*x[:, 0] + 5*x[:, 1]*x[:, 1],
-                7*x[:, 0] + 11*x[:, 1]*x[:, 1]
-            ], axis=1)
+                2*x[0] + 4*x[1]*x[1],
+                3*x[0] + 5*x[1]*x[1],
+                7*x[0] + 11*x[1]*x[1]
+            ], axis=0)
     elif len(shape_1) == 2:
         def f1(x):
             return stack([
-                2*x[:, 0] + 4*x[:, 1]*x[:, 1],
-                3*x[:, 0] + 5*x[:, 1]*x[:, 1],
-                7*x[:, 0] + 11*x[:, 1]*x[:, 1],
-                13*x[:, 0] + 17*x[:, 1]*x[:, 1]
-            ], axis=1)
+                2*x[0] + 4*x[1]*x[1],
+                3*x[0] + 5*x[1]*x[1],
+                7*x[0] + 11*x[1]*x[1],
+                13*x[0] + 17*x[1]*x[1]
+            ], axis=0)
     u1 = Function(block_V[0])
     u1.interpolate(f1)
     shape_2 = block_V[1].ufl_element().value_shape()
     if len(shape_2) == 0:
         def f2(x):
-            return 2*x[:, 1] + 4*x[:, 0]*x[:, 0]
+            return 2*x[1] + 4*x[0]*x[0]
     elif len(shape_2) == 1 and shape_2[0] == 2:
         def f2(x):
             return stack([
-                2*x[:, 1] + 4*x[:, 0]*x[:, 0],
-                3*x[:, 1] + 5*x[:, 0]*x[:, 0]
-            ], axis=1)
+                2*x[1] + 4*x[0]*x[0],
+                3*x[1] + 5*x[0]*x[0]
+            ], axis=0)
     elif len(shape_2) == 1 and shape_2[0] == 3:
         def f2(x):
             return stack([
-                2*x[:, 1] + 4*x[:, 0]*x[:, 0],
-                3*x[:, 1] + 5*x[:, 0]*x[:, 0],
-                7*x[:, 1] + 11*x[:, 0]*x[:, 0]
-            ], axis=1)
+                2*x[1] + 4*x[0]*x[0],
+                3*x[1] + 5*x[0]*x[0],
+                7*x[1] + 11*x[0]*x[0]
+            ], axis=0)
     elif len(shape_2) == 2:
         def f2(x):
             return stack([
-                2*x[:, 1] + 4*x[:, 0]*x[:, 0],
-                3*x[:, 1] + 5*x[:, 0]*x[:, 0],
-                7*x[:, 1] + 11*x[:, 0]*x[:, 0],
-                13*x[:, 1] + 17*x[:, 0]*x[:, 0]
-            ], axis=1)
+                2*x[1] + 4*x[0]*x[0],
+                3*x[1] + 5*x[0]*x[0],
+                7*x[1] + 11*x[0]*x[0],
+                13*x[1] + 17*x[0]*x[0]
+            ], axis=0)
     u2 = Function(block_V[1])
     u2.interpolate(f2)
     return [u1, u2]

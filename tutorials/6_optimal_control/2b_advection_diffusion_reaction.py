@@ -73,7 +73,7 @@ sigma = Constant(mesh, 0.)
 f = Constant(mesh, 0.)
 def bc_generator(val):
     bc = Function(W.sub(0))
-    bc.interpolate(lambda x: val*ones(x.shape[0]))
+    bc.interpolate(lambda x: val*ones(x.shape[1]))
     return bc
 
 # TRIAL/TEST FUNCTIONS #

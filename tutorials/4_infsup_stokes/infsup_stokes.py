@@ -37,7 +37,7 @@ mesh = UnitSquareMesh(MPI.comm_world, 32, 32)
 
 # Create boundaries
 def wall(x):
-    return logical_or(x[:, 1] < 0 + finfo(float).eps, x[:, 1] > 1 - finfo(float).eps)
+    return logical_or(x[1] < 0 + finfo(float).eps, x[1] > 1 - finfo(float).eps)
     
 boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
 boundaries.mark(wall, 1)

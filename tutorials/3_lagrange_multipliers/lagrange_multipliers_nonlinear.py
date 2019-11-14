@@ -64,7 +64,7 @@ ds = Measure("ds")(subdomain_data=boundaries)
 
 # ASSEMBLE #
 g = Function(V)
-g.interpolate(lambda x: numpy.sin(3*x[:, 0] + 1)*numpy.sin(3*x[:, 1] + 1))
+g.interpolate(lambda x: numpy.sin(3*x[0] + 1)*numpy.sin(3*x[1] + 1))
 F = [inner((1+u**2)*grad(u), grad(v))*dx + u*v*inner(grad(u), grad(u))*dx + l*v*ds - v*dx,
      u*m*ds - g*m*ds]
 J = block_derivative(F, ul, dul)

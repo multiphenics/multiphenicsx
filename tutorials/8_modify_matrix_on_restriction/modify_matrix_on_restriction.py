@@ -150,7 +150,7 @@ def generate_penalty_system(W, component, restriction, penalty, g):
 
 # ASSEMBLE #
 g = Function(V)
-g.interpolate(lambda x: numpy.sin(3*x[:, 0] + 1)*numpy.sin(3*x[:, 1] + 1))
+g.interpolate(lambda x: numpy.sin(3*x[0] + 1)*numpy.sin(3*x[1] + 1))
 a = [[inner(grad(u), grad(v))*dx]]
 f =  [v*dx                      ]
 A = block_assemble(a)

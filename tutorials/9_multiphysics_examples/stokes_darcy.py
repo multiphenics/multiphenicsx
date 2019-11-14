@@ -80,31 +80,31 @@ def between(x, interval):
     return logical_and(above(x, interval[0]), below(x, interval[1]))
 
 def top(x):
-    return near(x[:, 1], 2.0)
+    return near(x[1], 2.0)
 
 def sright(x):
-    return logical_and(near(x[:, 0], 1.0), between(x[:, 1], (0.0, 2.0)))
+    return logical_and(near(x[0], 1.0), between(x[1], (0.0, 2.0)))
 
 def sleft(x):
-    return logical_and(near(x[:, 0], -1.0), between(x[:, 1], (0.0, 2.0)))
+    return logical_and(near(x[0], -1.0), between(x[1], (0.0, 2.0)))
 
 def dright(x):
-    return logical_and(near(x[:, 0], 1.0), between(x[:, 1], (-2.0, 0.0)))
+    return logical_and(near(x[0], 1.0), between(x[1], (-2.0, 0.0)))
 
 def dleft(x):
-    return logical_and(near(x[:, 0], -1.0), between(x[:, 1], (-2.0, 0.0)))
+    return logical_and(near(x[0], -1.0), between(x[1], (-2.0, 0.0)))
    
 def bot(x):
-    return near(x[:, 1], -2.0)
+    return near(x[1], -2.0)
 
 def mstokes(x):
-    return above(x[:, 1], 0.0)
+    return above(x[1], 0.0)
 
 def mdarcy(x):
-    return below(x[:, 1], 0.0)
+    return below(x[1], 0.0)
     
 def interface(x):
-    return near(x[:, 1], 0.0)
+    return near(x[1], 0.0)
 
 subdomains.mark(mdarcy, darcy)
 subdomains.mark(mstokes, stokes)
@@ -187,8 +187,8 @@ print("DoFs = ", Hh.dim(), " -- DoFs with unified Taylor-Hood = ", P2v.dim() + P
 # ******** Other parameters and BCs ************* #
 
 def inflow_eval(x):
-    values = zeros((x.shape[0], 2))
-    values[:, 1] = x[:, 0]**2 - 1.0
+    values = zeros((2, x.shape[1]))
+    values[1, :] = x[0, :]**2 - 1.0
     return values
 inflow = Function(Hh.sub(0))
 inflow.interpolate(inflow_eval)

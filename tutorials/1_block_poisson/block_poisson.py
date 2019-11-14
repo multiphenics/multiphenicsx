@@ -53,10 +53,10 @@ to the one provided by standard FEniCS.
 mesh = UnitIntervalMesh(MPI.comm_world, 32)
 
 def left(x):
-    return abs(x[:, 0] - 0.) < finfo(float).eps
+    return abs(x[0] - 0.) < finfo(float).eps
 
 def right(x):
-    return abs(x[:, 0] - 1.) < finfo(float).eps
+    return abs(x[0] - 1.) < finfo(float).eps
         
 boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
 boundaries.mark(left, 1)

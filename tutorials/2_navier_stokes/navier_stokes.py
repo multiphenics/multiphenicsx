@@ -35,11 +35,11 @@ MixedElement class) and multiphenics code.
 # Constitutive parameters
 nu = 0.01
 def u_in_eval(x):
-    values = zeros((x.shape[0], 2))
-    values[:, 0] = 1.0
+    values = zeros((2, x.shape[1]))
+    values[0, :] = 1.0
     return values
 def u_wall_eval(x):
-    return zeros((x.shape[0], 2))
+    return zeros((2, x.shape[1]))
 
 # Solver parameters
 def set_solver_parameters(solver):

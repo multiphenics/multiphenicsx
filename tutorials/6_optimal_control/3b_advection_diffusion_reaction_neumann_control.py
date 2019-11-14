@@ -75,9 +75,9 @@ beta = as_vector((x[1]*(1-x[1]), 0))
 sigma = Constant(mesh, 0.)
 f = Constant(mesh, 0.)
 bc0 = Function(W.sub(0))
-bc0.interpolate(lambda x: zeros(x.shape[0]))
+bc0.interpolate(lambda x: zeros(x.shape[1]))
 bc1 = Function(W.sub(0))
-bc1.interpolate(lambda x: ones(x.shape[0]))
+bc1.interpolate(lambda x: ones(x.shape[1]))
 
 # TRIAL/TEST FUNCTIONS #
 yup = BlockTrialFunction(W)
