@@ -207,22 +207,6 @@ std::vector<std::size_t> BlockFunctionSpace::component() const
   return _component;
 }
 //-----------------------------------------------------------------------------
-std::string BlockFunctionSpace::str(bool verbose) const
-{
-  std::stringstream s;
-
-  if (verbose)
-  {
-    s << str(false) << std::endl << std::endl;
-
-    // No verbose output implemented
-  }
-  else
-    s << "<BlockFunctionSpace of dimension " << dim() << ">";
-
-  return s.str();
-}
-//-----------------------------------------------------------------------------
 bool BlockFunctionSpace::contains(const BlockFunctionSpace& V) const
 {
   // Is the root space same?
@@ -244,19 +228,16 @@ bool BlockFunctionSpace::contains(const BlockFunctionSpace& V) const
   return true;
 }
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor>
 BlockFunctionSpace::tabulate_dof_coordinates() const
 {
-  // Geometric dimension
-  assert(_mesh);
-  const std::size_t gdim = _mesh->geometry().dim();
-  
   // Get local size
   assert(_block_dofmap);
   std::size_t local_size = _block_dofmap->index_map->size_local() + _block_dofmap->index_map->num_ghosts();
   
   // Vector to hold coordinates and return
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dof_coordinates(local_size, gdim);
+  Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor> dof_coordinates =
+    Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor>::Zero(local_size, 3);
   
   // Loop over subspaces
   for (unsigned int i(0); i < _function_spaces.size(); ++i)

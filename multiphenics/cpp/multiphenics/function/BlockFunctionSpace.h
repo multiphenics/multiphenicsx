@@ -121,44 +121,22 @@ namespace multiphenics
       extract_block_sub_space(const std::vector<std::size_t>& component, bool with_restrictions=true) const;
 
       /// Check whether V is subspace of this, or this itself
-      ///
-      /// *Arguments*
-      ///     V (_FunctionSpace_)
-      ///         The space to be tested for inclusion.
-      ///
-      /// *Returns*
-      ///     bool
-      ///         True if V is contained or equal to this.
+      /// @param[in] V The space to be tested for inclusion
+      /// @return True if V is contained in or equal to this FunctionSpace
       bool contains(const BlockFunctionSpace& V) const;
 
-      /// Return component w.r.t. to root superspace, i.e.
-      ///   W.sub(1).sub(0) == [1, 0].
-      ///
-      /// *Returns*
-      ///     std::vector<std::size_t>
-      ///         The component (w.r.t to root superspace).
+      /// Get the component with respect to the root superspace
+      /// @return The component with respect to the root superspace , i.e.
+      ///         W.sub(1).sub(0) == [1, 0]
       std::vector<std::size_t> component() const;
 
-      /// Return informal string representation (pretty-print)
-      ///
-      /// *Arguments*
-      ///     verbose (bool)
-      ///         Flag to turn on additional output.
-      ///
-      /// *Returns*
-      ///     std::string
-      ///         An informal representation of the function space.
-      std::string str(bool verbose) const;
-      
       /// Tabulate the coordinates of all dofs on this process. This
       /// function is typically used by preconditioners that require the
       /// spatial coordinates of dofs, for example for re-partitioning or
       /// nullspace computations.
       ///
-      /// *Returns*
-      ///     std::vector<double>
-      ///         The dof coordinates (x0, y0, x1, y1, . . .)
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> tabulate_dof_coordinates() const;
+      /// @return The dof coordinates ([x0, y0, z0], [x1, y1, z1], ...)
+      Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor> tabulate_dof_coordinates() const;
       
       // The mesh
       std::shared_ptr<const dolfin::mesh::Mesh> mesh() const;
