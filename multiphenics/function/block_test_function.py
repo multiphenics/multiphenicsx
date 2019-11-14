@@ -16,12 +16,12 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from multiphenics.function.block_test_trial_function_base import BlockTestTrialFunction_Base
+from multiphenics.function.block_argument import BlockArgument
 from multiphenics.function.test_function import TestFunction
 
-class BlockTestFunction(BlockTestTrialFunction_Base):
+class BlockTestFunction(BlockArgument):
     def __new__(cls, arg1):
-        return BlockTestTrialFunction_Base.__new__(cls, arg1, TestFunction)
+        return BlockArgument.__new__(cls, arg1, TestFunction)
         
     def __init__(self, arg1):
-        BlockTestTrialFunction_Base.__init__(self, arg1, TestFunction)
+        BlockArgument.__init__(self, arg1, TestFunction)

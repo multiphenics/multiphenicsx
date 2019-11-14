@@ -16,8 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import TestFunction as dolfin_TestFunction
-from multiphenics.function.test_trial_function_base import TestTrialFunction_Base
+from multiphenics.function.argument import Argument
 
 def TestFunction(function_space, part=None, block_function_space=None, block_index=None):
-    return TestTrialFunction_Base(function_space, dolfin_TestFunction, part, block_function_space, block_index)
+    return Argument(function_space, 0, part, block_function_space, block_index)

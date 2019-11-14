@@ -22,8 +22,6 @@ from multiphenics.function.block_function_space import BlockFunctionSpace
 from multiphenics.function.block_split import block_split
 from multiphenics.function.block_test_function import BlockTestFunction
 from multiphenics.function.block_trial_function import BlockTrialFunction
-from multiphenics.function.test_function import TestFunction
-from multiphenics.function.trial_function import TrialFunction
 
 __all__ = [
     'BlockElement',
@@ -31,7 +29,5 @@ __all__ = [
     'BlockFunctionSpace',
     'block_split',
     'BlockTestFunction',
-    'BlockTrialFunction',
-    'TestFunction',
-    'TrialFunction'
+    'BlockTrialFunction'
 ]

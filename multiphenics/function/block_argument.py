@@ -18,7 +18,7 @@
 
 from multiphenics.function.block_function_space import BlockFunctionSpace
 
-class BlockTestTrialFunction_Base(tuple):
+class BlockArgument(tuple):
     def __new__(cls, arg1, Generator):
         assert isinstance(arg1, BlockFunctionSpace)
         return tuple.__new__(cls, [Generator(V, block_function_space=arg1, block_index=block_index) for (block_index, V) in enumerate(arg1)])
