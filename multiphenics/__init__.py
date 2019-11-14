@@ -17,7 +17,7 @@
 #
 
 from multiphenics.fem import block_adjoint, block_derivative, BlockDirichletBC, BlockForm, block_restrict, DirichletBC
-from multiphenics.function import BlockElement, BlockFunction, BlockFunctionSpace, block_split, BlockTestFunction, BlockTrialFunction, split, TestFunction, TrialFunction
+from multiphenics.function import BlockElement, BlockFunction, BlockFunctionSpace, block_split, BlockTestFunction, BlockTrialFunction, TestFunction, TrialFunction
 from multiphenics.la import BlockSLEPcEigenSolver, block_solve, SLEPcEigenSolver
 from multiphenics.mesh import MeshRestriction
 from multiphenics.nls import BlockNewtonSolver, BlockNonlinearProblem
@@ -41,7 +41,6 @@ __all__ = [
     'DirichletBC',
     'MeshRestriction',
     'SLEPcEigenSolver',
-    'split',
     'TestFunction',
     'TrialFunction'
 ]
