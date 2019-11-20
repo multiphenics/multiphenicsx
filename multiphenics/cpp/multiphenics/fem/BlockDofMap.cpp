@@ -267,7 +267,7 @@ void BlockDofMap::_assign_owned_dofs_to_block_dofmap(
   MPI_Comm comm = meshes[0]->mpi_comm();
   
   // Prepare temporary index map, neglecting ghosts
-  std::vector<std::int64_t> empty_ghosts;
+  Eigen::Array<std::int64_t, Eigen::Dynamic, 1> empty_ghosts;
   index_map.reset(new IndexMap(comm, block_dofmap_local_size, empty_ghosts, 1));
   for (unsigned int i = 0; i < dofmaps.size(); ++i) 
   {
@@ -331,8 +331,8 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
   const std::size_t mpi_size = dolfin::MPI::size(comm);
   std::vector<std::vector<std::size_t>> send_buffer(mpi_size);
   std::vector<std::vector<std::size_t>> recv_buffer(mpi_size);
-  std::vector<std::int64_t> local_to_global_unowned(block_dofmap_unowned_size);
-  std::vector<std::vector<std::int64_t>> sub_local_to_sub_global_unowned(dofmaps.size());
+  Eigen::Array<std::int64_t, Eigen::Dynamic, 1> local_to_global_unowned(block_dofmap_unowned_size);
+  std::vector<Eigen::Array<std::int64_t, Eigen::Dynamic, 1>, Eigen::aligned_allocator<Eigen::Array<std::int64_t, Eigen::Dynamic, 1>>> sub_local_to_sub_global_unowned(dofmaps.size());
   for (unsigned int i = 0; i < dofmaps.size(); ++i) 
   {
     sub_local_to_sub_global_unowned[i].resize(sub_block_dofmap_unowned_size[i]);
