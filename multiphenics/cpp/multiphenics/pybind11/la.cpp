@@ -23,11 +23,11 @@
 #include <dolfin/function/Function.h>
 #include <dolfin/la/SLEPcEigenSolver.h>
 #include <dolfin/la/utils.h>
+#include <dolfin/pybind11/caster_mpi.h>
+#include <dolfin/pybind11/caster_petsc.h>
 #include <multiphenics/function/BlockFunction.h>
 #include <multiphenics/la/CondensedBlockSLEPcEigenSolver.h>
 #include <multiphenics/la/CondensedSLEPcEigenSolver.h>
-#include <multiphenics/pybind11/mpi_casters.h> // TODO remove local copy of DOLFIN's pybind11 files
-#include <multiphenics/pybind11/petsc_casters.h> // TODO remove local copy of DOLFIN's pybind11 files
 
 namespace py = pybind11;
 

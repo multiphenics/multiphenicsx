@@ -22,6 +22,7 @@
 #include <pybind11/stl.h>
 
 #include <dolfin/common/IndexMap.h>
+#include <dolfin/pybind11/caster_petsc.h>
 #include <multiphenics/fem/block_assemble.h>
 #include <multiphenics/fem/BlockDirichletBC.h>
 #include <multiphenics/fem/BlockDirichletBCLegacy.h>
@@ -29,7 +30,6 @@
 #include <multiphenics/fem/BlockForm1.h>
 #include <multiphenics/fem/BlockForm2.h>
 #include <multiphenics/fem/DirichletBCLegacy.h>
-#include <multiphenics/pybind11/petsc_casters.h> // TODO remove local copy of DOLFIN's pybind11 files
 
 namespace py = pybind11;
 

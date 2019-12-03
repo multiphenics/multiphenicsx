@@ -56,8 +56,6 @@ def compile_package(package_name, package_root, *args):
     package_pybind11_sources = list()
     for package_submodule in package_submodules:
         package_pybind11_sources.append(os.path.join(package_root, package_name, "pybind11", package_submodule + ".cpp"))
-    if os.path.isfile(os.path.join(package_root, package_name, "pybind11", "MPICommWrapper.cpp")):
-        package_pybind11_sources.append(os.path.join(package_root, package_name, "pybind11", "MPICommWrapper.cpp")) # TODO remove local copy of DOLFIN's pybind11 files
     
     # Read in content of main package file
     package_code = open(os.path.join(package_root, package_name, "pybind11", package_name + ".cpp")).read()

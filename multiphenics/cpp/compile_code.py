@@ -49,8 +49,8 @@ def compile_code(package_name, package_code, **kwargs):
         compiler_args = kwargs["compiler_args"]
     except KeyError:
         compiler_args = []
-    compiler_args.append("-std=c++14")
-    compiler_args.extend('-D' + dm for dm in dolfin_pc['define_macros'])
+    compiler_args.append("-std=c++17")
+    compiler_args.extend("-D" + dm for dm in dolfin_pc["define_macros"])
         
     # Set libraries
     try:
@@ -89,7 +89,7 @@ cfg['linker_args'] += {str(linker_args)}
 """
 
     # Compute hash from package name
-    package_hash = hashlib.md5(package_code.encode('utf-8')).hexdigest()
+    package_hash = hashlib.md5(package_code.encode("utf-8")).hexdigest()
     package_name_with_hash = package_name + "_" + package_hash
     
     # Write to cache directory
