@@ -72,12 +72,20 @@ def _flatten_nested_2(form_or_block_form, flattened_block_form, block_function_s
         assert test_block_function_space is not None
         assert trial_block_index is not None
         assert trial_block_function_space is not None
+        if hasattr(test_block_function_space, "is_block_subspace"):
+            assert test_block_index in test_block_function_space.sub_components_to_components, "Block function space and test block index are not consistent on the sub space."
+            test_block_index = test_block_function_space.sub_components_to_components[test_block_index]
+            test_block_function_space = test_block_function_space.parent_block_function_space
         if hasattr(block_function_space[0], "is_block_subspace"):
             assert test_block_index in block_function_space[0].components_to_sub_components, "Block function space and test block index are not consistent on the sub space."
             test_block_index = block_function_space[0].components_to_sub_components[test_block_index]
             assert test_block_function_space == block_function_space[0].parent_block_function_space
         else:
             assert test_block_function_space == block_function_space[0]
+        if hasattr(trial_block_function_space, "is_block_subspace"):
+            assert trial_block_index in trial_block_function_space.sub_components_to_components, "Block function space and trial block index are not consistent on the sub space."
+            trial_block_index = trial_block_function_space.sub_components_to_components[trial_block_index]
+            trial_block_function_space = trial_block_function_space.parent_block_function_space
         if hasattr(block_function_space[1], "is_block_subspace"):
             assert trial_block_index in block_function_space[1].components_to_sub_components, "Block function space and trial block index are not consistent on the sub space."
             trial_block_index = block_function_space[1].components_to_sub_components[trial_block_index]
@@ -112,6 +120,10 @@ def _flatten_nested_1(form_or_block_form, flattened_block_form, block_function_s
                 test_block_function_space = arg.block_function_space()
         assert test_block_index is not None
         assert test_block_function_space is not None
+        if hasattr(test_block_function_space, "is_block_subspace"):
+            assert test_block_index in test_block_function_space.sub_components_to_components, "Block function space and test block index are not consistent on the sub space."
+            test_block_index = test_block_function_space.sub_components_to_components[test_block_index]
+            test_block_function_space = test_block_function_space.parent_block_function_space
         if hasattr(block_function_space[0], "is_block_subspace"):
             assert test_block_index in block_function_space[0].components_to_sub_components, "Block function space and test block index are not consistent on the sub space."
             test_block_index = block_function_space[0].components_to_sub_components[test_block_index]
