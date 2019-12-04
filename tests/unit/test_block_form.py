@@ -306,7 +306,7 @@ def test_case_0e_3(mesh):
     assert array_equal(assemble(A_sub[0, 0]).array(), assemble(a[0][1]).array())
     
 # Case 0f: simple forms (no nesting), test block_derivative
-def test_case_0f(mesh):
+def test_case_0f_1(mesh):
     # Function spaces
     V = VectorFunctionSpace(mesh, "Lagrange", 2)
     Q = FunctionSpace(mesh, "Lagrange", 1)
@@ -335,6 +335,141 @@ def test_case_0f(mesh):
             else:
                 assert array_equal(assemble(Jac[i, j]).array(), assemble(a[i][j]).array())
                 
+# Case 0f: simple forms (no nesting), test block_derivative in combination with block_restrict (diagonal case)
+def test_case_0f_2(mesh):
+    # Function spaces
+    V = VectorFunctionSpace(mesh, "Lagrange", 2)
+    Q = FunctionSpace(mesh, "Lagrange", 1)
+    W = BlockFunctionSpace([V, Q])
+    # Test and trial functions
+    vq = BlockTestFunction(W)
+    (v, q) = block_split(vq)
+    up = BlockTrialFunction(W)
+    (u, p) = block_split(up)
+    # Solutions
+    UP = BlockFunction(W)
+    (U, P) = block_split(UP)
+    # Linear form and its derivative
+    res = [inner(grad(U), grad(v))*dx - div(v)*P*dx,
+           div(U)*q*dx]
+    jac = block_derivative(res, UP, up)
+    # Define a subspace
+    W_sub = W.extract_block_sub_space((0, ))
+    # Restrict jacobian form to subspace
+    jac_sub = block_restrict(jac, [W_sub, W_sub])
+    # Exact jacobian (for comparison)
+    a = [[inner(grad(u), grad(v))*dx]]
+    # Assert equality for bilinear form
+    assert array_equal(assemble(jac_sub[0, 0]).array(), assemble(a[0][0]).array())
+    
+# Case 0f: simple forms (no nesting), test block_derivative in combination with block_restrict (off-diagonal case)
+def test_case_0f_3(mesh):
+    # Function spaces
+    V = VectorFunctionSpace(mesh, "Lagrange", 2)
+    Q = FunctionSpace(mesh, "Lagrange", 1)
+    W = BlockFunctionSpace([V, Q])
+    # Test and trial functions
+    vq = BlockTestFunction(W)
+    (v, q) = block_split(vq)
+    up = BlockTrialFunction(W)
+    (u, p) = block_split(up)
+    # Solutions
+    UP = BlockFunction(W)
+    (U, P) = block_split(UP)
+    # Linear form and its derivative
+    res = [inner(grad(U), grad(v))*dx - div(v)*P*dx,
+           div(U)*q*dx]
+    jac = block_derivative(res, UP, up)
+    # Define the subspaces
+    W_sub_0 = W.extract_block_sub_space((0, ))
+    W_sub_1 = W.extract_block_sub_space((1, ))
+    # Restrict jacobian form to subspace
+    jac_sub = block_restrict(jac, [W_sub_0, W_sub_1])
+    # Exact jacobian (for comparison)
+    a = [[- div(v)*p*dx]]
+    # Assert equality for bilinear form
+    assert array_equal(assemble(jac_sub[0, 0]).array(), assemble(a[0][0]).array())
+    
+# Case 0f: simple forms (no nesting), test block_restrict in combination with block_derivative (diagonal case)
+def test_case_0f_4(mesh):
+    # Function spaces
+    V = VectorFunctionSpace(mesh, "Lagrange", 2)
+    Q = FunctionSpace(mesh, "Lagrange", 1)
+    W = BlockFunctionSpace([V, Q])
+    # Solutions
+    UP = BlockFunction(W)
+    # Define a subspace
+    W_sub = W.extract_block_sub_space((0, ))
+    # Test and trial functions on subspace
+    v_sub = BlockTestFunction(W_sub)
+    (v, ) = block_split(v_sub)
+    u_sub = BlockTrialFunction(W_sub)
+    (u, ) = block_split(u_sub)
+    # Restrict solution to subspace
+    U_sub = block_restrict(UP, W_sub)
+    (U, ) = block_split(U_sub)
+    # Linear form on subspace and its derivative
+    res_sub = [inner(grad(U), grad(v))*dx]
+    jac_sub = block_derivative(res_sub, U_sub, u_sub)
+    # Exact jacobian (for comparison)
+    a = [[inner(grad(u), grad(v))*dx]]
+    # Assert equality for bilinear form
+    assert array_equal(assemble(jac_sub[0, 0]).array(), assemble(a[0][0]).array())
+    
+# Case 0f: simple forms (no nesting), test block_restrict in combination with block_derivative (off-diagonal case)
+def test_case_0f_5(mesh):
+    # Function spaces
+    V = VectorFunctionSpace(mesh, "Lagrange", 2)
+    Q = FunctionSpace(mesh, "Lagrange", 1)
+    W = BlockFunctionSpace([V, Q])
+    # Solutions
+    UP = BlockFunction(W)
+    # Define the subspaces
+    W_sub_0 = W.extract_block_sub_space((0, ))
+    W_sub_1 = W.extract_block_sub_space((1, ))
+    # Test and trial functions on subspaces
+    v_sub = BlockTestFunction(W_sub_0)
+    (v, ) = block_split(v_sub)
+    p_sub = BlockTrialFunction(W_sub_1)
+    (p, ) = block_split(p_sub)
+    # Restrict solution to subspace
+    P_sub = block_restrict(UP, W_sub_1)
+    (P, ) = block_split(P_sub)
+    # Linear form on subspace and its derivative
+    res_sub = [- div(v)*P*dx]
+    jac_sub = block_derivative(res_sub, P_sub, p_sub)
+    # Exact jacobian (for comparison)
+    a = [[- div(v)*p*dx]]
+    # Assert equality for bilinear form
+    assert array_equal(assemble(jac_sub[0, 0]).array(), assemble(a[0][0]).array())
+    
+# Case 0f: simple forms (no nesting), test block_restrict in combination with block_derivative (off-diagonal case)
+def test_case_0f_6(mesh):
+    # Function spaces
+    V = VectorFunctionSpace(mesh, "Lagrange", 2)
+    Q = FunctionSpace(mesh, "Lagrange", 1)
+    W = BlockFunctionSpace([V, Q])
+    # Solutions
+    UP = BlockFunction(W)
+    # Define the subspaces
+    W_sub_0 = W.extract_block_sub_space((0, ))
+    W_sub_1 = W.extract_block_sub_space((1, ))
+    # Test and trial functions on subspaces
+    q_sub = BlockTestFunction(W_sub_1)
+    (q, ) = block_split(q_sub)
+    u_sub = BlockTrialFunction(W_sub_0)
+    (u, ) = block_split(u_sub)
+    # Restrict solution to subspace
+    U_sub = block_restrict(UP, W_sub_0)
+    (U, ) = block_split(U_sub)
+    # Linear form on subspace and its derivative
+    res_sub = [div(U)*q*dx]
+    jac_sub = block_derivative(res_sub, U_sub, u_sub)
+    # Exact jacobian (for comparison)
+    a = [[div(u)*q*dx]]
+    # Assert equality for bilinear form
+    assert array_equal(assemble(jac_sub[0, 0]).array(), assemble(a[0][0]).array())
+    
 # Case 0g: simple forms (no nesting), test block_adjoint
 def test_case_0g(mesh):
     # Function spaces
