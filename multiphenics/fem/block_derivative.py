@@ -22,6 +22,7 @@ from multiphenics.fem.block_form import _block_form_preprocessing
 from multiphenics.fem.block_form_1 import BlockForm1
 from multiphenics.fem.block_form_2 import BlockForm2
 from multiphenics.fem.block_replace_zero import _is_zero
+from multiphenics.function import BlockFunction, BlockTrialFunction
 
 def block_derivative(F, u, du):
     assert isinstance(F, (array, list, BlockForm1))
@@ -34,6 +35,8 @@ def block_derivative(F, u, du):
         block_V = F.block_function_spaces()
     assert len(block_V) == 1
     block_V = block_V[0]
+    assert isinstance(u, BlockFunction)
+    assert isinstance(du, BlockTrialFunction)
     
     # Compute the derivative
     assert len(F) == len(u) == len(du)
