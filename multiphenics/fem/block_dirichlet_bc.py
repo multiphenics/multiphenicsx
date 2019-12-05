@@ -40,11 +40,19 @@ class BlockDirichletBC(BlockDirichletBC_Base):
         for _ in range(self._block_function_space.num_sub_spaces()):
             self.bcs.append(list())
         for bc in bcs:
-            block_index = bc.function_space().block_index()
+            bc_block_index = bc.function_space().block_index()
+            bc_block_function_space = bc.function_space().block_function_space()
+            if hasattr(bc_block_function_space, "is_block_subspace"):
+                assert bc_block_index in bc_block_function_space.sub_components_to_components, "Block function space and BC block index are not consistent on the sub space."
+                bc_block_index = bc_block_function_space.sub_components_to_components[bc_block_index]
+                bc_block_function_space = bc_block_function_space.parent_block_function_space
             if hasattr(block_function_space, "is_block_subspace"):
-                assert block_index in block_function_space.components_to_sub_components, "Block function space and BC block index are not consistent on the sub space."
-                block_index = block_function_space.components_to_sub_components[block_index]
-            self.bcs[block_index].append(bc)
+                assert bc_block_index in block_function_space.components_to_sub_components, "Block function space and BC block index are not consistent on the sub space."
+                bc_block_index = block_function_space.components_to_sub_components[bc_block_index]
+                assert bc_block_function_space == block_function_space.parent_block_function_space
+            else:
+                assert bc_block_function_space == block_function_space
+            self.bcs[bc_block_index].append(bc)
         # We disable the check on dof map range which is carried out by DirichletBC::check_arguments,
         # because BCs are defined on unrestricted function spaces, while sub tensors to which BCs
         # will be applied may be restricted
