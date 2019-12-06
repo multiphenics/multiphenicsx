@@ -333,8 +333,8 @@ def test_case_0f_1(mesh):
 # Case 0f: simple forms (no nesting), test block_derivative in combination with block_restrict (diagonal case)
 def test_case_0f_2(mesh):
     # Function spaces
-    V = VectorFunctionSpace(mesh, "Lagrange", 2)
-    Q = FunctionSpace(mesh, "Lagrange", 1)
+    V = VectorFunctionSpace(mesh, ("Lagrange", 2))
+    Q = FunctionSpace(mesh, ("Lagrange", 1))
     W = BlockFunctionSpace([V, Q])
     # Test and trial functions
     vq = BlockTestFunction(W)
@@ -355,13 +355,13 @@ def test_case_0f_2(mesh):
     # Exact jacobian (for comparison)
     a = [[inner(grad(u), grad(v))*dx]]
     # Assert equality for bilinear form
-    assert array_equal(assemble(jac_sub[0, 0]).array(), assemble(a[0][0]).array())
+    assert_forms_equal(jac_sub[0, 0], a[0][0])
     
 # Case 0f: simple forms (no nesting), test block_derivative in combination with block_restrict (off-diagonal case)
 def test_case_0f_3(mesh):
     # Function spaces
-    V = VectorFunctionSpace(mesh, "Lagrange", 2)
-    Q = FunctionSpace(mesh, "Lagrange", 1)
+    V = VectorFunctionSpace(mesh, ("Lagrange", 2))
+    Q = FunctionSpace(mesh, ("Lagrange", 1))
     W = BlockFunctionSpace([V, Q])
     # Test and trial functions
     vq = BlockTestFunction(W)
@@ -383,13 +383,13 @@ def test_case_0f_3(mesh):
     # Exact jacobian (for comparison)
     a = [[- div(v)*p*dx]]
     # Assert equality for bilinear form
-    assert array_equal(assemble(jac_sub[0, 0]).array(), assemble(a[0][0]).array())
+    assert_forms_equal(jac_sub[0, 0], a[0][0])
     
 # Case 0f: simple forms (no nesting), test block_restrict in combination with block_derivative (diagonal case)
 def test_case_0f_4(mesh):
     # Function spaces
-    V = VectorFunctionSpace(mesh, "Lagrange", 2)
-    Q = FunctionSpace(mesh, "Lagrange", 1)
+    V = VectorFunctionSpace(mesh, ("Lagrange", 2))
+    Q = FunctionSpace(mesh, ("Lagrange", 1))
     W = BlockFunctionSpace([V, Q])
     # Solutions
     UP = BlockFunction(W)
@@ -409,13 +409,13 @@ def test_case_0f_4(mesh):
     # Exact jacobian (for comparison)
     a = [[inner(grad(u), grad(v))*dx]]
     # Assert equality for bilinear form
-    assert array_equal(assemble(jac_sub[0, 0]).array(), assemble(a[0][0]).array())
+    assert_forms_equal(jac_sub[0, 0], a[0][0])
     
 # Case 0f: simple forms (no nesting), test block_restrict in combination with block_derivative (off-diagonal case)
 def test_case_0f_5(mesh):
     # Function spaces
-    V = VectorFunctionSpace(mesh, "Lagrange", 2)
-    Q = FunctionSpace(mesh, "Lagrange", 1)
+    V = VectorFunctionSpace(mesh, ("Lagrange", 2))
+    Q = FunctionSpace(mesh, ("Lagrange", 1))
     W = BlockFunctionSpace([V, Q])
     # Solutions
     UP = BlockFunction(W)
@@ -436,13 +436,13 @@ def test_case_0f_5(mesh):
     # Exact jacobian (for comparison)
     a = [[- div(v)*p*dx]]
     # Assert equality for bilinear form
-    assert array_equal(assemble(jac_sub[0, 0]).array(), assemble(a[0][0]).array())
+    assert_forms_equal(jac_sub[0, 0], a[0][0])
     
 # Case 0f: simple forms (no nesting), test block_restrict in combination with block_derivative (off-diagonal case)
 def test_case_0f_6(mesh):
     # Function spaces
-    V = VectorFunctionSpace(mesh, "Lagrange", 2)
-    Q = FunctionSpace(mesh, "Lagrange", 1)
+    V = VectorFunctionSpace(mesh, ("Lagrange", 2))
+    Q = FunctionSpace(mesh, ("Lagrange", 1))
     W = BlockFunctionSpace([V, Q])
     # Solutions
     UP = BlockFunction(W)
@@ -463,7 +463,7 @@ def test_case_0f_6(mesh):
     # Exact jacobian (for comparison)
     a = [[div(u)*q*dx]]
     # Assert equality for bilinear form
-    assert array_equal(assemble(jac_sub[0, 0]).array(), assemble(a[0][0]).array())
+    assert_forms_equal(jac_sub[0, 0], a[0][0])
     
 # Case 0g: simple forms (no nesting), test block_adjoint
 def test_case_0g(mesh):
