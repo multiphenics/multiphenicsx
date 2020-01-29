@@ -20,9 +20,9 @@ import numpy
 from numpy import isclose, where
 from ufl import *
 from petsc4py import PETSc
-from dolfin import *
-from dolfin.cpp.mesh import GhostMode
-from dolfin.fem import assemble_matrix, assemble_scalar, assemble_vector
+from dolfinx import *
+from dolfinx.cpp.mesh import GhostMode
+from dolfinx.fem import assemble_matrix, assemble_scalar, assemble_vector
 from multiphenics import *
 from multiphenics.fem import DirichletBCLegacy
 from multiphenics.io import XDMFFile

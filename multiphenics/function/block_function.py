@@ -18,7 +18,7 @@
 
 import types
 from petsc4py import PETSc
-from dolfin import Function
+from dolfinx import Function
 from multiphenics.cpp import cpp
 from multiphenics.function.block_function_space import BlockFunctionSpace
 
@@ -107,7 +107,7 @@ class BlockFunction(object):
         self._num_sub_spaces = self.block_function_space.num_sub_spaces()
         self._sub_functions = list()
         for i in range(self._num_sub_spaces):
-            # Extend with the python layer of dolfin's Function
+            # Extend with the python layer of dolfinx's Function
             sub_function = Function(self.block_function_space.sub(i), self._cpp_object.sub(i).vector)
             
             # Extend with block function and block index methods

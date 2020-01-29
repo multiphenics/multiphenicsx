@@ -18,15 +18,15 @@
 
 #ifdef HAS_SLEPC
 
-#include <dolfin/common/IndexMap.h>
-#include <dolfin/fem/DofMap.h>
-#include <dolfin/function/FunctionSpace.h>
-#include <dolfin/la/utils.h>
+#include <dolfinx/common/IndexMap.h>
+#include <dolfinx/fem/DofMap.h>
+#include <dolfinx/function/FunctionSpace.h>
+#include <dolfinx/la/utils.h>
 #include <multiphenics/la/CondensedSLEPcEigenSolver.h>
 
-using dolfin::fem::DirichletBC;
-using dolfin::la::CondensedSLEPcEigenSolver;
-using dolfin::la::petsc_error;
+using dolfinx::fem::DirichletBC;
+using dolfinx::la::CondensedSLEPcEigenSolver;
+using dolfinx::la::petsc_error;
 
 //-----------------------------------------------------------------------------
 CondensedSLEPcEigenSolver::CondensedSLEPcEigenSolver(MPI_Comm comm):
@@ -64,8 +64,8 @@ void CondensedSLEPcEigenSolver::set_boundary_conditions(std::vector<std::shared_
   #ifdef DEBUG
   for (auto & bc : bcs)
   {
-    dolfin_assert(comm == bc->function_space()->mesh()->mpi_comm());
-    dolfin_assert(dofmap == bc->function_space()->dofmap());
+    assert(comm == bc->function_space()->mesh()->mpi_comm());
+    assert(dofmap == bc->function_space()->dofmap());
   }
   #endif
   auto local_range = dofmap->index_map->local_range();

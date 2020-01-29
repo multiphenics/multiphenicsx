@@ -32,7 +32,7 @@ namespace multiphenics
     /// is a wrapper for the SLEPc eigenvalue solver. It also allows to
     /// constrain degrees of freedom associate to Dirichlet BCs.
 
-    class CondensedBlockSLEPcEigenSolver : public dolfin::la::CondensedSLEPcEigenSolver
+    class CondensedBlockSLEPcEigenSolver : public dolfinx::la::CondensedSLEPcEigenSolver
     {
     public:
 

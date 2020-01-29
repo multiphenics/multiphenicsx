@@ -16,12 +16,12 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import DirichletBC as dolfin_DirichletBC
+from dolfinx import DirichletBC as dolfinx_DirichletBC
 
-class DirichletBC(dolfin_DirichletBC):
+class DirichletBC(dolfinx_DirichletBC):
     def __init__(self, V, *args, **kwargs):
         # Call parent constructor
-        dolfin_DirichletBC.__init__(self, V, *args, **kwargs)
+        dolfinx_DirichletBC.__init__(self, V, *args, **kwargs)
         # Store the (python) function space. This is already available as a property in the public interface,
         # but it casts the function space to a C++ FunctionSpace and then wraps it into a python FunctionSpace,
         # losing all the customization that we have done in the block_function_space.py file (most notably, the

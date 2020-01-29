@@ -19,9 +19,9 @@
 from numpy import isclose, where
 from petsc4py import PETSc
 from ufl import *
-from dolfin import *
-from dolfin.cpp.mesh import GhostMode
-from dolfin.fem import assemble_scalar
+from dolfinx import *
+from dolfinx.cpp.mesh import GhostMode
+from dolfinx.fem import assemble_scalar
 from multiphenics import *
 from multiphenics.io import XDMFFile
 

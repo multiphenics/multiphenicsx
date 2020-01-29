@@ -21,7 +21,7 @@
 using namespace multiphenics;
 using namespace multiphenics::fem;
 
-using dolfin::fem::DirichletBC;
+using dolfinx::fem::DirichletBC;
 using multiphenics::function::BlockFunctionSpace;
 
 //-----------------------------------------------------------------------------

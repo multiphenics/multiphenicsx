@@ -20,7 +20,7 @@ import glob
 import mpi4py
 import os
 import petsc4py
-from dolfin.jit import mpi_jit_decorator
+from dolfinx.jit import mpi_jit_decorator
 from multiphenics.cpp.compile_code import compile_code
 
 @mpi_jit_decorator

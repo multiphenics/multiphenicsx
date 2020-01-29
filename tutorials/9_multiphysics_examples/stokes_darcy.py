@@ -19,10 +19,10 @@
 from numpy import array, finfo, isclose, logical_and, where, zeros
 from petsc4py import PETSc
 from ufl import *
-from dolfin import *
-from dolfin.cpp.mesh import GhostMode
-from dolfin.fem import assemble_scalar, create_coordinate_map
-from dolfin.io import XDMFFile
+from dolfinx import *
+from dolfinx.cpp.mesh import GhostMode
+from dolfinx.fem import assemble_scalar, create_coordinate_map
+from dolfinx.io import XDMFFile
 from multiphenics import *
 
 """

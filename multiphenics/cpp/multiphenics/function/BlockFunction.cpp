@@ -23,13 +23,13 @@
 using namespace multiphenics;
 using namespace multiphenics::function;
 
-using dolfin::common::IndexMap;
-using dolfin::fem::DofMap;
-using dolfin::function::Function;
-using dolfin::la::create_petsc_vector;
-using dolfin::la::petsc_error;
-using dolfin::la::VecReadWrapper;
-using dolfin::la::VecWrapper;
+using dolfinx::common::IndexMap;
+using dolfinx::fem::DofMap;
+using dolfinx::function::Function;
+using dolfinx::la::create_petsc_vector;
+using dolfinx::la::petsc_error;
+using dolfinx::la::VecReadWrapper;
+using dolfinx::la::VecWrapper;
 using multiphenics::la::BlockPETScSubVectorReadWrapper;
 using multiphenics::la::BlockPETScSubVectorWrapper;
 

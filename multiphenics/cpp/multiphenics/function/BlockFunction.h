@@ -20,7 +20,7 @@
 #define __BLOCK_FUNCTION_H
 
 #include <petscvec.h>
-#include <dolfin/function/Function.h>
+#include <dolfinx/function/Function.h>
 #include <multiphenics/function/BlockFunctionSpace.h>
 
 namespace multiphenics
@@ -39,7 +39,7 @@ namespace multiphenics
       /// @param[in] V The block function space
       /// @param[in] sub_functions Existing subfunctions
       BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
-                    std::vector<std::shared_ptr<dolfin::function::Function>> sub_functions);
+                    std::vector<std::shared_ptr<dolfinx::function::Function>> sub_functions);
 
       /// Create function on given function space with a given vector
       ///
@@ -60,7 +60,7 @@ namespace multiphenics
       /// @param[in] sub_functions Existing subfunctions
       BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
                     Vec x,
-                    std::vector<std::shared_ptr<dolfin::function::Function>> sub_functions);
+                    std::vector<std::shared_ptr<dolfinx::function::Function>> sub_functions);
 
       // Copy constructor
       BlockFunction(const BlockFunction& v) = delete;
@@ -80,7 +80,7 @@ namespace multiphenics
       /// Extract subfunction
       /// @param[in] i Index of subfunction
       /// @return The subfunction
-      std::shared_ptr<dolfin::function::Function> operator[](std::size_t i) const;
+      std::shared_ptr<dolfinx::function::Function> operator[](std::size_t i) const;
 
       /// Return shared pointer to block function space
       /// @returns The block function space
@@ -108,8 +108,8 @@ namespace multiphenics
       Vec _block_vector;
       
       // Sub functions
-      std::vector<std::shared_ptr<const dolfin::function::FunctionSpace>> _sub_function_spaces;
-      std::vector<std::shared_ptr<dolfin::function::Function>> _sub_functions;
+      std::vector<std::shared_ptr<const dolfinx::function::FunctionSpace>> _sub_function_spaces;
+      std::vector<std::shared_ptr<dolfinx::function::Function>> _sub_functions;
 
     };
   }

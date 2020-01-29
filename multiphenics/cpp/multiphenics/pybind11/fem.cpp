@@ -21,8 +21,8 @@
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 
-#include <dolfin/common/IndexMap.h>
-#include <dolfin/pybind11/caster_petsc.h>
+#include <dolfinx/common/IndexMap.h>
+#include <caster_petsc.h>
 #include <multiphenics/fem/block_assemble.h>
 #include <multiphenics/fem/BlockDirichletBC.h>
 #include <multiphenics/fem/BlockDirichletBCLegacy.h>
@@ -40,9 +40,9 @@ namespace multiphenics_wrappers
     // multiphenics::fem::BlockDofMap
     py::class_<multiphenics::fem::BlockDofMap, std::shared_ptr<multiphenics::fem::BlockDofMap>>
       (m, "BlockDofMap", "multiphenics BlockDofMap object")
-      .def(py::init<std::vector<std::shared_ptr<const dolfin::fem::DofMap>>,
-                    std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>>,
-                    const dolfin::mesh::Mesh&>())
+      .def(py::init<std::vector<std::shared_ptr<const dolfinx::fem::DofMap>>,
+                    std::vector<std::vector<std::shared_ptr<const dolfinx::mesh::MeshFunction<std::size_t>>>>,
+                    const dolfinx::mesh::Mesh&>())
       .def_property_readonly("dofmaps", &multiphenics::fem::BlockDofMap::dofmaps)
       .def("block_owned_dofs__local_numbering", &multiphenics::fem::BlockDofMap::block_owned_dofs__local_numbering)
       .def("block_unowned_dofs__local_numbering", &multiphenics::fem::BlockDofMap::block_unowned_dofs__local_numbering)
@@ -57,7 +57,7 @@ namespace multiphenics_wrappers
     // multiphenics::fem::BlockForm1
     py::class_<multiphenics::fem::BlockForm1, std::shared_ptr<multiphenics::fem::BlockForm1>>
       (m, "BlockForm1", "multiphenics BlockForm1 object")
-      .def(py::init<std::vector<std::shared_ptr<const dolfin::fem::Form>>,
+      .def(py::init<std::vector<std::shared_ptr<const dolfinx::fem::Form>>,
                     std::vector<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>>>())
       .def("mesh", &multiphenics::fem::BlockForm1::mesh)
       .def("block_size", &multiphenics::fem::BlockForm1::block_size);
@@ -65,7 +65,7 @@ namespace multiphenics_wrappers
     // multiphenics::fem::BlockForm2
     py::class_<multiphenics::fem::BlockForm2, std::shared_ptr<multiphenics::fem::BlockForm2>>
       (m, "BlockForm2", "multiphenics BlockForm2 object")
-      .def(py::init<std::vector<std::vector<std::shared_ptr<const dolfin::fem::Form>>>,
+      .def(py::init<std::vector<std::vector<std::shared_ptr<const dolfinx::fem::Form>>>,
                     std::vector<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>>>())
       .def("mesh", &multiphenics::fem::BlockForm2::mesh)
       .def("block_size", &multiphenics::fem::BlockForm2::block_size);
@@ -95,27 +95,27 @@ namespace multiphenics_wrappers
     // multiphenics::fem::BlockDirichletBC
     py::class_<multiphenics::fem::BlockDirichletBC, std::shared_ptr<multiphenics::fem::BlockDirichletBC>>
       (m, "BlockDirichletBC", "multiphenics BlockDirichletBC object")
-      .def(py::init<std::vector<std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>>,
+      .def(py::init<std::vector<std::vector<std::shared_ptr<const dolfinx::fem::DirichletBC>>>,
                     std::shared_ptr<const multiphenics::function::BlockFunctionSpace>>())
       .def("block_function_space", &multiphenics::fem::BlockDirichletBC::block_function_space);
            
-    // dolfin::fem::DirichletBCLegacy
-    py::class_<dolfin::fem::DirichletBCLegacy, std::shared_ptr<dolfin::fem::DirichletBCLegacy>>
-      (m, "DirichletBCLegacy", "dolfin DirichletBCLegacy object")
+    // dolfinx::fem::DirichletBCLegacy
+    py::class_<dolfinx::fem::DirichletBCLegacy, std::shared_ptr<dolfinx::fem::DirichletBCLegacy>>
+      (m, "DirichletBCLegacy", "dolfinx DirichletBCLegacy object")
       .def_static("apply",
         py::overload_cast<
-          std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>, Mat, PetscScalar
-        >(&dolfin::fem::DirichletBCLegacy::apply),
+          std::vector<std::shared_ptr<const dolfinx::fem::DirichletBC>>, Mat, PetscScalar
+        >(&dolfinx::fem::DirichletBCLegacy::apply),
         py::arg("bcs"), py::arg("A"), py::arg("diag"))
       .def_static("apply",
         py::overload_cast<
-          std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>, Vec
-        >(&dolfin::fem::DirichletBCLegacy::apply),
+          std::vector<std::shared_ptr<const dolfinx::fem::DirichletBC>>, Vec
+        >(&dolfinx::fem::DirichletBCLegacy::apply),
         py::arg("bcs"), py::arg("b"))
       .def_static("apply",
         py::overload_cast<
-          std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>, Vec, const Vec
-        >(&dolfin::fem::DirichletBCLegacy::apply),
+          std::vector<std::shared_ptr<const dolfinx::fem::DirichletBC>>, Vec, const Vec
+        >(&dolfinx::fem::DirichletBCLegacy::apply),
         py::arg("bcs"), py::arg("b"), py::arg("x"));
     
     // multiphenics::fem::BlockDirichletBCLegacy

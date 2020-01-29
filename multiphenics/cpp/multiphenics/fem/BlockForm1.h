@@ -20,7 +20,7 @@
 #define __BLOCK_FORM_1_H
 
 #include <vector>
-#include <dolfin/fem/Form.h>
+#include <dolfinx/fem/Form.h>
 #include <multiphenics/function/BlockFunctionSpace.h>
 
 namespace multiphenics
@@ -36,7 +36,7 @@ namespace multiphenics
       ///         Vector of forms.
       /// @param[in] function_spaces (std::vector<_multiphenics::function::BlockFunctionSpace_>)
       ///         Vector of function spaces, of size 1.
-      BlockForm1(std::vector<std::shared_ptr<const dolfin::fem::Form>> forms,
+      BlockForm1(std::vector<std::shared_ptr<const dolfinx::fem::Form>> forms,
                  std::vector<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>> block_function_spaces);
            
       /// Destructor
@@ -46,7 +46,7 @@ namespace multiphenics
       ///
       /// @return Mesh
       ///         Shared pointer to the mesh.
-      std::shared_ptr<const dolfin::mesh::Mesh> mesh() const;
+      std::shared_ptr<const dolfinx::mesh::Mesh> mesh() const;
 
       /// Return function spaces for arguments
       ///
@@ -56,11 +56,11 @@ namespace multiphenics
 
       unsigned int block_size(unsigned int d) const;
       
-      const dolfin::fem::Form & operator()(std::size_t i) const;
+      const dolfinx::fem::Form & operator()(std::size_t i) const;
 
     protected:
       // Block forms
-      std::vector<std::shared_ptr<const dolfin::fem::Form>> _forms;
+      std::vector<std::shared_ptr<const dolfinx::fem::Form>> _forms;
       // Block function spaces (one for each argument)
       std::vector<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>> _block_function_spaces;
       // Number of block forms

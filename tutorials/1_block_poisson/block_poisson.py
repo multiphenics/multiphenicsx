@@ -19,9 +19,9 @@
 from numpy import finfo, isclose, where
 from petsc4py import PETSc
 from ufl import *
-from dolfin import *
-from dolfin.cpp.la import get_local_vectors
-from dolfin.fem import assemble_matrix_block, assemble_scalar, assemble_vector_block, create_vector_block
+from dolfinx import *
+from dolfinx.cpp.la import get_local_vectors
+from dolfinx.fem import assemble_matrix_block, assemble_scalar, assemble_vector_block, create_vector_block
 from multiphenics import *
 
 """

@@ -23,8 +23,8 @@ from numpy import allclose as float_array_equal, array_equal as integer_array_eq
 from scipy.sparse import csr_matrix
 from petsc4py import PETSc
 from ufl import as_matrix, as_tensor, as_vector, dx, FiniteElement, inner, MixedElement, SpatialCoordinate, TensorElement, VectorElement
-from dolfin import Function, FunctionSpace, MeshFunction, TensorFunctionSpace, VectorFunctionSpace
-from dolfin.fem import assemble_matrix, assemble_vector
+from dolfinx import Function, FunctionSpace, MeshFunction, TensorFunctionSpace, VectorFunctionSpace
+from dolfinx.fem import assemble_matrix, assemble_vector
 from multiphenics import BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
 from multiphenics.fem import block_assemble, BlockDirichletBCLegacy, DirichletBCLegacy
 
@@ -64,11 +64,11 @@ def array_equal(array1, array2):
     else:
         return len(array1) == len(array2) and float_array_equal(array1, array2)
 
-# This function is required because ordering of dofs is different between dolfin and block libraries
+# This function is required because ordering of dofs is different between dolfinx and block libraries
 def array_sorted_equal(array1, array2):
     return array_equal(sort(array1), sort(array2))
     
-# This function is required because ordering of dofs is different between dolfin and block libraries,
+# This function is required because ordering of dofs is different between dolfinx and block libraries,
 # and because unique elements must be extracted when comparing tensors on subdomains.
 def array_unique_equal(array1, array2):
     return array_equal(unique(array1), unique(array2))

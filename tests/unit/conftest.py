@@ -16,7 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import MPI
+from dolfinx import MPI
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "slow: Tests that are slow.")

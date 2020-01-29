@@ -17,7 +17,7 @@
 #
 
 import pytest
-from dolfin import MPI, UnitSquareMesh
+from dolfinx import MPI, UnitSquareMesh
 from multiphenics import BlockFunctionSpace
 from test_utils import apply_bc_and_block_bc_matrix, assemble_and_block_assemble_matrix, assert_block_matrices_equal, get_block_bcs_1, get_block_bcs_2, get_function_spaces_1, get_function_spaces_2, get_lhs_block_form_1, get_lhs_block_form_2, get_restrictions_1, get_restrictions_2
 

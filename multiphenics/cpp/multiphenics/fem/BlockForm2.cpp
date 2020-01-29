@@ -21,8 +21,8 @@
 using namespace multiphenics;
 using namespace multiphenics::fem;
 
-using dolfin::fem::Form;
-using dolfin::mesh::Mesh;
+using dolfinx::fem::Form;
+using dolfinx::mesh::Mesh;
 using multiphenics::function::BlockFunctionSpace;
 
 //-----------------------------------------------------------------------------

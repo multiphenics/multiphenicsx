@@ -17,7 +17,7 @@
 #
 
 from numpy import ndarray as array, empty
-from dolfin.fem import derivative
+from dolfinx.fem import derivative
 from multiphenics.fem.block_form import _block_form_preprocessing
 from multiphenics.fem.block_form_1 import BlockForm1
 from multiphenics.fem.block_form_2 import BlockForm2

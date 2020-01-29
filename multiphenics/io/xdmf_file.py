@@ -17,7 +17,7 @@
 #
 
 import os
-from dolfin.io import XDMFFile as dolfin_XDMFFile
+from dolfinx.io import XDMFFile as dolfinx_XDMFFile
 from multiphenics.mesh import MeshRestriction
 
 class MeshRestrictionXDMFFile(object):
@@ -52,8 +52,8 @@ class MeshRestrictionXDMFFile(object):
             xdmf_file = XDMFFile(mesh_function_d.mesh().mpi_comm(), mesh_function_d_filename, self.encoding)
             xdmf_file.write(mesh_function_d)
             
-def XDMFFile(mpi_comm, filename, encoding=dolfin_XDMFFile.Encoding.HDF5):
+def XDMFFile(mpi_comm, filename, encoding=dolfinx_XDMFFile.Encoding.HDF5):
     if filename.endswith(".rtc.xdmf"):
         return MeshRestrictionXDMFFile(mpi_comm, filename, encoding)
     else:
-        return dolfin_XDMFFile(mpi_comm, filename, encoding)
+        return dolfinx_XDMFFile(mpi_comm, filename, encoding)

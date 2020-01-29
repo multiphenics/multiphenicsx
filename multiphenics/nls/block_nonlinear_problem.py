@@ -17,7 +17,7 @@
 #
 
 from petsc4py import PETSc
-from dolfin import NonlinearProblem
+from dolfinx import NonlinearProblem
 from multiphenics.fem import block_assemble, BlockDirichletBCLegacy
 
 class BlockNonlinearProblem(NonlinearProblem):

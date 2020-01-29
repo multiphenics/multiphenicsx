@@ -18,14 +18,14 @@
 
 #ifdef HAS_SLEPC
 
-#include <dolfin/common/IndexMap.h>
-#include <dolfin/la/utils.h>
+#include <dolfinx/common/IndexMap.h>
+#include <dolfinx/la/utils.h>
 #include <multiphenics/la/CondensedBlockSLEPcEigenSolver.h>
 
 using namespace multiphenics;
 using namespace multiphenics::la;
 
-using dolfin::la::petsc_error;
+using dolfinx::la::petsc_error;
 using multiphenics::fem::BlockDirichletBC;
 
 //-----------------------------------------------------------------------------

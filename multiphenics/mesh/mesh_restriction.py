@@ -17,7 +17,7 @@
 #
 
 import types
-from dolfin import Mesh, MeshFunction
+from dolfinx import Mesh, MeshFunction
 
 class MeshRestriction(list):
     """

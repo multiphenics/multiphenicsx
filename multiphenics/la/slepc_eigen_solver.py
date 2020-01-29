@@ -16,7 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import DirichletBC, Function
+from dolfinx import DirichletBC, Function
 from multiphenics.cpp import cpp
 
 def DecorateGetEigenPair(SLEPcEigenSolver):

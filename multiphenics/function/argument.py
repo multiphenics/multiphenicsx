@@ -17,7 +17,7 @@
 #
 
 from ufl import Argument as ufl_Argument
-from dolfin import FunctionSpace
+from dolfinx import FunctionSpace
 from multiphenics.function.block_function_space import BlockFunctionSpace
 
 class Argument(ufl_Argument):

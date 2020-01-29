@@ -18,11 +18,11 @@
 
 from numpy import isclose, isin, stack, where
 from ufl import *
-from dolfin import *
-from dolfin.cpp.mesh import GhostMode
-from dolfin.fem import assemble_scalar
-from dolfin.io import XDMFFile
-from dolfin.plotting import plot
+from dolfinx import *
+from dolfinx.cpp.mesh import GhostMode
+from dolfinx.fem import assemble_scalar
+from dolfinx.io import XDMFFile
+from dolfinx.plotting import plot
 import matplotlib.pyplot as plt
 from multiphenics import *
 from sympy import cos, lambdify, symbols

@@ -19,8 +19,8 @@
 from numpy import finfo, isclose, logical_or, where
 from petsc4py import PETSc
 from ufl import *
-from dolfin import *
-from dolfin.fem import assemble_matrix, assemble_scalar
+from dolfinx import *
+from dolfinx.fem import assemble_matrix, assemble_scalar
 from multiphenics import *
 from multiphenics.fem import block_assemble
 

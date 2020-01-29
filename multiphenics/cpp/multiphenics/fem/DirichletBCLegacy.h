@@ -21,9 +21,9 @@
 
 #include <petscmat.h>
 #include <petscvec.h>
-#include <dolfin/fem/DirichletBC.h>
+#include <dolfinx/fem/DirichletBC.h>
 
-namespace dolfin
+namespace dolfinx
 {
   namespace fem
   {
@@ -31,16 +31,16 @@ namespace dolfin
     {
     public:
       /// Apply list of boundary conditions to a matrix
-      static void apply(std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>> bcs,
+      static void apply(std::vector<std::shared_ptr<const dolfinx::fem::DirichletBC>> bcs,
                         Mat A,
                         PetscScalar diag);
 
       /// Apply list of boundary conditions to a vector
-      static void apply(std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>> bcs,
+      static void apply(std::vector<std::shared_ptr<const dolfinx::fem::DirichletBC>> bcs,
                         Vec b);
 
       /// Apply list of boundary conditions to vectors for a nonlinear problem
-      static void apply(std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>> bcs,
+      static void apply(std::vector<std::shared_ptr<const dolfinx::fem::DirichletBC>> bcs,
                         Vec b,
                         const Vec x);
     };

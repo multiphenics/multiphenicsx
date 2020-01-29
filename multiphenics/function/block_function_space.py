@@ -20,29 +20,29 @@ import types
 import numpy
 import cffi
 from ufl.finiteelement import FiniteElementBase
-from dolfin import FunctionSpace, Mesh, MeshFunction
-import dolfin.cpp
-from dolfin.cpp.mesh import MeshFunctionSizet
-import dolfin.fem.dofmap
-from dolfin.jit import ffc_jit
+from dolfinx import FunctionSpace, Mesh, MeshFunction
+import dolfinx.cpp
+from dolfinx.cpp.mesh import MeshFunctionSizet
+import dolfinx.fem.dofmap
+from dolfinx.jit import ffcx_jit
 from multiphenics.cpp import cpp
 from multiphenics.function.block_element import BlockElement
 from multiphenics.mesh import MeshRestriction
 
-def _compile_dolfin_element(element, mesh):
-    # Compile dofmap and element and create DOLFIN objects
-    ufc_element, ufc_dofmap_ptr = ffc_jit(
+def _compile_dolfinx_element(element, mesh):
+    # Compile dofmap and element and create DOLFIN-X objects
+    ufc_element, ufc_dofmap_ptr = ffcx_jit(
         element,
         form_compiler_parameters=None,
         mpi_comm=mesh.mpi_comm())
 
     ffi = cffi.FFI()
-    ufc_element = dolfin.fem.dofmap.make_ufc_finite_element(ffi.cast("uintptr_t", ufc_element))
-    dolfin_element = dolfin.cpp.fem.FiniteElement(ufc_element)
-    ufc_dofmap = dolfin.fem.dofmap.make_ufc_dofmap(ffi.cast("uintptr_t", ufc_dofmap_ptr))
-    dolfin_dofmap = dolfin.cpp.fem.create_dofmap(ufc_dofmap, mesh)
+    ufc_element = dolfinx.fem.dofmap.make_ufc_finite_element(ffi.cast("uintptr_t", ufc_element))
+    dolfinx_element = dolfinx.cpp.fem.FiniteElement(ufc_element)
+    ufc_dofmap = dolfinx.fem.dofmap.make_ufc_dofmap(ffi.cast("uintptr_t", ufc_dofmap_ptr))
+    dolfinx_dofmap = dolfinx.cpp.fem.create_dofmap(ufc_dofmap, mesh)
     
-    return dolfin_element, dolfin_dofmap
+    return dolfinx_element, dolfinx_dofmap
     
 BlockFunctionSpace_Base = cpp.function.BlockFunctionSpace
 
@@ -103,22 +103,22 @@ class BlockFunctionSpace(object):
         self._init_sub_spaces(elements)
 
     def _init_from_ufl(self, mesh, elements, restrict=None):
-        # Compile elements and dofmaps and construct corresponding dolfin objects
-        dolfin_elements = list()
-        dolfin_dofmaps = list()
+        # Compile elements and dofmaps and construct corresponding DOLFIN-X objects
+        dolfinx_elements = list()
+        dolfinx_dofmaps = list()
         for element in elements:
             assert isinstance(element, FiniteElementBase)
-            dolfin_element, dolfin_dofmap = _compile_dolfin_element(element, mesh)
-            dolfin_elements.append(dolfin_element)
-            dolfin_dofmaps.append(dolfin_dofmap)
+            dolfinx_element, dolfinx_dofmap = _compile_dolfinx_element(element, mesh)
+            dolfinx_elements.append(dolfinx_element)
+            dolfinx_dofmaps.append(dolfinx_dofmap)
             
         # Initialize the BlockFunctionSpace_Base
         if restrict is None:
-            self._cpp_object = BlockFunctionSpace_Base(mesh, dolfin_elements, dolfin_dofmaps)
+            self._cpp_object = BlockFunctionSpace_Base(mesh, dolfinx_elements, dolfinx_dofmaps)
         else:
             restrict = self._init_restriction(mesh, restrict)
             assert len(restrict) == len(elements)
-            self._cpp_object = BlockFunctionSpace_Base(mesh, dolfin_elements, dolfin_dofmaps, restrict)
+            self._cpp_object = BlockFunctionSpace_Base(mesh, dolfinx_elements, dolfinx_dofmaps, restrict)
         
         # Fill in subspaces
         self._init_sub_spaces(elements)

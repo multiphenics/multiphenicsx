@@ -16,7 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import *
+from dolfinx import *
 from multiphenics import *
 
 # Helper function to generate subdomain restriction based on a gmsh subdomain id

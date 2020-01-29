@@ -16,7 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import NewtonSolver
+from dolfinx import NewtonSolver
 
 class BlockNewtonSolver(NewtonSolver):
     def solve(self, problem, block_solution_vector):

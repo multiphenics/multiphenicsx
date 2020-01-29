@@ -18,7 +18,7 @@
 
 import pytest
 from numpy import concatenate
-from dolfin import FunctionSpace, MPI, UnitSquareMesh
+from dolfinx import FunctionSpace, MPI, UnitSquareMesh
 from multiphenics import BlockElement, BlockFunctionSpace
 from multiphenics.cpp.compile_code import compile_code
 from test_utils import assert_global_dofs, assert_owned_local_dofs, assert_tabulated_dof_coordinates, array_sorted_equal, assert_unowned_local_dofs, get_elements_1, get_elements_2, get_function_spaces_1, get_function_spaces_2, get_restrictions_1, get_restrictions_2, unique
@@ -30,10 +30,10 @@ def mesh():
     
 # Auxiliary pybind11 wrapper
 _local_to_global_cpp_code = """
-    #include <dolfin/common/IndexMap.h>
+    #include <dolfinx/common/IndexMap.h>
     #include <pybind11/pybind11.h>
     
-    std::size_t local_to_global(std::shared_ptr<dolfin::common::IndexMap> index_map, std::size_t i)
+    std::size_t local_to_global(std::shared_ptr<dolfinx::common::IndexMap> index_map, std::size_t i)
     {
         const std::size_t block_size = index_map->block_size;
         return index_map->local_to_global(i/block_size)*block_size + (i%block_size);

@@ -16,23 +16,23 @@
 // along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <dolfin/common/IndexMap.h>
-#include <dolfin/fem/DofMap.h>
-#include <dolfin/mesh/Mesh.h>
-#include <dolfin/mesh/MeshIterator.h>
+#include <dolfinx/common/IndexMap.h>
+#include <dolfinx/fem/DofMap.h>
+#include <dolfinx/mesh/Mesh.h>
+#include <dolfinx/mesh/MeshIterator.h>
 #include <multiphenics/fem/BlockDofMap.h>
 
 using namespace multiphenics;
 using namespace multiphenics::fem;
 
-using dolfin::common::IndexMap;
-using dolfin::fem::DofMap;
-using dolfin::mesh::cell_num_entities;
-using dolfin::mesh::Mesh;
-using dolfin::mesh::MeshEntity;
-using dolfin::mesh::MeshFunction;
-using dolfin::mesh::MeshRange;
-using dolfin::mesh::MeshRangeType;
+using dolfinx::common::IndexMap;
+using dolfinx::fem::DofMap;
+using dolfinx::mesh::cell_num_entities;
+using dolfinx::mesh::Mesh;
+using dolfinx::mesh::MeshEntity;
+using dolfinx::mesh::MeshFunction;
+using dolfinx::mesh::MeshRange;
+using dolfinx::mesh::MeshRangeType;
 
 //-----------------------------------------------------------------------------
 BlockDofMap::BlockDofMap(std::vector<std::shared_ptr<const DofMap>> dofmaps,
@@ -327,8 +327,8 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
   }
   
   // Fill in local to global map of unowned dofs
-  const std::size_t mpi_rank = dolfin::MPI::rank(comm);
-  const std::size_t mpi_size = dolfin::MPI::size(comm);
+  const std::size_t mpi_rank = dolfinx::MPI::rank(comm);
+  const std::size_t mpi_size = dolfinx::MPI::size(comm);
   std::vector<std::vector<std::size_t>> send_buffer(mpi_size);
   std::vector<std::vector<std::size_t>> recv_buffer(mpi_size);
   Eigen::Array<std::int64_t, Eigen::Dynamic, 1> local_to_global_unowned(block_dofmap_unowned_size);
@@ -372,7 +372,7 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
       recv_buffer_r.clear();
     
     // Step 1 - communicate
-    dolfin::MPI::all_to_all(comm, send_buffer, recv_buffer);
+    dolfinx::MPI::all_to_all(comm, send_buffer, recv_buffer);
     
     // Step 2 - cleanup sending buffer
     for (auto& send_buffer_r: send_buffer)
@@ -401,7 +401,7 @@ void BlockDofMap::_prepare_local_to_global_for_unowned_dofs(
       recv_buffer_r.clear();
     
     // Step 2 - communicate
-    dolfin::MPI::all_to_all(comm, send_buffer, recv_buffer);
+    dolfinx::MPI::all_to_all(comm, send_buffer, recv_buffer);
     
     // Step 3 - cleanup sending buffer
     for (auto& send_buffer_r: send_buffer)
@@ -506,12 +506,12 @@ std::string BlockDofMap::str(bool verbose) const
   return s.str();
 }
 //-----------------------------------------------------------------------------
-std::vector<std::shared_ptr<const dolfin::fem::DofMap>> BlockDofMap::dofmaps() const
+std::vector<std::shared_ptr<const dolfinx::fem::DofMap>> BlockDofMap::dofmaps() const
 {
   return _dofmaps;
 }
 //-----------------------------------------------------------------------------
-std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> BlockDofMap::restrictions() const
+std::vector<std::vector<std::shared_ptr<const dolfinx::mesh::MeshFunction<std::size_t>>>> BlockDofMap::restrictions() const
 {
   return _restrictions;
 }

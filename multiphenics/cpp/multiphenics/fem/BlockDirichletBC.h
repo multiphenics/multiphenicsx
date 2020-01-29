@@ -19,7 +19,7 @@
 #ifndef __BLOCK_DIRICHLET_BC_H
 #define __BLOCK_DIRICHLET_BC_H
 
-#include <dolfin/fem/DirichletBC.h>
+#include <dolfinx/fem/DirichletBC.h>
 #include <multiphenics/function/BlockFunctionSpace.h>
 
 namespace multiphenics
@@ -33,7 +33,7 @@ namespace multiphenics
       ///
       /// @param    bcs (list of list _DirichletBC_)
       ///         List (over blocks) of list (due to possible multiple BCs for each block) of DirichletBC objects
-      BlockDirichletBC(std::vector<std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>> bcs,
+      BlockDirichletBC(std::vector<std::vector<std::shared_ptr<const dolfinx::fem::DirichletBC>>> bcs,
                        std::shared_ptr<const multiphenics::function::BlockFunctionSpace> block_function_space);
 
       /// Destructor
@@ -46,10 +46,10 @@ namespace multiphenics
       std::shared_ptr<const multiphenics::function::BlockFunctionSpace> block_function_space() const;
       
       std::size_t size() const;
-      std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>> operator[](std::size_t I) const;
+      std::vector<std::shared_ptr<const dolfinx::fem::DirichletBC>> operator[](std::size_t I) const;
 
     private:
-      std::vector<std::vector<std::shared_ptr<const dolfin::fem::DirichletBC>>> _bcs;
+      std::vector<std::vector<std::shared_ptr<const dolfinx::fem::DirichletBC>>> _bcs;
       std::shared_ptr<const multiphenics::function::BlockFunctionSpace> _block_function_space;
 
     };

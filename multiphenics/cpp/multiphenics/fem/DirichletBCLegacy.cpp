@@ -16,11 +16,11 @@
 // along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <dolfin/fem/assembler.h>
+#include <dolfinx/fem/assembler.h>
 #include <multiphenics/fem/DirichletBCLegacy.h>
 
-using dolfin::fem::DirichletBCLegacy;
-using dolfin::fem::set_bc;
+using dolfinx::fem::DirichletBCLegacy;
+using dolfinx::fem::set_bc;
 
 //-----------------------------------------------------------------------------
 void DirichletBCLegacy::apply(std::vector<std::shared_ptr<const DirichletBC>> bcs, Mat A, PetscScalar diag)

@@ -21,10 +21,10 @@
 
 #ifdef HAS_SLEPC
 
-#include <dolfin/fem/DirichletBC.h>
-#include <dolfin/la/SLEPcEigenSolver.h>
+#include <dolfinx/fem/DirichletBC.h>
+#include <dolfinx/la/SLEPcEigenSolver.h>
 
-namespace dolfin
+namespace dolfinx
 {
   namespace la
   {

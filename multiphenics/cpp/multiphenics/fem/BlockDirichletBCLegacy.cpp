@@ -16,8 +16,8 @@
 // along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <dolfin/common/IndexMap.h>
-#include <dolfin/la/utils.h>
+#include <dolfinx/common/IndexMap.h>
+#include <dolfinx/la/utils.h>
 #include <multiphenics/fem/BlockDirichletBCLegacy.h>
 #include <multiphenics/fem/DirichletBCLegacy.h>
 #include <multiphenics/la/BlockPETScSubVectorReadWrapper.h>
@@ -26,8 +26,8 @@
 using namespace multiphenics;
 using namespace multiphenics::fem;
 
-using dolfin::fem::DirichletBC;
-using dolfin::la::petsc_error;
+using dolfinx::fem::DirichletBC;
+using dolfinx::la::petsc_error;
 using multiphenics::la::BlockPETScSubVectorReadWrapper;
 using multiphenics::la::BlockPETScSubVectorWrapper;
 
@@ -67,7 +67,7 @@ void BlockDirichletBCLegacy::apply(const BlockDirichletBC& bcs, Mat A, PetscScal
     MPI_Comm mpi_comm = MPI_COMM_NULL;
     ierr = PetscObjectGetComm((PetscObject) A, &mpi_comm);
     if (ierr != 0) petsc_error(ierr, __FILE__, "PetscObjectGetComm");
-    std::size_t MatZeroRows_called = dolfin::MPI::sum(mpi_comm, block_global_indices.size());
+    std::size_t MatZeroRows_called = dolfinx::MPI::sum(mpi_comm, block_global_indices.size());
     if (block_global_indices.size() > 0)
     {
       ierr = MatZeroRows(A, block_global_indices.size(), block_global_indices.data(), diag, NULL, NULL);
@@ -87,7 +87,7 @@ void BlockDirichletBCLegacy::apply(const BlockDirichletBC& bcs, Mat A, PetscScal
 void BlockDirichletBCLegacy::apply(const BlockDirichletBC& bcs, Vec b)
 {
   // This method is adapted from
-  //    dolfin::fem::set_bc in dolfin/fem/assembler.cpp
+  //    dolfinx::fem::set_bc in dolfinx/fem/assembler.cpp
   
   for (std::size_t I(0); I < bcs.size(); ++I)
   {
@@ -109,7 +109,7 @@ void BlockDirichletBCLegacy::apply(const BlockDirichletBC& bcs, Vec b)
 void BlockDirichletBCLegacy::apply(const BlockDirichletBC& bcs, Vec b, const Vec x)
 {
   // This method is adapted from
-  //    dolfin::fem::set_bc in dolfin/fem/assembler.cpp
+  //    dolfinx::fem::set_bc in dolfinx/fem/assembler.cpp
   
   for (std::size_t I(0); I < bcs.size(); ++I)
   {

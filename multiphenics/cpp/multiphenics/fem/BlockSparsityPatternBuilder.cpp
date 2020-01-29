@@ -16,17 +16,17 @@
 // along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <dolfin/mesh/MeshIterator.h>
+#include <dolfinx/mesh/MeshIterator.h>
 #include <multiphenics/fem/BlockSparsityPatternBuilder.h>
 
 using namespace multiphenics;
 using namespace multiphenics::fem;
 
-using dolfin::la::SparsityPattern;
-using dolfin::mesh::Connectivity;
-using dolfin::mesh::Mesh;
-using dolfin::mesh::MeshEntity;
-using dolfin::mesh::MeshRange;
+using dolfinx::la::SparsityPattern;
+using dolfinx::mesh::Connectivity;
+using dolfinx::mesh::Mesh;
+using dolfinx::mesh::MeshEntity;
+using dolfinx::mesh::MeshRange;
 
 //-----------------------------------------------------------------------------
 void BlockSparsityPatternBuilder::cells(

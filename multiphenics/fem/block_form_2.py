@@ -21,8 +21,8 @@ from ufl import Form
 from ufl.algorithms import expand_derivatives
 from ufl.algorithms.analysis import has_exact_type
 from ufl.classes import CoefficientDerivative
-from dolfin.fem.assemble import _create_cpp_form
-from dolfin.cpp.fem import Form as cpp_Form
+from dolfinx.fem.assemble import _create_cpp_form
+from dolfinx.cpp.fem import Form as cpp_Form
 from multiphenics.cpp import cpp
 from multiphenics.fem.block_form_1 import BlockForm1
 from multiphenics.fem.block_replace_zero import block_replace_zero, _is_zero
@@ -37,7 +37,7 @@ class BlockForm2(BlockForm2_Base):
         # Store block function space
         assert len(block_function_space) == 2
         self._block_function_space = block_function_space
-        # Replace UFL form by Dolfin form before passing it to the constructor
+        # Replace UFL form by DOLFIN-X form before passing it to the constructor
         # (note that we assume that block_form has been already preprocessed,
         #  so we can assume that nested blocks have been unrolled and zero
         #  placeholders have been replaced by zero forms)

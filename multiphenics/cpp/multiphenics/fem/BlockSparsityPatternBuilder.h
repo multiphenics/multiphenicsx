@@ -19,8 +19,8 @@
 #ifndef __BLOCK_SPARSITY_PATTERN_BUILDER_H
 #define __BLOCK_SPARSITY_PATTERN_BUILDER_H
 
-#include <dolfin/la/SparsityPattern.h>
-#include <dolfin/mesh/Mesh.h>
+#include <dolfinx/la/SparsityPattern.h>
+#include <dolfinx/mesh/Mesh.h>
 #include <multiphenics/fem/BlockDofMap.h>
 
 namespace multiphenics
@@ -28,7 +28,7 @@ namespace multiphenics
   namespace fem
   {
     /// This class provides functions to compute the sparsity pattern
-    /// based on DOF maps. This class is a copy of the corresponding DOLFIN one,
+    /// based on DOF maps. This class is a copy of the corresponding DOLFIN-X one,
     /// which unfortunately we cannot reuse because DofMap::cell_dofs is not virtual and thus,
     /// even if BlockDofMap were to inherit from DofMap, the overridden implementation of cell_dofs
     /// would not be called.
@@ -37,17 +37,17 @@ namespace multiphenics
     {
     public:
       /// Iterate over cells and insert entries into sparsity pattern
-      static void cells(dolfin::la::SparsityPattern& pattern, const dolfin::mesh::Mesh& mesh,
+      static void cells(dolfinx::la::SparsityPattern& pattern, const dolfinx::mesh::Mesh& mesh,
                         const std::array<const BlockDofMap*, 2> block_dofmaps);
 
       /// Iterate over interior facets and insert entries into sparsity pattern
-      static void interior_facets(dolfin::la::SparsityPattern& pattern,
-                                  const dolfin::mesh::Mesh& mesh,
+      static void interior_facets(dolfinx::la::SparsityPattern& pattern,
+                                  const dolfinx::mesh::Mesh& mesh,
                                   const std::array<const BlockDofMap*, 2> block_dofmaps);
 
       /// Iterate over exterior facets and insert entries into sparsity pattern
-      static void exterior_facets(dolfin::la::SparsityPattern& pattern,
-                                  const dolfin::mesh::Mesh& mesh,
+      static void exterior_facets(dolfinx::la::SparsityPattern& pattern,
+                                  const dolfinx::mesh::Mesh& mesh,
                                   const std::array<const BlockDofMap*, 2> block_dofmaps);
     };
   }

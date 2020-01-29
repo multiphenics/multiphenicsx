@@ -20,8 +20,8 @@
 #define __BLOCK_DOF_MAP_H
 
 #include <petscvec.h>
-#include <dolfin/fem/DofMap.h>
-#include <dolfin/mesh/MeshFunction.h>
+#include <dolfinx/fem/DofMap.h>
+#include <dolfinx/mesh/MeshFunction.h>
 
 namespace multiphenics
 {
@@ -36,22 +36,22 @@ namespace multiphenics
     public:
 
       /// Constructor
-      BlockDofMap(std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps,
-                  std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> restrictions,
-                  const dolfin::mesh::Mesh& mesh);
+      BlockDofMap(std::vector<std::shared_ptr<const dolfinx::fem::DofMap>> dofmaps,
+                  std::vector<std::vector<std::shared_ptr<const dolfinx::mesh::MeshFunction<std::size_t>>>> restrictions,
+                  const dolfinx::mesh::Mesh& mesh);
 
     protected:
       
       /// Helper functions for constructor
-      BlockDofMap(std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps,
-                  std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> restrictions);
-      BlockDofMap(std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps,
-                  std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> restrictions,
-                  std::vector<std::shared_ptr<const dolfin::mesh::Mesh>> meshes);
+      BlockDofMap(std::vector<std::shared_ptr<const dolfinx::fem::DofMap>> dofmaps,
+                  std::vector<std::vector<std::shared_ptr<const dolfinx::mesh::MeshFunction<std::size_t>>>> restrictions);
+      BlockDofMap(std::vector<std::shared_ptr<const dolfinx::fem::DofMap>> dofmaps,
+                  std::vector<std::vector<std::shared_ptr<const dolfinx::mesh::MeshFunction<std::size_t>>>> restrictions,
+                  std::vector<std::shared_ptr<const dolfinx::mesh::Mesh>> meshes);
       void _extract_dofs_from_original_dofmaps(
-        std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps,
-        std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> restrictions,
-        std::vector<std::shared_ptr<const dolfin::mesh::Mesh>> meshes,
+        std::vector<std::shared_ptr<const dolfinx::fem::DofMap>> dofmaps,
+        std::vector<std::vector<std::shared_ptr<const dolfinx::mesh::MeshFunction<std::size_t>>>> restrictions,
+        std::vector<std::shared_ptr<const dolfinx::mesh::Mesh>> meshes,
         std::vector<std::set<PetscInt>>& owned_dofs,
         std::vector<std::map<PetscInt, bool>>& owned_dofs__to__in_restriction,
         std::vector<std::map<PetscInt, std::set<std::size_t>>>& owned_dofs__to__cell_indices,
@@ -60,8 +60,8 @@ namespace multiphenics
         std::vector<std::map<PetscInt, std::set<std::size_t>>>& unowned_dofs_in_restriction__to__cell_indices
       ) const;
       void _assign_owned_dofs_to_block_dofmap(
-        std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps,
-        std::vector<std::shared_ptr<const dolfin::mesh::Mesh>> meshes,
+        std::vector<std::shared_ptr<const dolfinx::fem::DofMap>> dofmaps,
+        std::vector<std::shared_ptr<const dolfinx::mesh::Mesh>> meshes,
         const std::vector<std::set<PetscInt>>& owned_dofs,
         const std::vector<std::map<PetscInt, bool>>& owned_dofs__to__in_restriction,
         const std::vector<std::map<PetscInt, std::set<std::size_t>>>& owned_dofs__to__cell_indices,
@@ -69,7 +69,7 @@ namespace multiphenics
         std::vector<std::int64_t>& sub_block_dofmap_local_size
       );
       void _prepare_local_to_global_for_unowned_dofs(
-        std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps,
+        std::vector<std::shared_ptr<const dolfinx::fem::DofMap>> dofmaps,
         MPI_Comm comm,
         const std::vector<std::set<PetscInt>>& unowned_dofs_in_restriction,
         const std::vector<std::map<PetscInt, PetscInt>>& unowned_dofs_in_restriction__local_to_global,
@@ -78,7 +78,7 @@ namespace multiphenics
         const std::vector<std::int64_t>& sub_block_dofmap_local_size
       );
       void _precompute_views(
-        const std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps
+        const std::vector<std::shared_ptr<const dolfinx::fem::DofMap>> dofmaps
       );
 
     public:
@@ -113,14 +113,14 @@ namespace multiphenics
       cell_dofs(std::size_t cell_index) const;
       
       // Constructor arguments
-      std::vector<std::shared_ptr<const dolfin::fem::DofMap>> dofmaps() const;
-      std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> restrictions() const;
+      std::vector<std::shared_ptr<const dolfinx::fem::DofMap>> dofmaps() const;
+      std::vector<std::vector<std::shared_ptr<const dolfinx::mesh::MeshFunction<std::size_t>>>> restrictions() const;
 
       // Index Map from local to global
-      std::shared_ptr<dolfin::common::IndexMap> index_map;
+      std::shared_ptr<dolfinx::common::IndexMap> index_map;
       
       // Index Map from sub local to sub global
-      std::vector<std::shared_ptr<dolfin::common::IndexMap>> sub_index_map;
+      std::vector<std::shared_ptr<dolfinx::common::IndexMap>> sub_index_map;
       
       /// Return informal string representation (pretty-print)
       /// @param[in] verbose Flag to turn on additional output.
@@ -139,8 +139,8 @@ namespace multiphenics
 
     protected:
       // Constructor arguments
-      std::vector<std::shared_ptr<const dolfin::fem::DofMap>> _dofmaps;
-      std::vector<std::vector<std::shared_ptr<const dolfin::mesh::MeshFunction<std::size_t>>>> _restrictions;
+      std::vector<std::shared_ptr<const dolfinx::fem::DofMap>> _dofmaps;
+      std::vector<std::vector<std::shared_ptr<const dolfinx::mesh::MeshFunction<std::size_t>>>> _restrictions;
       
       // Cell-local-to-dof map
       std::map<PetscInt, std::vector<PetscInt>> _dofmap;

@@ -16,7 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dolfin import *
+from dolfinx import *
 from mshr import *
 
 # Geometrical parameters

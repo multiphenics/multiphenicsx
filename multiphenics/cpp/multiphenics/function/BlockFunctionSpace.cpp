@@ -16,19 +16,19 @@
 // along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <dolfin/common/IndexMap.h>
-#include <dolfin/common/UniqueIdGenerator.h>
+#include <dolfinx/common/IndexMap.h>
+#include <dolfinx/common/UniqueIdGenerator.h>
 #include <multiphenics/function/BlockFunctionSpace.h>
 
 using namespace multiphenics;
 using namespace multiphenics::function;
 
-using dolfin::common::UniqueIdGenerator;
-using dolfin::fem::DofMap;
-using dolfin::fem::FiniteElement;
-using dolfin::function::FunctionSpace;
-using dolfin::mesh::Mesh;
-using dolfin::mesh::MeshFunction;
+using dolfinx::common::UniqueIdGenerator;
+using dolfinx::fem::DofMap;
+using dolfinx::fem::FiniteElement;
+using dolfinx::function::FunctionSpace;
+using dolfinx::mesh::Mesh;
+using dolfinx::mesh::MeshFunction;
 using multiphenics::fem::BlockDofMap;
 
 //-----------------------------------------------------------------------------

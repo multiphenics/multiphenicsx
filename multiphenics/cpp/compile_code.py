@@ -21,7 +21,8 @@ import hashlib
 import os
 import sys
 from pathlib import Path
-from dolfin.jit import dolfin_pc, mpi_jit_decorator
+from dolfinx import wrappers
+from dolfinx.jit import dolfinx_pc, mpi_jit_decorator
 
 @mpi_jit_decorator
 def compile_code(package_name, package_code, **kwargs):
@@ -42,7 +43,8 @@ def compile_code(package_name, package_code, **kwargs):
         include_dirs = kwargs["include_dirs"]
     except KeyError:
         include_dirs = []
-    include_dirs.extend(dolfin_pc["include_dirs"])
+    include_dirs.extend(dolfinx_pc["include_dirs"])
+    include_dirs.append(str(wrappers.get_include_path()))
         
     # Set compiler arguments
     try:
@@ -50,21 +52,21 @@ def compile_code(package_name, package_code, **kwargs):
     except KeyError:
         compiler_args = []
     compiler_args.append("-std=c++17")
-    compiler_args.extend("-D" + dm for dm in dolfin_pc["define_macros"])
+    compiler_args.extend("-D" + dm for dm in dolfinx_pc["define_macros"])
         
     # Set libraries
     try:
         libraries = kwargs["libraries"]
     except KeyError:
         libraries = []
-    libraries.extend(dolfin_pc["libraries"])
+    libraries.extend(dolfinx_pc["libraries"])
         
     # Set library directories
     try:
         library_dirs = kwargs["library_dirs"]
     except KeyError:
         library_dirs = []
-    library_dirs.extend(dolfin_pc["library_dirs"])
+    library_dirs.extend(dolfinx_pc["library_dirs"])
         
     # Set linker arguments
     try:

@@ -18,7 +18,7 @@
 
 from numpy import ndarray as array
 from ufl import Form
-from dolfin.cpp.fem import Form as cpp_Form
+from dolfinx.cpp.fem import Form as cpp_Form
 from multiphenics.cpp.compile_code import compile_code
 
 zeros = (0, 0.)
@@ -59,17 +59,17 @@ def _is_zero(form_or_block_form):
         return form_or_block_form.empty()
     elif isinstance(form_or_block_form, cpp_Form):
         _is_zero_form_cpp_code = """
-            #include <dolfin/fem/Form.h>
+            #include <dolfinx/fem/Form.h>
             #include <pybind11/pybind11.h>
             
-            bool is_zero_form(std::shared_ptr<dolfin::fem::Form> form)
+            bool is_zero_form(std::shared_ptr<dolfinx::fem::Form> form)
             {
               return (
-                form->integrals().num_integrals(dolfin::fem::FormIntegrals::Type::cell) == 0
+                form->integrals().num_integrals(dolfinx::fem::FormIntegrals::Type::cell) == 0
                     &&
-                form->integrals().num_integrals(dolfin::fem::FormIntegrals::Type::interior_facet) == 0
+                form->integrals().num_integrals(dolfinx::fem::FormIntegrals::Type::interior_facet) == 0
                     &&
-                form->integrals().num_integrals(dolfin::fem::FormIntegrals::Type::exterior_facet) == 0
+                form->integrals().num_integrals(dolfinx::fem::FormIntegrals::Type::exterior_facet) == 0
               );
             }
             
