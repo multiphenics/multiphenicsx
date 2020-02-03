@@ -27,7 +27,7 @@ void DirichletBCLegacy::apply(std::vector<std::shared_ptr<const DirichletBC>> bc
 {
   for (auto bc: bcs)
   {
-    const auto rows = bc->dof_indices();
+    const auto rows = bc->dofs_owned().col(0);
     MatZeroRowsLocal(A, rows.size(), rows.data(), diag, NULL, NULL);
   }
 }

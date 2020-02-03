@@ -51,7 +51,7 @@ void BlockDirichletBCLegacy::apply(const BlockDirichletBC& bcs, Mat A, PetscScal
     const auto & original_to_block = block_dofmap->original_to_block(I);
     for (auto bc: bcs[I])
     {
-      const auto original_local_indices = bc->dof_indices();
+      const auto original_local_indices = bc->dofs_owned().col(0);
       for (Eigen::Index o = 0; o < original_local_indices.size(); ++o)
       {
         if (original_to_block.count(original_local_indices[o]) > 0) // skip all dofs which have been removed by restriction

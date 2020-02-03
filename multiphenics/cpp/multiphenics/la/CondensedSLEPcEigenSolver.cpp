@@ -75,7 +75,7 @@ void CondensedSLEPcEigenSolver::set_boundary_conditions(std::vector<std::shared_
   std::set<PetscInt> constrained_local_dofs;
   for (auto & bc : bcs)
   {
-    const auto bc_local_dofs = bc->dof_indices();
+    const auto bc_local_dofs = bc->dofs_owned().col(0);
     for (Eigen::Index i = 0; i < bc_local_dofs.size(); ++i)
     {
       constrained_local_dofs.insert(dofmap->index_map->local_to_global(bc_local_dofs[i]/dofmap_block_size)*dofmap_block_size + (bc_local_dofs[i]%dofmap_block_size));
