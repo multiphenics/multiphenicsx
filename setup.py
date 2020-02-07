@@ -27,7 +27,7 @@ setup(name="multiphenics",
       license="GNU Library or Lesser General Public License (LGPL)",
       url="http://mathlab.sissa.it/multiphenics",
       classifiers=[
-          "Development Status :: 5 - Production/Stable"
+          "Development Status :: 5 - Production/Stable",
           "Intended Audience :: Developers",
           "Intended Audience :: Science/Research",
           "Programming Language :: Python :: 3",
