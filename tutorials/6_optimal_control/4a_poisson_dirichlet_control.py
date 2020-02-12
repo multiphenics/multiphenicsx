@@ -21,7 +21,7 @@ from petsc4py import PETSc
 from ufl import *
 from dolfinx import *
 from dolfinx.cpp.mesh import GhostMode
-from dolfinx.fem import assemble_scalar
+from dolfinx.fem import assemble_scalar, locate_dofs_topological
 from dolfinx.plotting import plot
 import matplotlib.pyplot as plt
 from multiphenics import *
@@ -90,10 +90,12 @@ f =  [y_d*z*dx,
       0       ,
       0       ,
       f*q*dx   ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), bc0, boundaries_4)],
+bdofs_W0_4 = locate_dofs_topological((W.sub(0), W.sub(0)), mesh.topology.dim - 1, boundaries_4)
+bdofs_W2_24 = locate_dofs_topological((W.sub(3), W.sub(0)), mesh.topology.dim - 1, boundaries_24)
+bc = BlockDirichletBC([[DirichletBC(bc0, bdofs_W0_4, W.sub(0))],
                        [],
                        [],
-                       [DirichletBC(W.sub(3), bc0, boundaries_24)]])
+                       [DirichletBC(bc0, bdofs_W2_24, W.sub(3))]])
 
 # SOLUTION #
 yulp = BlockFunction(W)
@@ -105,8 +107,9 @@ J = 0.5*inner(y - y_d, y - y_d)*dx + 0.5*alpha*inner(u, u)*ds(2)
 # UNCONTROLLED FUNCTIONAL VALUE #
 a_state = replace(a[3][0], {q: z})
 f_state = replace(f[3], {q: z})
-bc_state = [DirichletBC(W.sub(0), bc0, boundaries_24)]
-solver_parameters = {"ksp_type": "preonly", "pc_type": "lu", "pc_factor_mat_solver_type": "mumps", "mat_mumps_icntl_7": 3}
+bdofs_W0_24 = locate_dofs_topological((W.sub(0), W.sub(0)), mesh.topology.dim - 1, boundaries_24)
+bc_state = [DirichletBC(bc0, bdofs_W0_24, W.sub(0))]
+solver_parameters = {"ksp_type": "preonly", "pc_type": "lu", "pc_factor_mat_solver_type": "superlu_dist"}
 solve(a_state == f_state, y, bc_state, petsc_options=solver_parameters)
 y.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
 J_uncontrolled = MPI.sum(mesh.mpi_comm(), assemble_scalar(J))

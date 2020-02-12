@@ -21,7 +21,7 @@ from petsc4py import PETSc
 from ufl import *
 from dolfinx import *
 from dolfinx.cpp.la import get_local_vectors
-from dolfinx.fem import assemble_matrix_block, assemble_scalar, assemble_vector_block, create_vector_block
+from dolfinx.fem import assemble_matrix_block, assemble_scalar, assemble_vector_block, create_vector_block, locate_dofs_topological
 from multiphenics import *
 
 """
@@ -82,7 +82,8 @@ def run_standard():
     zero = Function(V)
     with zero.vector.localForm() as zero_local:
         zero_local.set(0.0)
-    bc = DirichletBC(V, zero, boundaries_1)
+    bdofs_V_1 = locate_dofs_topological(V, mesh.topology.dim - 1, boundaries_1)
+    bc = DirichletBC(zero, bdofs_V_1)
     
     # Solve the linear system
     u = Function(V)
@@ -111,8 +112,10 @@ def run_standard_block():
     zero = Function(V1)
     with zero.vector.localForm() as zero_local:
         zero_local.set(0.0)
-    bc1 = DirichletBC(V1, zero, boundaries_1)
-    bc2 = DirichletBC(V2, zero, boundaries_1)
+    bdofs_V1_1 = locate_dofs_topological((V1, V1), mesh.topology.dim - 1, boundaries_1)
+    bdofs_V2_1 = locate_dofs_topological((V2, V1), mesh.topology.dim - 1, boundaries_1)
+    bc1 = DirichletBC(zero, bdofs_V1_1, V1)
+    bc2 = DirichletBC(zero, bdofs_V2_1, V2)
     bcs = [bc1, bc2]
     
     # Assemble the block linear system
@@ -163,8 +166,10 @@ def run_multiphenics():
     zero = Function(V)
     with zero.vector.localForm() as zero_local:
         zero_local.set(0.0)
-    bc1 = DirichletBC(VV.sub(0), zero, boundaries_1)
-    bc2 = DirichletBC(VV.sub(1), zero, boundaries_1)
+    bdofs_VV0_1 = locate_dofs_topological((VV.sub(0), V), mesh.topology.dim - 1, boundaries_1)
+    bdofs_VV1_1 = locate_dofs_topological((VV.sub(1), V), mesh.topology.dim - 1, boundaries_1)
+    bc1 = DirichletBC(zero, bdofs_VV0_1, VV.sub(0))
+    bc2 = DirichletBC(zero, bdofs_VV1_1, VV.sub(1))
     bcs = BlockDirichletBC([bc1,
                             bc2])
     

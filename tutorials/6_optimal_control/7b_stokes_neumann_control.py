@@ -20,7 +20,7 @@ from numpy import isclose, isin, where, zeros
 from ufl import *
 from dolfinx import *
 from dolfinx.cpp.mesh import GhostMode
-from dolfinx.fem import assemble_scalar
+from dolfinx.fem import assemble_scalar, locate_dofs_topological
 from dolfinx.plotting import plot
 import matplotlib.pyplot as plt
 from multiphenics import *
@@ -121,10 +121,13 @@ f =  [tracking(v_d, w)*dS(4),
       0                     ,
       inner(f, s)*dx        ,
       0                      ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), g, boundaries_1), DirichletBC(W.sub(0), bc0, boundaries_2)],
+bdofs_W0_1 = locate_dofs_topological((W.sub(0), W.sub(0)), mesh.topology.dim - 1, boundaries_1)
+bdofs_W0_2 = locate_dofs_topological((W.sub(0), W.sub(0)), mesh.topology.dim - 1, boundaries_2)
+bdofs_W3_12 = locate_dofs_topological((W.sub(3), W.sub(0)), mesh.topology.dim - 1, boundaries_12)
+bc = BlockDirichletBC([[DirichletBC(g, bdofs_W0_1, W.sub(0)), DirichletBC(bc0, bdofs_W0_2, W.sub(0))],
                        [],
                        [],
-                       [DirichletBC(W.sub(3), bc0, boundaries_12)],
+                       [DirichletBC(bc0, bdofs_W3_12, W.sub(3))],
                        []])
 
 # SOLUTION #

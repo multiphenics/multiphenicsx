@@ -21,7 +21,7 @@ from petsc4py import PETSc
 from ufl import *
 from dolfinx import *
 from dolfinx.cpp.mesh import GhostMode
-from dolfinx.fem import assemble_scalar
+from dolfinx.fem import assemble_scalar, locate_dofs_topological
 from multiphenics import *
 from multiphenics.io import XDMFFile
 
@@ -86,8 +86,10 @@ f =  [v1*dx(1)                       , v2*dx(2)                       , 0       
 
 zero = Function(V)
 boundaries_1 = where(boundaries.values == 1)[0]
-bc1 = DirichletBC(W.sub(0), zero, boundaries_1)
-bc2 = DirichletBC(W.sub(1), zero, boundaries_1)
+bdofs_W0_1 = locate_dofs_topological((W.sub(0), V), mesh.topology.dim - 1, boundaries_1)
+bdofs_W1_1 = locate_dofs_topological((W.sub(1), V), mesh.topology.dim - 1, boundaries_1)
+bc1 = DirichletBC(zero, bdofs_W0_1, W.sub(0))
+bc2 = DirichletBC(zero, bdofs_W1_1, W.sub(1))
 bcs = BlockDirichletBC([bc1,
                         bc2,
                         None])
@@ -102,7 +104,8 @@ u = TrialFunction(V)
 v = TestFunction(V)
 a_ex = inner(grad(u), grad(v))*dx
 f_ex = v*dx
-bc_ex = DirichletBC(V, zero, boundaries_1)
+bdofs_V_1 = locate_dofs_topological(V, mesh.topology.dim - 1, boundaries_1)
+bc_ex = DirichletBC(zero, bdofs_V_1)
 u_ex = Function(V)
 solve(a_ex == f_ex, u_ex, bc_ex, petsc_options=solver_parameters)
 u_ex.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)

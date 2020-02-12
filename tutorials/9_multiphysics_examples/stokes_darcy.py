@@ -21,7 +21,7 @@ from petsc4py import PETSc
 from ufl import *
 from dolfinx import *
 from dolfinx.cpp.mesh import GhostMode
-from dolfinx.fem import assemble_scalar, create_coordinate_map
+from dolfinx.fem import assemble_scalar, create_coordinate_map, locate_dofs_topological
 from dolfinx.io import XDMFFile
 from multiphenics import *
 
@@ -198,9 +198,12 @@ for noSlip in (noSlip0, noSlip1):
     with noSlip.vector.localForm() as noSlip_local:
         noSlip_local.set(0.0)
 
-bcUin = DirichletBC(Hh.sub(0), inflow, boundaries_inlet)
-bcUS = DirichletBC(Hh.sub(0), noSlip0, boundaries_wallS)
-bcUD = DirichletBC(Hh.sub(1), noSlip1, boundaries_wallD)
+bdofs_inlet = locate_dofs_topological(Hh.sub(0), mesh.topology.dim - 1, boundaries_inlet)
+bdofs_wallS = locate_dofs_topological(Hh.sub(0), mesh.topology.dim - 1, boundaries_wallS)
+bdofs_wallD = locate_dofs_topological(Hh.sub(1), mesh.topology.dim - 1, boundaries_wallD)
+bcUin = DirichletBC(inflow, bdofs_inlet)
+bcUS = DirichletBC(noSlip0, bdofs_wallS)
+bcUD = DirichletBC(noSlip1, bdofs_wallD)
 
 bcs = BlockDirichletBC([bcUin, bcUS, bcUD])
 

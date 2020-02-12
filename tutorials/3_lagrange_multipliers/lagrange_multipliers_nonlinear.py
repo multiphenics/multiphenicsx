@@ -22,7 +22,7 @@ from ufl import *
 from petsc4py import PETSc
 from dolfinx import *
 from dolfinx.cpp.mesh import GhostMode
-from dolfinx.fem import assemble_matrix, assemble_scalar, assemble_vector
+from dolfinx.fem import assemble_matrix, assemble_scalar, assemble_vector, locate_dofs_topological
 from multiphenics import *
 from multiphenics.fem import DirichletBCLegacy
 from multiphenics.io import XDMFFile
@@ -118,7 +118,8 @@ u_ex = Function(V)
 F_ex = replace(F[0], {u: u_ex, l: 0})
 J_ex = derivative(F_ex, u_ex, du)
 boundaries_1 = where(boundaries.values == 1)[0]
-bc_ex = [DirichletBC(V, g, boundaries_1)]
+bdofs_V_1 = locate_dofs_topological(V, mesh.topology.dim - 1, boundaries_1)
+bc_ex = [DirichletBC(g, bdofs_V_1)]
 problem_ex = LagrangeMultipliersNonlinearProblem(F_ex, u_ex, bc_ex, J_ex)
 solver_ex = NewtonSolver(mesh.mpi_comm())
 set_solver_parameters(solver_ex)

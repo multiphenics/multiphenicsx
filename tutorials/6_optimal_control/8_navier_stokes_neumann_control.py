@@ -20,7 +20,7 @@ from numpy import isclose, isin, stack, where
 from ufl import *
 from dolfinx import *
 from dolfinx.cpp.mesh import GhostMode
-from dolfinx.fem import assemble_scalar
+from dolfinx.fem import assemble_scalar, locate_dofs_topological
 from dolfinx.plotting import plot
 import matplotlib.pyplot as plt
 from multiphenics import *
@@ -97,10 +97,12 @@ r =  [nu*inner(grad(z), grad(w))*dx + inner(grad(w)*v, z)*dx + inner(grad(v)*w, 
       nu*inner(grad(v), grad(s))*dx + inner(grad(v)*v, s)*dx - p*div(s)*dx - inner(f, s)*dx - inner(u, s)*ds(2)           ,
       - d*div(v)*dx                                                                                                        ]
 dr = block_derivative(r, solution, trial)
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), bc0, boundaries_134)],
+bdofs_W0_134 = locate_dofs_topological((W.sub(0), W.sub(0)), mesh.topology.dim - 1, boundaries_134)
+bdofs_W3_134 = locate_dofs_topological((W.sub(3), W.sub(0)), mesh.topology.dim - 1, boundaries_134)
+bc = BlockDirichletBC([[DirichletBC(bc0, bdofs_W0_134, W.sub(0))],
                        [],
                        [],
-                       [DirichletBC(W.sub(3), bc0, boundaries_134)],
+                       [DirichletBC(bc0, bdofs_W3_134, W.sub(3))],
                        []])
 
 

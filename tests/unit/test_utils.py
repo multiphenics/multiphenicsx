@@ -24,7 +24,7 @@ from scipy.sparse import csr_matrix
 from petsc4py import PETSc
 from ufl import as_matrix, as_tensor, as_vector, dx, FiniteElement, inner, MixedElement, SpatialCoordinate, TensorElement, VectorElement
 from dolfinx import Function, FunctionSpace, MeshFunction, TensorFunctionSpace, VectorFunctionSpace
-from dolfinx.fem import assemble_matrix, assemble_vector
+from dolfinx.fem import assemble_matrix, assemble_vector, locate_dofs_topological
 from multiphenics import BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
 from multiphenics.fem import block_assemble, BlockDirichletBCLegacy, DirichletBCLegacy
 
@@ -333,14 +333,16 @@ def get_block_bcs_1():
             bc1_fun = Function(block_V[0])
             with bc1_fun.vector.localForm() as local_form:
                 local_form.set(1.)
-            return [DirichletBC(block_V[0], bc1_fun, boundaries_1)]
+            bdofs = locate_dofs_topological(block_V[0], mesh.topology.dim - 1, boundaries_1)
+            return [DirichletBC(bc1_fun, bdofs)]
         else:
             bc1 = list()
             for i in range(num_sub_elements):
                 bc1_fun = Function(block_V[0].sub(i).collapse())
                 with bc1_fun.vector.localForm() as local_form:
                     local_form.set(i + 1.)
-                bc1.append(DirichletBC(block_V[0].sub(i), bc1_fun, boundaries_1))
+                bdofs = locate_dofs_topological((block_V[0].sub(i), bc1_fun.function_space), mesh.topology.dim - 1, boundaries_1)
+                bc1.append(DirichletBC(bc1_fun, bdofs, block_V[0].sub(i)))
             return bc1
     return (
         lambda block_V: None,
@@ -360,14 +362,16 @@ def get_block_bcs_2():
             bc1_fun = Function(block_V[0])
             with bc1_fun.vector.localForm() as local_form:
                 local_form.set(1.)
-            return [DirichletBC(block_V[0], bc1_fun, boundaries_1)]
+            bdofs = locate_dofs_topological(block_V[0], mesh.topology.dim - 1, boundaries_1)
+            return [DirichletBC(bc1_fun, bdofs)]
         else:
             bc1 = list()
             for i in range(num_sub_elements):
                 bc1_fun = Function(block_V[0].sub(i).collapse())
                 with bc1_fun.vector.localForm() as local_form:
                     local_form.set(i + 1.)
-                bc1.append(DirichletBC(block_V[0].sub(i), bc1_fun, boundaries_1))
+                bdofs = locate_dofs_topological((block_V[0].sub(i), bc1_fun.function_space), mesh.topology.dim - 1, boundaries_1)
+                bc1.append(DirichletBC(bc1_fun, bdofs, block_V[0].sub(i)))
             return bc1
     def _get_bc_2(block_V):
         mesh = block_V.mesh
@@ -379,14 +383,16 @@ def get_block_bcs_2():
             bc2_fun = Function(block_V[1])
             with bc2_fun.vector.localForm() as local_form:
                 local_form.set(11.)
-            return [DirichletBC(block_V[1], bc2_fun, boundaries_1)]
+            bdofs = locate_dofs_topological(block_V[1], mesh.topology.dim - 1, boundaries_1)
+            return [DirichletBC(bc2_fun, bdofs)]
         else:
             bc2 = list()
             for i in range(num_sub_elements):
                 bc2_fun = Function(block_V[1].sub(i).collapse())
                 with bc2_fun.vector.localForm() as local_form:
                     local_form.set(i + 11.)
-                bc2.append(DirichletBC(block_V[1].sub(i), bc2_fun, boundaries_1))
+                bdofs = locate_dofs_topological((block_V[1].sub(i), bc2_fun.function_space), mesh.topology.dim - 1, boundaries_1)
+                bc2.append(DirichletBC(bc2_fun, bdofs, block_V[1].sub(i)))
             return bc2
     return (
         lambda block_V: None,

@@ -20,7 +20,7 @@ from numpy import isclose, isin, stack, where
 from ufl import *
 from dolfinx import *
 from dolfinx.cpp.mesh import GhostMode
-from dolfinx.fem import assemble_scalar
+from dolfinx.fem import assemble_scalar, locate_dofs_topological
 from dolfinx.io import XDMFFile
 from dolfinx.plotting import plot
 import matplotlib.pyplot as plt
@@ -92,10 +92,12 @@ f =  [inner(v_d, w)*dx,
       0               ,
       inner(f, s)*dx  ,
       0                ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), bc0, boundaries_1234)],
+bdofs_W0_1234 = locate_dofs_topological((W.sub(0), W.sub(0)), mesh.topology.dim - 1, boundaries_1234)
+bdofs_W3_1234 = locate_dofs_topological((W.sub(3), W.sub(0)), mesh.topology.dim - 1, boundaries_1234)
+bc = BlockDirichletBC([[DirichletBC(bc0, bdofs_W0_1234, W.sub(0))],
                        [],
                        [],
-                       [DirichletBC(W.sub(3), bc0, boundaries_1234)],
+                       [DirichletBC(bc0, bdofs_W3_1234, W.sub(3))],
                        []])
 
 # SOLUTION #

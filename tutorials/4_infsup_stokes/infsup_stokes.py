@@ -20,7 +20,7 @@ from numpy import finfo, isclose, logical_or, where
 from petsc4py import PETSc
 from ufl import *
 from dolfinx import *
-from dolfinx.fem import assemble_matrix, assemble_scalar
+from dolfinx.fem import assemble_matrix, assemble_scalar, locate_dofs_topological
 from multiphenics import *
 from multiphenics.fem import block_assemble
 
@@ -89,7 +89,8 @@ def run_monolithic():
 
     # Boundary conditions
     zero = Function(W.sub(0).collapse())
-    bc = [DirichletBC(W.sub(0), zero, boundaries_1)]
+    bdofs_V_1 = locate_dofs_topological((W.sub(0), W.sub(0).collapse()), mesh.topology.dim - 1, boundaries_1)
+    bc = [DirichletBC(zero, bdofs_V_1, W.sub(0))]
 
     # Assemble lhs and rhs matrices
     LHS = assemble_matrix(lhs)
@@ -139,7 +140,8 @@ def run_block():
 
     # Boundary conditions
     zero = Function(W.sub(0))
-    wallc = [DirichletBC(W.sub(0), zero, boundaries_1)]
+    bdofs_V_1 = locate_dofs_topological(W.sub(0), mesh.topology.dim - 1, boundaries_1)
+    wallc = [DirichletBC(zero, bdofs_V_1)]
     bc = BlockDirichletBC([[wallc], []])
 
     # Assemble lhs and rhs matrices

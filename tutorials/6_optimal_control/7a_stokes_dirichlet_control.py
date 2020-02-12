@@ -20,7 +20,7 @@ from numpy import isclose, where, zeros
 from ufl import *
 from dolfinx import *
 from dolfinx.cpp.mesh import GhostMode
-from dolfinx.fem import assemble_scalar
+from dolfinx.fem import assemble_scalar, locate_dofs_topological
 from dolfinx.plotting import plot
 import matplotlib.pyplot as plt
 from multiphenics import *
@@ -58,7 +58,6 @@ using an adjoint formulation solved by a one shot approach
 mesh = XDMFFile(MPI.comm_world, "data/vorticity_reduction.xdmf").read_mesh(GhostMode.none)
 subdomains = XDMFFile(MPI.comm_world, "data/vorticity_reduction_physical_region.xdmf").read_mf_size_t(mesh)
 boundaries = XDMFFile(MPI.comm_world, "data/vorticity_reduction_facet_region.xdmf").read_mf_size_t(mesh)
-boundaries_side = {idx: where(boundaries.values == idx)[0] for idx in (1, 2, 4, 5)}
 # Dirichlet control boundary
 control_boundary = XDMFFile(MPI.comm_world, "data/vorticity_reduction_restriction_control.rtc.xdmf").read_mesh_restriction(mesh)
 # Normal and tangent
@@ -115,20 +114,22 @@ f =  [0,
       0               ,
       inner(f, s)*dx  ,
       0                ]
+def bdofs(space_from, space_to, idx):
+    return locate_dofs_topological((space_from, space_to), mesh.topology.dim - 1, where(boundaries.values == idx)[0])
 bc = BlockDirichletBC([[
-                            DirichletBC(W.sub(0), bc1, boundaries_side[1]),
-                            DirichletBC(W.sub(0).sub(1), bc0_component, boundaries_side[2]),
-                            DirichletBC(W.sub(0).sub(0), bc0_component, boundaries_side[4]),
-                            DirichletBC(W.sub(0), bc0, boundaries_side[5]),
+                            DirichletBC(bc1, bdofs(W.sub(0), bc1.function_space, 1), W.sub(0)),
+                            DirichletBC(bc0_component, bdofs(W.sub(0).sub(1), bc0_component.function_space, 2), W.sub(0).sub(1)),
+                            DirichletBC(bc0_component, bdofs(W.sub(0).sub(0), bc0_component.function_space, 4), W.sub(0).sub(0)),
+                            DirichletBC(bc0, bdofs(W.sub(0), bc0.function_space, 5), W.sub(0))
                         ],
                        [],
                        [],
                        [],
                        [
-                            DirichletBC(W.sub(4), bc0, boundaries_side[1]),
-                            DirichletBC(W.sub(4).sub(1), bc0_component, boundaries_side[2]),
-                            DirichletBC(W.sub(4), bc0, boundaries_side[4]),
-                            DirichletBC(W.sub(4), bc0, boundaries_side[5]),
+                            DirichletBC(bc0, bdofs(W.sub(4), bc0.function_space, 1), W.sub(4)),
+                            DirichletBC(bc0_component, bdofs(W.sub(4).sub(1), bc0_component.function_space, 2), W.sub(4).sub(1)),
+                            DirichletBC(bc0, bdofs(W.sub(4), bc0.function_space, 4), W.sub(4)),
+                            DirichletBC(bc0, bdofs(W.sub(4), bc0.function_space, 5), W.sub(4))
                         ],
                        []])
 
@@ -145,10 +146,10 @@ W_state_test = W.extract_block_sub_space((4, 5))
 a_state = block_restrict(a, [W_state_test, W_state_trial])
 f_state = block_restrict(f, W_state_test)
 bc_state = BlockDirichletBC([[
-                                  DirichletBC(W_state_trial.sub(0), bc1, boundaries_side[1]),
-                                  DirichletBC(W_state_trial.sub(0).sub(1), bc0_component, boundaries_side[2]),
-                                  DirichletBC(W_state_trial.sub(0), bc0, boundaries_side[4]),
-                                  DirichletBC(W_state_trial.sub(0), bc0, boundaries_side[5]),
+                                  DirichletBC(bc1, bdofs(W_state_trial.sub(0), bc1.function_space, 1), W_state_trial.sub(0)),
+                                  DirichletBC(bc0_component, bdofs(W_state_trial.sub(0).sub(1), bc0_component.function_space, 2), W_state_trial.sub(0).sub(1)),
+                                  DirichletBC(bc0, bdofs(W_state_trial.sub(0), bc0.function_space, 4), W_state_trial.sub(0)),
+                                  DirichletBC(bc0, bdofs(W_state_trial.sub(0), bc0.function_space, 5), W_state_trial.sub(0))
                               ],
                              []])
 solution_state = block_restrict(solution, W_state_trial)

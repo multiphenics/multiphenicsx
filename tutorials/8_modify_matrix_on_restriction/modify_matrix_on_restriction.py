@@ -22,7 +22,7 @@ from petsc4py import PETSc
 from ufl import *
 from dolfinx import *
 from dolfinx.cpp.mesh import GhostMode
-from dolfinx.fem import assemble_scalar
+from dolfinx.fem import assemble_scalar, locate_dofs_topological
 from multiphenics import *
 from multiphenics.fem import block_assemble
 from multiphenics.io import XDMFFile
@@ -175,7 +175,8 @@ U.apply("to subfunctions")
 
 # ERROR #
 boundaries_1 = where(boundaries.values == 1)[0]
-bc_ex = DirichletBC(V, g, boundaries_1)
+bdofs_V_1 = locate_dofs_topological(V, mesh.topology.dim - 1, boundaries_1)
+bc_ex = DirichletBC(g, bdofs_V_1)
 u_ex = Function(V)
 solve(a[0][0] == f[0], u_ex, bc_ex, petsc_options=solver_parameters)
 u_ex.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)

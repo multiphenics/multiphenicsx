@@ -21,7 +21,7 @@ from petsc4py import PETSc
 from ufl import *
 from dolfinx import *
 from dolfinx.cpp.mesh import GhostMode
-from dolfinx.fem import assemble_matrix, assemble_scalar, assemble_vector
+from dolfinx.fem import assemble_matrix, assemble_scalar, assemble_vector, locate_dofs_topological
 from dolfinx.io import XDMFFile
 from multiphenics import *
 from multiphenics.fem import DirichletBCLegacy
@@ -85,8 +85,10 @@ def run_monolithic():
     u_in.interpolate(u_in_eval)
     u_wall = Function(W.sub(0).collapse())
     u_wall.interpolate(u_wall_eval)
-    inlet_bc = DirichletBC(W.sub(0), u_in, boundaries_1)
-    wall_bc = DirichletBC(W.sub(0), u_wall, boundaries_2)
+    bdofs_V_1 = locate_dofs_topological((W.sub(0), W.sub(0).collapse()), mesh.topology.dim - 1, boundaries_1)
+    bdofs_V_2 = locate_dofs_topological((W.sub(0), W.sub(0).collapse()), mesh.topology.dim - 1, boundaries_2)
+    inlet_bc = DirichletBC(u_in, bdofs_V_1, W.sub(0))
+    wall_bc = DirichletBC(u_wall, bdofs_V_2, W.sub(0))
     bc = [inlet_bc, wall_bc]
     
     # Class for interfacing with the Newton solver
@@ -160,8 +162,10 @@ def run_block():
     u_in.interpolate(u_in_eval)
     u_wall = Function(W.sub(0))
     u_wall.interpolate(u_wall_eval)
-    inlet_bc = DirichletBC(W.sub(0), u_in, boundaries_1)
-    wall_bc = DirichletBC(W.sub(0), u_wall, boundaries_2)
+    bdofs_V_1 = locate_dofs_topological(W.sub(0), mesh.topology.dim - 1, boundaries_1)
+    bdofs_V_2 = locate_dofs_topological(W.sub(0), mesh.topology.dim - 1, boundaries_2)
+    inlet_bc = DirichletBC(u_in, bdofs_V_1)
+    wall_bc = DirichletBC(u_wall, bdofs_V_2)
     bc = BlockDirichletBC([[inlet_bc, wall_bc], []])
 
     # Solve

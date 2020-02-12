@@ -21,7 +21,7 @@ from petsc4py import PETSc
 from ufl import *
 from dolfinx import *
 from dolfinx.cpp.mesh import GhostMode
-from dolfinx.fem import assemble_scalar
+from dolfinx.fem import assemble_scalar, locate_dofs_topological
 from dolfinx.plotting import plot
 import matplotlib.pyplot as plt
 from multiphenics import *
@@ -98,9 +98,11 @@ a = [[y*z*dx(3)     , 0              , adjoint_operator],
 f =  [y_d*z*dx(3),
       0          ,
       f*q*dx      ]
-bc = BlockDirichletBC([[DirichletBC(W.sub(0), bc1, boundaries_1)],
+bdofs_W0_1 = locate_dofs_topological((W.sub(0), W.sub(0)), mesh.topology.dim - 1, boundaries_1)
+bdofs_W2_1 = locate_dofs_topological((W.sub(2), W.sub(0)), mesh.topology.dim - 1, boundaries_1)
+bc = BlockDirichletBC([[DirichletBC(bc1, bdofs_W0_1, W.sub(0))],
                        [],
-                       [DirichletBC(W.sub(2), bc0, boundaries_1)]])
+                       [DirichletBC(bc0, bdofs_W2_1, W.sub(2))]])
 
 # SOLUTION #
 yup = BlockFunction(W)
