@@ -20,7 +20,7 @@
 #define __BLOCK_SPARSITY_PATTERN_BUILDER_H
 
 #include <dolfinx/la/SparsityPattern.h>
-#include <dolfinx/mesh/Mesh.h>
+#include <dolfinx/mesh/Topology.h>
 #include <multiphenics/fem/BlockDofMap.h>
 
 namespace multiphenics
@@ -37,17 +37,18 @@ namespace multiphenics
     {
     public:
       /// Iterate over cells and insert entries into sparsity pattern
-      static void cells(dolfinx::la::SparsityPattern& pattern, const dolfinx::mesh::Mesh& mesh,
+      static void cells(dolfinx::la::SparsityPattern& pattern,
+                        const dolfinx::mesh::Topology& topology,
                         const std::array<const BlockDofMap*, 2> block_dofmaps);
 
       /// Iterate over interior facets and insert entries into sparsity pattern
       static void interior_facets(dolfinx::la::SparsityPattern& pattern,
-                                  const dolfinx::mesh::Mesh& mesh,
+                                  const dolfinx::mesh::Topology& topology,
                                   const std::array<const BlockDofMap*, 2> block_dofmaps);
 
       /// Iterate over exterior facets and insert entries into sparsity pattern
       static void exterior_facets(dolfinx::la::SparsityPattern& pattern,
-                                  const dolfinx::mesh::Mesh& mesh,
+                                  const dolfinx::mesh::Topology& topology,
                                   const std::array<const BlockDofMap*, 2> block_dofmaps);
     };
   }
