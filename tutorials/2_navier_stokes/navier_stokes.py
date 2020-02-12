@@ -47,8 +47,8 @@ def set_solver_parameters(solver):
     
 # Mesh
 mesh = XDMFFile(MPI.comm_world, "data/backward_facing_step.xdmf").read_mesh(GhostMode.none)
-subdomains = XDMFFile(MPI.comm_world, "data/backward_facing_step_physical_region.xdmf").read_mf_size_t(mesh)
-boundaries = XDMFFile(MPI.comm_world, "data/backward_facing_step_facet_region.xdmf").read_mf_size_t(mesh)
+subdomains = XDMFFile(MPI.comm_world, "data/backward_facing_step_subdomains.xdmf").read_mf_size_t(mesh)
+boundaries = XDMFFile(MPI.comm_world, "data/backward_facing_step_boundaries.xdmf").read_mf_size_t(mesh)
 boundaries_1 = where(boundaries.values == 1)[0]
 boundaries_2 = where(boundaries.values == 2)[0]
 
