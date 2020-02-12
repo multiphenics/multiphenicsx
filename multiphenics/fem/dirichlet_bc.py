@@ -19,14 +19,17 @@
 from dolfinx import DirichletBC as dolfinx_DirichletBC
 
 class DirichletBC(dolfinx_DirichletBC):
-    def __init__(self, V, *args, **kwargs):
+    def __init__(self, value, dofs, V=None):
         # Call parent constructor
-        dolfinx_DirichletBC.__init__(self, V, *args, **kwargs)
+        dolfinx_DirichletBC.__init__(self, value, dofs, V)
         # Store the (python) function space. This is already available as a property in the public interface,
         # but it casts the function space to a C++ FunctionSpace and then wraps it into a python FunctionSpace,
         # losing all the customization that we have done in the block_function_space.py file (most notably, the
         # block_function_space() method)
-        self._function_space = V
+        if V is None:
+            self._function_space = value.function_space
+        else:
+            self._function_space = V
         
     @property
     def function_space(self):

@@ -28,6 +28,7 @@ class BlockDirichletBC(BlockDirichletBC_Base):
         # Detect the common block function space
         if block_function_space is None:
             for bc in bcs:
+                assert hasattr(bc.function_space, "block_function_space"), "Function passed to DirichletBC must either be defined over a subspace of a BlockFunctionSpace, or such subspace must be provided as optional argument to DirichletBC"
                 if block_function_space is None:
                     block_function_space = bc.function_space.block_function_space()
                 else:
