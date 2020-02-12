@@ -165,18 +165,11 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
           }
           
           // Get ids of all cells connected to the entity
-          const std::size_t num_cells
-              = mesh.topology().connectivity(d, D)->size(e.index());
-          assert(num_cells > 0);
-          std::set<std::size_t> cell_indices;
-          for (std::size_t c(0); c < num_cells; ++c)
-          {
-            std::size_t cell_index = e.entities(D)[c];
-            cell_indices.insert(cell_index);
-          }
+          auto cell_indices = mesh.topology().connectivity(d, D)->links(e.index());
+          assert(cell_indices.rows() > 0);
           
           // Get the first cell connected to the entity
-          const MeshEntity cell(mesh, D, *cell_indices.begin());
+          const MeshEntity cell(mesh, D, cell_indices[0]);
 
           // Find local entity number
           std::size_t local_entity_ind = 0;
@@ -207,8 +200,8 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
               else
                 owned_dofs__to__in_restriction[i][cell_dof] = owned_dofs__to__in_restriction[i][cell_dof] or in_restriction;
               if (in_restriction)
-                for (auto c : cell_indices)
-                  owned_dofs__to__cell_indices[i][cell_dof].insert(c);
+                for (Eigen::Index c = 0; c < cell_indices.rows(); ++c)
+                  owned_dofs__to__cell_indices[i][cell_dof].insert(cell_indices[c]);
             }
             else 
             {
@@ -217,8 +210,8 @@ void BlockDofMap::_extract_dofs_from_original_dofmaps(
                 unowned_dofs_in_restriction[i].insert(cell_dof);
                 std::size_t cell_global_dof = dofmap->index_map->local_to_global(cell_dof/dofmap_block_size)*dofmap_block_size + (cell_dof%dofmap_block_size);
                 unowned_dofs_in_restriction__local_to_global[i][cell_dof] = cell_global_dof;
-                for (auto c : cell_indices)
-                  unowned_dofs_in_restriction__to__cell_indices[i][cell_dof].insert(c);
+                for (Eigen::Index c = 0; c < cell_indices.rows(); ++c)
+                  unowned_dofs_in_restriction__to__cell_indices[i][cell_dof].insert(cell_indices[c]);
               }
             }
           }
