@@ -177,13 +177,13 @@ Mat multiphenics::fem::init_matrix(const BlockForm2& a)
       else if (i == j)
       {
         // Keep diagonal element in sparsity pattern
-        const auto local_range = index_maps[0]->local_range();
+        const std::int32_t local_size = index_maps[0]->size_local();
         Eigen::Array<PetscInt, Eigen::Dynamic, 1> diagonal_dof(1);
-        for (std::int64_t I = std::get<0>(local_range); I < std::get<1>(local_range); I++)
+        for (std::int32_t I = 0; I < local_size; I++)
         {
           const PetscInt _I = I;
           diagonal_dof(0) = _I;
-          pattern.insert_global(diagonal_dof, diagonal_dof);
+          pattern.insert(diagonal_dof, diagonal_dof);
         }
       }
     }
