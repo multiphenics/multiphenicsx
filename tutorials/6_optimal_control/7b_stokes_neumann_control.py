@@ -58,8 +58,8 @@ if MPI.size(MPI.comm_world) > 1:
 else:
     mesh_ghost_mode = GhostMode.none
 mesh = XDMFFile(MPI.comm_world, "data/bifurcation.xdmf").read_mesh(mesh_ghost_mode)
-subdomains = XDMFFile(MPI.comm_world, "data/bifurcation_physical_region.xdmf").read_mf_size_t(mesh)
-boundaries = XDMFFile(MPI.comm_world, "data/bifurcation_facet_region.xdmf").read_mf_size_t(mesh)
+subdomains = XDMFFile(MPI.comm_world, "data/bifurcation_subdomains.xdmf").read_mf_size_t(mesh)
+boundaries = XDMFFile(MPI.comm_world, "data/bifurcation_boundaries.xdmf").read_mf_size_t(mesh)
 boundaries_1 = where(boundaries.values == 1)[0]
 boundaries_2 = where(boundaries.values == 2)[0]
 boundaries_12 = where(isin(boundaries.values, (1, 2)))[0]
@@ -148,7 +148,7 @@ solver_parameters = {"ksp_type": "preonly", "pc_type": "lu", "pc_factor_mat_solv
 block_solve(a_state, solution_state, f_state, bc_state, petsc_options=solver_parameters)
 J_uncontrolled = MPI.sum(mesh.mpi_comm(), assemble_scalar(J))
 print("Uncontrolled J =", J_uncontrolled)
-assert isclose(J_uncontrolled, 2.8512005)
+assert isclose(J_uncontrolled, 2.8479865)
 plt.figure()
 plot(v, title="uncontrolled state velocity")
 plt.figure()
@@ -159,7 +159,7 @@ plt.show()
 block_solve(a, solution, f, bc, petsc_options=solver_parameters)
 J_controlled = MPI.sum(mesh.mpi_comm(), assemble_scalar(J))
 print("Optimal J =", J_controlled)
-assert isclose(J_controlled, 1.7640778)
+assert isclose(J_controlled, 1.7643950)
 plt.figure()
 plot(v, title="state velocity")
 plt.figure()
