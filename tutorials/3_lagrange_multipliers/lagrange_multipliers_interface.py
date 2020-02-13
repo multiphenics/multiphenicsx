@@ -53,8 +53,8 @@ if MPI.size(MPI.comm_world) > 1:
 else:
     mesh_ghost_mode = GhostMode.none
 mesh = XDMFFile(MPI.comm_world, "data/circle.xdmf").read_mesh(mesh_ghost_mode)
-subdomains = XDMFFile(MPI.comm_world, "data/circle_physical_region.xdmf").read_mf_size_t(mesh)
-boundaries = XDMFFile(MPI.comm_world, "data/circle_facet_region.xdmf").read_mf_size_t(mesh)
+subdomains = XDMFFile(MPI.comm_world, "data/circle_subdomains.xdmf").read_mf_size_t(mesh)
+boundaries = XDMFFile(MPI.comm_world, "data/circle_boundaries.xdmf").read_mf_size_t(mesh)
 # Restrictions
 left = XDMFFile(MPI.comm_world, "data/circle_restriction_left.rtc.xdmf").read_mesh_restriction(mesh)
 right = XDMFFile(MPI.comm_world, "data/circle_restriction_right.rtc.xdmf").read_mesh_restriction(mesh)
