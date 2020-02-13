@@ -20,9 +20,8 @@ import types
 import numpy
 import cffi
 from ufl.finiteelement import FiniteElementBase
-from dolfinx import FunctionSpace, Mesh, MeshFunction
+from dolfinx import FunctionSpace, Mesh
 import dolfinx.cpp
-from dolfinx.cpp.mesh import MeshFunctionSizet
 import dolfinx.fem.dofmap
 from dolfinx.jit import ffcx_jit
 from multiphenics.cpp import cpp
@@ -90,7 +89,8 @@ class BlockFunctionSpace(object):
         else:
             restrict = self._init_restriction(mesh, restrict)
             assert len(restrict) == len(function_spaces)
-            self._cpp_object = BlockFunctionSpace_Base([function_space._cpp_object for function_space in function_spaces], restrict)
+            restrict_cpp = [[restrict_e_d for restrict_e_d in restrict_e] for restrict_e in restrict]
+            self._cpp_object = BlockFunctionSpace_Base([function_space._cpp_object for function_space in function_spaces], restrict_cpp)
             
         # Fill in subspaces
         self._init_sub_spaces([function_space.ufl_element() for function_space in function_spaces])
@@ -118,46 +118,35 @@ class BlockFunctionSpace(object):
         else:
             restrict = self._init_restriction(mesh, restrict)
             assert len(restrict) == len(elements)
-            self._cpp_object = BlockFunctionSpace_Base(mesh, dolfinx_elements, dolfinx_dofmaps, restrict)
+            restrict_cpp = [[restrict_e_d for restrict_e_d in restrict_e] for restrict_e in restrict]
+            self._cpp_object = BlockFunctionSpace_Base(mesh, dolfinx_elements, dolfinx_dofmaps, restrict_cpp)
         
         # Fill in subspaces
         self._init_sub_spaces(elements)
     
     @staticmethod
-    def _init_restriction(mesh, subdomains):
-        assert isinstance(subdomains, (list, tuple))
-        all_none = all([subdomain is None for subdomain in subdomains])
-        at_least_one_subdomain = any([isinstance(subdomain, types.FunctionType) for subdomain in subdomains])
-        at_least_one_mesh_function = any([(
-                isinstance(subdomain, (list, tuple))
-                    and
-                all([isinstance(mesh_function, MeshFunctionSizet) for mesh_function in subdomain])
-            ) for subdomain in subdomains])
-        assert all_none or at_least_one_subdomain or at_least_one_mesh_function
+    def _init_restriction(mesh, restrictions):
+        assert isinstance(restrictions, (list, tuple))
+        all_none = all([restriction is None for restriction in restrictions])
+        at_least_one_subdomain = any([isinstance(restriction, types.FunctionType) for restriction in restrictions])
+        at_least_one_mesh_restriction = any([isinstance(restriction, MeshRestriction) for restriction in restrictions])
+        assert all_none or at_least_one_subdomain or at_least_one_mesh_restriction
         if all_none:
-            mesh_functions_for_subdomains = list()
-            for subdomain in subdomains:
-                empty_mesh_functions_for_current_subdomain = list()
-                mesh_functions_for_subdomains.append(empty_mesh_functions_for_current_subdomain)
-            return mesh_functions_for_subdomains
+            return [[] for restriction in restrictions]
         elif at_least_one_subdomain:
-            assert not at_least_one_mesh_function, "Please do not mix functions defining subdomains and MeshFunctions, rather provide only MeshFunctions"
-            mesh_functions_for_subdomains = list()
-            for subdomain in subdomains:
-                mesh_functions_for_current_subdomain = MeshRestriction(mesh, subdomain)
-                mesh_functions_for_subdomains.append(mesh_functions_for_current_subdomain)
-            return mesh_functions_for_subdomains
-        elif at_least_one_mesh_function:
-            assert not at_least_one_subdomain, "Please do not mix functions defining subdomains and MeshFunctions, rather provide only MeshFunctions"
-            mesh_functions_for_subdomains = list()
-            for mesh_functions in subdomains:
-                if mesh_functions is not None:
-                    assert all([isinstance(mesh_function, MeshFunction)] for mesh_function in mesh_functions)
-                    mesh_functions_for_subdomains.append(mesh_functions)
+            assert not at_least_one_mesh_restriction, "Please do not mix functions defining subdomains and MeshRestrictions, rather provide only MeshRestrictions"
+            mesh_restrictions = list()
+            for subdomain in restrictions:
+                mesh_restriction = MeshRestriction(mesh)
+                if subdomain is not None:
+                    mesh_restriction.mark(subdomain)
                 else:
-                    empty_mesh_functions_for_current_subdomain = list()
-                    mesh_functions_for_subdomains.append(empty_mesh_functions_for_current_subdomain)
-            return mesh_functions_for_subdomains
+                    mesh_restriction.mark(lambda x: numpy.full(x.shape[1], True))
+                mesh_restrictions.append(mesh_restriction)
+            return mesh_restrictions
+        elif at_least_one_mesh_restriction:
+            assert not at_least_one_subdomain, "Please do not mix functions defining subdomains and MeshRestrictions, rather provide only MeshRestrictions"
+            return [restriction if isinstance(restriction, MeshRestriction) else [] for restriction in restrictions]
         else:
             raise AssertionError("Invalid arguments provided as BlockFunctionSpace restriction")
     

@@ -26,18 +26,17 @@ class MeshRestrictionXDMFFile(object):
         self.encoding = encoding
     
     def read_mesh_restriction(self, mesh):
-        # Create empty MeshRestriction
-        content = MeshRestriction(mesh)
         # Read in MeshFunctions
+        mesh_functions = list()
         D = mesh.topology.dim
         for d in range(D + 1):
             mesh_function_d_filename = self.filename + "/mesh_function_" + str(d) + ".xdmf"
             xdmf_file = XDMFFile(mesh.mpi_comm(), mesh_function_d_filename, self.encoding)
             mesh_function_d = xdmf_file.read_mf_size_t(mesh)
             assert mesh_function_d.dim == d
-            content.append(mesh_function_d)
-        # Return
-        return content
+            mesh_functions.append(mesh_function_d)
+        # Return MeshRestriction from MeshFunctions
+        return MeshRestriction(mesh, mesh_functions)
     
     def write(self, content):
         # Create output folder
