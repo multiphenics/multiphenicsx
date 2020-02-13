@@ -34,8 +34,8 @@ Dirichlet boundary conditions imposed by Lagrange multipliers.
 # MESHES #
 # Mesh
 mesh = XDMFFile(MPI.comm_world, "data/circle.xdmf").read_mesh(GhostMode.none)
-subdomains = XDMFFile(MPI.comm_world, "data/circle_physical_region.xdmf").read_mf_size_t(mesh)
-boundaries = XDMFFile(MPI.comm_world, "data/circle_facet_region.xdmf").read_mf_size_t(mesh)
+subdomains = XDMFFile(MPI.comm_world, "data/circle_subdomains.xdmf").read_mf_size_t(mesh)
+boundaries = XDMFFile(MPI.comm_world, "data/circle_boundaries.xdmf").read_mf_size_t(mesh)
 # Dirichlet boundary
 boundary_restriction = XDMFFile(MPI.comm_world, "data/circle_restriction_boundary.rtc.xdmf").read_mesh_restriction(mesh)
 
@@ -82,4 +82,4 @@ r, c = eigv.real, eigv.imag
 assert abs(c) < 1.e-10
 assert r > 0., "r = " + str(r) + " is not positive"
 print("Inf-sup constant: ", sqrt(r))
-assert isclose(sqrt(r), 0.088385)
+assert isclose(sqrt(r), 0.125473)
