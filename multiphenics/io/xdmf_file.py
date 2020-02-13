@@ -24,6 +24,12 @@ class MeshRestrictionXDMFFile(object):
     def __init__(self, mpi_comm, filename, encoding):
         self.filename = filename
         self.encoding = encoding
+        
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        pass
     
     def read_mesh_restriction(self, mesh):
         # Read in MeshFunctions
@@ -31,8 +37,8 @@ class MeshRestrictionXDMFFile(object):
         D = mesh.topology.dim
         for d in range(D + 1):
             mesh_function_d_filename = self.filename + "/mesh_function_" + str(d) + ".xdmf"
-            xdmf_file = XDMFFile(mesh.mpi_comm(), mesh_function_d_filename, self.encoding)
-            mesh_function_d = xdmf_file.read_mf_size_t(mesh)
+            with XDMFFile(mesh.mpi_comm(), mesh_function_d_filename, self.encoding) as xdmf_file:
+                mesh_function_d = xdmf_file.read_mf_size_t(mesh)
             assert mesh_function_d.dim == d
             mesh_functions.append(mesh_function_d)
         # Return MeshRestriction from MeshFunctions
@@ -48,8 +54,8 @@ class MeshRestrictionXDMFFile(object):
         # Write out MeshFunctions
         for (d, mesh_function_d) in enumerate(content):
             mesh_function_d_filename = self.filename + "/mesh_function_" + str(d) + ".xdmf"
-            xdmf_file = XDMFFile(mesh_function_d.mesh().mpi_comm(), mesh_function_d_filename, self.encoding)
-            xdmf_file.write(mesh_function_d)
+            with XDMFFile(mesh_function_d.mesh().mpi_comm(), mesh_function_d_filename, self.encoding) as xdmf_file:
+                xdmf_file.write(mesh_function_d)
             
 def XDMFFile(mpi_comm, filename, encoding=dolfinx_XDMFFile.Encoding.HDF5):
     if filename.endswith(".rtc.xdmf"):
