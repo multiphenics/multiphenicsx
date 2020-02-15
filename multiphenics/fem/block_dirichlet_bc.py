@@ -16,7 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import collections
+import collections.abc
 from multiphenics.cpp import cpp
 
 BlockDirichletBC_Base = cpp.fem.BlockDirichletBC
@@ -74,7 +74,7 @@ class BlockDirichletBC(BlockDirichletBC_Base):
         # https://stackoverflow.com/questions/2158395/flatten-an-irregular-list-of-lists
         def flatten(l):
             for el in l:
-                if isinstance(el, collections.Iterable):
+                if isinstance(el, collections.abc.Iterable):
                     for sub in flatten(el):
                         yield sub
                 else:
