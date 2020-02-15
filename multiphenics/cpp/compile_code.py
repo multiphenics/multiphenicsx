@@ -79,13 +79,13 @@ def compile_code(package_name, package_code, **kwargs):
 /*
 <%
 setup_pybind11(cfg)
-cfg['sources'] += {str(sources)}
-cfg['dependencies'] += {str(dependencies)}
-cfg['include_dirs'] += {str(include_dirs)}
-cfg['compiler_args'] += {str(compiler_args)}
-cfg['libraries'] += {str(libraries)}
-cfg['library_dirs'] += {str(library_dirs)}
-cfg['linker_args'] += {str(linker_args)}
+cfg["sources"] += {str(sources)}
+cfg["dependencies"] += {str(dependencies)}
+cfg["include_dirs"] += {str(include_dirs)}
+cfg["compiler_args"] += {str(compiler_args)}
+cfg["libraries"] += {str(libraries)}
+cfg["library_dirs"] += {str(library_dirs)}
+cfg["linker_args"] += {str(linker_args)}
 %>
 */
 """

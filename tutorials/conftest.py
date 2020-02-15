@@ -66,7 +66,7 @@ class TutorialItem(pytest.Item):
         spec = importlib.util.spec_from_file_location(self.name, str(self.parent.fspath))
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        plt.close('all') # do not trigger matplotlib max_open_warning
+        plt.close("all") # do not trigger matplotlib max_open_warning
 
     def reportinfo(self):
         return self.fspath, 0, self.name

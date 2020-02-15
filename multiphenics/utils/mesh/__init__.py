@@ -19,7 +19,7 @@
 from multiphenics.utils.mesh.generate_restrictions import generate_boundary_restriction, generate_interface_restriction, generate_subdomain_restriction
 
 __all__ = [
-    'generate_boundary_restriction',
-    'generate_interface_restriction',
-    'generate_subdomain_restriction'
+    "generate_boundary_restriction",
+    "generate_interface_restriction",
+    "generate_subdomain_restriction"
 ]

@@ -21,7 +21,7 @@ from multiphenics.la.block_solve import block_solve
 from multiphenics.la.slepc_eigen_solver import SLEPcEigenSolver
 
 __all__ = [
-    'BlockSLEPcEigenSolver',
-    'block_solve',
-    'SLEPcEigenSolver'
+    "BlockSLEPcEigenSolver",
+    "block_solve",
+    "SLEPcEigenSolver"
 ]

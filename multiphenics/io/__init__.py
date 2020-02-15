@@ -19,5 +19,5 @@
 from multiphenics.io.xdmf_file import XDMFFile
 
 __all__ = [
-    'XDMFFile'
+    "XDMFFile"
 ]

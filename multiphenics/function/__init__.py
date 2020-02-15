@@ -24,10 +24,10 @@ from multiphenics.function.block_test_function import BlockTestFunction
 from multiphenics.function.block_trial_function import BlockTrialFunction
 
 __all__ = [
-    'BlockElement',
-    'BlockFunction',
-    'BlockFunctionSpace',
-    'block_split',
-    'BlockTestFunction',
-    'BlockTrialFunction'
+    "BlockElement",
+    "BlockFunction",
+    "BlockFunctionSpace",
+    "block_split",
+    "BlockTestFunction",
+    "BlockTrialFunction"
 ]

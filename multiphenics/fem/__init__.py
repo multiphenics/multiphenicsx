@@ -32,18 +32,18 @@ from multiphenics.fem.dirichlet_bc import DirichletBC
 from multiphenics.fem.dirichlet_bc_legacy import DirichletBCLegacy
 
 __all__ = [
-    'block_adjoint',
-    'block_assemble',
-    'block_derivative',
-    'BlockDirichletBC',
-    'BlockDirichletBCLegacy',
-    'BlockDofMap',
-    'block_flatten_nested',
-    'BlockForm',
-    'BlockForm1',
-    'BlockForm2',
-    'block_replace_zero',
-    'block_restrict',
-    'DirichletBC',
-    'DirichletBCLegacy'
+    "block_adjoint",
+    "block_assemble",
+    "block_derivative",
+    "BlockDirichletBC",
+    "BlockDirichletBCLegacy",
+    "BlockDofMap",
+    "block_flatten_nested",
+    "BlockForm",
+    "BlockForm1",
+    "BlockForm2",
+    "block_replace_zero",
+    "block_restrict",
+    "DirichletBC",
+    "DirichletBCLegacy"
 ]

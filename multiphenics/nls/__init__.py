@@ -20,6 +20,6 @@ from multiphenics.nls.block_newton_solver import BlockNewtonSolver
 from multiphenics.nls.block_nonlinear_problem import BlockNonlinearProblem
 
 __all__ = [
-    'BlockNewtonSolver',
-    'BlockNonlinearProblem'
+    "BlockNewtonSolver",
+    "BlockNonlinearProblem"
 ]

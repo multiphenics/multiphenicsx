@@ -19,5 +19,5 @@
 from multiphenics.mesh.mesh_restriction import MeshRestriction
 
 __all__ = [
-    'MeshRestriction'
+    "MeshRestriction"
 ]
