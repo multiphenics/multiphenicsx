@@ -36,8 +36,8 @@ s.t.
                         v = g       on \Gamma_{in} [id 1]
                         v = 0       on \Gamma_{w}  [id 2]
    p n - \nu \partial_n v = u       on \Gamma_{N}  [id 3]
-       
-             
+
+
 where
     \Omega                      unit square
     u \in [L^2(Gamma_C)]^2      control variable
@@ -47,7 +47,7 @@ where
     v_d                         desired state
     f                           forcing term
     g                           inlet profile
-    
+
 using an adjoint formulation solved by a one shot approach
 """
 

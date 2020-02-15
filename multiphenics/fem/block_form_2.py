@@ -63,26 +63,26 @@ class BlockForm2(BlockForm2_Base):
         # Store sizes for shape method
         self.N = N
         self.M = M
-    
+
     @property
     def shape(self):
         return (self.N, self.M)
-        
+
     def __getitem__(self, ij):
         assert isinstance(ij, tuple)
         assert len(ij) == 2
         return self._block_form[ij]
-        
+
     def block_function_spaces(self):
         return self._block_function_space
-        
+
     def __str__(self):
         matrix_of_str = empty((self.N, self.M), dtype=object)
         for I in range(self.N):
             for J in range(self.M):
                 matrix_of_str[I, J] = str(self._block_form[I, J])
         return str(matrix_of_str)
-        
+
     def __add__(self, other):
         if isinstance(other, BlockForm2):
             assert self.N == other.N
@@ -123,7 +123,7 @@ class BlockForm2(BlockForm2_Base):
             return BlockForm2(output_block_form, self._block_function_space)
         else:
             return NotImplemented
-            
+
     def __mul__(self, other):
         if isinstance(other, BlockFunction):
             assert self.M == other._num_sub_spaces
@@ -143,16 +143,16 @@ class BlockForm2(BlockForm2_Base):
             return BlockForm1(output_block_form, [self._block_function_space[0]])
         else:
             return NotImplemented
-            
+
     def __sub__(self, other):
         return self + (-1.*other)
-        
+
     def __radd__(self, other):
         return self.__add__(other)
-        
+
     def __rsub__(self, other):
         return -1.*self.__sub__(other)
-        
+
     def __rmul__(self, other):
         if isinstance(other, float):
             output_block_form = empty((self.N, self.M), dtype=object)
@@ -168,6 +168,6 @@ class BlockForm2(BlockForm2_Base):
             return BlockForm2(output_block_form, self._block_function_space)
         else:
             return NotImplemented
-    
+
     def __neg__(self):
         return -1.*self

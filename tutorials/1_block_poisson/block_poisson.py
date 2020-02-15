@@ -29,7 +29,7 @@ In this tutorial we first solve the problem
 
 -u'' = f    in Omega = [0, 1]
  u   = 0    on Gamma = {0, 1}
- 
+
 using standard FEniCS code.
 
 Then we use multiphenics to solve the system
@@ -41,7 +41,7 @@ subject to
 
  w_1 = 0    on Gamma = {0, 1}
  w_2 = 0    on Gamma = {0, 1}
- 
+
 By construction the solution of the system is
     (w_1, w_2) = (u, u)
 
@@ -57,7 +57,7 @@ def left(x):
 
 def right(x):
     return abs(x[0] - 1.) < finfo(float).eps
-        
+
 boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
 boundaries.mark(left, 1)
 boundaries.mark(right, 1)
@@ -84,15 +84,15 @@ def run_standard():
         zero_local.set(0.0)
     bdofs_V_1 = locate_dofs_topological(V, mesh.topology.dim - 1, boundaries_1)
     bc = DirichletBC(zero, bdofs_V_1)
-    
+
     # Solve the linear system
     u = Function(V)
     solve(a == f, u, bc, petsc_options=solver_parameters)
     u.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
-    
+
     # Return the solution
     return u
-    
+
 u = run_standard()
 
 def run_standard_block():
@@ -107,7 +107,7 @@ def run_standard_block():
           [3*inner(grad(u1), grad(v2))*dx + 3*u1*v2*dx, 4*inner(grad(u2), grad(v2))*dx + 4*u2*v2*dx]]
     ff = [300*sin(20*x0)*v1*dx,
           700*sin(20*x0)*v2*dx]
-    
+
     # Define block boundary conditions
     zero = Function(V1)
     with zero.vector.localForm() as zero_local:
@@ -117,12 +117,12 @@ def run_standard_block():
     bc1 = DirichletBC(zero, bdofs_V1_1, V1)
     bc2 = DirichletBC(zero, bdofs_V2_1, V2)
     bcs = [bc1, bc2]
-    
+
     # Assemble the block linear system
     AA = assemble_matrix_block(aa, bcs)
     AA.assemble()
     FF = assemble_vector_block(ff, aa, bcs)
-    
+
     # Solve the block linear system
     uu = create_vector_block(ff)
     ksp = PETSc.KSP()
@@ -141,10 +141,10 @@ def run_standard_block():
         )
     u1.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
     u2.vector.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
-    
+
     # Return the block solution
     return u1, u2
-    
+
 u1, u2 = run_standard_block()
 
 def run_multiphenics():
@@ -161,7 +161,7 @@ def run_multiphenics():
           [3*inner(grad(u1), grad(v2))*dx + 3*u1*v2*dx, 4*inner(grad(u2), grad(v2))*dx + 4*u2*v2*dx]]
     ff = [300*sin(20*x0)*v1*dx,
           700*sin(20*x0)*v2*dx]
-    
+
     # Define block boundary conditions
     zero = Function(V)
     with zero.vector.localForm() as zero_local:
@@ -172,15 +172,15 @@ def run_multiphenics():
     bc2 = DirichletBC(zero, bdofs_VV1_1, VV.sub(1))
     bcs = BlockDirichletBC([bc1,
                             bc2])
-    
+
     # Solve the block linear system
     uu = BlockFunction(VV)
     block_solve(aa, uu, ff, bcs, petsc_options=solver_parameters)
     uu1, uu2 = uu
-    
+
     # Return the block solution
     return uu1, uu2
-    
+
 uu1, uu2 = run_multiphenics()
 
 def compute_errors(u1, u2, uu1, uu2):

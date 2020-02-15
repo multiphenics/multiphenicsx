@@ -39,7 +39,7 @@ BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V)
 {
   // Initialize block vector
   init_block_vector();
-  
+
   // Initialize sub functions
   init_sub_functions();
 }
@@ -50,7 +50,7 @@ BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
 {
   // Initialize block vector
   init_block_vector();
-  
+
   // Apply from subfunctions
   apply("from subfunctions");
 }
@@ -61,7 +61,7 @@ BlockFunction::BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
 {
   // Initialize sub functions
   init_sub_functions();
-  
+
   // Apply to subfunctions
   apply("to subfunctions");
 }
@@ -96,7 +96,7 @@ void BlockFunction::init_block_vector()
 {
   // This method has been adapted from
   //    Function::init_vector
-  
+
   // Get dof map
   assert(_block_function_space);
   assert(_block_function_space->block_dofmap());

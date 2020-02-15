@@ -25,7 +25,7 @@ namespace multiphenics
 {
   namespace la
   {
-    
+
     /// This class initializes an eigen wrapper to a PETSc sub vector associated to a specific block.
     class BlockPETScSubVectorWrapper: public BlockPETScSubVectorReadWrapper
     {
@@ -35,22 +35,22 @@ namespace multiphenics
                                  std::size_t block_index,
                                  std::shared_ptr<const multiphenics::fem::BlockDofMap> block_dofmap,
                                  InsertMode insert_mode);
-      
+
       /// Destructor
       ~BlockPETScSubVectorWrapper();
-      
+
       /// Copy constructor (deleted)
       BlockPETScSubVectorWrapper(const BlockPETScSubVectorWrapper&) = delete;
 
       /// Move constructor (deleted)
       BlockPETScSubVectorWrapper(BlockPETScSubVectorWrapper&&) = delete;
-      
+
       // Assignment operator (deleted)
       BlockPETScSubVectorWrapper& operator=(const BlockPETScSubVectorWrapper&) = delete;
 
       /// Move assignment operator (deleted)
       BlockPETScSubVectorWrapper& operator=(BlockPETScSubVectorWrapper&&) = delete;
-      
+
     private:
       Vec _global_vector;
       const std::map<PetscInt, PetscInt> & _original_to_block;

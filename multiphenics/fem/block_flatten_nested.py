@@ -40,7 +40,7 @@ def block_flatten_nested(block_form, block_function_space):
         for block_form_I_nested in block_form:
             _flatten_nested_1(block_form_I_nested, flattened_block_form, block_function_space)
         return flattened_block_form
-        
+
 def _flatten_nested_2(form_or_block_form, flattened_block_form, block_function_space):
     is_zero = _is_zero(form_or_block_form)
     assert is_zero or isinstance(form_or_block_form, (array, Form, list))
@@ -100,7 +100,7 @@ def _flatten_nested_2(form_or_block_form, flattened_block_form, block_function_s
                 _flatten_nested_2(block_form_IJ_nested, flattened_block_form, block_function_space)
     else:
         raise AssertionError("Invalid case in _flatten_nested_2")
-        
+
 def _flatten_nested_1(form_or_block_form, flattened_block_form, block_function_space):
     is_zero = _is_zero(form_or_block_form)
     assert is_zero or isinstance(form_or_block_form, (array, Form, list))
@@ -137,12 +137,12 @@ def _flatten_nested_1(form_or_block_form, flattened_block_form, block_function_s
             _flatten_nested_1(block_form_I_nested, flattened_block_form, block_function_space)
     else:
         raise AssertionError("Invalid case in _flatten_nested_1")
-    
+
 def _extract_arguments(form):
     # This is a copy of extract_type in ufl.algorithms.analysis
     # without wrapping the result in a set
     return [o for e in iter_expressions(form) for o in traverse_unique_terminals(e) if isinstance(o, Argument)]
-    
+
 def _assert_flattened_form_2_is_square(block_form):
     N = len(block_form)
     M = len(block_form[0])

@@ -24,13 +24,13 @@ class MeshRestrictionXDMFFile(object):
     def __init__(self, mpi_comm, filename, encoding):
         self.filename = filename
         self.encoding = encoding
-        
+
     def __enter__(self):
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
         pass
-    
+
     def read_mesh_restriction(self, mesh):
         # Read in MeshFunctions
         mesh_functions = list()
@@ -43,7 +43,7 @@ class MeshRestrictionXDMFFile(object):
             mesh_functions.append(mesh_function_d)
         # Return MeshRestriction from MeshFunctions
         return MeshRestriction(mesh, mesh_functions)
-    
+
     def write(self, content):
         # Create output folder
         try:
@@ -56,7 +56,7 @@ class MeshRestrictionXDMFFile(object):
             mesh_function_d_filename = self.filename + "/mesh_function_" + str(d) + ".xdmf"
             with XDMFFile(mesh_function_d.mesh().mpi_comm(), mesh_function_d_filename, self.encoding) as xdmf_file:
                 xdmf_file.write(mesh_function_d)
-            
+
 def XDMFFile(mpi_comm, filename, encoding=dolfinx_XDMFFile.Encoding.HDF5):
     if filename.endswith(".rtc.xdmf"):
         return MeshRestrictionXDMFFile(mpi_comm, filename, encoding)

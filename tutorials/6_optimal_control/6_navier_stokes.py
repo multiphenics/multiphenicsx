@@ -35,7 +35,7 @@ s.t.
     - \nu \Delta v + v \cdot \nabla v + \nabla p = f + u   in \Omega
                                            div v = 0       in \Omega
                                                v = 0       on \partial\Omega
-             
+
 where
     \Omega                      unit square
     u \in [L^2(\Omega)]^2       control variable
@@ -45,7 +45,7 @@ where
     v_d                         desired state
     \nu                         kinematic viscosity
     f                           forcing term
-    
+
 using an adjoint formulation solved by a one shot approach
 """
 

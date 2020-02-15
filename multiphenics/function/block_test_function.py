@@ -22,6 +22,6 @@ from multiphenics.function.test_function import TestFunction
 class BlockTestFunction(BlockArgument):
     def __new__(cls, arg1):
         return BlockArgument.__new__(cls, arg1, TestFunction)
-        
+
     def __init__(self, arg1):
         BlockArgument.__init__(self, arg1, TestFunction)

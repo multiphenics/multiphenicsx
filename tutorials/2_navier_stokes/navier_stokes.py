@@ -44,7 +44,7 @@ def u_wall_eval(x):
 # Solver parameters
 def set_solver_parameters(solver):
     solver.max_it = 20
-    
+
 # Mesh
 mesh = XDMFFile(MPI.comm_world, "data/backward_facing_step.xdmf").read_mesh(GhostMode.none)
 subdomains = XDMFFile(MPI.comm_world, "data/backward_facing_step_subdomains.xdmf").read_mf_size_t(mesh)
@@ -90,7 +90,7 @@ def run_monolithic():
     inlet_bc = DirichletBC(u_in, bdofs_V_1, W.sub(0))
     wall_bc = DirichletBC(u_wall, bdofs_V_2, W.sub(0))
     bc = [inlet_bc, wall_bc]
-    
+
     # Class for interfacing with the Newton solver
     class NavierStokesProblem(NonlinearProblem):
         def __init__(self, F, up, bc, J):
@@ -101,7 +101,7 @@ def run_monolithic():
             self._J = J
             self._F_vec = None
             self._J_mat = None
-            
+
         def form(self, x):
             x.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
 
@@ -134,7 +134,7 @@ def run_monolithic():
 
     # Extract solutions
     return up
-    
+
 up_m = run_monolithic()
 
 # -------------------------------------------------- #
@@ -176,7 +176,7 @@ def run_block():
 
     # Extract solutions
     return up
-    
+
 up_b = run_block()
 
 # -------------------------------------------------- #

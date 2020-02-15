@@ -55,7 +55,7 @@ class Boundary_D(SubDomain):
                 (x[0] >= 0 and x[0] <= 1 and x[1] > 1-DOLFIN_EPS and x[1] < 1+DOLFIN_EPS)
             )
         )
-        
+
 class Boundary_C(SubDomain):
     def inside(self, x, on_boundary):
         return (
@@ -67,7 +67,7 @@ class Boundary_C(SubDomain):
                 (x[0] >= 1 and x[0] <= 3 and x[1] > 1-DOLFIN_EPS and x[1] < 1+DOLFIN_EPS)
             )
         )
-        
+
 class Boundary_N(SubDomain):
     def inside(self, x, on_boundary):
         return (
@@ -75,7 +75,7 @@ class Boundary_N(SubDomain):
                 and
             (x[0] > 3 - DOLFIN_EPS and x[0] < 3 + DOLFIN_EPS and x[1] >= 0 and x[1] <= 1)
         )
-        
+
 boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
 boundary_D = Boundary_D()
 boundary_D.mark(boundaries, 1)

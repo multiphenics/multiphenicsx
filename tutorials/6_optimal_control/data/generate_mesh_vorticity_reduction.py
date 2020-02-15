@@ -87,7 +87,7 @@ class Boundary_w(SubDomain):
                 r_x < r + DOLFIN_EPS
             )
         )
-        
+
 boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
 inlet = Inlet()
 inlet.mark(boundaries, 1) # Gamma_in

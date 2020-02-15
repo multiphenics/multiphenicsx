@@ -25,7 +25,7 @@ def DecorateGetEigenPair(SLEPcEigenSolver):
             assert isinstance(r_fun, Function)
             assert isinstance(c_fun, Function)
             return SLEPcEigenSolver.get_eigenpair(self, r_fun._cpp_object, c_fun._cpp_object, i)
-            
+
     return DecoratedSLEPcEigenSolver
 
 def SLEPcEigenSolver(A, B=None, bcs=None):
@@ -41,6 +41,6 @@ def SLEPcEigenSolver(A, B=None, bcs=None):
         SLEPcEigenSolver = DecorateGetEigenPair(cpp.la.CondensedSLEPcEigenSolver)
         eigen_solver = SLEPcEigenSolver(A.getComm().tompi4py())
         eigen_solver.set_boundary_conditions(bcs)
-        
+
     eigen_solver.set_operators(A, B)
     return eigen_solver

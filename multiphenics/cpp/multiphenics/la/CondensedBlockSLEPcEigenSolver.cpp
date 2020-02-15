@@ -52,7 +52,7 @@ void CondensedBlockSLEPcEigenSolver::set_boundary_conditions(std::shared_ptr<con
   assert(block_dofmap->index_map->block_size == 1);
   const auto block_index_map = block_dofmap->index_map;
   auto local_range = block_index_map->local_range();
-  
+
   // List all constrained local dofs
   std::set<PetscInt> constrained_local_dofs;
   for (std::size_t I(0); I < block_bcs->size(); ++I)
@@ -72,15 +72,15 @@ void CondensedBlockSLEPcEigenSolver::set_boundary_conditions(std::shared_ptr<con
       }
     }
   }
-  
+
   // List all unconstrained dofs
   std::vector<PetscInt> local_dofs(local_range[1] - local_range[0]);
   std::iota(local_dofs.begin(), local_dofs.end(), local_range[0]);
   std::vector<PetscInt> unconstrained_local_dofs;
-  std::set_difference(local_dofs.begin(), local_dofs.end(), 
-                      constrained_local_dofs.begin(), constrained_local_dofs.end(), 
+  std::set_difference(local_dofs.begin(), local_dofs.end(),
+                      constrained_local_dofs.begin(), constrained_local_dofs.end(),
                       std::inserter(unconstrained_local_dofs, unconstrained_local_dofs.begin()));
-                      
+
   // Generate IS accordingly
   PetscErrorCode ierr;
   ierr = ISCreateGeneral(comm, unconstrained_local_dofs.size(), unconstrained_local_dofs.data(),

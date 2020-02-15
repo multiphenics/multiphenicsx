@@ -35,7 +35,7 @@ def generate_subdomain_restriction(mesh, subdomains, subdomain_id, restriction=N
                     restriction[d].values[e] = 1
     # Return
     return restriction
-    
+
 # Helper function to generate boundary restriction based on a boundary id
 def generate_boundary_restriction(mesh, boundaries, boundary_id, restriction=None):
     D = mesh.topology.dim
@@ -53,7 +53,7 @@ def generate_boundary_restriction(mesh, boundaries, boundary_id, restriction=Non
                     restriction[d].values[e] = 1
     # Return
     return restriction
-    
+
 # Helper function to generate interface restriction based on a pair of neighboring subdomain ids
 def generate_interface_restriction(mesh, subdomains, subdomain_ids, restriction=None):
     assert isinstance(subdomain_ids, set)

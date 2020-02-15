@@ -26,7 +26,7 @@ def DecorateGetEigenPair(BlockSLEPcEigenSolver):
             assert isinstance(c_fun, BlockFunction)
             (lr, lc) = BlockSLEPcEigenSolver.get_eigenpair(self, r_fun._cpp_object, c_fun._cpp_object, i)
             return (lr, lc)
-            
+
     return DecoratedBlockSLEPcEigenSolver
 
 def BlockSLEPcEigenSolver(A, B=None, bcs=None):
@@ -37,6 +37,6 @@ def BlockSLEPcEigenSolver(A, B=None, bcs=None):
         SLEPcEigenSolver = DecorateGetEigenPair(cpp.la.CondensedBlockSLEPcEigenSolver)
         eigen_solver = SLEPcEigenSolver(A.getComm().tompi4py())
         eigen_solver.set_boundary_conditions(bcs)
-        
+
     eigen_solver.set_operators(A, B)
     return eigen_solver

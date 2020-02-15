@@ -34,7 +34,7 @@ min J(y, u) = 1/2 \int_{\Omega} (y - y_d)^2 dx + \alpha/2 \int_{\Omega} u^2 dx
 s.t.
     - \Delta y = f + u   in \Omega
              y = 1       on \partial \Omega
-             
+
 where
     \Omega                      unit square
     u \in L^2(\Omega)           control variable
@@ -42,7 +42,7 @@ where
     \alpha > 0                  penalization parameter
     y_d = piecewise constant    desired state
     f                           forcing term
-    
+
 using an adjoint formulation solved by a one shot approach.
 The test case is from section 5.1 of
 F. Negri, G. Rozza, A. Manzoni and A. Quarteroni. Reduced Basis Method for Parametrized Elliptic Optimal Control Problems. SIAM Journal on Scientific Computing, 35(5): A2316-A2340, 2013.

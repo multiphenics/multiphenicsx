@@ -39,8 +39,8 @@ void BlockDirichletBCLegacy::apply(const BlockDirichletBC& bcs, Mat A, PetscScal
   ierr = MatSetOption(A, MAT_KEEP_NONZERO_PATTERN, PETSC_TRUE);
   if (ierr != 0) petsc_error(ierr, __FILE__, "MatSetOption");
 
-  // Submatrices A_{IJ} do not support MatZeroRowsLocal, so we cannot delegate application of BCs to the legacy 
-  // DirichletBCLegacy::apply(bcs[I], A_{IJ}, diag*\delta_{IJ}). 
+  // Submatrices A_{IJ} do not support MatZeroRowsLocal, so we cannot delegate application of BCs to the legacy
+  // DirichletBCLegacy::apply(bcs[I], A_{IJ}, diag*\delta_{IJ}).
   // We will thus operate directly on the global matrix A.
   const auto block_dofmap = bcs.block_function_space()->block_dofmap();
   const auto block_index_map = block_dofmap->index_map;
@@ -62,7 +62,7 @@ void BlockDirichletBCLegacy::apply(const BlockDirichletBC& bcs, Mat A, PetscScal
         }
       }
     }
-    // Call MatZeroRows. Note that this will clear {A_{IJ} for all J != I}, because we are now clearing the 
+    // Call MatZeroRows. Note that this will clear {A_{IJ} for all J != I}, because we are now clearing the
     // global matrix A.
     MPI_Comm mpi_comm = MPI_COMM_NULL;
     ierr = PetscObjectGetComm((PetscObject) A, &mpi_comm);
@@ -88,7 +88,7 @@ void BlockDirichletBCLegacy::apply(const BlockDirichletBC& bcs, Vec b)
 {
   // This method is adapted from
   //    dolfinx::fem::set_bc in dolfinx/fem/assembler.cpp
-  
+
   for (std::size_t I(0); I < bcs.size(); ++I)
   {
     BlockPETScSubVectorWrapper b_I(b, I, bcs.block_function_space()->block_dofmap(), INSERT_VALUES);
@@ -110,7 +110,7 @@ void BlockDirichletBCLegacy::apply(const BlockDirichletBC& bcs, Vec b, const Vec
 {
   // This method is adapted from
   //    dolfinx::fem::set_bc in dolfinx/fem/assembler.cpp
-  
+
   for (std::size_t I(0); I < bcs.size(); ++I)
   {
     BlockPETScSubVectorWrapper b_I(b, I, bcs.block_function_space()->block_dofmap(), INSERT_VALUES);

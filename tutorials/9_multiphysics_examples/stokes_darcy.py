@@ -69,13 +69,13 @@ eps = finfo(float).eps
 
 def near(x, a):
     return abs(x - a) < eps
-    
+
 def above(x, a):
     return x > a - eps
-    
+
 def below(x, a):
     return x < a + eps
-    
+
 def between(x, interval):
     return logical_and(above(x, interval[0]), below(x, interval[1]))
 
@@ -93,7 +93,7 @@ def dright(x):
 
 def dleft(x):
     return logical_and(near(x[0], -1.0), between(x[1], (-2.0, 0.0)))
-   
+
 def bot(x):
     return near(x[1], -2.0)
 
@@ -102,7 +102,7 @@ def mstokes(x):
 
 def mdarcy(x):
     return below(x[1], 0.0)
-    
+
 def interface(x):
     return near(x[1], 0.0)
 

@@ -34,7 +34,7 @@ namespace multiphenics
       /// Create function on given block function space
       /// @param[in] V The block function space
       explicit BlockFunction(std::shared_ptr<const BlockFunctionSpace> V);
-      
+
       /// Create function on given block function space and with given subfunctions
       /// @param[in] V The block function space
       /// @param[in] sub_functions Existing subfunctions
@@ -49,7 +49,7 @@ namespace multiphenics
       /// @param[in] x The block vector
       BlockFunction(std::shared_ptr<const BlockFunctionSpace> V,
                     Vec x);
-                    
+
       /// Create function on given function space with a given vector
       /// and given subfunctions
       ///
@@ -70,7 +70,7 @@ namespace multiphenics
 
       /// Destructor
       virtual ~BlockFunction() = default;
-      
+
       /// Move assignment
       BlockFunction& operator=(BlockFunction&& v) = default;
 
@@ -89,15 +89,15 @@ namespace multiphenics
       /// Return vector of expansion coefficients (non-const version)
       /// @returns The vector of expansion coefficients.
       Vec block_vector();
-            
+
       /// Sync block vector and sub functions
       void apply(std::string mode, int only = -1);
-      
+
     private:
 
       // Initialize vector
       void init_block_vector();
-      
+
       // Initialize sub functions
       void init_sub_functions();
 
@@ -106,7 +106,7 @@ namespace multiphenics
 
       // The vector of expansion coefficients (local)
       Vec _block_vector;
-      
+
       // Sub functions
       std::vector<std::shared_ptr<const dolfinx::function::FunctionSpace>> _sub_function_spaces;
       std::vector<std::shared_ptr<dolfinx::function::Function>> _sub_functions;

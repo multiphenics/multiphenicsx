@@ -48,7 +48,7 @@ def block_replace_zero(block_form, index, block_function_space):
             return _get_zero_form(block_function_space, (I, ))
         else:
             return block_form[I]
-        
+
 def _is_zero(form_or_block_form):
     assert (
         isinstance(form_or_block_form, (array, cpp_Form, Form, list))
@@ -61,7 +61,7 @@ def _is_zero(form_or_block_form):
         _is_zero_form_cpp_code = """
             #include <dolfinx/fem/Form.h>
             #include <pybind11/pybind11.h>
-            
+
             bool is_zero_form(std::shared_ptr<dolfinx::fem::Form> form)
             {
               return (
@@ -72,7 +72,7 @@ def _is_zero(form_or_block_form):
                 form->integrals().num_integrals(dolfinx::fem::FormIntegrals::Type::exterior_facet) == 0
               );
             }
-            
+
             PYBIND11_MODULE(SIGNATURE, m)
             {
                 m.def("is_zero_form", &is_zero_form);
@@ -100,7 +100,7 @@ def _is_zero(form_or_block_form):
         return True
     else:
         raise AssertionError("Invalid case in _is_zero")
-    
+
 def _get_block_form_rank(form_or_block_form):
     assert (
         isinstance(form_or_block_form, (array, Form, list))
@@ -126,7 +126,7 @@ def _get_block_form_rank(form_or_block_form):
         return None
     else:
         raise AssertionError("Invalid case in _get_block_form_rank")
-    
+
 def _get_zero_form(block_function_space, index):
     assert len(index) in (1, 2)
     if len(index) == 2:

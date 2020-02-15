@@ -25,7 +25,7 @@ class Argument(ufl_Argument):
         assert isinstance(function_space, FunctionSpace)
         assert isinstance(block_function_space, BlockFunctionSpace) or block_function_space is None
         assert isinstance(block_index, int) or block_index is None
-    
+
         # Generate trial/test function
         ufl_Argument.__init__(self, function_space, number, part)
 
@@ -38,7 +38,7 @@ class Argument(ufl_Argument):
         else:
             self._block_function_space = None
             self._block_index = None
-    
+
     def block_function_space(self):
         if self._block_function_space is not None:
             return self._block_function_space

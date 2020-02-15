@@ -33,7 +33,7 @@ def pytest_collect_file(path, parent):
         "data" not in path.dirname
     ):
         return TutorialFile(path, parent)
-        
+
 def pytest_pycollect_makemodule(path, parent):
     """
     Hook into py.test to avoid collecting twice tutorial files explicitly provided on the command lines
@@ -44,37 +44,37 @@ def pytest_pycollect_makemodule(path, parent):
         "data" not in path.dirname
     ):
         return DoNothingFile(path, parent)
-    
+
 class TutorialFile(pytest.File):
     """
     Custom file handler for tutorial files
     """
-    
+
     def collect(self):
         yield TutorialItem("run_tutorial -> " + os.path.relpath(str(self.fspath), str(self.parent.fspath)), self)
-        
+
 class TutorialItem(pytest.Item):
     """
     Handle the execution of the tutorial
     """
-    
+
     def __init__(self, name, parent):
         super(TutorialItem, self).__init__(name, parent)
-        
+
     def runtest(self):
         os.chdir(self.parent.fspath.dirname)
         spec = importlib.util.spec_from_file_location(self.name, str(self.parent.fspath))
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         plt.close('all') # do not trigger matplotlib max_open_warning
-        
+
     def reportinfo(self):
         return self.fspath, 0, self.name
-        
+
 class DoNothingFile(pytest.File):
     """
     Custom file handler to avoid running twice tutorial files explicitly provided on the command lines
     """
-    
+
     def collect(self):
         return []

@@ -38,7 +38,7 @@ mesh = UnitSquareMesh(MPI.comm_world, 32, 32)
 # Create boundaries
 def wall(x):
     return logical_or(x[1] < 0 + finfo(float).eps, x[1] > 1 - finfo(float).eps)
-    
+
 boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
 boundaries.mark(wall, 1)
 boundaries_1 = where(boundaries.values == 1)[0]
@@ -114,9 +114,9 @@ def run_monolithic():
     eigensolver.get_eigenpair(r_fun, c_fun, 0)
     (u_fun_1, u_fun_2, p_fun) = (r_fun.sub(0).sub(0).collapse(), r_fun.sub(0).sub(1).collapse(), r_fun.sub(1).collapse())
     normalize(u_fun_1, u_fun_2, p_fun)
-    
+
     return (r, u_fun_1, u_fun_2, p_fun)
-    
+
 (eig_m, u_fun_1_m, u_fun_2_m, p_fun_m) = run_monolithic()
 
 # -------------------------------------------------- #
@@ -158,15 +158,15 @@ def run_block():
     assert abs(c) < 1.e-10
     assert r > 0., "r = " + str(r) + " is not positive"
     print("Inf-sup constant (block): ", sqrt(r))
-    
+
     # Extract eigenfunctions
     r_fun, c_fun = BlockFunction(W), BlockFunction(W)
     eigensolver.get_eigenpair(r_fun, c_fun, 0)
     (u_fun_1, u_fun_2, p_fun) = (r_fun.sub(0).sub(0).collapse(), r_fun.sub(0).sub(1).collapse(), r_fun.sub(1))
     normalize(u_fun_1, u_fun_2, p_fun)
-    
+
     return (r, u_fun_1, u_fun_2, p_fun)
-    
+
 (eig_b, u_fun_1_b, u_fun_2_b, p_fun_b) = run_block()
 
 # -------------------------------------------------- #
@@ -205,5 +205,5 @@ def run_error(eig_m, eig_b, u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m,
     select_error(err_1_plus, err_1_plus_norm, err_1_minus, err_1_minus_norm, u_fun_1_norm, "velocity 1")
     select_error(err_2_plus, err_2_plus_norm, err_2_minus, err_2_minus_norm, u_fun_2_norm, "velocity 2")
     select_error(err_p_plus, err_p_plus_norm, err_p_minus, err_p_minus_norm, p_fun_norm, "pressure")
-    
+
 run_error(eig_m, eig_b, u_fun_1_m, u_fun_1_b, u_fun_2_m, u_fun_2_b, p_fun_m, p_fun_b)

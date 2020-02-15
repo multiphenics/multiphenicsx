@@ -42,7 +42,7 @@ subdomains = MeshFunction("size_t", mesh, mesh.topology.dim, mesh.domains())
 class Boundary(SubDomain):
     def inside(self, x, on_boundary):
         return on_boundary
-        
+
 boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
 boundary = Boundary()
 boundary.mark(boundaries, 1)

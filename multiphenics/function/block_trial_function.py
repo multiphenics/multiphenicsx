@@ -22,6 +22,6 @@ from multiphenics.function.trial_function import TrialFunction
 class BlockTrialFunction(BlockArgument):
     def __new__(cls, arg1):
         return BlockArgument.__new__(cls, arg1, TrialFunction)
-        
+
     def __init__(self, arg1):
         BlockArgument.__init__(self, arg1, TrialFunction)

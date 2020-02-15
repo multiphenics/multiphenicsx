@@ -30,19 +30,19 @@ namespace multiphenics
   {
     /// Assemble block vector from given block form of rank 1
     Vec block_assemble(const BlockForm1& L);
-    
+
     /// Assemble block vector from given block form of rank 1, re-using existing vector
     void block_assemble(Vec b, const BlockForm1& L);
-    
+
     /// Assemble block vector from given block form of rank 2
     Mat block_assemble(const BlockForm2& a);
-    
+
     /// Assemble block vector from given block form of rank 2, re-using existing matrix
     void block_assemble(Mat A, const BlockForm2& a);
-    
+
     // Initialize block vector
     Vec init_vector(const BlockForm1& L);
-    
+
     // Initialize block matrix
     Mat init_matrix(const BlockForm2& a);
   }

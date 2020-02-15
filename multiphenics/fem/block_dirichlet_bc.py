@@ -55,20 +55,20 @@ class BlockDirichletBC(BlockDirichletBC_Base):
             self.bcs[bc_block_index].append(bc)
         # Call Parent
         BlockDirichletBC_Base.__init__(self, self.bcs, self._block_function_space._cpp_object)
-        
+
     def __getitem__(self, key):
         return self.bcs[key]
-        
+
     def __iter__(self):
         return self.bcs.__iter__()
-        
+
     def __len__(self):
         return len(self.bcs)
-        
+
     @property
     def block_function_space(self):
         return self._block_function_space
-    
+
     @staticmethod
     def _flatten_bcs(bcs):
         # https://stackoverflow.com/questions/2158395/flatten-an-irregular-list-of-lists
@@ -79,6 +79,6 @@ class BlockDirichletBC(BlockDirichletBC_Base):
                         yield sub
                 else:
                     yield el
-         
+
         # Flatten and remove any remaining None
         return [bc for bc in flatten(bcs) if bc is not None]

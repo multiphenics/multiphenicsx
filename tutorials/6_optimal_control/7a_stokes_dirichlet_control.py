@@ -40,8 +40,8 @@ s.t.
                 v \cdot n = 0       on \Gamma_{s}  [id 2]
  \nu \partial_n v \cdot t = 0       on \Gamma_{s}  [id 2]
    p n - \nu \partial_n v = 0       on \Gamma_{N}  [id 3]
-       
-             
+
+
 where
     \Omega                      unit square
     u \in [L^2(Gamma_C)]^2      control variable
@@ -49,7 +49,7 @@ where
     p \in L^2(\Omega)           state pressure variable
     \alpha > 0                  penalization parameter
     f                           forcing term
-    
+
 using an adjoint formulation solved by a one shot approach
 """
 

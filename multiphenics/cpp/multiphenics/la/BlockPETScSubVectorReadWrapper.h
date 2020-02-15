@@ -26,7 +26,7 @@ namespace multiphenics
 {
   namespace la
   {
-    
+
     /// This class initializes an eigen wrapper to a PETSc sub vector associated to a specific block.
     class BlockPETScSubVectorReadWrapper
     {
@@ -38,20 +38,20 @@ namespace multiphenics
 
       /// Destructor
       ~BlockPETScSubVectorReadWrapper();
-      
+
       /// Copy constructor (deleted)
       BlockPETScSubVectorReadWrapper(const BlockPETScSubVectorReadWrapper&) = delete;
 
       /// Move constructor (deleted)
       BlockPETScSubVectorReadWrapper(BlockPETScSubVectorReadWrapper&&) = delete;
-      
+
       // Assignment operator (deleted)
       BlockPETScSubVectorReadWrapper& operator=(const BlockPETScSubVectorReadWrapper&) = delete;
 
       /// Move assignment operator (deleted)
       BlockPETScSubVectorReadWrapper& operator=(BlockPETScSubVectorReadWrapper&&) = delete;
-      
-      /// Public attribute to store content to be added/inserted in an eigen matrix 
+
+      /// Public attribute to store content to be added/inserted in an eigen matrix
       Eigen::Map<Eigen::Matrix<PetscScalar, Eigen::Dynamic, 1>> content;
 
     private:

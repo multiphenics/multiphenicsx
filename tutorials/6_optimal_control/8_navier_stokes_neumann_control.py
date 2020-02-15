@@ -38,7 +38,7 @@ s.t.
                            pn - \nu \partial_n v = u       on \Gamma_2
                                                v = 0       on \Gamma_3
                                                v = 0       on \Gamma_4
-             
+
 where
     \Omega                      unit square
     u \in [L^2(\Gamma_2)]^2     control variable
@@ -48,7 +48,7 @@ where
     v_d                         desired state
     \nu                         kinematic viscosity
     f                           forcing term
-    
+
 using an adjoint formulation solved by a one shot approach
 """
 

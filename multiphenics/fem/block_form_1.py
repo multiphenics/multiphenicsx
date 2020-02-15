@@ -52,27 +52,27 @@ class BlockForm1(BlockForm1_Base):
         BlockForm1_Base.__init__(self, replaced_block_form.tolist(), [block_function_space_._cpp_object for block_function_space_ in block_function_space])
         # Store size for len and shape method
         self.N = N
-        
+
     def __len__(self):
         return self.N
-        
+
     @property
     def shape(self):
         return (self.N, )
-        
+
     def __getitem__(self, i):
         assert isinstance(i, int)
         return self._block_form[i]
-        
+
     def block_function_spaces(self):
         return self._block_function_space
-        
+
     def __str__(self):
         vector_of_str = empty((self.N, ), dtype=object)
         for I in range(self.N):
             vector_of_str[I] = str(self._block_form[I])
         return str(vector_of_str)
-        
+
     def __add__(self, other):
         if isinstance(other, BlockForm1):
             assert self.N == other.N
@@ -110,16 +110,16 @@ class BlockForm1(BlockForm1_Base):
             return BlockForm1(output_block_form, self._block_function_space)
         else:
             return NotImplemented
-            
+
     def __sub__(self, other):
         return self + (-1.*other)
-        
+
     def __radd__(self, other):
         return self.__add__(other)
-        
+
     def __rsub__(self, other):
         return -1.*self.__sub__(other)
-        
+
     def __rmul__(self, other):
         if isinstance(other, float):
             output_block_form = empty((self.N, ), dtype=object)
@@ -134,6 +134,6 @@ class BlockForm1(BlockForm1_Base):
             return BlockForm1(output_block_form, self._block_function_space)
         else:
             return NotImplemented
-    
+
     def __neg__(self):
         return -1.*self

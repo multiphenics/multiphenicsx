@@ -30,7 +30,7 @@ class DirichletBC(dolfinx_DirichletBC):
             self._function_space = value.function_space
         else:
             self._function_space = V
-        
+
     @property
     def function_space(self):
         return self._function_space

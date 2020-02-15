@@ -37,7 +37,7 @@ def test_single_block_no_restriction(mesh, FunctionSpace, BlockBCs):
     (lhs, block_lhs) = assemble_and_block_assemble_matrix(block_form)
     apply_bc_and_block_bc_matrix(lhs, block_lhs, block_bcs)
     assert_block_matrices_equal(lhs, block_lhs, block_V)
-    
+
 # Two blocks, no restriction
 @pytest.mark.parametrize("FunctionSpaces", get_function_spaces_2())
 @pytest.mark.parametrize("BlockBCs", get_block_bcs_2())

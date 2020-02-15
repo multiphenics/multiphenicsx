@@ -86,7 +86,7 @@ def block_restrict(block_input, block_function_sub_space):
         return BlockDirichletBC(sub_bcs, block_function_sub_space)
     else:
         raise AssertionError("Invalid arguments to block_restrict")
-        
+
 def _sub_component_to_component(block_function_sub_space, sub_component):
     if hasattr(block_function_sub_space, "sub_components_to_components"):
         return block_function_sub_space.sub_components_to_components[sub_component]

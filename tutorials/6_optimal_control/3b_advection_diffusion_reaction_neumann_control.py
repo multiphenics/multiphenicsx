@@ -36,7 +36,7 @@ s.t.
                                                            y = 1    on \Gamma_1
                                        \epsilon \partial_n y = u    on \Gamma_2
                                        \epsilon \partial_n y = 0    on \Gamma_3
-             
+
 where
     \Omega                      unit square
     u \in L^2(\Gamma_2)         control variable
@@ -47,7 +47,7 @@ where
     \beta in IR^2               advection field
     \sigma > 0                  reaction coefficient
     f                           forcing term
-    
+
 using an adjoint formulation solved by a one shot approach
 """
 

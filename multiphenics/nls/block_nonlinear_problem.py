@@ -31,10 +31,10 @@ class BlockNonlinearProblem(NonlinearProblem):
         # Storage for residual/jacobian tensors
         self.residual_block_vector = None
         self.jacobian_block_matrix = None
-        
+
     def form(self, block_x):
         block_x.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
-        
+
     def F(self, _):
         # Update block solution subfunctions based on the last argument, which has already been
         # stored in self.block_solution.block_vector
@@ -51,7 +51,7 @@ class BlockNonlinearProblem(NonlinearProblem):
             BlockDirichletBCLegacy.apply(self.bcs, self.residual_block_vector, self.block_solution.block_vector)
         # Return
         return self.residual_block_vector
-        
+
     def J(self, _):
         # No need to update block solution subfunctions, this has already been done in the residual
         # Assemble the block jacobian

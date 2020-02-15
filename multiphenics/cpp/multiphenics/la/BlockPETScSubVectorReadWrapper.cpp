@@ -55,7 +55,7 @@ BlockPETScSubVectorReadWrapper::BlockPETScSubVectorReadWrapper(
   if (ierr != 0) petsc_error(ierr, __FILE__, "VecGetValues");
   ierr = VecGhostRestoreLocalForm(x, &x_local_form);
   if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostRestoreLocalForm");
-  
+
   // Assign to an eigen matrix (indexed with respect to original indices)
   const auto original_index_map = block_dofmap->dofmaps()[block_index]->index_map;
   _content.resize(original_index_map->block_size*(original_index_map->size_local() + original_index_map->num_ghosts()), 0.);

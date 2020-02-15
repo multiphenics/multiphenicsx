@@ -37,7 +37,7 @@ s.t.
     \partial_n y = u       on \Gamma_2
     \partial_n y = 0       on \Gamma_3
                y = 0       on \Gamma_4
-             
+
 where
     \Omega                      unit square
     u \in L^2(\Gamma_2)         control variable
@@ -45,7 +45,7 @@ where
     \alpha > 0                  penalization parameter
     y_d = 1                     desired state
     f                           forcing term
-    
+
 using an adjoint formulation solved by a one shot approach.
 Note that this is an alternative, to Lagrange multipliers, weak imposition
 of y = y_d on \Gamma_2.

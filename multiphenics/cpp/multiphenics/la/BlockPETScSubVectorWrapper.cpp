@@ -53,7 +53,7 @@ BlockPETScSubVectorWrapper::~BlockPETScSubVectorWrapper()
     restricted_rows[sub_block_index] = block_index;
     restricted_values[sub_block_index] = content[original_index];
   }
-  
+
   // Insert values calling PETSc API
   PetscErrorCode ierr;
   Vec global_vector_local_form;

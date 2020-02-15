@@ -55,7 +55,7 @@ namespace multiphenics_wrappers
            &multiphenics::function::BlockFunctionSpace::sub)
       .def("extract_block_sub_space", &multiphenics::function::BlockFunctionSpace::extract_block_sub_space)
       .def("tabulate_dof_coordinates", &multiphenics::function::BlockFunctionSpace::tabulate_dof_coordinates);
-      
+
     // multiphenics::function::BlockFunction
     py::class_<multiphenics::function::BlockFunction, std::shared_ptr<multiphenics::function::BlockFunction>>
       (m, "BlockFunction", "A finite element block function")

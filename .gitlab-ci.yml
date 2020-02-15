@@ -18,7 +18,7 @@ build:
   script:
     - docker build --pull -t $TESTING_IMAGE -f docker/Dockerfile .
     - docker push $TESTING_IMAGE
-    
+
 import:
   image:
     name: $TESTING_IMAGE
@@ -31,7 +31,7 @@ import:
     paths:
       - jitfailure*
     when: on_failure
-    
+
 flake8:
   image:
     name: $TESTING_IMAGE
@@ -49,7 +49,7 @@ flake8:
     paths:
       - pytest_flake8.html
     when: on_failure
-    
+
 tutorials_serial:
   image:
     name: $TESTING_IMAGE
@@ -63,7 +63,7 @@ tutorials_serial:
     paths:
       - pytest_tutorials_serial.html
     when: on_failure
-    
+
 tests_serial:
   image:
     name: $TESTING_IMAGE
@@ -77,7 +77,7 @@ tests_serial:
     paths:
       - pytest_tests_serial.html
     when: on_failure
-    
+
 .tutorials_parallel:
   image:
     name: $TESTING_IMAGE
@@ -91,7 +91,7 @@ tests_serial:
     paths:
       - pytest_tutorials_parallel.html
     when: on_failure
-    
+
 .tests_parallel:
   image:
     name: $TESTING_IMAGE

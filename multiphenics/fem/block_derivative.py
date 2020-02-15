@@ -37,7 +37,7 @@ def block_derivative(F, u, du):
     block_V = block_V[0]
     assert isinstance(u, BlockFunction)
     assert isinstance(du, BlockTrialFunction)
-    
+
     # Compute the derivative
     assert len(F) == len(u) == len(du)
     J = empty((len(F), len(u)), dtype=object)

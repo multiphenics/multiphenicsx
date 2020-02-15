@@ -34,7 +34,7 @@ min J(y, u) = 1/2 \int_{\Omega} (y - y_d)^2 dx + \alpha/2 \int_{\Omega} u^2 dx
 s.t.
     - \epsilon \Delta y + \beta \cdot \nabla y + \sigma y = f + u       in \Omega
                                                         y = 0           on \partial \Omega
-             
+
 where
     \Omega                      unit square
     u \in L^2(\Omega)           control variable
@@ -45,7 +45,7 @@ where
     \beta in IR^2               advection field
     \sigma > 0                  reaction coefficient
     f                           forcing term
-    
+
 using an adjoint formulation solved by a one shot approach
 """
 

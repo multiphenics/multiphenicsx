@@ -72,7 +72,7 @@ J = block_derivative(F, ul, dul)
 # SOLVE #
 def set_solver_parameters(solver):
     solver.max_it = 20
-    
+
 problem = BlockNonlinearProblem(F, ul, None, J)
 solver = BlockNewtonSolver(mesh.mpi_comm())
 set_solver_parameters(solver)
@@ -89,7 +89,7 @@ class LagrangeMultipliersNonlinearProblem(NonlinearProblem):
         self._J = J
         self._F_vec = None
         self._J_mat = None
-        
+
     def form(self, x):
         x.ghostUpdate(addv=PETSc.InsertMode.INSERT, mode=PETSc.ScatterMode.FORWARD)
 
@@ -113,7 +113,7 @@ class LagrangeMultipliersNonlinearProblem(NonlinearProblem):
         self._J_mat.assemble()
         DirichletBCLegacy.apply(self._bc, self._J_mat, 1.0)
         return self._J_mat
-        
+
 u_ex = Function(V)
 F_ex = replace(F[0], {u: u_ex, l: 0})
 J_ex = derivative(F_ex, u_ex, du)

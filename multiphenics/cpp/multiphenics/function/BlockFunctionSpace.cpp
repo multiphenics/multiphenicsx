@@ -68,7 +68,7 @@ BlockFunctionSpace::BlockFunctionSpace(std::shared_ptr<const Mesh> mesh,
 //-----------------------------------------------------------------------------
 void BlockFunctionSpace::_init_mesh_and_elements_and_dofmaps_from_function_spaces() {
   _mesh = _function_spaces[0]->mesh();
-  for (auto& function_space : _function_spaces) 
+  for (auto& function_space : _function_spaces)
   {
     assert(_mesh == function_space->mesh());
     _elements.push_back(function_space->element());
@@ -78,7 +78,7 @@ void BlockFunctionSpace::_init_mesh_and_elements_and_dofmaps_from_function_space
 //-----------------------------------------------------------------------------
 void BlockFunctionSpace::_init_function_spaces_from_elements_and_dofmaps() {
   assert(_elements.size() == _dofmaps.size());
-  for (unsigned int i(0); i < _elements.size(); ++i) 
+  for (unsigned int i(0); i < _elements.size(); ++i)
   {
     std::shared_ptr<const FunctionSpace> function_space_i(new FunctionSpace(_mesh, _elements[i], _dofmaps[i]));
     _function_spaces.push_back(function_space_i);
@@ -92,21 +92,21 @@ void BlockFunctionSpace::_init_block_dofmap_from_dofmaps_and_restrictions() {
 bool BlockFunctionSpace::operator==(const BlockFunctionSpace& V) const
 {
   // Compare pointers to shared objects
-  
+
   // -> elements
   if (_elements.size() != V.elements().size())
     return false;
   for (unsigned int i(0); i < _elements.size(); ++i)
     if (_elements[i].get() != V.elements()[i].get())
       return false;
-      
+
   // -> dofmaps
   if (_dofmaps.size() != V.dofmaps().size())
     return false;
   for (unsigned int i(0); i < _dofmaps.size(); ++i)
     if (_dofmaps[i].get() != V.dofmaps()[i].get())
       return false;
-      
+
   // -> restrictions
   if (_restrictions.size() != V.restrictions().size())
     return false;
@@ -114,16 +114,16 @@ bool BlockFunctionSpace::operator==(const BlockFunctionSpace& V) const
     for (unsigned int d(0); d < _restrictions[i].size(); ++d)
       if (_restrictions[i][d].get() != V.restrictions()[i][d].get())
         return false;
-      
+
   // -> function_spaces
   if (_function_spaces.size() != V.function_spaces().size())
     return false;
   for (unsigned int i(0); i < _function_spaces.size(); ++i)
     if (_function_spaces[i].get() != V.function_spaces()[i].get())
       return false;
-      
+
   // -> mesh and block_dofmap
-  return 
+  return
     _mesh.get() == V.mesh().get() &&
     _block_dofmap.get() == V.block_dofmap().get();
 }
@@ -181,7 +181,7 @@ BlockFunctionSpace::extract_block_sub_space(const std::vector<std::size_t>& comp
     if (with_restrictions)
       for (auto c: component)
         sub_restrictions.push_back(_restrictions[c]);
-    
+
     // Create new block sub space
     std::shared_ptr<BlockFunctionSpace>
       new_block_sub_space(new BlockFunctionSpace(_mesh, sub_elements, sub_dofmaps, sub_restrictions));
@@ -234,22 +234,22 @@ BlockFunctionSpace::tabulate_dof_coordinates() const
   // Get local size
   assert(_block_dofmap);
   std::size_t local_size = _block_dofmap->index_map->size_local() + _block_dofmap->index_map->num_ghosts();
-  
+
   // Vector to hold coordinates and return
   Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor> dof_coordinates =
     Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor>::Zero(local_size, 3);
-  
+
   // Loop over subspaces
   for (unsigned int i(0); i < _function_spaces.size(); ++i)
   {
     auto function_space = _function_spaces[i];
-    
+
     // Get dof coordinates of function space
     auto sub_dof_coordinates = function_space->tabulate_dof_coordinates();
-    
+
     // Get original to block numbering
     auto original_to_block = _block_dofmap->original_to_block(i);
-    
+
     // Loop over all original dofs
     for (unsigned int d(0); d < sub_dof_coordinates.rows(); ++d)
     {
@@ -259,7 +259,7 @@ BlockFunctionSpace::tabulate_dof_coordinates() const
       }
     }
   }
-  
+
   return dof_coordinates;
 }
 //-----------------------------------------------------------------------------

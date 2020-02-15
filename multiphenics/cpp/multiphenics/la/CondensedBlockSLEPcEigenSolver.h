@@ -47,7 +47,7 @@ namespace multiphenics
 
       /// Set boundary conditions. This method must be called *before* setting operators.
       void set_boundary_conditions(std::shared_ptr<const fem::BlockDirichletBC> block_bcs);
-      
+
     private:
       /// Hide Parent's version of boundary conditions setter
       using CondensedSLEPcEigenSolver::set_boundary_conditions;

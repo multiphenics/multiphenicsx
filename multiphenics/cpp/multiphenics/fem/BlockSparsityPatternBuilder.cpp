@@ -49,7 +49,7 @@ void BlockSparsityPatternBuilder::interior_facets(
   const int D = topology.dim();
   if (!topology.connectivity(D - 1, 0))
     throw std::runtime_error("Topology facets have not been created.");
-    
+
   auto connectivity = topology.connectivity(D - 1, D);
   if (!connectivity)
     throw std::runtime_error("Facet-cell connectivity has not been computed.");
@@ -93,11 +93,11 @@ void BlockSparsityPatternBuilder::exterior_facets(
   const int D = topology.dim();
   if (!topology.connectivity(D - 1, 0))
     throw std::runtime_error("Topology facets have not been created.");
-    
+
   auto connectivity = topology.connectivity(D - 1, D);
   if (!connectivity)
     throw std::runtime_error("Facet-cell connectivity has not been computed.");
-    
+
   for (int f = 0; f < connectivity->num_nodes(); ++f)
   {
     // Skip interior facets

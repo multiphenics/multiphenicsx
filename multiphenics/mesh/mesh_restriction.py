@@ -35,13 +35,13 @@ class MeshRestriction(object):
             self._mesh_functions = mesh_functions
         else:
             self._mesh_functions = [MeshFunction("size_t", mesh, d, 0) for d in range(D + 1)]
-            
+
     def mesh(self):
         return self._mesh
-        
+
     def __getitem__(self, dim):
         return self._mesh_functions[dim]
-        
+
     def mark(self, marking_function):
         assert isinstance(marking_function, types.FunctionType)
         D = self._mesh.topology.dim

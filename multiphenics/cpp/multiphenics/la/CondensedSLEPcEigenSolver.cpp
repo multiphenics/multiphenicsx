@@ -44,12 +44,12 @@ CondensedSLEPcEigenSolver::~CondensedSLEPcEigenSolver()
   PetscErrorCode ierr;
   ierr = ISDestroy(&_is);
   if (ierr != 0) petsc_error(ierr, __FILE__, "ISDestroy");
-  
+
   if (_condensed_A) {
     ierr = MatDestroy(&_condensed_A);
     if (ierr != 0) petsc_error(ierr, __FILE__, "MatDestroy");
   }
-  
+
   if (_condensed_B) {
     ierr = MatDestroy(&_condensed_B);
     if (ierr != 0) petsc_error(ierr, __FILE__, "MatDestroy");
@@ -70,7 +70,7 @@ void CondensedSLEPcEigenSolver::set_boundary_conditions(std::vector<std::shared_
   #endif
   auto local_range = dofmap->index_map->local_range();
   int dofmap_block_size = dofmap->index_map->block_size;
-  
+
   // List all constrained local dofs
   std::set<PetscInt> constrained_local_dofs;
   for (auto & bc : bcs)
@@ -81,15 +81,15 @@ void CondensedSLEPcEigenSolver::set_boundary_conditions(std::vector<std::shared_
       constrained_local_dofs.insert(dofmap->index_map->local_to_global(bc_local_dofs[i]/dofmap_block_size)*dofmap_block_size + (bc_local_dofs[i]%dofmap_block_size));
     }
   }
-  
+
   // List all unconstrained dofs
   std::vector<PetscInt> local_dofs(dofmap_block_size*(local_range[1] - local_range[0]));
   std::iota(local_dofs.begin(), local_dofs.end(), dofmap_block_size*local_range[0]);
   std::vector<PetscInt> unconstrained_local_dofs;
-  std::set_difference(local_dofs.begin(), local_dofs.end(), 
-                      constrained_local_dofs.begin(), constrained_local_dofs.end(), 
+  std::set_difference(local_dofs.begin(), local_dofs.end(),
+                      constrained_local_dofs.begin(), constrained_local_dofs.end(),
                       std::inserter(unconstrained_local_dofs, unconstrained_local_dofs.begin()));
-                      
+
   // Generate IS accordingly
   PetscErrorCode ierr;
   ierr = ISCreateGeneral(comm, unconstrained_local_dofs.size(), unconstrained_local_dofs.data(),
@@ -116,11 +116,11 @@ void CondensedSLEPcEigenSolver::set_operators(const Mat A, const Mat B)
 Mat CondensedSLEPcEigenSolver::_condense_matrix(const Mat mat) const
 {
   PetscErrorCode ierr;
-  
+
   Mat condensed_mat;
   ierr = MatCreateSubMatrix(mat, _is, _is, MAT_INITIAL_MATRIX, &condensed_mat);
   if (ierr != 0) petsc_error(ierr, __FILE__, "MatCreateSubMatrix");
-  
+
   return condensed_mat;
 }
 //-----------------------------------------------------------------------------
@@ -137,7 +137,7 @@ void CondensedSLEPcEigenSolver::get_eigenpair(double& lr, double& lc,
   if (ii < num_computed_eigenvalues)
   {
     PetscErrorCode ierr;
-    
+
     // Condense input vectors
     Vec condensed_r_vec;
     ierr = VecGetSubVector(r, _is, &condensed_r_vec);
@@ -145,10 +145,10 @@ void CondensedSLEPcEigenSolver::get_eigenpair(double& lr, double& lc,
     Vec condensed_c_vec;
     ierr = VecGetSubVector(c, _is, &condensed_c_vec);
     if (ierr != 0) petsc_error(ierr, __FILE__, "VecGetSubVector");
-    
+
     // Get eigen pairs (as in Parent)
     EPSGetEigenpair(this->eps(), ii, &lr, &lc, condensed_r_vec, condensed_c_vec);
-    
+
     // Restore input vectors
     ierr = VecRestoreSubVector(r, _is, &condensed_r_vec);
     if (ierr != 0) petsc_error(ierr, __FILE__, "VecRestoreSubVector");

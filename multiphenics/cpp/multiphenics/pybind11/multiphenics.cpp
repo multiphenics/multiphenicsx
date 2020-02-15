@@ -31,7 +31,7 @@ PYBIND11_MODULE(SIGNATURE, m)
 {
   // Create module for C++ wrappers
   m.doc() = "multiphenics Python interface";
-  
+
   // Create function submodule
   py::module function = m.def_submodule("function", "Function module");
   multiphenics_wrappers::function(function);

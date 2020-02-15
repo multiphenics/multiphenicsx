@@ -125,7 +125,7 @@ Mat multiphenics::fem::init_matrix(const BlockForm2& a)
 {
   // This method is adapted from
   //    dolfinx::fem::create_matrix in dolfinx/fem/utils.cpp
-  
+
   // Get mesh
   assert(a.mesh());
   const Mesh& mesh = *(a.mesh());
@@ -137,10 +137,10 @@ Mat multiphenics::fem::init_matrix(const BlockForm2& a)
     a.block_function_spaces()[0]->block_dofmap()->index_map,
     a.block_function_spaces()[1]->block_dofmap()->index_map
   }};
-      
+
   // Create sparsity pattern
   SparsityPattern pattern(mesh.mpi_comm(), index_maps);
-  
+
   // Build sparsity pattern for each block
   for (std::size_t i = 0; i < a.block_size(0); i++)
   {
@@ -188,7 +188,7 @@ Mat multiphenics::fem::init_matrix(const BlockForm2& a)
       }
     }
   }
-  
+
   // Finalize sparsity pattern
   pattern.assemble();
   t0.stop();
@@ -199,12 +199,12 @@ Mat multiphenics::fem::init_matrix(const BlockForm2& a)
   t1.stop();
 
   PetscErrorCode ierr;
-  
+
   // Get size
   std::array<PetscInt, 2> size;
   ierr = MatGetSize(A, &size[0], &size[1]);
   if (ierr != 0) petsc_error(ierr, __FILE__, "MatGetSize");
-  
+
   // Get local row range
   std::array<PetscInt, 2> row_range;
   ierr = MatGetOwnershipRange(A, &row_range[0], &row_range[1]);
@@ -224,7 +224,7 @@ Mat multiphenics::fem::init_matrix(const BlockForm2& a)
       if (ierr != 0) petsc_error(ierr, __FILE__, "MatSetValue");
     }
   }
-  
+
   // Wait with assembly flush
   {
     PetscErrorCode ierr;
@@ -233,7 +233,7 @@ Mat multiphenics::fem::init_matrix(const BlockForm2& a)
     ierr = MatAssemblyEnd(A, MAT_FLUSH_ASSEMBLY);
     if (ierr != 0) petsc_error(ierr, __FILE__, "MatAssemblyEnd");
   }
-  
+
   // Return
   return A;
 }

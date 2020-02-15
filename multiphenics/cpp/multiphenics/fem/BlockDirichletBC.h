@@ -38,13 +38,13 @@ namespace multiphenics
 
       /// Destructor
       ~BlockDirichletBC();
-      
+
       /// Return the block function space
       ///
       /// @return multiphenics::function::BlockFunctionSpace
       ///         The block function space to which boundary conditions are applied.
       std::shared_ptr<const multiphenics::function::BlockFunctionSpace> block_function_space() const;
-      
+
       std::size_t size() const;
       std::vector<std::shared_ptr<const dolfinx::fem::DirichletBC>> operator[](std::size_t I) const;
 

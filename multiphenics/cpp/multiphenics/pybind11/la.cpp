@@ -67,7 +67,7 @@ namespace multiphenics_wrappers
              if (ierr != 0) dolfinx::la::petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
              return py::make_tuple(lr, lc);
            });
-           
+
     // dolfinx::la::CondensedSLEPcEigenSolver
     py::class_<dolfinx::la::CondensedSLEPcEigenSolver, std::shared_ptr<dolfinx::la::CondensedSLEPcEigenSolver>, dolfinx::la::SLEPcEigenSolver>
       (m, "CondensedSLEPcEigenSolver", "multiphenics CondensedSLEPcEigenSolver object")
@@ -91,7 +91,7 @@ namespace multiphenics_wrappers
              if (ierr != 0) dolfinx::la::petsc_error(ierr, __FILE__, "VecGhostUpdateEnd");
              return py::make_tuple(lr, lc);
            });
-    
+
     // multiphenics::la::CondensedBlockSLEPcEigenSolver
     py::class_<multiphenics::la::CondensedBlockSLEPcEigenSolver, std::shared_ptr<multiphenics::la::CondensedBlockSLEPcEigenSolver>, dolfinx::la::CondensedSLEPcEigenSolver>
       (m, "CondensedBlockSLEPcEigenSolver", "multiphenics CondensedBlockSLEPcEigenSolver object")

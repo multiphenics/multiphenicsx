@@ -37,7 +37,7 @@ BlockPETScSubMatrix::BlockPETScSubMatrix(
   MPI_Comm mpi_comm = MPI_COMM_NULL;
   ierr = PetscObjectGetComm((PetscObject) A, &mpi_comm);
   if (ierr != 0) petsc_error(ierr, __FILE__, "PetscObjectGetComm");
-  
+
   // Extract sub matrix
   for (std::size_t i = 0; i < 2; ++i)
   {
@@ -48,12 +48,12 @@ BlockPETScSubMatrix::BlockPETScSubMatrix(
   }
   ierr = MatGetLocalSubMatrix(_global_matrix, _is[0], _is[1], &_A);
   if (ierr != 0) petsc_error(ierr, __FILE__, "MatGetLocalSubMatrix");
-  
+
   // Initialization of local to global PETSc map.
   // Here "local" is intended with respect to the original space, while
   // "global" is intended with respect to original matrix _global_matrix
   // for entries in restriction, -1 for entries not in restriction.
-  
+
   // Allocate data for local-to-global map in an STL vector
   std::array<std::vector<PetscInt>, 2> stl_local_to_global;
   for (std::size_t i = 0; i < 2; ++i)
@@ -62,7 +62,7 @@ BlockPETScSubMatrix::BlockPETScSubMatrix(
     const auto block_index_map = block_dofmaps[i]->index_map;
     const auto original_index_map = block_dofmaps[i]->dofmaps()[block_indices[i]]->index_map;
     std::size_t unrestricted_ghosted_size = original_index_map->block_size*(original_index_map->size_local() + original_index_map->num_ghosts());
-    
+
     auto & map = stl_local_to_global[i];
     map.resize(unrestricted_ghosted_size);
     for (std::size_t original_index = 0; original_index < unrestricted_ghosted_size; original_index++)
@@ -77,7 +77,7 @@ BlockPETScSubMatrix::BlockPETScSubMatrix(
       }
     }
   }
-  
+
   // Create PETSc local-to-global map as index set
   std::array<ISLocalToGlobalMapping, 2> petsc_local_to_global;
   for (std::size_t i = 0; i < 2; ++i)
@@ -86,11 +86,11 @@ BlockPETScSubMatrix::BlockPETScSubMatrix(
                                         PETSC_COPY_VALUES, &petsc_local_to_global[i]);
     if (ierr != 0) petsc_error(ierr, __FILE__, "ISLocalToGlobalMappingCreate");
   }
-  
+
   // Set matrix local-to-global maps
   ierr = MatSetLocalToGlobalMapping(_A, petsc_local_to_global[0], petsc_local_to_global[1]);
   if (ierr != 0) petsc_error(ierr, __FILE__, "MatSetLocalToGlobalMapping");
-  
+
   // Clean up local-to-global maps
   for (std::size_t i = 0; i < 2; ++i)
   {
@@ -102,7 +102,7 @@ BlockPETScSubMatrix::BlockPETScSubMatrix(
 BlockPETScSubMatrix::~BlockPETScSubMatrix()
 {
   PetscErrorCode ierr;
-  
+
   // --- restore the global matrix --- //
   ierr = MatRestoreLocalSubMatrix(_global_matrix, _is[0], _is[1], &_A);
   if (ierr != 0) petsc_error(ierr, __FILE__, "MatRestoreLocalSubMatrix");

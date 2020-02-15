@@ -35,7 +35,7 @@ def BlockForm(block_form, block_function_space=None, block_form_rank=None):
             return BlockForm1(replaced_block_form, block_function_space)
     else:
         return block_form
-        
+
 def _block_form_preprocessing(block_form, block_function_space=None, block_form_rank=None):
     assert isinstance(block_form, (array, list))
     if block_form_rank is None:
@@ -58,10 +58,10 @@ def _block_form_preprocessing(block_form, block_function_space=None, block_form_
             assert len(block_function_space) == 2
             assert isinstance(block_function_space[0], BlockFunctionSpace)
             assert isinstance(block_function_space[1], BlockFunctionSpace)
-        
+
         # Flatten nested blocks, if any
         block_form = block_flatten_nested(block_form, block_function_space)
-        
+
         # Return preprocessed data
         return (block_form, block_function_space, block_form_rank)
     elif block_form_rank == 1:
@@ -76,16 +76,16 @@ def _block_form_preprocessing(block_form, block_function_space=None, block_form_
         else:
             assert isinstance(block_function_space, BlockFunctionSpace)
             block_function_space = [block_function_space]
-        
+
         # Flatten nested blocks, if any
         block_form = block_flatten_nested(block_form, block_function_space)
-        
+
         # Return preprocessed data
         return (block_form, block_function_space, block_form_rank)
 
 def _extract_block_function_space_2(block_form):
     block_function_space = dict()
-    
+
     for block_form_I in block_form:
         block_function_space_I = _extract_block_function_space_1(block_form_I)
         for (number, block_function_space_number) in block_function_space_I.items():
@@ -93,12 +93,12 @@ def _extract_block_function_space_2(block_form):
                 assert block_function_space[number] == block_function_space_number
             else:
                 block_function_space[number] = block_function_space_number
-                        
+
     return block_function_space
-    
+
 def _extract_block_function_space_1(block_form):
     block_function_space = dict()
-    
+
     for block_form_I in block_form:
         if _is_zero(block_form_I):
             continue
@@ -121,5 +121,5 @@ def _extract_block_function_space_1(block_form):
                     assert block_function_space[number] == block_function_space_arg
                 else:
                     block_function_space[number] = block_function_space_arg
-                        
+
     return block_function_space

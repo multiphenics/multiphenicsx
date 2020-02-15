@@ -35,7 +35,7 @@ s.t.
     - \Delta v + \nabla p = f + u   in \Omega
                     div v = 0       in \Omega
                         v = 0       on \partial\Omega
-             
+
 where
     \Omega                      unit square
     u \in [L^2(\Omega)]^2       control variable
@@ -44,7 +44,7 @@ where
     \alpha > 0                  penalization parameter
     v_d                         desired state
     f                           forcing term
-    
+
 using an adjoint formulation solved by a one shot approach
 """
 

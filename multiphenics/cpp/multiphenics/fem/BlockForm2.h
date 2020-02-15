@@ -38,10 +38,10 @@ namespace multiphenics
       ///         Vector of function spaces, of size 2.
       BlockForm2(std::vector<std::vector<std::shared_ptr<const dolfinx::fem::Form>>> forms,
                  std::vector<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>> block_function_spaces);
-           
+
       /// Destructor
       ~BlockForm2();
-      
+
       /// Extract common mesh from form
       ///
       /// @return Mesh
@@ -53,11 +53,11 @@ namespace multiphenics
       /// @return    std::vector<_FunctionSpace_>
       ///         Vector of function space shared pointers.
       std::vector<std::shared_ptr<const multiphenics::function::BlockFunctionSpace>> block_function_spaces() const;
-            
+
       unsigned int block_size(unsigned int d) const;
-      
+
       const dolfinx::fem::Form & operator()(std::size_t i, std::size_t j) const;
-      
+
     protected:
       // Block forms
       std::vector<std::vector<std::shared_ptr<const dolfinx::fem::Form>>> _forms;

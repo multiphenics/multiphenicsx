@@ -27,7 +27,7 @@ from test_utils import assert_forms_equal, get_list_of_functions_2
 @pytest.fixture(scope="module")
 def mesh():
     return UnitSquareMesh(MPI.comm_world, 4, 4)
-    
+
 # Case 0a: simple forms (no nesting), standard forms [linear form]
 def test_case_0a_linear(mesh):
     # Function spaces
@@ -64,7 +64,7 @@ def test_case_0a_bilinear(mesh):
     for i in range(A.block_size(0)):
         for j in range(A.block_size(1)):
             assert_forms_equal(A[i, j], a[i][j])
-    
+
 # Case 0b: simple forms (no nesting), define a useless subspace (equal to original space) and assemble on subspace [linear form]
 def test_case_0b_linear(mesh):
     # Function spaces
@@ -84,7 +84,7 @@ def test_case_0b_linear(mesh):
     # Assert equality for restricted linear form
     for i in range(F_sub.block_size(0)):
         assert_forms_equal(F_sub[i], f[i])
-    
+
 # Case 0b: simple forms (no nesting), define a useless subspace (equal to original space) and assemble on subspace [bilinear form]
 def test_case_0b_bilinear(mesh):
     # Function spaces
@@ -107,7 +107,7 @@ def test_case_0b_bilinear(mesh):
     for i in range(A_sub.block_size(0)):
         for j in range(A_sub.block_size(1)):
             assert_forms_equal(A_sub[i, j], a[i][j])
-            
+
 # Case 0c: simple forms (no nesting), define the velocity subspace and assemble on subspace [linear form]
 def test_case_0c_linear(mesh):
     # Function spaces
@@ -126,7 +126,7 @@ def test_case_0c_linear(mesh):
     F_sub = block_restrict(f, W_sub)
     # Assert equality for restricted linear form
     assert_forms_equal(F_sub[0], f[0])
-    
+
 # Case 0c: simple forms (no nesting), define the velocity subspace and assemble on subspace [bilinear form]
 def test_case_0c_bilinear(mesh):
     # Function spaces
@@ -166,7 +166,7 @@ def test_case_0d_linear(mesh):
     F_sub = block_restrict(f, W_sub)
     # Assert equality for restricted linear form
     assert_forms_equal(F_sub[0], f[1])
-    
+
 # Case 0d: simple forms (no nesting), define the pressure subspace and assemble on subspace [bilinear form]
 def test_case_0d_bilinear_1(mesh):
     # Function spaces
@@ -187,7 +187,7 @@ def test_case_0d_bilinear_1(mesh):
     A_sub = block_restrict(a, [W_sub, W_sub])
     # Assert equality for restricted bilinear form
     assert_forms_equal(A_sub[0, 0], 0)
-    
+
 # Case 0d: simple forms (no nesting), define the pressure subspace and assemble on subspace [bilinear form]
 def test_case_0d_bilinear_2(mesh):
     # Function spaces
@@ -209,7 +209,7 @@ def test_case_0d_bilinear_2(mesh):
     with pytest.raises(AssertionError) as excinfo:
         BlockForm(a_sub, block_function_space=[W_sub, W_sub])
     assert str(excinfo.value) == "A block form rank should be provided when assemblying a zero block vector/matrix."
-    
+
 # Case 0d: simple forms (no nesting), define the pressure subspace and assemble on subspace [bilinear form]
 def test_case_0d_bilinear_3(mesh):
     # Function spaces
@@ -231,7 +231,7 @@ def test_case_0d_bilinear_3(mesh):
     A_sub = BlockForm(a_sub, block_function_space=[W_sub, W_sub], block_form_rank=2)
     # Assert equality for restricted bilinear form
     assert_forms_equal(A_sub[0, 0], 0)
-    
+
 # Case 0e: simple forms (no nesting), define both velocity and pressure subspaces and assemble rectangular matrix on them
 def test_case_0e_1(mesh):
     # Function spaces
@@ -253,7 +253,7 @@ def test_case_0e_1(mesh):
     A_sub = block_restrict(a, [W_sub_0, W_sub_1])
     # Assert equality for restricted bilinear form
     assert_forms_equal(A_sub[0, 0], a[0][1])
-    
+
 # Case 0e: simple forms (no nesting), define both velocity and pressure subspaces and assemble rectangular matrix on them
 def test_case_0e_2(mesh):
     # Function spaces
@@ -299,7 +299,7 @@ def test_case_0e_3(mesh):
     A_sub = BlockForm(a_sub, block_function_space=[W_sub_0, W_sub_1])
     # Assert equality for restricted bilinear form
     assert_forms_equal(A_sub[0, 0], a[0][1])
-    
+
 # Case 0f: simple forms (no nesting), test block_derivative
 def test_case_0f_1(mesh):
     # Function spaces
@@ -329,7 +329,7 @@ def test_case_0f_1(mesh):
                 assert Jac[i, j].empty()
             else:
                 assert_forms_equal(Jac[i, j], a[i][j])
-                
+
 # Case 0f: simple forms (no nesting), test block_derivative in combination with block_restrict (diagonal case)
 def test_case_0f_2(mesh):
     # Function spaces
@@ -356,7 +356,7 @@ def test_case_0f_2(mesh):
     a = [[inner(grad(u), grad(v))*dx]]
     # Assert equality for bilinear form
     assert_forms_equal(jac_sub[0, 0], a[0][0])
-    
+
 # Case 0f: simple forms (no nesting), test block_derivative in combination with block_restrict (off-diagonal case)
 def test_case_0f_3(mesh):
     # Function spaces
@@ -384,7 +384,7 @@ def test_case_0f_3(mesh):
     a = [[- div(v)*p*dx]]
     # Assert equality for bilinear form
     assert_forms_equal(jac_sub[0, 0], a[0][0])
-    
+
 # Case 0f: simple forms (no nesting), test block_restrict in combination with block_derivative (diagonal case)
 def test_case_0f_4(mesh):
     # Function spaces
@@ -410,7 +410,7 @@ def test_case_0f_4(mesh):
     a = [[inner(grad(u), grad(v))*dx]]
     # Assert equality for bilinear form
     assert_forms_equal(jac_sub[0, 0], a[0][0])
-    
+
 # Case 0f: simple forms (no nesting), test block_restrict in combination with block_derivative (off-diagonal case)
 def test_case_0f_5(mesh):
     # Function spaces
@@ -437,7 +437,7 @@ def test_case_0f_5(mesh):
     a = [[- div(v)*p*dx]]
     # Assert equality for bilinear form
     assert_forms_equal(jac_sub[0, 0], a[0][0])
-    
+
 # Case 0f: simple forms (no nesting), test block_restrict in combination with block_derivative (off-diagonal case)
 def test_case_0f_6(mesh):
     # Function spaces
@@ -464,7 +464,7 @@ def test_case_0f_6(mesh):
     a = [[div(u)*q*dx]]
     # Assert equality for bilinear form
     assert_forms_equal(jac_sub[0, 0], a[0][0])
-    
+
 # Case 0g: simple forms (no nesting), test block_adjoint
 def test_case_0g(mesh):
     # Function spaces
@@ -489,7 +489,7 @@ def test_case_0g(mesh):
                 assert_forms_equal(At[i, j], 0)
             else:
                 assert_forms_equal(At[i, j], (-1)**(i+j)*a[i][j])
-                
+
 # Case 0h: simple forms (no nesting), sum [linear form]
 def test_case_0h_linear(mesh):
     # Function spaces
@@ -661,7 +661,7 @@ def test_case_1a_bilinear(mesh):
     assert_forms_equal(A[0, 1], a_01[0][0])
     assert_forms_equal(A[1, 0], a_10[0][0])
     assert_forms_equal(A[1, 1], 0)
-    
+
 # Case 1b: forms with at most one level of nesting, test non constant nesting levels [linear form]
 def test_case_1b_linear(mesh):
     # Function spaces
@@ -705,7 +705,7 @@ def test_case_1b_bilinear(mesh):
     assert_forms_equal(A[0, 1], a_01[0][0])
     assert_forms_equal(A[1, 0], a_10[0][0])
     assert_forms_equal(A[1, 1], 0)
-    
+
 # Case 1c: forms with at most one level of nesting, test block_adjoint in nested matrix
 def test_case_1c(mesh):
     # Function spaces
@@ -728,7 +728,7 @@ def test_case_1c(mesh):
     assert_forms_equal(A[0, 1], a_01[0][0])
     assert_forms_equal(A[1, 0], -a_10[0][0])
     assert_forms_equal(A[1, 1], 0)
-    
+
 # Case 1d: forms with at most one level of nesting, test nesting on standard forms [linear form]
 def test_case_1d_linear(mesh):
     # Function spaces
@@ -751,7 +751,7 @@ def test_case_1d_linear(mesh):
     assert_forms_equal(F[1], f_0[1])
     assert_forms_equal(F[2], f_1[0])
     assert_forms_equal(F[3], f_1[1])
-    
+
 # Case 1d: forms with at most one level of nesting, test nesting on standard forms [bilinear form]
 def test_case_1d_bilinear(mesh):
     # Function spaces
@@ -792,7 +792,7 @@ def test_case_1d_bilinear(mesh):
     assert_forms_equal(A[3, 1], a_10[1][1])
     assert_forms_equal(A[3, 2], 0)
     assert_forms_equal(A[3, 3], 0)
-    
+
 # Case 1e: forms with at most one level of nesting, test non constant nesting levels [linear form]
 def test_case_1e_linear(mesh):
     # Function spaces
@@ -816,7 +816,7 @@ def test_case_1e_linear(mesh):
     assert_forms_equal(F[1], f_0[1])
     assert_forms_equal(F[2], f_1[0])
     assert_forms_equal(F[3], f_1[1])
-    
+
 # Case 1e: forms with at most one level of nesting, test non constant nesting levels [bilinear form]
 def test_case_1e_bilinear(mesh):
     # Function spaces
@@ -858,7 +858,7 @@ def test_case_1e_bilinear(mesh):
     assert_forms_equal(A[3, 1], a_10[1][1])
     assert_forms_equal(A[3, 2], 0)
     assert_forms_equal(A[3, 3], 0)
-    
+
 # Case 1f: forms with at most one level of nesting, test block_adjoint in nested matrix
 def test_case_1f(mesh):
     # Function spaces
@@ -895,7 +895,7 @@ def test_case_1f(mesh):
     assert_forms_equal(A[3, 1], -a_10[1][1])
     assert_forms_equal(A[3, 2], 0)
     assert_forms_equal(A[3, 3], 0)
-    
+
 # Case 1g: forms with at most one level of nesting, test nesting on standard forms [linear form]
 def test_case_1g_linear(mesh):
     # Function spaces
@@ -916,7 +916,7 @@ def test_case_1g_linear(mesh):
     assert_forms_equal(F[0], f_0[0])
     assert_forms_equal(F[1], f_0[1])
     assert_forms_equal(F[2], f_1[0])
-    
+
 # Case 1g: forms with at most one level of nesting, test nesting on standard forms [bilinear form]
 def test_case_1g_bilinear(mesh):
     # Function spaces
@@ -948,7 +948,7 @@ def test_case_1g_bilinear(mesh):
     assert_forms_equal(A[2, 0], a_10[0][0])
     assert_forms_equal(A[2, 1], a_10[0][1])
     assert_forms_equal(A[2, 2], 0)
-    
+
 # Case 1h: forms with at most one level of nesting, test non constant nesting levels [linear form]
 def test_case_1h_linear(mesh):
     # Function spaces
@@ -970,7 +970,7 @@ def test_case_1h_linear(mesh):
     assert_forms_equal(F[0], f_0[0])
     assert_forms_equal(F[1], f_0[1])
     assert_forms_equal(F[2], f_1[0])
-    
+
 # Case 1h: forms with at most one level of nesting, test non constant nesting levels [bilinear form]
 def test_case_1h_bilinear(mesh):
     # Function spaces
@@ -1003,7 +1003,7 @@ def test_case_1h_bilinear(mesh):
     assert_forms_equal(A[2, 0], a_10[0][0])
     assert_forms_equal(A[2, 1], a_10[0][1])
     assert_forms_equal(A[2, 2], 0)
-    
+
 # Case 1i: forms with at most one level of nesting, test block_adjoint in nested matrix [bilinear form]
 def test_case_1i_bilinear(mesh):
     # Function spaces
@@ -1054,7 +1054,7 @@ def test_case_2a_linear(mesh):
     assert_forms_equal(F[0], f_0[0])
     assert_forms_equal(F[1], f_1[0])
     assert_forms_equal(F[2], f_2[0])
-    
+
 # Case 2a: forms with at most two levels of nesting, test nesting on standard forms [bilinear form]
 def test_case_2a_bilinear(mesh):
     # Function spaces
@@ -1091,7 +1091,7 @@ def test_case_2a_bilinear(mesh):
     assert_forms_equal(A[2, 0], a_20[0][0])
     assert_forms_equal(A[2, 1], a_21[0][0])
     assert_forms_equal(A[2, 2], 0)
-    
+
 # Case 2b: forms with at most two levels of nesting, test block_adjoint in nested matrix
 def test_case_2b(mesh):
     # Function spaces
@@ -1126,7 +1126,7 @@ def test_case_2b(mesh):
     assert_forms_equal(A[2, 0], a_20[0][0])
     assert_forms_equal(A[2, 1], a_21[0][0])
     assert_forms_equal(A[2, 2], 0)
-    
+
 # Case 2c: forms with at most two levels of nesting, test nesting on standard forms [linear form]
 def test_case_2c_linear(mesh):
     # Function spaces
@@ -1154,7 +1154,7 @@ def test_case_2c_linear(mesh):
     assert_forms_equal(F[3], f_1[1])
     assert_forms_equal(F[4], f_2[0])
     assert_forms_equal(F[5], f_2[1])
-    
+
 # Case 2c: forms with at most two levels of nesting, test nesting on standard forms [bilinear form]
 def test_case_2c_bilinear(mesh):
     # Function spaces
@@ -1224,7 +1224,7 @@ def test_case_2c_bilinear(mesh):
     assert_forms_equal(A[5, 3], a_21[1][1])
     assert_forms_equal(A[5, 4], 0)
     assert_forms_equal(A[5, 5], 0)
-    
+
 # Case 2d: forms with at most two levels of nesting, test block_adjoint in nested matrix
 def test_case_2d(mesh):
     # Function spaces
@@ -1292,7 +1292,7 @@ def test_case_2d(mesh):
     assert_forms_equal(A[5, 3], a_21[1][1])
     assert_forms_equal(A[5, 4], 0)
     assert_forms_equal(A[5, 5], 0)
-    
+
 # Case 2e: forms with at most two levels of nesting, test nesting on standard forms [linear form]
 def test_case_2e_linear(mesh):
     # Function spaces
@@ -1318,7 +1318,7 @@ def test_case_2e_linear(mesh):
     assert_forms_equal(F[2], f_1[0])
     assert_forms_equal(F[3], f_1[1])
     assert_forms_equal(F[4], f_2[0])
-    
+
 # Case 2e: forms with at most two levels of nesting, test nesting on standard forms [bilinear form]
 def test_case_2e_bilinear(mesh):
     # Function spaces
@@ -1375,7 +1375,7 @@ def test_case_2e_bilinear(mesh):
     assert_forms_equal(A[4, 2], a_21[0][0])
     assert_forms_equal(A[4, 3], a_21[0][1])
     assert_forms_equal(A[4, 4], 0)
-    
+
 # Case 2f: forms with at most two levels of nesting, test block_adjoint in nested matrix
 def test_case_2f(mesh):
     # Function spaces
