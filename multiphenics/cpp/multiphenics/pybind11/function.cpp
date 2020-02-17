@@ -34,22 +34,12 @@ namespace multiphenics_wrappers
     // multiphenics::function::BlockFunctionSpace
     py::class_<multiphenics::function::BlockFunctionSpace, std::shared_ptr<multiphenics::function::BlockFunctionSpace>>
       (m, "BlockFunctionSpace", "A finite element block function space", py::dynamic_attr())
-      .def(py::init<std::vector<std::shared_ptr<const dolfinx::function::FunctionSpace>>>())
       .def(py::init<std::vector<std::shared_ptr<const dolfinx::function::FunctionSpace>>,
-                    std::vector<std::vector<std::shared_ptr<const dolfinx::mesh::MeshFunction<std::size_t>>>>>())
-      .def(py::init<std::shared_ptr<const dolfinx::mesh::Mesh>,
-                    std::vector<std::shared_ptr<const dolfinx::fem::FiniteElement>>,
-                    std::vector<std::shared_ptr<const dolfinx::fem::DofMap>>>())
-      .def(py::init<std::shared_ptr<const dolfinx::mesh::Mesh>,
-                    std::vector<std::shared_ptr<const dolfinx::fem::FiniteElement>>,
-                    std::vector<std::shared_ptr<const dolfinx::fem::DofMap>>,
-                    std::vector<std::vector<std::shared_ptr<const dolfinx::mesh::MeshFunction<std::size_t>>>>>())
+                    std::vector<Eigen::Ref<const Eigen::Array<std::int32_t, Eigen::Dynamic, 1>>>>())
       .def("__eq__", &multiphenics::function::BlockFunctionSpace::operator==)
       .def("dim", &multiphenics::function::BlockFunctionSpace::dim)
       .def("contains", &multiphenics::function::BlockFunctionSpace::contains)
-      .def_property_readonly("elements", &multiphenics::function::BlockFunctionSpace::elements)
       .def_property_readonly("mesh", &multiphenics::function::BlockFunctionSpace::mesh)
-      .def_property_readonly("dofmaps", &multiphenics::function::BlockFunctionSpace::dofmaps)
       .def_property_readonly("block_dofmap", &multiphenics::function::BlockFunctionSpace::block_dofmap)
       .def("sub", (std::shared_ptr<dolfinx::function::FunctionSpace> (multiphenics::function::BlockFunctionSpace::*)(std::size_t) const)
            &multiphenics::function::BlockFunctionSpace::sub)

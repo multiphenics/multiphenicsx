@@ -26,43 +26,16 @@ namespace multiphenics
 {
   namespace function
   {
-    /// This class represents a finite element function space defined by
-    /// a mesh, a vector of finite elements, and a vector of local-to-global mapping of the
-    /// degrees of freedom (dofmap).
-
     class BlockFunctionSpace
     {
     public:
 
-      /// Create a block function space from a list of existing function spaces (on the same mesh)
-      /// @param[in] function_spaces List of existing function spaces.
-      explicit BlockFunctionSpace(std::vector<std::shared_ptr<const dolfinx::function::FunctionSpace>> function_spaces);
-
       /// Create a block function space from a list of existing function spaces (on the same mesh),
-      /// but keeping only a part
+      /// but keep only degrees of freedom in a restriction
       /// @param[in] function_spaces List of existing function spaces
-      /// @param[in] restrictions Vector (over blocks) of vector (over space dimensions) representing the restrictions
+      /// @param[in] restrictions List (of the same size of function_spaces) of list of dofs
       BlockFunctionSpace(std::vector<std::shared_ptr<const dolfinx::function::FunctionSpace>> function_spaces,
-                         std::vector<std::vector<std::shared_ptr<const dolfinx::mesh::MeshFunction<std::size_t>>>> restrictions);
-
-      /// Create a block function space for given mesh, vector of elements and vector of dofmaps
-      /// @param[in] mesh The mesh
-      /// @param[in] elements The elements
-      /// @param[in] dofmaps The dofmaps
-      BlockFunctionSpace(std::shared_ptr<const dolfinx::mesh::Mesh> mesh,
-                         std::vector<std::shared_ptr<const dolfinx::fem::FiniteElement>> elements,
-                         std::vector<std::shared_ptr<const dolfinx::fem::DofMap>> dofmaps);
-
-      /// Create a block function space for given mesh, vector of elements and vector of dofmaps
-      /// but keeping only a part
-      /// @param[in] mesh The mesh
-      /// @param[in] elements The elements
-      /// @param[in] dofmaps The dofmaps
-      /// @param[in] restrictions Vector (over blocks) of vector (over space dimensions) representing the restrictions
-      BlockFunctionSpace(std::shared_ptr<const dolfinx::mesh::Mesh> mesh,
-                         std::vector<std::shared_ptr<const dolfinx::fem::FiniteElement>> elements,
-                         std::vector<std::shared_ptr<const dolfinx::fem::DofMap>> dofmaps,
-                         std::vector<std::vector<std::shared_ptr<const dolfinx::mesh::MeshFunction<std::size_t>>>> restrictions);
+                         std::vector<Eigen::Ref<const Eigen::Array<std::int32_t, Eigen::Dynamic, 1>>> restrictions);
 
       /// Copy constructor (deleted)
       BlockFunctionSpace(const BlockFunctionSpace& V) = delete;
@@ -71,20 +44,7 @@ namespace multiphenics
       BlockFunctionSpace(BlockFunctionSpace&& V) = default;
 
       /// Destructor
-      virtual ~BlockFunctionSpace() = default;
-
-    private:
-
-      // Initialize _elements and _dofmaps from function spaces
-      void _init_mesh_and_elements_and_dofmaps_from_function_spaces();
-
-      // Initialize _function_spaces from elements and dofmaps
-      void _init_function_spaces_from_elements_and_dofmaps();
-
-      // Initialize _block_dofmap from dofmaps and restrictions
-      void _init_block_dofmap_from_dofmaps_and_restrictions();
-
-    public:
+      ~BlockFunctionSpace() = default;
 
       /// Assignment operator (deleted)
       BlockFunctionSpace& operator=(const BlockFunctionSpace& V) = delete;
@@ -141,12 +101,6 @@ namespace multiphenics
       // The mesh
       std::shared_ptr<const dolfinx::mesh::Mesh> mesh() const;
 
-      // The finite elements
-      std::vector<std::shared_ptr<const dolfinx::fem::FiniteElement>> elements() const;
-
-      // The dofmaps
-      std::vector<std::shared_ptr<const dolfinx::fem::DofMap>> dofmaps() const;
-
       // The block dofmap
       std::shared_ptr<multiphenics::fem::BlockDofMap> block_dofmap() const;
 
@@ -154,17 +108,11 @@ namespace multiphenics
       std::vector<std::shared_ptr<const dolfinx::function::FunctionSpace>> function_spaces() const;
 
       // The restrictions
-      std::vector<std::vector<std::shared_ptr<const dolfinx::mesh::MeshFunction<std::size_t>>>> restrictions() const;
+      std::vector<Eigen::Ref<const Eigen::Array<std::int32_t, Eigen::Dynamic, 1>>> restrictions() const;
 
     private:
       // The mesh
       std::shared_ptr<const dolfinx::mesh::Mesh> _mesh;
-
-      // The finite elements
-      std::vector<std::shared_ptr<const dolfinx::fem::FiniteElement>> _elements;
-
-      // The dofmaps
-      std::vector<std::shared_ptr<const dolfinx::fem::DofMap>> _dofmaps;
 
       // The block dofmap
       std::shared_ptr<multiphenics::fem::BlockDofMap> _block_dofmap;
@@ -173,7 +121,7 @@ namespace multiphenics
       std::vector<std::shared_ptr<const dolfinx::function::FunctionSpace>> _function_spaces;
 
       // The restrictions
-      std::vector<std::vector<std::shared_ptr<const dolfinx::mesh::MeshFunction<std::size_t>>>> _restrictions;
+      std::vector<Eigen::Ref<const Eigen::Array<std::int32_t, Eigen::Dynamic, 1>>> _restrictions;
 
       // The component w.r.t. to root space
       std::vector<std::size_t> _component;

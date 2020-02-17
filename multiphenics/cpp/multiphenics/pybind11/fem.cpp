@@ -41,13 +41,8 @@ namespace multiphenics_wrappers
     py::class_<multiphenics::fem::BlockDofMap, std::shared_ptr<multiphenics::fem::BlockDofMap>>
       (m, "BlockDofMap", "multiphenics BlockDofMap object")
       .def(py::init<std::vector<std::shared_ptr<const dolfinx::fem::DofMap>>,
-                    std::vector<std::vector<std::shared_ptr<const dolfinx::mesh::MeshFunction<std::size_t>>>>,
-                    const dolfinx::mesh::Mesh&>())
+                    std::vector<Eigen::Ref<const Eigen::Array<std::int32_t, Eigen::Dynamic, 1>>>>())
       .def_property_readonly("dofmaps", &multiphenics::fem::BlockDofMap::dofmaps)
-      .def("block_owned_dofs__local_numbering", &multiphenics::fem::BlockDofMap::block_owned_dofs__local_numbering)
-      .def("block_unowned_dofs__local_numbering", &multiphenics::fem::BlockDofMap::block_unowned_dofs__local_numbering)
-      .def("block_owned_dofs__global_numbering", &multiphenics::fem::BlockDofMap::block_owned_dofs__global_numbering)
-      .def("block_unowned_dofs__global_numbering", &multiphenics::fem::BlockDofMap::block_unowned_dofs__global_numbering)
       .def("original_to_block", &multiphenics::fem::BlockDofMap::original_to_block)
       .def("block_to_original", &multiphenics::fem::BlockDofMap::block_to_original)
       .def("cell_dofs", &multiphenics::fem::BlockDofMap::cell_dofs)

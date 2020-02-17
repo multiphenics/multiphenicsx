@@ -25,100 +25,41 @@ using namespace multiphenics::function;
 
 using dolfinx::common::UniqueIdGenerator;
 using dolfinx::fem::DofMap;
-using dolfinx::fem::FiniteElement;
 using dolfinx::function::FunctionSpace;
 using dolfinx::mesh::Mesh;
-using dolfinx::mesh::MeshFunction;
 using multiphenics::fem::BlockDofMap;
 
 //-----------------------------------------------------------------------------
-BlockFunctionSpace::BlockFunctionSpace(std::vector<std::shared_ptr<const FunctionSpace>> function_spaces)
-  : _function_spaces(function_spaces), _restrictions(function_spaces.size()), _root_space_id(UniqueIdGenerator::id())
-{
-  _init_mesh_and_elements_and_dofmaps_from_function_spaces();
-  _init_block_dofmap_from_dofmaps_and_restrictions();
-}
-//-----------------------------------------------------------------------------
 BlockFunctionSpace::BlockFunctionSpace(std::vector<std::shared_ptr<const FunctionSpace>> function_spaces,
-                                       std::vector<std::vector<std::shared_ptr<const MeshFunction<std::size_t>>>> restrictions)
-  : _function_spaces(function_spaces), _restrictions(restrictions), _root_space_id(UniqueIdGenerator::id())
+                                       std::vector<Eigen::Ref<const Eigen::Array<std::int32_t, Eigen::Dynamic, 1>>> restrictions)
+  : _mesh(function_spaces[0]->mesh()), _function_spaces(function_spaces), _restrictions(restrictions), _root_space_id(UniqueIdGenerator::id())
 {
-  _init_mesh_and_elements_and_dofmaps_from_function_spaces();
-  _init_block_dofmap_from_dofmaps_and_restrictions();
-}
-//-----------------------------------------------------------------------------
-BlockFunctionSpace::BlockFunctionSpace(std::shared_ptr<const Mesh> mesh,
-                                       std::vector<std::shared_ptr<const FiniteElement>> elements,
-                                       std::vector<std::shared_ptr<const DofMap>> dofmaps)
-  : _mesh(mesh), _elements(elements), _dofmaps(dofmaps), _restrictions(dofmaps.size()), _root_space_id(UniqueIdGenerator::id())
-{
-  _init_function_spaces_from_elements_and_dofmaps();
-  _init_block_dofmap_from_dofmaps_and_restrictions();
-}
-//-----------------------------------------------------------------------------
-BlockFunctionSpace::BlockFunctionSpace(std::shared_ptr<const Mesh> mesh,
-                                       std::vector<std::shared_ptr<const FiniteElement>> elements,
-                                       std::vector<std::shared_ptr<const DofMap>> dofmaps,
-                                       std::vector<std::vector<std::shared_ptr<const MeshFunction<std::size_t>>>> restrictions)
-  : _mesh(mesh), _elements(elements), _dofmaps(dofmaps), _restrictions(restrictions), _root_space_id(UniqueIdGenerator::id())
-{
-  _init_function_spaces_from_elements_and_dofmaps();
-  _init_block_dofmap_from_dofmaps_and_restrictions();
-}
-//-----------------------------------------------------------------------------
-void BlockFunctionSpace::_init_mesh_and_elements_and_dofmaps_from_function_spaces() {
-  _mesh = _function_spaces[0]->mesh();
-  for (auto& function_space : _function_spaces)
-  {
+  // Initialize block dof map
+  std::vector<std::shared_ptr<const dolfinx::fem::DofMap>> dofmaps;
+  for (auto& function_space : _function_spaces) {
     assert(_mesh == function_space->mesh());
-    _elements.push_back(function_space->element());
-    _dofmaps.push_back(function_space->dofmap());
+    dofmaps.push_back(function_space->dofmap());
   }
-}
-//-----------------------------------------------------------------------------
-void BlockFunctionSpace::_init_function_spaces_from_elements_and_dofmaps() {
-  assert(_elements.size() == _dofmaps.size());
-  for (unsigned int i(0); i < _elements.size(); ++i)
-  {
-    std::shared_ptr<const FunctionSpace> function_space_i(new FunctionSpace(_mesh, _elements[i], _dofmaps[i]));
-    _function_spaces.push_back(function_space_i);
-  }
-}
-//-----------------------------------------------------------------------------
-void BlockFunctionSpace::_init_block_dofmap_from_dofmaps_and_restrictions() {
-  _block_dofmap = std::make_shared<BlockDofMap>(_dofmaps, _restrictions, *_mesh);
+  _block_dofmap = std::make_shared<BlockDofMap>(dofmaps, _restrictions);
 }
 //-----------------------------------------------------------------------------
 bool BlockFunctionSpace::operator==(const BlockFunctionSpace& V) const
 {
   // Compare pointers to shared objects
 
-  // -> elements
-  if (_elements.size() != V.elements().size())
-    return false;
-  for (unsigned int i(0); i < _elements.size(); ++i)
-    if (_elements[i].get() != V.elements()[i].get())
-      return false;
-
-  // -> dofmaps
-  if (_dofmaps.size() != V.dofmaps().size())
-    return false;
-  for (unsigned int i(0); i < _dofmaps.size(); ++i)
-    if (_dofmaps[i].get() != V.dofmaps()[i].get())
-      return false;
-
   // -> restrictions
   if (_restrictions.size() != V.restrictions().size())
     return false;
-  for (unsigned int i(0); i < _restrictions.size(); ++i)
-    for (unsigned int d(0); d < _restrictions[i].size(); ++d)
-      if (_restrictions[i][d].get() != V.restrictions()[i][d].get())
-        return false;
+/* TODO
+  for (std::size_t i(0); i < _restrictions.size(); ++i)
+    if (_restrictions[i] != V.restrictions()[i])
+      return false;
+*/
 
   // -> function_spaces
   if (_function_spaces.size() != V.function_spaces().size())
     return false;
-  for (unsigned int i(0); i < _function_spaces.size(); ++i)
+  for (std::size_t i(0); i < _function_spaces.size(); ++i)
     if (_function_spaces[i].get() != V.function_spaces()[i].get())
       return false;
 
@@ -166,25 +107,20 @@ BlockFunctionSpace::extract_block_sub_space(const std::vector<std::size_t>& comp
     return subspace->second;
   else
   {
-    // Extract sub elements
-    std::vector<std::shared_ptr<const FiniteElement>> sub_elements;
+    // Extract sub function spaces
+    std::vector<std::shared_ptr<const FunctionSpace>> sub_function_spaces;
     for (auto c: component)
-      sub_elements.push_back(_elements[c]);
-
-    // Extract sub dofmaps
-    std::vector<std::shared_ptr<const DofMap>> sub_dofmaps;
-    for (auto c: component)
-      sub_dofmaps.push_back(_dofmaps[c]);
+      sub_function_spaces.push_back(_function_spaces[c]);
 
     // Extract restrictions, if required
-    std::vector<std::vector<std::shared_ptr<const MeshFunction<std::size_t>>>> sub_restrictions;
+    std::vector<Eigen::Ref<const Eigen::Array<std::int32_t, Eigen::Dynamic, 1>>> sub_restrictions;
     if (with_restrictions)
       for (auto c: component)
         sub_restrictions.push_back(_restrictions[c]);
 
     // Create new block sub space
     std::shared_ptr<BlockFunctionSpace>
-      new_block_sub_space(new BlockFunctionSpace(_mesh, sub_elements, sub_dofmaps, sub_restrictions));
+      new_block_sub_space(new BlockFunctionSpace(sub_function_spaces, sub_restrictions));
 
     // Set root space id and component w.r.t. root
     new_block_sub_space->_root_space_id = _root_space_id;
@@ -240,7 +176,7 @@ BlockFunctionSpace::tabulate_dof_coordinates() const
     Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor>::Zero(local_size, 3);
 
   // Loop over subspaces
-  for (unsigned int i(0); i < _function_spaces.size(); ++i)
+  for (std::size_t i(0); i < _function_spaces.size(); ++i)
   {
     auto function_space = _function_spaces[i];
 
@@ -268,16 +204,6 @@ std::shared_ptr<const Mesh> BlockFunctionSpace::mesh() const
   return _mesh;
 }
 //-----------------------------------------------------------------------------
-std::vector<std::shared_ptr<const FiniteElement>> BlockFunctionSpace::elements() const
-{
-  return _elements;
-}
-//-----------------------------------------------------------------------------
-std::vector<std::shared_ptr<const DofMap>> BlockFunctionSpace::dofmaps() const
-{
-  return _dofmaps;
-}
-//-----------------------------------------------------------------------------
 std::shared_ptr<BlockDofMap> BlockFunctionSpace::block_dofmap() const
 {
   return _block_dofmap;
@@ -288,7 +214,7 @@ std::vector<std::shared_ptr<const FunctionSpace>> BlockFunctionSpace::function_s
   return _function_spaces;
 }
 //-----------------------------------------------------------------------------
-std::vector<std::vector<std::shared_ptr<const MeshFunction<std::size_t>>>> BlockFunctionSpace::restrictions() const
+std::vector<Eigen::Ref<const Eigen::Array<std::int32_t, Eigen::Dynamic, 1>>> BlockFunctionSpace::restrictions() const
 {
   return _restrictions;
 }

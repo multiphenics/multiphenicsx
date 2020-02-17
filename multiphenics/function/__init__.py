@@ -16,7 +16,6 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from multiphenics.function.block_element import BlockElement
 from multiphenics.function.block_function import BlockFunction
 from multiphenics.function.block_function_space import BlockFunctionSpace
 from multiphenics.function.block_split import block_split
@@ -24,7 +23,6 @@ from multiphenics.function.block_test_function import BlockTestFunction
 from multiphenics.function.block_trial_function import BlockTrialFunction
 
 __all__ = [
-    "BlockElement",
     "BlockFunction",
     "BlockFunctionSpace",
     "block_split",

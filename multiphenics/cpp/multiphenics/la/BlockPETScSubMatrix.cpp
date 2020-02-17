@@ -41,9 +41,16 @@ BlockPETScSubMatrix::BlockPETScSubMatrix(
   // Extract sub matrix
   for (std::size_t i = 0; i < 2; ++i)
   {
-    const auto & block_owned_dofs__local_numbering = block_dofmaps[i]->block_owned_dofs__local_numbering(block_indices[i]);
-    ierr = ISCreateGeneral(mpi_comm, block_owned_dofs__local_numbering.size(), block_owned_dofs__local_numbering.data(),
-                           PETSC_USE_POINTER, &_is[i]);
+    const auto & original_to_block = block_dofmaps[i]->original_to_block(block_indices[i]);
+    std::vector<PetscInt> index_set;
+    index_set.reserve(original_to_block.size());
+    std::transform(original_to_block.begin(), original_to_block.end(), std::back_inserter(index_set),
+                   [](std::pair<std::int32_t, std::int32_t> const & pair)
+                   {
+                       return pair.second;
+                   });
+    assert(index_set.size() == original_to_block.size());
+    ierr = ISCreateGeneral(mpi_comm, index_set.size(), index_set.data(), PETSC_COPY_VALUES, &_is[i]);
     if (ierr != 0) petsc_error(ierr, __FILE__, "ISCreateGeneral");
   }
   ierr = MatGetLocalSubMatrix(_global_matrix, _is[0], _is[1], &_A);

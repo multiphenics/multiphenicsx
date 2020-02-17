@@ -17,173 +17,60 @@
 #
 
 import types
-import numpy
-import cffi
-from ufl.finiteelement import FiniteElementBase
-from dolfinx import FunctionSpace, Mesh
-import dolfinx.cpp
-import dolfinx.fem.dofmap
-from dolfinx.jit import ffcx_jit
+from numpy import arange
+from dolfinx import FunctionSpace
 from multiphenics.cpp import cpp
-from multiphenics.function.block_element import BlockElement
-from multiphenics.mesh import MeshRestriction
-
-def _compile_dolfinx_element(element, mesh):
-    # Compile dofmap and element and create DOLFIN-X objects
-    ufc_element, ufc_dofmap_ptr = ffcx_jit(
-        element,
-        form_compiler_parameters=None,
-        mpi_comm=mesh.mpi_comm())
-
-    ffi = cffi.FFI()
-    ufc_element = dolfinx.fem.dofmap.make_ufc_finite_element(ffi.cast("uintptr_t", ufc_element))
-    dolfinx_element = dolfinx.cpp.fem.FiniteElement(ufc_element)
-    ufc_dofmap = dolfinx.fem.dofmap.make_ufc_dofmap(ffi.cast("uintptr_t", ufc_dofmap_ptr))
-    dolfinx_dofmap = dolfinx.cpp.fem.create_dofmap(ufc_dofmap, mesh)
-
-    return dolfinx_element, dolfinx_dofmap
 
 BlockFunctionSpace_Base = cpp.function.BlockFunctionSpace
 
 class BlockFunctionSpace(object):
-    "Base class for all block function spaces."
+    "Class for block function spaces."
 
-    def __init__(self, *args, **kwargs):
-        assert len(args) in (1, 2)
-        if len(args) == 1:
-            assert isinstance(args[0], (list, tuple))
-            assert (
-                len(kwargs) == 0
-                    or
-                (len(kwargs) == 1 and "restrict" in kwargs)
-            )
-            self._init_from_function_spaces(*args, **kwargs)
-        elif len(args) == 2:
-            if isinstance(args[0], Mesh):
-                assert isinstance(args[1], (list, tuple, BlockElement))
-                assert (
-                    len(kwargs) == 0
-                        or
-                    (len(kwargs) == 1 and "restrict" in kwargs)
-                )
-                self._init_from_ufl(*args, **kwargs)
-            elif isinstance(args[0], BlockFunctionSpace_Base):
-                assert isinstance(args[1], (list, tuple, BlockElement))
-                assert len(kwargs) == 0
-                self._init_from_cpp(*args, **kwargs)
-            else:
-                raise AssertionError("Invalid argument to BlockFunctionSpace")
-        else:
-            raise AssertionError("Invalid argument to BlockFunctionSpace")
-
-    def _init_from_function_spaces(self, function_spaces, restrict=None):
-        # Get the common mesh
+    def __init__(self, function_spaces, restrict=None, cpp_object=None):
+        # Check function spaces consistency
+        assert isinstance(function_spaces, (list, tuple))
         assert isinstance(function_spaces[0], FunctionSpace)
         mesh = function_spaces[0].mesh
         for function_space in function_spaces:
             assert isinstance(function_space, FunctionSpace)
             assert function_space.mesh.ufl_domain() == mesh.ufl_domain()
-        # Initialize the BlockFunctionSpace_Base
-        if restrict is None:
-            self._cpp_object = BlockFunctionSpace_Base([function_space._cpp_object for function_space in function_spaces])
+
+        # Initialize cpp block function space based on existing cpp_object, if provided
+        if cpp_object is not None:
+            assert restrict is None, "restrict kwarg is not supposed to be used in combination with cpp_object kwarg"
+            self._cpp_object = cpp_object
         else:
-            restrict = self._init_restriction(mesh, restrict)
+            # Provide default argument to restrict kwarg, if not provided, which does not perform any restriction
+            if restrict is None:
+                restrict = [arange(0, function_space.dofmap.index_map.block_size*(
+                            function_space.dofmap.index_map.size_local + function_space.dofmap.index_map.num_ghosts
+                            )) for function_space in function_spaces]
             assert len(restrict) == len(function_spaces)
-            restrict_cpp = [[restrict_e_d for restrict_e_d in restrict_e] for restrict_e in restrict]
-            self._cpp_object = BlockFunctionSpace_Base([function_space._cpp_object for function_space in function_spaces], restrict_cpp)
+            self._cpp_object = BlockFunctionSpace_Base([function_space._cpp_object
+                                                        for function_space in function_spaces], restrict)
 
-        # Fill in subspaces
-        self._init_sub_spaces([function_space.ufl_element() for function_space in function_spaces])
-
-    def _init_from_cpp(self, cppV, elements):
-        # Store the BlockFunctionSpace_Base
-        self._cpp_object = cppV
-
-        # Fill in subspaces
-        self._init_sub_spaces(elements)
-
-    def _init_from_ufl(self, mesh, elements, restrict=None):
-        # Compile elements and dofmaps and construct corresponding DOLFIN-X objects
-        dolfinx_elements = list()
-        dolfinx_dofmaps = list()
-        for element in elements:
-            assert isinstance(element, FiniteElementBase)
-            dolfinx_element, dolfinx_dofmap = _compile_dolfinx_element(element, mesh)
-            dolfinx_elements.append(dolfinx_element)
-            dolfinx_dofmaps.append(dolfinx_dofmap)
-
-        # Initialize the BlockFunctionSpace_Base
-        if restrict is None:
-            self._cpp_object = BlockFunctionSpace_Base(mesh, dolfinx_elements, dolfinx_dofmaps)
-        else:
-            restrict = self._init_restriction(mesh, restrict)
-            assert len(restrict) == len(elements)
-            restrict_cpp = [[restrict_e_d for restrict_e_d in restrict_e] for restrict_e in restrict]
-            self._cpp_object = BlockFunctionSpace_Base(mesh, dolfinx_elements, dolfinx_dofmaps, restrict_cpp)
-
-        # Fill in subspaces
-        self._init_sub_spaces(elements)
-
-    @staticmethod
-    def _init_restriction(mesh, restrictions):
-        assert isinstance(restrictions, (list, tuple))
-        all_none = all([restriction is None for restriction in restrictions])
-        at_least_one_subdomain = any([isinstance(restriction, types.FunctionType) for restriction in restrictions])
-        at_least_one_mesh_restriction = any([isinstance(restriction, MeshRestriction) for restriction in restrictions])
-        assert all_none or at_least_one_subdomain or at_least_one_mesh_restriction
-        if all_none:
-            return [[] for restriction in restrictions]
-        elif at_least_one_subdomain:
-            assert not at_least_one_mesh_restriction, "Please do not mix functions defining subdomains and MeshRestrictions, rather provide only MeshRestrictions"
-            mesh_restrictions = list()
-            for subdomain in restrictions:
-                mesh_restriction = MeshRestriction(mesh)
-                if subdomain is not None:
-                    mesh_restriction.mark(subdomain)
-                else:
-                    mesh_restriction.mark(lambda x: numpy.full(x.shape[1], True))
-                mesh_restrictions.append(mesh_restriction)
-            return mesh_restrictions
-        elif at_least_one_mesh_restriction:
-            assert not at_least_one_subdomain, "Please do not mix functions defining subdomains and MeshRestrictions, rather provide only MeshRestrictions"
-            return [restriction if isinstance(restriction, MeshRestriction) else [] for restriction in restrictions]
-        else:
-            raise AssertionError("Invalid arguments provided as BlockFunctionSpace restriction")
-
-    def _init_sub_spaces(self, ufl_sub_elements):
-        def extend_sub_function_space(sub_function_space, i):
-            # Make sure to preserve a reference to the block function
-            def block_function_space(self_):
-                return self
-            sub_function_space.block_function_space = types.MethodType(block_function_space, sub_function_space)
+        # Store and patch subspaces
+        def attach_block_function_space_and_block_index_to_function_space(index, function_space):
+            # Make sure to preserve a reference to the block function space
+            function_space.block_function_space = types.MethodType(lambda _: self, function_space)
 
             # ... and a reference to the block index
-            def block_index(self_):
-                return i
-            sub_function_space.block_index = types.MethodType(block_index, sub_function_space)
+            function_space.block_index = types.MethodType(lambda _: index, function_space)
 
-            # ... and that these methods are preserved by sub_function_space.sub()
-            original_sub = sub_function_space.sub
+            # ... and that these methods are preserved by function_space.sub()
+            original_sub = function_space.sub
             def sub(self_, j):
                 output = original_sub(j)
-                extend_sub_function_space(output, i)
+                attach_block_function_space_and_block_index_to_function_space(index, output)
                 return output
-            sub_function_space.sub = types.MethodType(sub, sub_function_space)
+            function_space.sub = types.MethodType(sub, function_space)
 
-        self._num_sub_spaces = len(ufl_sub_elements)
-        self._sub_spaces = list()
-        for (i, element_i) in enumerate(ufl_sub_elements):
-            # Extend .sub() call with the python layer of FunctionSpace
-            sub_function_space = FunctionSpace(None, element_i, self._cpp_object.sub(i))
-
-            # Extend with block function space and block index methods
-            extend_sub_function_space(sub_function_space, i)
-
-            # Append
-            self._sub_spaces.append(sub_function_space)
+        self._sub_spaces = function_spaces
+        for (index, function_space) in enumerate(function_spaces):
+            attach_block_function_space_and_block_index_to_function_space(index, function_space)
 
         # Finally, fill in ufl_element
-        self._ufl_element = BlockElement(*ufl_sub_elements)
+        self._ufl_element = [function_space.ufl_element() for function_space in function_spaces]
 
     def __str__(self):
         "Pretty-print."
@@ -211,7 +98,7 @@ class BlockFunctionSpace(object):
 
     def num_sub_spaces(self):
         "Return the number of sub spaces"
-        return self._num_sub_spaces
+        return len(self._sub_spaces)
 
     def __len__(self):
         "Return the number of sub spaces"
@@ -222,6 +109,9 @@ class BlockFunctionSpace(object):
         Return the i-th sub space, *neglecting* restrictions.
         """
         return self.sub(i)
+
+    def __iter__(self):
+        return self._sub_spaces.__iter__()
 
     def sub(self, i):
         """
@@ -234,7 +124,7 @@ class BlockFunctionSpace(object):
         Extract block subspace for component, possibly considering restrictions.
 
         *Arguments*
-            component (numpy.array(uint))
+            component (array(uint))
                The component.
             restrict (bool)
                Consider or not restrictions
@@ -243,25 +133,23 @@ class BlockFunctionSpace(object):
             _BlockFunctionSpace_
                 The block subspace.
         """
-        # Transform the argument to a NumPy array
-        assert hasattr(component, "__len__")
-        component = numpy.asarray(component, dtype=numpy.uintp)
 
         # Get the cpp version of the BlockFunctionSpace
         cpp_space = self._cpp_object.extract_block_sub_space(component, restrict)
 
         # Extend with the python layer
-        block_sub_element = [self._ufl_element[component_] for component_ in component]
-        python_space = BlockFunctionSpace(cpp_space, BlockElement(*block_sub_element))
+        # TODO need to clone because of the patching (block_function_space and block_index) in the constructor.
+        #      It would probably be best to remove such patch altogether
+        sub_spaces = [self._sub_spaces[component_].clone() for component_ in component]
+        python_space = BlockFunctionSpace(sub_spaces, cpp_object=cpp_space)
 
         # Store the components in the python space
         python_space.is_block_subspace = True
-        python_space.sub_components_to_components = dict([(sub_component, int(component_)) for (sub_component, component_) in enumerate(component)])
-        python_space.components_to_sub_components = dict([(int(component_), sub_component) for (sub_component, component_) in enumerate(component)])
+        python_space.sub_components_to_components = {sub_component: int(component_)
+                                                     for (sub_component, component_) in enumerate(component)}
+        python_space.components_to_sub_components = {int(component_): sub_component
+                                                     for (sub_component, component_) in enumerate(component)}
         python_space.parent_block_function_space = self
 
         # Return
         return python_space
-
-    def __iter__(self):
-        return self._sub_spaces.__iter__()
