@@ -166,11 +166,13 @@ Mat multiphenics::fem::init_matrix(const BlockForm2& a)
         if (a_ij.integrals().num_integrals(FormIntegrals::Type::interior_facet) > 0)
         {
           mesh.create_entities(mesh.topology().dim() - 1);
+          mesh.create_connectivity(mesh.topology().dim() - 1, mesh.topology().dim());
           BlockSparsityPatternBuilder::interior_facets(pattern, mesh.topology(), dofmaps_ij);
         }
         if (a_ij.integrals().num_integrals(FormIntegrals::Type::exterior_facet) > 0)
         {
           mesh.create_entities(mesh.topology().dim() - 1);
+          mesh.create_connectivity(mesh.topology().dim() - 1, mesh.topology().dim());
           BlockSparsityPatternBuilder::exterior_facets(pattern, mesh.topology(), dofmaps_ij);
         }
       }
