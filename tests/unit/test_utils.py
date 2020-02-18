@@ -19,10 +19,10 @@
 import numbers
 import pytest
 from _pytest.mark import ParameterSet
-from numpy import allclose as float_array_equal, array_equal as integer_array_equal, block as bmat, finfo, hstack, hstack as bvec, logical_and, logical_or, sort, stack, unique, vstack, where
+from numpy import allclose as float_array_equal, arange, array_equal as integer_array_equal, block as bmat, finfo, hstack, hstack as bvec, logical_and, logical_or, sort, stack, unique, vstack, where
 from scipy.sparse import csr_matrix
 from petsc4py import PETSc
-from ufl import as_matrix, as_tensor, as_vector, dx, FiniteElement, inner, MixedElement, SpatialCoordinate, TensorElement, VectorElement
+from ufl import as_matrix, as_tensor, as_vector, dx, FiniteElement, inner, MixedElement, SpatialCoordinate, VectorElement
 from dolfinx import Function, FunctionSpace, MeshFunction, TensorFunctionSpace, VectorFunctionSpace
 from dolfinx.fem import assemble_matrix, assemble_vector, locate_dofs_topological
 from multiphenics import BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
@@ -218,13 +218,11 @@ def assert_forms_equal(form1, form2):
 
 # ================ FUNCTION SPACES GENERATOR ================ #
 def StokesFunctionSpace(mesh, family_degree):
-    stokes_element = StokesElement(family_degree[0], mesh.ufl_cell(), family_degree[1])
+    (family, degree) = family_degree
+    V_element = VectorElement(family, mesh.ufl_cell(), degree + 1)
+    Q_element = FiniteElement(family, mesh.ufl_cell(), degree)
+    stokes_element = MixedElement(V_element, Q_element)
     return FunctionSpace(mesh, stokes_element)
-
-def StokesElement(family, cell, degree):
-    V_element = VectorElement(family, cell, degree + 1)
-    Q_element = FiniteElement(family, cell, degree)
-    return MixedElement(V_element, Q_element)
 
 def get_function_spaces_1():
     return (
@@ -241,25 +239,11 @@ def get_function_spaces_1():
 def get_function_spaces_2():
     return pytest_mark_slow_for_cartesian_product(get_function_spaces_1, get_function_spaces_1)
 
-def get_elements_1():
-    return (
-        lambda mesh: FiniteElement("Lagrange", mesh.ufl_cell(), 1),
-        pytest_mark_slow(lambda mesh: FiniteElement("Lagrange", mesh.ufl_cell(), 2)),
-        lambda mesh: VectorElement("Lagrange", mesh.ufl_cell(), 1),
-        pytest_mark_slow(lambda mesh: VectorElement("Lagrange", mesh.ufl_cell(), 2)),
-        pytest_mark_slow(lambda mesh: TensorElement("Lagrange", mesh.ufl_cell(), 1)),
-        pytest_mark_slow(lambda mesh: TensorElement("Lagrange", mesh.ufl_cell(), 2)),
-        lambda mesh: StokesElement("Lagrange", mesh.ufl_cell(), 1),
-        pytest_mark_slow(lambda mesh: StokesElement("Lagrange", mesh.ufl_cell(), 2))
-    )
-
-def get_elements_2():
-    return pytest_mark_slow_for_cartesian_product(get_elements_1, get_elements_1)
-
 # ================ SUBDOMAIN GENERATOR ================ #
 def UnitSquareSubDomain(X, Y):
     def unit_square_subdomain(x):
         return logical_and(x[0] <= X, x[1] <= Y)
+    unit_square_subdomain.codimension = 0
     return unit_square_subdomain
 
 def UnitSquareInterface(X=None, Y=None, on_boundary=False):
@@ -282,11 +266,23 @@ def UnitSquareInterface(X=None, Y=None, on_boundary=False):
                 logical_or(x[0] <= finfo(float).eps, x[0] >= 1. - finfo(float).eps),
                 logical_or(x[1] <= finfo(float).eps, x[1] >= 1. - finfo(float).eps)
             )
+    unit_square_interface.codimension = 1
     return unit_square_interface
 
-OnBoundary = UnitSquareInterface(on_boundary=True)
+def MeshFunctionSizetFromSubdomain(mesh, subdomain):
+    mesh_function = MeshFunction("size_t", mesh, mesh.topology.dim - subdomain.codimension, 0)
+    mesh_function.mark(subdomain, 1)
+    return mesh_function
 
-def get_restrictions_1():
+def Restriction(V, subdomain):
+    if subdomain is not None:
+        mesh_function = MeshFunctionSizetFromSubdomain(V.mesh, subdomain)
+        mesh_function_1 = where(mesh_function.values == 1)[0]
+        return locate_dofs_topological(V, mesh_function.dim, mesh_function_1)
+    else:
+        return arange(0, V.dofmap.index_map.block_size*(V.dofmap.index_map.size_local + V.dofmap.index_map.num_ghosts))
+
+def get_subdomains_1():
     return (
         None,
         UnitSquareSubDomain(0.5, 0.5),
@@ -297,7 +293,7 @@ def get_restrictions_1():
         pytest_mark_slow(UnitSquareInterface(Y=0.25))
     )
 
-def get_restrictions_2():
+def get_subdomains_2():
     return (
         (None, None),
         (None, UnitSquareSubDomain(0.75, 0.75)),
@@ -323,17 +319,18 @@ def get_restrictions_2():
 # ================ BLOCK BOUNDARY CONDITIONS GENERATOR ================ #
 # Computation of block bcs for single block
 def get_block_bcs_1():
+    OnBoundary = UnitSquareInterface(on_boundary=True)
+
     def _get_bc_1(block_V):
         mesh = block_V.mesh
-        boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
-        boundaries.mark(OnBoundary, 1)
+        boundaries = MeshFunctionSizetFromSubdomain(mesh, OnBoundary)
         boundaries_1 = where(boundaries.values == 1)[0]
         num_sub_elements = block_V[0].ufl_element().num_sub_elements()
         if num_sub_elements == 0:
             bc1_fun = Function(block_V[0])
             with bc1_fun.vector.localForm() as local_form:
                 local_form.set(1.)
-            bdofs = locate_dofs_topological(block_V[0], mesh.topology.dim - 1, boundaries_1)
+            bdofs = locate_dofs_topological(block_V[0], boundaries.dim, boundaries_1)
             return [DirichletBC(bc1_fun, bdofs)]
         else:
             bc1 = list()
@@ -341,7 +338,7 @@ def get_block_bcs_1():
                 bc1_fun = Function(block_V[0].sub(i).collapse())
                 with bc1_fun.vector.localForm() as local_form:
                     local_form.set(i + 1.)
-                bdofs = locate_dofs_topological((block_V[0].sub(i), bc1_fun.function_space), mesh.topology.dim - 1, boundaries_1)
+                bdofs = locate_dofs_topological((block_V[0].sub(i), bc1_fun.function_space), boundaries.dim, boundaries_1)
                 bc1.append(DirichletBC(bc1_fun, bdofs, block_V[0].sub(i)))
             return bc1
     return (
@@ -352,17 +349,18 @@ def get_block_bcs_1():
 
 # Computation of block bcs for two blocks
 def get_block_bcs_2():
+    OnBoundary = UnitSquareInterface(on_boundary=True)
+
     def _get_bc_1(block_V):
         mesh = block_V.mesh
-        boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
-        boundaries.mark(OnBoundary, 1)
+        boundaries = MeshFunctionSizetFromSubdomain(mesh, OnBoundary)
         boundaries_1 = where(boundaries.values == 1)[0]
         num_sub_elements = block_V[0].ufl_element().num_sub_elements()
         if num_sub_elements == 0:
             bc1_fun = Function(block_V[0])
             with bc1_fun.vector.localForm() as local_form:
                 local_form.set(1.)
-            bdofs = locate_dofs_topological(block_V[0], mesh.topology.dim - 1, boundaries_1)
+            bdofs = locate_dofs_topological(block_V[0], boundaries.dim, boundaries_1)
             return [DirichletBC(bc1_fun, bdofs)]
         else:
             bc1 = list()
@@ -370,20 +368,19 @@ def get_block_bcs_2():
                 bc1_fun = Function(block_V[0].sub(i).collapse())
                 with bc1_fun.vector.localForm() as local_form:
                     local_form.set(i + 1.)
-                bdofs = locate_dofs_topological((block_V[0].sub(i), bc1_fun.function_space), mesh.topology.dim - 1, boundaries_1)
+                bdofs = locate_dofs_topological((block_V[0].sub(i), bc1_fun.function_space), boundaries.dim, boundaries_1)
                 bc1.append(DirichletBC(bc1_fun, bdofs, block_V[0].sub(i)))
             return bc1
     def _get_bc_2(block_V):
         mesh = block_V.mesh
-        boundaries = MeshFunction("size_t", mesh, mesh.topology.dim - 1, 0)
-        boundaries.mark(OnBoundary, 1)
+        boundaries = MeshFunctionSizetFromSubdomain(mesh, OnBoundary)
         boundaries_1 = where(boundaries.values == 1)[0]
         num_sub_elements = block_V[1].ufl_element().num_sub_elements()
         if num_sub_elements == 0:
             bc2_fun = Function(block_V[1])
             with bc2_fun.vector.localForm() as local_form:
                 local_form.set(11.)
-            bdofs = locate_dofs_topological(block_V[1], mesh.topology.dim - 1, boundaries_1)
+            bdofs = locate_dofs_topological(block_V[1], boundaries.dim, boundaries_1)
             return [DirichletBC(bc2_fun, bdofs)]
         else:
             bc2 = list()
@@ -391,7 +388,7 @@ def get_block_bcs_2():
                 bc2_fun = Function(block_V[1].sub(i).collapse())
                 with bc2_fun.vector.localForm() as local_form:
                     local_form.set(i + 11.)
-                bdofs = locate_dofs_topological((block_V[1].sub(i), bc2_fun.function_space), mesh.topology.dim - 1, boundaries_1)
+                bdofs = locate_dofs_topological((block_V[1].sub(i), bc2_fun.function_space), boundaries.dim, boundaries_1)
                 bc2.append(DirichletBC(bc2_fun, bdofs, block_V[1].sub(i)))
             return bc2
     return (

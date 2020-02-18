@@ -19,7 +19,7 @@
 import pytest
 from dolfinx import MPI, UnitSquareMesh
 from multiphenics import BlockFunctionSpace
-from test_utils import assert_functions_manipulations, get_function_spaces_1, get_function_spaces_2, get_list_of_functions_1, get_list_of_functions_2, get_restrictions_1, get_restrictions_2
+from test_utils import assert_functions_manipulations, get_function_spaces_1, get_function_spaces_2, get_list_of_functions_1, get_list_of_functions_2, get_subdomains_1, get_subdomains_2, Restriction
 
 # Mesh
 @pytest.fixture(scope="module")
@@ -45,21 +45,25 @@ def test_two_blocks_no_restriction(mesh, FunctionSpaces):
     assert_functions_manipulations(functions, block_V)
 
 # Single block, with restriction
-@pytest.mark.parametrize("restriction", get_restrictions_1())
+@pytest.mark.parametrize("subdomain", get_subdomains_1())
 @pytest.mark.parametrize("FunctionSpace", get_function_spaces_1())
-def test_single_block_with_restriction(mesh, restriction, FunctionSpace):
+def test_single_block_with_restriction(mesh, subdomain, FunctionSpace):
     V = FunctionSpace(mesh)
+    restriction = Restriction(V, subdomain)
     block_V = BlockFunctionSpace([V], restrict=[restriction])
     functions = get_list_of_functions_1(block_V)
     assert_functions_manipulations(functions, block_V)
 
 # Two blocks, with restrictions
-@pytest.mark.parametrize("restriction", get_restrictions_2())
+@pytest.mark.parametrize("subdomains", get_subdomains_2())
 @pytest.mark.parametrize("FunctionSpaces", get_function_spaces_2())
-def test_two_blocks_with_restriction(mesh, restriction, FunctionSpaces):
+def test_two_blocks_with_restriction(mesh, subdomains, FunctionSpaces):
     (FunctionSpace1, FunctionSpace2) = FunctionSpaces
+    (subdomain1, subdomain2) = subdomains
     V1 = FunctionSpace1(mesh)
     V2 = FunctionSpace2(mesh)
-    block_V = BlockFunctionSpace([V1, V2], restrict=restriction)
+    restriction1 = Restriction(V1, subdomain1)
+    restriction2 = Restriction(V2, subdomain2)
+    block_V = BlockFunctionSpace([V1, V2], restrict=[restriction1, restriction2])
     functions = get_list_of_functions_2(block_V)
     assert_functions_manipulations(functions, block_V)

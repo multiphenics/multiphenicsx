@@ -18,10 +18,10 @@
 
 import pytest
 from numpy import concatenate
-from dolfinx import FunctionSpace, MPI, UnitSquareMesh
-from multiphenics import BlockElement, BlockFunctionSpace
+from dolfinx import MPI, UnitSquareMesh
+from multiphenics import BlockFunctionSpace
 from multiphenics.cpp.compile_code import compile_code
-from test_utils import assert_global_dofs, assert_owned_local_dofs, assert_tabulated_dof_coordinates, array_sorted_equal, assert_unowned_local_dofs, get_elements_1, get_elements_2, get_function_spaces_1, get_function_spaces_2, get_restrictions_1, get_restrictions_2, unique
+from test_utils import assert_global_dofs, assert_owned_local_dofs, assert_tabulated_dof_coordinates, array_sorted_equal, assert_unowned_local_dofs, get_function_spaces_1, get_function_spaces_2, get_subdomains_1, get_subdomains_2, Restriction, unique
 
 # Mesh
 @pytest.fixture(scope="module")
@@ -74,20 +74,11 @@ def assert_dof_map_single_block_no_restriction(V, block_V):
     block_V_dof_coordinates = block_V.tabulate_dof_coordinates()
     assert_tabulated_dof_coordinates(V_dof_coordinates, block_V_dof_coordinates)
 
-# Single block, no restriction, from list
+# Single block, no restriction
 @pytest.mark.parametrize("FunctionSpace", get_function_spaces_1())
-def test_single_block_no_restriction_from_list(mesh, FunctionSpace):
+def test_single_block_no_restriction(mesh, FunctionSpace):
     V = FunctionSpace(mesh)
     block_V = BlockFunctionSpace([V])
-    assert_dof_map_single_block_no_restriction(V, block_V)
-
-# Single block, no restriction, from block element
-@pytest.mark.parametrize("Element", get_elements_1())
-def test_single_block_no_restriction_from_block_element(mesh, Element):
-    V_element = Element(mesh)
-    V = FunctionSpace(mesh, V_element)
-    block_V_element = BlockElement(V_element)
-    block_V = BlockFunctionSpace(mesh, block_V_element)
     assert_dof_map_single_block_no_restriction(V, block_V)
 
 # Assert for two blocks, no restriction
@@ -120,25 +111,13 @@ def assert_dof_map_two_blocks_no_restriction(V1, V2, block_V):
     block_V_dof_coordinates = block_V.tabulate_dof_coordinates()
     assert_tabulated_dof_coordinates(V_dof_coordinates, block_V_dof_coordinates)
 
-# Two blocks, no restriction, from list
+# Two blocks, no restriction
 @pytest.mark.parametrize("FunctionSpaces", get_function_spaces_2())
-def test_two_blocks_no_restriction_from_list(mesh, FunctionSpaces):
+def test_two_blocks_no_restriction(mesh, FunctionSpaces):
     (FunctionSpace1, FunctionSpace2) = FunctionSpaces
     V1 = FunctionSpace1(mesh)
     V2 = FunctionSpace2(mesh)
     block_V = BlockFunctionSpace([V1, V2])
-    assert_dof_map_two_blocks_no_restriction(V1, V2, block_V)
-
-# Two blocks, no restriction from block element
-@pytest.mark.parametrize("Elements", get_elements_2())
-def test_two_blocks_no_restriction_from_block_element(mesh, Elements):
-    (Element1, Element2) = Elements
-    V1_element = Element1(mesh)
-    V2_element = Element2(mesh)
-    V1 = FunctionSpace(mesh, V1_element)
-    V2 = FunctionSpace(mesh, V2_element)
-    block_V_element = BlockElement(V1_element, V2_element)
-    block_V = BlockFunctionSpace(mesh, block_V_element)
     assert_dof_map_two_blocks_no_restriction(V1, V2, block_V)
 
 # Assert for single block, with restriction
@@ -159,22 +138,13 @@ def assert_dof_map_single_block_with_restriction(V, block_V):
         assert_owned_local_dofs(V_cell_owned_local_dofs, block_V_cell_owned_local_dofs)
         assert_unowned_local_dofs(V_cell_unowned_local_dofs, block_V_cell_unowned_local_dofs)
 
-# Single block, with restriction, from list
-@pytest.mark.parametrize("restriction", get_restrictions_1())
+# Single block, with restriction
+@pytest.mark.parametrize("subdomain", get_subdomains_1())
 @pytest.mark.parametrize("FunctionSpace", get_function_spaces_1())
-def test_single_block_with_restriction_from_list(mesh, restriction, FunctionSpace):
+def test_single_block_with_restriction(mesh, subdomain, FunctionSpace):
     V = FunctionSpace(mesh)
+    restriction = Restriction(V, subdomain)
     block_V = BlockFunctionSpace([V], restrict=[restriction])
-    assert_dof_map_single_block_with_restriction(V, block_V)
-
-# Single block, with restriction, from block element
-@pytest.mark.parametrize("restriction", get_restrictions_1())
-@pytest.mark.parametrize("Element", get_elements_1())
-def test_single_block_with_restriction_from_block_element(mesh, restriction, Element):
-    V_element = Element(mesh)
-    V = FunctionSpace(mesh, V_element)
-    block_V_element = BlockElement(V_element)
-    block_V = BlockFunctionSpace(mesh, block_V_element, restrict=[restriction])
     assert_dof_map_single_block_with_restriction(V, block_V)
 
 # Assert for two blocks, with restrictions
@@ -208,25 +178,15 @@ def assert_dof_map_test_two_blocks_with_restriction(V1, V2, block_V):
         assert_owned_local_dofs(V_cell_owned_local_dofs, block_V_cell_owned_local_dofs)
         assert_unowned_local_dofs(V_cell_unowned_local_dofs, block_V_cell_unowned_local_dofs)
 
-# Two blocks, with restrictions, from list
-@pytest.mark.parametrize("restriction", get_restrictions_2())
+# Two blocks, with restrictions
+@pytest.mark.parametrize("subdomains", get_subdomains_2())
 @pytest.mark.parametrize("FunctionSpaces", get_function_spaces_2())
-def test_two_blocks_with_restriction_from_list(mesh, restriction, FunctionSpaces):
+def test_two_blocks_with_restriction(mesh, subdomains, FunctionSpaces):
     (FunctionSpace1, FunctionSpace2) = FunctionSpaces
+    (subdomain1, subdomain2) = subdomains
     V1 = FunctionSpace1(mesh)
     V2 = FunctionSpace2(mesh)
-    block_V = BlockFunctionSpace([V1, V2], restrict=restriction)
-    assert_dof_map_test_two_blocks_with_restriction(V1, V2, block_V)
-
-# Two blocks, with restrictions, from block element
-@pytest.mark.parametrize("restriction", get_restrictions_2())
-@pytest.mark.parametrize("Elements", get_elements_2())
-def test_two_blocks_with_restriction_from_block_element(mesh, restriction, Elements):
-    (Element1, Element2) = Elements
-    V1_element = Element1(mesh)
-    V2_element = Element2(mesh)
-    V1 = FunctionSpace(mesh, V1_element)
-    V2 = FunctionSpace(mesh, V2_element)
-    block_V_element = BlockElement(V1_element, V2_element)
-    block_V = BlockFunctionSpace(mesh, block_V_element, restrict=restriction)
+    restriction1 = Restriction(V1, subdomain1)
+    restriction2 = Restriction(V2, subdomain2)
+    block_V = BlockFunctionSpace([V1, V2], restrict=[restriction1, restriction2])
     assert_dof_map_test_two_blocks_with_restriction(V1, V2, block_V)
