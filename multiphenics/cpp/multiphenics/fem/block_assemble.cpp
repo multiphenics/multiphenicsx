@@ -176,19 +176,17 @@ Mat multiphenics::fem::init_matrix(const BlockForm2& a)
           BlockSparsityPatternBuilder::exterior_facets(pattern, mesh.topology(), dofmaps_ij);
         }
       }
-      else if (i == j)
-      {
-        // Keep diagonal element in sparsity pattern
-        const std::int32_t local_size = index_maps[0]->size_local();
-        Eigen::Array<PetscInt, Eigen::Dynamic, 1> diagonal_dof(1);
-        for (std::int32_t I = 0; I < local_size; I++)
-        {
-          const PetscInt _I = I;
-          diagonal_dof(0) = _I;
-          pattern.insert(diagonal_dof, diagonal_dof);
-        }
-      }
     }
+  }
+
+  // Keep diagonal element in sparsity pattern
+  const std::int32_t local_size = index_maps[0]->size_local();
+  Eigen::Array<PetscInt, Eigen::Dynamic, 1> diagonal_dof(1);
+  for (std::int32_t I = 0; I < local_size; I++)
+  {
+    const PetscInt _I = I;
+    diagonal_dof(0) = _I;
+    pattern.insert(diagonal_dof, diagonal_dof);
   }
 
   // Finalize sparsity pattern
@@ -202,39 +200,21 @@ Mat multiphenics::fem::init_matrix(const BlockForm2& a)
 
   PetscErrorCode ierr;
 
-  // Get size
-  std::array<PetscInt, 2> size;
-  ierr = MatGetSize(A, &size[0], &size[1]);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "MatGetSize");
-
-  // Get local row range
-  std::array<PetscInt, 2> row_range;
-  ierr = MatGetOwnershipRange(A, &row_range[0], &row_range[1]);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "MatGetOwnershipRange");
-
   // Insert zeros on the diagonal as diagonal entries may be
   // optimised away, e.g. when calling MatAssemblyBegin/MatAssemblyEnd.
+  const PetscScalar block = 0.0;
+  for (std::int32_t I = 0; I < local_size; I++)
   {
-    // Loop over rows and insert 0.0 on the diagonal
-    const PetscScalar block = 0.0;
-    const std::int64_t range = std::min(row_range[1], size[1]);
-
-    for (std::int64_t I = row_range[0]; I < range; I++)
-    {
-      const PetscInt _I = I;
-      ierr = MatSetValue(A, _I, _I, block, INSERT_VALUES);
-      if (ierr != 0) petsc_error(ierr, __FILE__, "MatSetValue");
-    }
+    const PetscInt _I = I;
+    ierr = MatSetValueLocal(A, _I, _I, block, INSERT_VALUES);
+    if (ierr != 0) petsc_error(ierr, __FILE__, "MatSetValueLocal");
   }
 
   // Wait with assembly flush
-  {
-    PetscErrorCode ierr;
-    ierr = MatAssemblyBegin(A, MAT_FLUSH_ASSEMBLY);
-    if (ierr != 0) petsc_error(ierr, __FILE__, "MatAssemblyBegin");
-    ierr = MatAssemblyEnd(A, MAT_FLUSH_ASSEMBLY);
-    if (ierr != 0) petsc_error(ierr, __FILE__, "MatAssemblyEnd");
-  }
+  ierr = MatAssemblyBegin(A, MAT_FLUSH_ASSEMBLY);
+  if (ierr != 0) petsc_error(ierr, __FILE__, "MatAssemblyBegin");
+  ierr = MatAssemblyEnd(A, MAT_FLUSH_ASSEMBLY);
+  if (ierr != 0) petsc_error(ierr, __FILE__, "MatAssemblyEnd");
 
   // Return
   return A;
