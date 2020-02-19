@@ -19,35 +19,61 @@
 import os
 import importlib
 import pytest
-import matplotlib
+import pytest_flake8
+import matplotlib  # TODO remove after transition to ipynb is complete?
 matplotlib.use("agg", warn=False)
 import matplotlib.pyplot as plt
+from nbconvert.exporters import PythonExporter
+from dolfinx import MPI
+
+def pytest_ignore_collect(path, config):
+    if path.ext == ".py" and path.new(ext=".ipynb").exists():  # ignore .py files obtained from previous runs
+        return True
+    else:
+        return False
 
 def pytest_collect_file(path, parent):
     """
-    Hook into py.test to collect tutorial files.
+    Collect tutorial files.
     """
-    if (
-        path.ext == ".py" and path.basename not in "conftest.py"
-            and
-        "data" not in path.dirname
-    ):
-        return TutorialFile(path, parent)
+    if path.ext == ".ipynb":
+        # Convert .ipynb notebooks to plain .py files
+        exporter = PythonExporter()
+        exporter.exclude_markdown = True
+        exporter.exclude_input_prompt = True
+        code, _ = exporter.from_filename(path)
+        code = code.rstrip("\n") + "\n"
+        if MPI.rank(MPI.comm_world) == 0:
+            with open(path.new(ext=".py"), "w", encoding="utf-8") as f:
+                f.write(code)
+        # Collect the corresponding .py file
+        config = parent.config
+        if config.getoption("--flake8"):
+            return pytest_flake8.pytest_collect_file(path.new(ext=".py"), parent)
+        else:
+            if "data" not in path.dirname:  # skip running mesh generation notebooks
+                return TutorialFile(path.new(ext=".py"), parent)
+    elif path.ext == ".py":  # TODO remove after transition to ipynb is complete? assert never py files?
+        if "data" not in path.dirname:  # skip running mesh generation notebooks
+            return TutorialFile(path, parent)
 
 def pytest_pycollect_makemodule(path, parent):
     """
-    Hook into py.test to avoid collecting twice tutorial files explicitly provided on the command lines
+    Disable running .py files produced by previous runs, as they may get out of sync with the corresponding .ipynb file.
     """
-    if (
-        path.ext == ".py" and path.basename not in "conftest.py"
-            and
-        "data" not in path.dirname
-    ):
-        return DoNothingFile(path, parent)
+    if path.ext == ".py":
+        assert not path.new(ext=".ipynb").exists(), "Please run pytest on jupyter notebooks, not plain python files."
+        return DoNothingFile(path, parent)  # TODO remove after transition to ipynb is complete?
+
+def pytest_runtest_teardown(item, nextitem):
+    # Do the normal teardown
+    item.teardown()
+    # Add a MPI barrier in parallel
+    MPI.barrier(MPI.comm_world)
 
 class TutorialFile(pytest.File):
     """
-    Custom file handler for tutorial files
+    Custom file handler for tutorial files.
     """
 
     def collect(self):
@@ -55,7 +81,7 @@ class TutorialFile(pytest.File):
 
 class TutorialItem(pytest.Item):
     """
-    Handle the execution of the tutorial
+    Handle the execution of the tutorial.
     """
 
     def __init__(self, name, parent):
@@ -73,7 +99,7 @@ class TutorialItem(pytest.Item):
 
 class DoNothingFile(pytest.File):
     """
-    Custom file handler to avoid running twice tutorial files explicitly provided on the command lines
+    Custom file handler to avoid running twice python files explicitly provided on the command line.
     """
 
     def collect(self):
