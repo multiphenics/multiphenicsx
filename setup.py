@@ -45,6 +45,7 @@ setup(name="multiphenics",
           "pytest-runner"
       ],
       tests_require=[
+          "nbconvert",
           "pytest",
           "pytest-flake8",
           "pytest-html",
