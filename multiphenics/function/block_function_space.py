@@ -65,8 +65,10 @@ class BlockFunctionSpace(object):
                 return output
             function_space.sub = types.MethodType(sub, function_space)
 
-        self._sub_spaces = function_spaces
-        for (index, function_space) in enumerate(function_spaces):
+        # TODO need to clone because of attach_block_function_space_and_block_index_to_function_space
+        #      It would probably be best to remove such patch altogether
+        self._sub_spaces = [function_space.clone() for function_space in function_spaces]
+        for (index, function_space) in enumerate(self._sub_spaces):
             attach_block_function_space_and_block_index_to_function_space(index, function_space)
 
         # Finally, fill in ufl_element
@@ -138,9 +140,7 @@ class BlockFunctionSpace(object):
         cpp_space = self._cpp_object.extract_block_sub_space(component, restrict)
 
         # Extend with the python layer
-        # TODO need to clone because of the patching (block_function_space and block_index) in the constructor.
-        #      It would probably be best to remove such patch altogether
-        sub_spaces = [self._sub_spaces[component_].clone() for component_ in component]
+        sub_spaces = [self._sub_spaces[component_] for component_ in component]
         python_space = BlockFunctionSpace(sub_spaces, cpp_object=cpp_space)
 
         # Store the components in the python space
