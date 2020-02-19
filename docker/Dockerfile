@@ -24,7 +24,7 @@ RUN apt-get -qq update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     pip3 -q install --upgrade pytest pytest-flake8 pytest-html pytest-instafail pytest-xdist && \
-    sed -i "s/pytest_report_header/DISABLED_pytest_report_header/g" /usr/local/lib/python3.6/dist-packages/pytest_metadata/plugin.py && \
+    sed -i "s/pytest_report_header/DISABLED_pytest_report_header/g" /usr/local/lib/python3.7/dist-packages/pytest_metadata/plugin.py && \
     cat /dev/null > $FENICS_HOME/WELCOME
 
 COPY . /tmp/multiphenics
