@@ -54,7 +54,11 @@ def pytest_collect_file(path, parent):
             if "data" not in path.dirname:  # skip running mesh generation notebooks
                 return TutorialFile(path.new(ext=".py"), parent)
     elif path.ext == ".py":  # TODO remove after transition to ipynb is complete? assert never py files?
-        if "data" not in path.dirname:  # skip running mesh generation notebooks
+        if (
+            path.basename not in "conftest.py"  # do not run pytest configuration file
+                or
+            "data" not in path.dirname  # skip running mesh generation notebooks
+        ):
             return TutorialFile(path, parent)
 
 def pytest_pycollect_makemodule(path, parent):
