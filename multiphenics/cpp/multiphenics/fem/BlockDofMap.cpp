@@ -53,7 +53,7 @@ void BlockDofMap::_map_owned_dofs(std::vector<std::shared_ptr<const DofMap>> dof
                                   std::vector<Eigen::Ref<const Eigen::Array<std::int32_t, Eigen::Dynamic, 1>>> restrictions)
 {
   // Compute local block and sub_block indices associated to owned dofs
-  std::int32_t block_dofmap_owned_size;
+  std::int32_t block_dofmap_owned_size = 0;
   std::vector<std::int32_t> sub_block_dofmap_owned_size(dofmaps.size());
   for (std::size_t i = 0; i < dofmaps.size(); ++i)
   {
