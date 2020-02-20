@@ -16,23 +16,16 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import ndarray as array, empty
+from numpy import empty
 from dolfinx.fem import derivative
-from multiphenics.fem.block_form import _block_form_preprocessing
 from multiphenics.fem.block_form_1 import BlockForm1
 from multiphenics.fem.block_form_2 import BlockForm2
 from multiphenics.fem.block_replace_zero import _is_zero
 from multiphenics.function import BlockFunction, BlockTrialFunction
 
 def block_derivative(F, u, du):
-    assert isinstance(F, (array, list, BlockForm1))
-    if isinstance(F, (array, list)):
-        input_type = array
-        (F, block_V, block_form_rank) = _block_form_preprocessing(F)
-        assert block_form_rank == 1
-    else:
-        input_type = BlockForm1
-        block_V = F.block_function_spaces()
+    assert isinstance(F, BlockForm1)
+    block_V = F.block_function_spaces()
     assert len(block_V) == 1
     block_V = block_V[0]
     assert isinstance(u, BlockFunction)
@@ -47,7 +40,4 @@ def block_derivative(F, u, du):
                 J[i, j] = derivative(F[i], u[j], du[j])
         else:
             J[i, :] = 0
-    if input_type is array:
-        return J
-    elif input_type is BlockForm1:
-        return BlockForm2(J, block_function_space=[du.block_function_space(), block_V])
+    return BlockForm2(J.tolist(), block_function_space=[u.block_function_space, block_V])

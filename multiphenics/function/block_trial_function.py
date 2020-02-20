@@ -16,12 +16,9 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from ufl import TrialFunction
 from multiphenics.function.block_argument import BlockArgument
-from multiphenics.function.trial_function import TrialFunction
 
 class BlockTrialFunction(BlockArgument):
-    def __new__(cls, arg1):
-        return BlockArgument.__new__(cls, arg1, TrialFunction)
-
-    def __init__(self, arg1):
-        BlockArgument.__init__(self, arg1, TrialFunction)
+    def __new__(cls, block_function_space):
+        return BlockArgument.__new__(cls, block_function_space, TrialFunction)

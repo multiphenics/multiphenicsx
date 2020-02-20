@@ -19,13 +19,6 @@
 from multiphenics.function.block_function_space import BlockFunctionSpace
 
 class BlockArgument(tuple):
-    def __new__(cls, arg1, Generator):
-        assert isinstance(arg1, BlockFunctionSpace)
-        return tuple.__new__(cls, [Generator(V, block_function_space=arg1, block_index=block_index) for (block_index, V) in enumerate(arg1)])
-
-    def __init__(self, arg1, Generator):
-        assert isinstance(arg1, BlockFunctionSpace)
-        self._block_function_space = arg1
-
-    def block_function_space(self):
-        return self._block_function_space
+    def __new__(cls, block_function_space, Generator):
+        assert isinstance(block_function_space, BlockFunctionSpace)
+        return tuple.__new__(cls, [Generator(V) for V in block_function_space])

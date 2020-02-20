@@ -16,7 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from multiphenics.fem import block_adjoint, block_derivative, BlockDirichletBC, BlockForm, block_restrict, DirichletBC
+from multiphenics.fem import block_adjoint, block_derivative, BlockDirichletBC, BlockForm1, BlockForm2, block_restrict
 from multiphenics.function import BlockFunction, BlockFunctionSpace, block_split, BlockTestFunction, BlockTrialFunction
 from multiphenics.la import BlockSLEPcEigenSolver, block_solve, SLEPcEigenSolver
 from multiphenics.nls import BlockNewtonSolver, BlockNonlinearProblem
@@ -25,7 +25,8 @@ __all__ = [
     "block_adjoint",
     "block_derivative",
     "BlockDirichletBC",
-    "BlockForm",
+    "BlockForm1",
+    "BlockForm2",
     "BlockFunction",
     "BlockFunctionSpace",
     "BlockNewtonSolver",
@@ -36,6 +37,5 @@ __all__ = [
     "block_split",
     "BlockTestFunction",
     "BlockTrialFunction",
-    "DirichletBC",
     "SLEPcEigenSolver"
 ]

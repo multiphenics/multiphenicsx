@@ -16,19 +16,14 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import ndarray as array
 from petsc4py import PETSc
-from multiphenics.fem import block_assemble, BlockDirichletBC, BlockDirichletBCLegacy, BlockForm, BlockForm1, BlockForm2
+from multiphenics.fem import block_assemble, BlockDirichletBC, BlockDirichletBCLegacy, BlockForm1, BlockForm2
 from multiphenics.function import BlockFunction
 
 def block_solve(block_lhs, block_x, block_rhs, block_bcs=None, petsc_options=None):
     # Process inputs
-    if isinstance(block_lhs, (array, list)):
-        block_lhs = BlockForm(block_lhs)
     assert isinstance(block_lhs, BlockForm2)
     assert isinstance(block_x, BlockFunction)
-    if isinstance(block_rhs, (array, list)):
-        block_rhs = BlockForm(block_rhs)
     assert isinstance(block_rhs, BlockForm1)
     assert block_bcs is None or isinstance(block_bcs, BlockDirichletBC)
     # Assemble

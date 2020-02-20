@@ -16,20 +16,12 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import ndarray as array
 from multiphenics.cpp import cpp
-from multiphenics.fem.block_form import BlockForm
 from multiphenics.fem.block_form_1 import BlockForm1
 from multiphenics.fem.block_form_2 import BlockForm2
 
-def block_assemble(block_form,
-                   block_tensor=None):
-
-    # Create a block form, the provided one is a list of Forms
-    if isinstance(block_form, (array, list)):
-        block_form = BlockForm(block_form)
-    else:
-        assert isinstance(block_form, (BlockForm1, BlockForm2))
+def block_assemble(block_form, block_tensor=None):
+    assert isinstance(block_form, (BlockForm1, BlockForm2))
 
     # Call C++ assemble function
     if block_tensor is None:

@@ -71,7 +71,7 @@ class BlockForm1(BlockForm1_Base):
         vector_of_str = empty((self.N, ), dtype=object)
         for I in range(self.N):
             vector_of_str[I] = str(self._block_form[I])
-        return str(vector_of_str)
+        return str(vector_of_str.tolist())
 
     def __add__(self, other):
         if isinstance(other, BlockForm1):
@@ -107,7 +107,7 @@ class BlockForm1(BlockForm1_Base):
                     output_block_form[I] = 0
                 else:
                     raise TypeError("Invalid form")
-            return BlockForm1(output_block_form, self._block_function_space)
+            return BlockForm1(output_block_form.tolist(), self._block_function_space)
         else:
             return NotImplemented
 
@@ -131,7 +131,7 @@ class BlockForm1(BlockForm1_Base):
                     output_block_form[I] = 0
                 else:
                     raise TypeError("Invalid form")
-            return BlockForm1(output_block_form, self._block_function_space)
+            return BlockForm1(output_block_form.tolist(), self._block_function_space)
         else:
             return NotImplemented
 

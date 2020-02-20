@@ -16,50 +16,42 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import ndarray as array, zeros
+from numpy import empty
 from multiphenics.fem.block_dirichlet_bc import BlockDirichletBC
-from multiphenics.fem.block_form import _block_form_preprocessing
 from multiphenics.fem.block_form_1 import BlockForm1
 from multiphenics.fem.block_form_2 import BlockForm2
 from multiphenics.function import BlockFunctionSpace, BlockFunction
 
 def block_restrict(block_input, block_function_sub_space):
-    assert isinstance(block_input, (array, list, BlockDirichletBC, BlockForm1, BlockForm2, BlockFunction))
-    if isinstance(block_input, (array, list, BlockForm1, BlockForm2)):
-        if isinstance(block_input, (array, list)):
-            (block_form, _, block_form_rank) = _block_form_preprocessing(block_input)
-        elif isinstance(block_input, BlockForm2):
-            block_form = block_input
-            block_form_rank = 2
-        elif isinstance(block_input, BlockForm1):
-            block_form = block_input
-            block_form_rank = 1
-        if block_form_rank == 2:
-            assert isinstance(block_function_sub_space, list)
-            assert len(block_function_sub_space) == 2
-            assert isinstance(block_function_sub_space[0], BlockFunctionSpace)
-            assert isinstance(block_function_sub_space[1], BlockFunctionSpace)
-            N_sub_space = block_function_sub_space[0].num_sub_spaces()
-            M_sub_space = block_function_sub_space[1].num_sub_spaces()
-            sub_block_form = zeros((N_sub_space, M_sub_space), dtype=object)
-            for I_sub_space in range(N_sub_space):
-                I_space = _sub_component_to_component(block_function_sub_space[0], I_sub_space)
-                for J_sub_space in range(M_sub_space):
-                    J_space = _sub_component_to_component(block_function_sub_space[1], J_sub_space)
-                    sub_block_form[I_sub_space, J_sub_space] = block_form[I_space, J_space]
-            return BlockForm2(sub_block_form, block_function_sub_space)
-        elif block_form_rank == 1:
-            assert isinstance(block_function_sub_space, (BlockFunctionSpace, list))
-            if isinstance(block_function_sub_space, BlockFunctionSpace):
-                block_function_sub_space = [block_function_sub_space]
-            assert len(block_function_sub_space) == 1
-            assert isinstance(block_function_sub_space[0], BlockFunctionSpace)
-            N_sub_space = block_function_sub_space[0].num_sub_spaces()
-            sub_block_form = zeros((N_sub_space, ), dtype=object)
-            for I_sub_space in range(N_sub_space):
-                I_space = _sub_component_to_component(block_function_sub_space[0], I_sub_space)
-                sub_block_form[I_sub_space] = block_form[I_space]
-            return BlockForm1(sub_block_form, block_function_sub_space)
+    assert isinstance(block_input, (BlockDirichletBC, BlockForm1, BlockForm2, BlockFunction))
+    if isinstance(block_input, BlockForm2):
+        block_form = block_input
+        assert isinstance(block_function_sub_space, list)
+        assert len(block_function_sub_space) == 2
+        assert isinstance(block_function_sub_space[0], BlockFunctionSpace)
+        assert isinstance(block_function_sub_space[1], BlockFunctionSpace)
+        N_sub_space = block_function_sub_space[0].num_sub_spaces()
+        M_sub_space = block_function_sub_space[1].num_sub_spaces()
+        sub_block_form = empty((N_sub_space, M_sub_space), dtype=object)
+        for I_sub_space in range(N_sub_space):
+            I_space = _sub_component_to_component(block_function_sub_space[0], I_sub_space)
+            for J_sub_space in range(M_sub_space):
+                J_space = _sub_component_to_component(block_function_sub_space[1], J_sub_space)
+                sub_block_form[I_sub_space][J_sub_space] = block_form[I_space][J_space]
+        return BlockForm2(sub_block_form.tolist(), block_function_sub_space)
+    elif isinstance(block_input, BlockForm1):
+        block_form = block_input
+        assert isinstance(block_function_sub_space, (BlockFunctionSpace, list))
+        if isinstance(block_function_sub_space, BlockFunctionSpace):
+            block_function_sub_space = [block_function_sub_space]
+        assert len(block_function_sub_space) == 1
+        assert isinstance(block_function_sub_space[0], BlockFunctionSpace)
+        N_sub_space = block_function_sub_space[0].num_sub_spaces()
+        sub_block_form = empty((N_sub_space, ), dtype=object)
+        for I_sub_space in range(N_sub_space):
+            I_space = _sub_component_to_component(block_function_sub_space[0], I_sub_space)
+            sub_block_form[I_sub_space] = block_form[I_space]
+        return BlockForm1(sub_block_form.tolist(), block_function_sub_space)
     elif isinstance(block_input, BlockFunction):
         assert isinstance(block_function_sub_space, (BlockFunctionSpace, list))
         if isinstance(block_function_sub_space, list):

@@ -23,9 +23,9 @@ from numpy import allclose as float_array_equal, arange, array_equal as integer_
 from scipy.sparse import csr_matrix
 from petsc4py import PETSc
 from ufl import as_matrix, as_tensor, as_vector, dx, FiniteElement, inner, MixedElement, SpatialCoordinate, VectorElement
-from dolfinx import Function, FunctionSpace, MeshFunction, TensorFunctionSpace, VectorFunctionSpace
+from dolfinx import DirichletBC, Function, FunctionSpace, MeshFunction, TensorFunctionSpace, VectorFunctionSpace
 from dolfinx.fem import assemble_matrix, assemble_vector, locate_dofs_topological
-from multiphenics import BlockDirichletBC, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction, DirichletBC
+from multiphenics import BlockDirichletBC, BlockForm1, BlockForm2, BlockFunction, block_split, BlockTestFunction, BlockTrialFunction
 from multiphenics.fem import block_assemble, BlockDirichletBCLegacy, DirichletBCLegacy
 
 # ================ PYTEST HELPER ================ #
@@ -343,8 +343,8 @@ def get_block_bcs_1():
             return bc1
     return (
         lambda block_V: None,
-        pytest_mark_slow(lambda block_V: BlockDirichletBC([None], block_function_space=block_V)),
-        lambda block_V: BlockDirichletBC(_get_bc_1(block_V))
+        pytest_mark_slow(lambda block_V: BlockDirichletBC([[None]], block_V)),
+        lambda block_V: BlockDirichletBC([_get_bc_1(block_V)], block_V)
     )
 
 # Computation of block bcs for two blocks
@@ -393,10 +393,10 @@ def get_block_bcs_2():
             return bc2
     return (
         lambda block_V: None,
-        pytest_mark_slow(lambda block_V: BlockDirichletBC([None, None], block_function_space=block_V)),
-        lambda block_V: BlockDirichletBC([_get_bc_1(block_V), None]),
-        pytest_mark_slow(lambda block_V: BlockDirichletBC([None, _get_bc_2(block_V)])),
-        lambda block_V: BlockDirichletBC([_get_bc_1(block_V), _get_bc_2(block_V)])
+        pytest_mark_slow(lambda block_V: BlockDirichletBC([[], []], block_V)),
+        lambda block_V: BlockDirichletBC([_get_bc_1(block_V), []], block_V),
+        pytest_mark_slow(lambda block_V: BlockDirichletBC([[], _get_bc_2(block_V)], block_V)),
+        lambda block_V: BlockDirichletBC([_get_bc_1(block_V), _get_bc_2(block_V)], block_V)
     )
 
 # ================ RIGHT-HAND SIDE BLOCK FORM GENERATOR ================ #
@@ -419,7 +419,7 @@ def get_rhs_block_form_1(block_V):
         f = as_matrix(((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]),
                        (7*x[0] + 11*x[1]*x[1], 13*x[0] + 17*x[1]*x[1])))
         block_form = [inner(f, v)*dx]
-    return block_form
+    return BlockForm1(block_form, [block_V])
 
 # Computation of rhs block form for two blocks
 def get_rhs_block_form_2(block_V):
@@ -455,7 +455,7 @@ def get_rhs_block_form_2(block_V):
         f2 = as_matrix(((2*x[1] + 4*x[0]*x[0], 3*x[1] + 5*x[0]*x[0]),
                         (7*x[1] + 11*x[0]*x[0], 13*x[1] + 17*x[0]*x[0])))
         block_form[1] = inner(f2, v2)*dx
-    return block_form
+    return BlockForm1(block_form, [block_V])
 
 # ================ LEFT-HAND SIDE BLOCK FORM GENERATOR ================ #
 # Computation of lhs block form for single block
@@ -479,7 +479,7 @@ def get_lhs_block_form_1(block_V):
         f = as_tensor(((2*x[0] + 4*x[1]*x[1], 3*x[0] + 5*x[1]*x[1]),
                        (7*x[0] + 11*x[1]*x[1], 13*x[0] + 17*x[1]*x[1])))
         block_form = [[(f[0, 0]*u[0, 0]*v[0, 0] + f[0, 1]*u[0, 1].dx(1)*v[0, 1] + f[1, 0]*u[1, 0].dx(0)*v[1, 0].dx(1) + f[1, 1]*u[1, 1].dx(0)*v[1, 1])*dx]]
-    return block_form
+    return BlockForm2(block_form, [block_V, block_V])
 
 # Computation of lhs block form for two blocks
 def get_lhs_block_form_2(block_V):
@@ -572,7 +572,7 @@ def get_lhs_block_form_2(block_V):
         elif len(shape_2) == 2:
             block_form[0][1] = (f1[0, 0]*u2[0, 0]*v1[0, 0] + f1[0, 1]*u2[0, 1].dx(1)*v1[0, 1] + f1[1, 0]*u2[1, 0].dx(0)*v1[1, 0].dx(1) + f1[1, 1]*u2[1, 1].dx(0)*v1[1, 1])*dx
             block_form[1][0] = (f2[0, 0]*u1[0, 0]*v2[0, 0] + f2[0, 1]*u1[0, 1].dx(1)*v2[0, 1] + f2[1, 0]*u1[1, 0].dx(0)*v2[1, 0].dx(1) + f2[1, 1]*u1[1, 1].dx(0)*v2[1, 1])*dx
-    return block_form
+    return BlockForm2(block_form, [block_V, block_V])
 
 # ================ RIGHT-HAND SIDE BLOCK FORM ASSEMBLER ================ #
 def assemble_and_block_assemble_vector(block_form):
@@ -602,8 +602,7 @@ def apply_bc_and_block_bc_vector_non_linear(rhs, block_rhs, block_bcs, block_V):
 # ================ LEFT-HAND SIDE BLOCK FORM ASSEMBLER ================ #
 def assemble_and_block_assemble_matrix(block_form):
     block_matrix = block_assemble(block_form)
-    N = len(block_form)
-    M = len(block_form[0])
+    N, M = block_form.shape
     assert M == N
     matrix = [[assemble_matrix(block_form[i][j]) for j in range(M)] for i in range(N)]
     [matrix[i][j].assemble() for j in range(M) for i in range(N)]

@@ -16,12 +16,9 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from ufl import TestFunction
 from multiphenics.function.block_argument import BlockArgument
-from multiphenics.function.test_function import TestFunction
 
 class BlockTestFunction(BlockArgument):
-    def __new__(cls, arg1):
-        return BlockArgument.__new__(cls, arg1, TestFunction)
-
-    def __init__(self, arg1):
-        BlockArgument.__init__(self, arg1, TestFunction)
+    def __new__(cls, block_function_space):
+        return BlockArgument.__new__(cls, block_function_space, TestFunction)

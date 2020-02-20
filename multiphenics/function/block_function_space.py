@@ -16,7 +16,6 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import types
 from numpy import arange
 from dolfinx import FunctionSpace
 from multiphenics.cpp import cpp
@@ -49,27 +48,8 @@ class BlockFunctionSpace(object):
             self._cpp_object = BlockFunctionSpace_Base([function_space._cpp_object
                                                         for function_space in function_spaces], restrict)
 
-        # Store and patch subspaces
-        def attach_block_function_space_and_block_index_to_function_space(index, function_space):
-            # Make sure to preserve a reference to the block function space
-            function_space.block_function_space = types.MethodType(lambda _: self, function_space)
-
-            # ... and a reference to the block index
-            function_space.block_index = types.MethodType(lambda _: index, function_space)
-
-            # ... and that these methods are preserved by function_space.sub()
-            original_sub = function_space.sub
-            def sub(self_, j):
-                output = original_sub(j)
-                attach_block_function_space_and_block_index_to_function_space(index, output)
-                return output
-            function_space.sub = types.MethodType(sub, function_space)
-
-        # TODO need to clone because of attach_block_function_space_and_block_index_to_function_space
-        #      It would probably be best to remove such patch altogether
-        self._sub_spaces = [function_space.clone() for function_space in function_spaces]
-        for (index, function_space) in enumerate(self._sub_spaces):
-            attach_block_function_space_and_block_index_to_function_space(index, function_space)
+        # Store subspaces
+        self._sub_spaces = function_spaces
 
         # Finally, fill in ufl_element
         self._ufl_element = [function_space.ufl_element() for function_space in function_spaces]

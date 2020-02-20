@@ -16,41 +16,28 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import ndarray as array, empty
+from numpy import empty
 from ufl import Form
 from dolfinx.fem import adjoint
-from multiphenics.fem.block_form import _block_form_preprocessing
 from multiphenics.fem.block_form_2 import BlockForm2
 from multiphenics.fem.block_replace_zero import _is_zero
 from multiphenics.function import BlockTestFunction, BlockTrialFunction
 
 def block_adjoint(block_form):
-    assert isinstance(block_form, (array, list, BlockForm2))
-    if isinstance(block_form, (array, list)):
-        input_type = array
-        (block_form, block_function_space, block_form_rank) = _block_form_preprocessing(block_form)
-        assert block_form_rank == 2
-        N = len(block_form)
-        M = len(block_form[0])
-        block_adjoint_function_space = [block_function_space[1], block_function_space[0]]
-    else:
-        input_type = BlockForm2
-        N = block_form.block_size(0)
-        M = block_form.block_size(1)
-        block_adjoint_function_space = [block_form.block_function_spaces(1), block_form.block_function_spaces(0)]
+    assert isinstance(block_form, BlockForm2)
+    N = block_form.block_size(0)
+    M = block_form.block_size(1)
+    block_adjoint_function_space = [block_form.block_function_spaces()[1], block_form.block_function_spaces()[0]]
     block_test_function_adjoint = BlockTestFunction(block_adjoint_function_space[0])
     block_trial_function_adjoint = BlockTrialFunction(block_adjoint_function_space[1])
     block_adjoint_form = empty((M, N), dtype=object)
     for I in range(N):
         for J in range(M):
-            assert isinstance(block_form[I, J], Form) or _is_zero(block_form[I, J])
-            if isinstance(block_form[I, J], Form):
-                block_adjoint_form[J, I] = adjoint(block_form[I, J], (block_test_function_adjoint[J], block_trial_function_adjoint[I]))
-            elif _is_zero(block_form[I, J]):
-                block_adjoint_form[J, I] = 0
+            assert isinstance(block_form[I][J], Form) or _is_zero(block_form[I][J])
+            if isinstance(block_form[I][J], Form):
+                block_adjoint_form[J][I] = adjoint(block_form[I][J], (block_test_function_adjoint[J], block_trial_function_adjoint[I]))
+            elif _is_zero(block_form[I][J]):
+                block_adjoint_form[J][I] = 0
             else:
                 raise TypeError("Invalid form")
-    if input_type is array:
-        return block_adjoint_form
-    elif input_type is BlockForm2:
-        return BlockForm2(block_adjoint_form, block_function_space=block_adjoint_function_space)
+    return BlockForm2(block_adjoint_form.tolist(), block_function_space=block_adjoint_function_space)

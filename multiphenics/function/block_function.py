@@ -16,7 +16,6 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import types
 from petsc4py import PETSc
 from dolfinx import Function
 from multiphenics.cpp import cpp
@@ -85,36 +84,8 @@ class BlockFunction(object):
         self._sub_functions = sub_functions
 
     def _init_sub_functions(self):
-        def extend_sub_function(sub_function, i):
-            # Make sure to preserve a reference to the block function
-            def block_function(self_):
-                return self
-            sub_function.block_function = types.MethodType(block_function, sub_function)
-
-            # ... and a reference to the block index
-            def block_index(self_):
-                return i
-            sub_function.block_index = types.MethodType(block_index, sub_function)
-
-            # ... and that these methods are preserved by sub_function.sub()
-            original_sub = sub_function.sub
-            def sub(self_, j):
-                output = original_sub(j)
-                extend_sub_function(output, i)
-                return output
-            sub_function.sub = types.MethodType(sub, sub_function)
-
         self._num_sub_spaces = self.block_function_space.num_sub_spaces()
-        self._sub_functions = list()
-        for i in range(self._num_sub_spaces):
-            # Extend with the python layer of dolfinx's Function
-            sub_function = Function(self.block_function_space.sub(i), self._cpp_object.sub(i).vector)
-
-            # Extend with block function and block index methods
-            extend_sub_function(sub_function, i)
-
-            # Append
-            self._sub_functions.append(sub_function)
+        self._sub_functions = [Function(self.block_function_space.sub(i), self._cpp_object.sub(i).vector) for i in range(self._num_sub_spaces)]
 
     def __len__(self):
         "Return the number of sub functions"

@@ -16,7 +16,6 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numpy import ndarray as array
 from ufl import Form
 from dolfinx.cpp.fem import Form as cpp_Form
 from multiphenics.cpp.compile_code import compile_code
@@ -29,7 +28,7 @@ def block_replace_zero(block_form, index, block_function_space):
         I = index[0]  # noqa: E741
         J = index[1]
         assert (
-            isinstance(block_form[I][J], Form) # this function is always called after flattening, so it cannot be an array or list
+            isinstance(block_form[I][J], Form)
                 or
             (isinstance(block_form[I][J], (float, int)) and block_form[I][J] in zeros)
         )
@@ -40,7 +39,7 @@ def block_replace_zero(block_form, index, block_function_space):
     else:
         I = index[0]  # noqa: E741
         assert (
-            isinstance(block_form[I], Form) # this function is always called after flattening, so it cannot be an array or list
+            isinstance(block_form[I], Form)
                 or
             (isinstance(block_form[I], (float, int)) and block_form[I] in zeros)
         )
@@ -51,7 +50,7 @@ def block_replace_zero(block_form, index, block_function_space):
 
 def _is_zero(form_or_block_form):
     assert (
-        isinstance(form_or_block_form, (array, cpp_Form, Form, list))
+        isinstance(form_or_block_form, (cpp_Form, Form, list))
             or
         (isinstance(form_or_block_form, (float, int)) and form_or_block_form in zeros)
     )
@@ -80,52 +79,10 @@ def _is_zero(form_or_block_form):
             """
         is_zero_form = compile_code("is_zero_form", _is_zero_form_cpp_code).is_zero_form
         return is_zero_form(form_or_block_form)
-    elif isinstance(form_or_block_form, (array, list)):
-        block_form_rank = _get_block_form_rank(form_or_block_form)
-        assert block_form_rank in (None, 1, 2)
-        if block_form_rank == 2:
-            for block_form_I in form_or_block_form:
-                for block_form_IJ in block_form_I:
-                    if not _is_zero(block_form_IJ):
-                        return False
-            return True
-        elif block_form_rank == 1:
-            for block_form_I in form_or_block_form:
-                if not _is_zero(block_form_I):
-                    return False
-            return True
-        elif block_form_rank is None:
-            return True
     elif isinstance(form_or_block_form, (float, int)) and form_or_block_form in zeros:
         return True
     else:
         raise AssertionError("Invalid case in _is_zero")
-
-def _get_block_form_rank(form_or_block_form):
-    assert (
-        isinstance(form_or_block_form, (array, Form, list))
-            or
-        (isinstance(form_or_block_form, (float, int)) and form_or_block_form in zeros)
-    )
-    if isinstance(form_or_block_form, Form):
-        if form_or_block_form.empty():
-            return None
-        else:
-            return len(form_or_block_form.arguments())
-    elif isinstance(form_or_block_form, (array, list)):
-        block_form_rank = None
-        for sub_form_or_block_form in form_or_block_form:
-            current_block_form_rank = _get_block_form_rank(sub_form_or_block_form)
-            if current_block_form_rank is not None:
-                if block_form_rank is not None:
-                    assert block_form_rank == current_block_form_rank
-                else:
-                    block_form_rank = current_block_form_rank
-        return block_form_rank
-    elif isinstance(form_or_block_form, (float, int)) and form_or_block_form in zeros:
-        return None
-    else:
-        raise AssertionError("Invalid case in _get_block_form_rank")
 
 def _get_zero_form(block_function_space, index):
     assert len(index) in (1, 2)

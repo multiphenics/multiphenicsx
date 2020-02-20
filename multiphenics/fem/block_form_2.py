@@ -47,16 +47,16 @@ class BlockForm2(BlockForm2_Base):
         replaced_block_form = empty((N, M), dtype=object)
         for I in range(N):
             for J in range(M):
-                if isinstance(block_form[I, J], Form) and has_exact_type(block_form[I, J], CoefficientDerivative):
-                    block_form[I, J] = expand_derivatives(block_form[I, J])
-                replaced_block_form[I, J] = block_replace_zero(block_form, (I, J), block_function_space)
-                assert isinstance(replaced_block_form[I, J], Form) or _is_zero(replaced_block_form[I, J])
-                if isinstance(replaced_block_form[I, J], Form):
-                    replaced_block_form[I, J] = _create_cpp_form(
-                        form=replaced_block_form[I, J]
+                if isinstance(block_form[I][J], Form) and has_exact_type(block_form[I][J], CoefficientDerivative):
+                    block_form[I][J] = expand_derivatives(block_form[I][J])
+                replaced_block_form[I][J] = block_replace_zero(block_form, (I, J), block_function_space)
+                assert isinstance(replaced_block_form[I][J], Form) or _is_zero(replaced_block_form[I][J])
+                if isinstance(replaced_block_form[I][J], Form):
+                    replaced_block_form[I][J] = _create_cpp_form(
+                        form=replaced_block_form[I][J]
                     )
-                elif _is_zero(replaced_block_form[I, J]):
-                    assert isinstance(replaced_block_form[I, J], cpp_Form)
+                elif _is_zero(replaced_block_form[I][J]):
+                    assert isinstance(replaced_block_form[I][J], cpp_Form)
                 else:
                     raise TypeError("Invalid form")
         BlockForm2_Base.__init__(self, replaced_block_form.tolist(), [block_function_space_._cpp_object for block_function_space_ in block_function_space])
@@ -68,10 +68,9 @@ class BlockForm2(BlockForm2_Base):
     def shape(self):
         return (self.N, self.M)
 
-    def __getitem__(self, ij):
-        assert isinstance(ij, tuple)
-        assert len(ij) == 2
-        return self._block_form[ij]
+    def __getitem__(self, i):
+        assert not isinstance(i, tuple), "Access entries with form[I][J], not form[I, J]"
+        return self._block_form[i]
 
     def block_function_spaces(self):
         return self._block_function_space
@@ -80,8 +79,8 @@ class BlockForm2(BlockForm2_Base):
         matrix_of_str = empty((self.N, self.M), dtype=object)
         for I in range(self.N):
             for J in range(self.M):
-                matrix_of_str[I, J] = str(self._block_form[I, J])
-        return str(matrix_of_str)
+                matrix_of_str[I][J] = str(self._block_form[I][J])
+        return str(matrix_of_str.tolist())
 
     def __add__(self, other):
         if isinstance(other, BlockForm2):
@@ -92,35 +91,35 @@ class BlockForm2(BlockForm2_Base):
             output_block_form = empty((self.N, self.M), dtype=object)
             for I in range(self.N):
                 for J in range(self.M):
-                    assert isinstance(self[I, J], Form) or _is_zero(self[I, J])
-                    assert isinstance(other[I, J], Form) or _is_zero(other[I, J])
+                    assert isinstance(self[I][J], Form) or _is_zero(self[I][J])
+                    assert isinstance(other[I][J], Form) or _is_zero(other[I][J])
                     if (
-                        isinstance(self[I, J], Form)
+                        isinstance(self[I][J], Form)
                             and
-                        isinstance(other[I, J], Form)
+                        isinstance(other[I][J], Form)
                     ):
-                        output_block_form[I, J] = self[I, J] + other[I, J]
+                        output_block_form[I][J] = self[I][J] + other[I][J]
                     elif (
-                        isinstance(self[I, J], Form)
+                        isinstance(self[I][J], Form)
                             and
-                        _is_zero(other[I, J])
+                        _is_zero(other[I][J])
                     ):
-                        output_block_form[I, J] = self[I, J]
+                        output_block_form[I][J] = self[I][J]
                     elif (
-                        isinstance(other[I, J], Form)
+                        isinstance(other[I][J], Form)
                             and
-                        _is_zero(self[I, J])
+                        _is_zero(self[I][J])
                     ):
-                        output_block_form[I, J] = other[I, J]
+                        output_block_form[I][J] = other[I][J]
                     elif (
-                        _is_zero(self[I, J])
+                        _is_zero(self[I][J])
                             and
-                        _is_zero(other[I, J])
+                        _is_zero(other[I][J])
                     ):
-                        output_block_form[I, J] = 0
+                        output_block_form[I][J] = 0
                     else:
                         raise TypeError("Invalid form")
-            return BlockForm2(output_block_form, self._block_function_space)
+            return BlockForm2(output_block_form.tolist(), self._block_function_space)
         else:
             return NotImplemented
 
@@ -132,15 +131,15 @@ class BlockForm2(BlockForm2_Base):
             for I in range(self.N):
                 non_zero_J = list()
                 for J in range(self.M):
-                    if isinstance(self[I, J], Form):
+                    if isinstance(self[I][J], Form):
                         non_zero_J.append(J)
                 if len(non_zero_J) > 0:
-                    output_block_form[I] = self[I, non_zero_J[0]]*other[non_zero_J[0]]
+                    output_block_form[I] = self[I][non_zero_J[0]]*other[non_zero_J[0]]
                     for J in non_zero_J[1:]:
-                        output_block_form[I] += self[I, J]*other[J]
+                        output_block_form[I] += self[I][J]*other[J]
                 else:
                     output_block_form = 0
-            return BlockForm1(output_block_form, [self._block_function_space[0]])
+            return BlockForm1(output_block_form.tolist(), [self._block_function_space[0]])
         else:
             return NotImplemented
 
@@ -158,14 +157,14 @@ class BlockForm2(BlockForm2_Base):
             output_block_form = empty((self.N, self.M), dtype=object)
             for I in range(self.N):
                 for J in range(self.M):
-                    assert isinstance(self[I, J], Form) or _is_zero(self[I, J])
-                    if isinstance(self[I, J], Form):
-                        output_block_form[I, J] = other*self[I, J]
-                    elif _is_zero(self[I, J]):
-                        output_block_form[I, J] = 0
+                    assert isinstance(self[I][J], Form) or _is_zero(self[I][J])
+                    if isinstance(self[I][J], Form):
+                        output_block_form[I][J] = other*self[I][J]
+                    elif _is_zero(self[I][J]):
+                        output_block_form[I][J] = 0
                     else:
                         raise TypeError("Invalid form")
-            return BlockForm2(output_block_form, self._block_function_space)
+            return BlockForm2(output_block_form.tolist(), self._block_function_space)
         else:
             return NotImplemented
 
