@@ -95,14 +95,14 @@ geom.add_physical(rectangle_right, label=12)
 geom.add_physical(bifurcation_top, label=13)
 geom.add_physical(bifurcation_bottom, label=14)
 pygmsh_mesh = pygmsh.generate_mesh(geom)
-mesh = Mesh(MPI.comm_world, CellType.triangle, pygmsh_mesh.points[:, :2], pygmsh_mesh.cells["triangle"], [], GhostMode.none)
+mesh = Mesh(MPI.comm_world, CellType.triangle, pygmsh_mesh.points[:, :2], pygmsh_mesh.cells_dict["triangle"], [], GhostMode.none)
 
 # Create subdomains
-subdomains_mvc = MeshValueCollection("size_t", mesh, mesh.topology.dim, pygmsh_mesh.cells["triangle"], pygmsh_mesh.cell_data["triangle"]["gmsh:physical"] - 10)
+subdomains_mvc = MeshValueCollection("size_t", mesh, mesh.topology.dim, pygmsh_mesh.cells_dict["triangle"], pygmsh_mesh.cell_data_dict["gmsh:physical"]["triangle"] - 10)
 subdomains = MeshFunction("size_t", mesh, subdomains_mvc, 0)
 
 # Create boundaries
-boundaries_mvc = MeshValueCollection("size_t", mesh, mesh.topology.dim - 1, pygmsh_mesh.cells["line"], pygmsh_mesh.cell_data["line"]["gmsh:physical"])
+boundaries_mvc = MeshValueCollection("size_t", mesh, mesh.topology.dim - 1, pygmsh_mesh.cells_dict["line"], pygmsh_mesh.cell_data_dict["gmsh:physical"]["line"])
 boundaries = MeshFunction("size_t", mesh, boundaries_mvc, 0)
 
 # Create restrictions
