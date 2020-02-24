@@ -35,7 +35,7 @@ _local_to_global_cpp_code = """
 
     std::size_t local_to_global(std::shared_ptr<dolfinx::common::IndexMap> index_map, std::size_t i)
     {
-        const std::size_t block_size = index_map->block_size;
+        const std::size_t block_size = index_map->block_size();
         return index_map->local_to_global(i/block_size)*block_size + (i%block_size);
     }
 

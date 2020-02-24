@@ -57,7 +57,7 @@ void BlockDofMap::_map_owned_dofs(std::vector<std::shared_ptr<const DofMap>> dof
   std::vector<std::int32_t> sub_block_dofmap_owned_size(dofmaps.size());
   for (std::size_t i = 0; i < dofmaps.size(); ++i)
   {
-    const auto dofmaps_i_owned_size = dofmaps[i]->index_map->block_size*dofmaps[i]->index_map->size_local();
+    const auto dofmaps_i_owned_size = dofmaps[i]->index_map->block_size()*dofmaps[i]->index_map->size_local();
     for (Eigen::Index d = 0; d < restrictions[i].rows(); ++d)
     {
       auto original_dof = restrictions[i][d];
@@ -94,7 +94,7 @@ void BlockDofMap::_map_ghost_dofs(std::vector<std::shared_ptr<const DofMap>> dof
   std::vector<std::int32_t> sub_block_dofmap_ghost_size(dofmaps.size());
   for (std::size_t i = 0; i < dofmaps.size(); ++i)
   {
-    const auto dofmaps_i_owned_size = dofmaps[i]->index_map->block_size*dofmaps[i]->index_map->size_local();
+    const auto dofmaps_i_owned_size = dofmaps[i]->index_map->block_size()*dofmaps[i]->index_map->size_local();
     for (Eigen::Index d = 0; d < restrictions[i].rows(); ++d)
     {
       auto original_local_dof = restrictions[i][d];
@@ -123,7 +123,7 @@ void BlockDofMap::_map_ghost_dofs(std::vector<std::shared_ptr<const DofMap>> dof
   for (std::size_t i = 0; i < dofmaps.size(); ++i)
   {
     sub_local_to_sub_global_ghost[i].resize(sub_block_dofmap_ghost_size[i]);
-    const auto dofmaps_i_block_size = dofmaps[i]->index_map->block_size;
+    const auto dofmaps_i_block_size = dofmaps[i]->index_map->block_size();
     const auto dofmaps_i_owned_size = dofmaps_i_block_size*dofmaps[i]->index_map->size_local();
     const auto dofmaps_i_local_range_0 = dofmaps_i_block_size*dofmaps[i]->index_map->local_range()[0];
 

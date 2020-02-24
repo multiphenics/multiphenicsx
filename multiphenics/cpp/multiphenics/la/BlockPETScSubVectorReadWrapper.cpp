@@ -58,7 +58,7 @@ BlockPETScSubVectorReadWrapper::BlockPETScSubVectorReadWrapper(
 
   // Assign to an eigen matrix (indexed with respect to original indices)
   const auto original_index_map = block_dofmap->dofmaps()[block_index]->index_map;
-  _content.resize(original_index_map->block_size*(original_index_map->size_local() + original_index_map->num_ghosts()), 0.);
+  _content.resize(original_index_map->block_size()*(original_index_map->size_local() + original_index_map->num_ghosts()), 0.);
   for (auto & sub_block_to_original_it: sub_block_to_original)
   {
     auto sub_block_index = sub_block_to_original_it.first;
