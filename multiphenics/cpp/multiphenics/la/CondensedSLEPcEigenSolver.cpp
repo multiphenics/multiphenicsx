@@ -22,6 +22,7 @@
 #include <dolfinx/fem/DofMap.h>
 #include <dolfinx/function/FunctionSpace.h>
 #include <dolfinx/la/utils.h>
+#include <dolfinx/mesh/Mesh.h>
 #include <multiphenics/la/CondensedSLEPcEigenSolver.h>
 
 using dolfinx::fem::DirichletBC;

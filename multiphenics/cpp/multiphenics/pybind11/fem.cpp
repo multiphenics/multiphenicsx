@@ -22,6 +22,7 @@
 #include <pybind11/stl.h>
 
 #include <dolfinx/common/IndexMap.h>
+#include <dolfinx/mesh/Mesh.h>
 #include <caster_petsc.h>
 #include <multiphenics/fem/block_assemble.h>
 #include <multiphenics/fem/BlockDirichletBC.h>

@@ -20,6 +20,7 @@
 
 #include <dolfinx/common/IndexMap.h>
 #include <dolfinx/la/utils.h>
+#include <dolfinx/mesh/Mesh.h>
 #include <multiphenics/la/CondensedBlockSLEPcEigenSolver.h>
 
 using namespace multiphenics;

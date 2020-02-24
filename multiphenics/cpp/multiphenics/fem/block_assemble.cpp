@@ -21,6 +21,7 @@
 #include <dolfinx/fem/assemble_matrix_impl.h>
 #include <dolfinx/fem/assemble_vector_impl.h>
 #include <dolfinx/la/utils.h>
+#include <dolfinx/mesh/Mesh.h>
 #include <multiphenics/fem/block_assemble.h>
 #include <multiphenics/fem/BlockDofMap.h>
 #include <multiphenics/fem/BlockSparsityPatternBuilder.h>

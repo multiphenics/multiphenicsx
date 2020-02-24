@@ -22,6 +22,7 @@
 #include <pybind11/stl.h>
 
 #include <caster_petsc.h>
+#include <dolfinx/mesh/Mesh.h>
 #include <multiphenics/function/BlockFunction.h>
 #include <multiphenics/function/BlockFunctionSpace.h>
 
