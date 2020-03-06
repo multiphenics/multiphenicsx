@@ -39,9 +39,7 @@ setup(name="multiphenics",
           "Topic :: Software Development :: Libraries :: Python Modules",
       ],
       packages=find_packages(),
-      include_package_data=True,
       install_requires=[
-          "cppimport",
           "pytest-runner"
       ],
       tests_require=[
@@ -52,5 +50,4 @@ setup(name="multiphenics",
           "pytest-instafail",
           "pytest-xdist"
       ],
-      zip_safe=False
       )
