@@ -16,9 +16,42 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-FROM quay.io/fenicsproject/dolfinx:real
+FROM dolfinx/dev-env-real
 MAINTAINER Francesco Ballarin <francesco.ballarin@sissa.it>
 
+# Install FIAT, UFL and FFCX (development versions, master branch)
+RUN pip3 install --no-cache-dir git+https://github.com/FEniCS/fiat.git && \
+    pip3 install --no-cache-dir git+https://github.com/FEniCS/ufl.git && \
+    pip3 install --no-cache-dir git+https://github.com/FEniCS/ffcx.git
+
+# Clone and install dolfinx from fork
+WORKDIR /root
+
+RUN git clone https://github.com/fenics/dolfinx.git && \
+    cd dolfinx && \
+    git remote add fork https://github.com/francesco-ballarin/dolfinx.git && \
+    git fetch fork && \
+    git checkout migration && \
+    git config --global user.name "GitLab CI" && \
+    git config --global user.email "multiphenics@gitlab.ci" && \
+    git rebase master
+
+WORKDIR /tmp
+
+RUN mkdir build && \
+    cd build && \
+    cmake -G Ninja $HOME/dolfinx/cpp && \
+    ninja install && \
+    cd .. && \
+    rm -rf /tmp/build
+
+RUN cp -rf $HOME/dolfinx/python . && \
+    cd python && \
+    pip3 install . && \
+    cd .. && \
+    rm -rf /tmp/python
+
+# Add former multiphenics dependencies
 RUN apt-get -qq update && \
     apt-get -qq remove python3-pytest && \
     apt-get clean && \
@@ -27,7 +60,4 @@ RUN apt-get -qq update && \
     sed -i "s/pytest_report_header/DISABLED_pytest_report_header/g" /usr/local/lib/python3.7/dist-packages/pytest_metadata/plugin.py && \
     cat /dev/null > $FENICS_HOME/WELCOME
 
-COPY . /tmp/multiphenics
-
-WORKDIR /tmp/multiphenics
-RUN python3 setup.py -q install && rm -rf /tmp/multiphenics
+WORKDIR /root

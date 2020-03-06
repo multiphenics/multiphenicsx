@@ -1,12 +1,11 @@
 stages:
   - build
-  - import
   - test
   - release
 
 variables:
   TESTING_IMAGE: $CI_REGISTRY_IMAGE:testing-$CI_COMMIT_SHA
-  RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
+  RELEASE_IMAGE: $CI_REGISTRY_IMAGE:dolfinx-proposal
 
 build:
   image: docker:latest
@@ -19,35 +18,47 @@ build:
     - docker build --pull -t $TESTING_IMAGE -f docker/Dockerfile .
     - docker push $TESTING_IMAGE
 
-import:
-  image:
-    name: $TESTING_IMAGE
-  stage: import
-  before_script:
-    - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
-  script:
-    - python3 -c "import multiphenics"
-  artifacts:
-    paths:
-      - jitfailure*
-    when: on_failure
-
-flake8:
+flake8_tutorials:
   image:
     name: $TESTING_IMAGE
   stage: test
   before_script:
     - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
-    - python3 -c "import multiphenics"
   script:
-    - find . -type f -name "__init__.py" -exec bash -c 'mv "$0" "`echo \"$0\" | sed s/__init__/___init___/`"' {} \;
-    - sed -i "s|__init__.py|___init___.py|g" setup.cfg
-    - pytest --flake8 -m flake8 -vv --html=pytest_flake8.html --self-contained-html
-    - find . -type f -name "___init___.py" -exec bash -c 'mv "$0" "`echo \"$0\" | sed s/___init___/__init__/`"' {} \;
-    - sed -i "s|___init___.py|__init__.py|g" setup.cfg
+    - cd tutorials
+    - pytest --flake8 -m flake8 -vv --html=pytest_flake8_tutorials.html --self-contained-html
   artifacts:
     paths:
-      - pytest_flake8.html
+      - pytest_flake8_tutorials.html
+    when: on_failure
+
+flake8_tests:
+  image:
+    name: $TESTING_IMAGE
+  stage: test
+  before_script:
+    - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
+  script:
+    - cd $HOME/dolfinx/python/test/unit
+    - pytest --flake8 -m flake8 -vv --html=pytest_flake8_tests.html --self-contained-html
+  artifacts:
+    paths:
+      - pytest_flake8_tests.html
+    when: on_failure
+
+flake8_core:
+  image:
+    name: $TESTING_IMAGE
+  stage: test
+  before_script:
+    - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
+  script:
+    - cd /usr/local/lib/python3.7/dist-packages/dolfinx/
+    - cp $HOME/dolfinx/python/setup.cfg .
+    - pytest --flake8 -m flake8 -vv --html=pytest_flake8_core.html --self-contained-html
+  artifacts:
+    paths:
+      - pytest_flake8_core.html
     when: on_failure
 
 tutorials_serial:
@@ -56,9 +67,9 @@ tutorials_serial:
   stage: test
   before_script:
     - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
-    - python3 -c "import multiphenics"
   script:
-    - pytest -n auto -vv --html=pytest_tutorials_serial.html --self-contained-html tutorials
+    - cd tutorials
+    - pytest -n auto -vv --html=pytest_tutorials_serial.html --self-contained-html
   artifacts:
     paths:
       - pytest_tutorials_serial.html
@@ -70,9 +81,9 @@ tests_serial:
   stage: test
   before_script:
     - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
-    - python3 -c "import multiphenics"
   script:
-    - pytest -n auto -vv --html=pytest_tests_serial.html --self-contained-html tests
+    - cd $HOME/dolfinx/python/test/unit
+    - pytest -n auto -vv --html=pytest_tests_serial.html --self-contained-html
   artifacts:
     paths:
       - pytest_tests_serial.html
@@ -118,4 +129,4 @@ release:
     - docker tag $TESTING_IMAGE $RELEASE_IMAGE
     - docker push $RELEASE_IMAGE
   only:
-    - master
+    - fenicsx
