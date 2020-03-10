@@ -20,17 +20,18 @@ import os
 import importlib
 import pytest
 import pytest_flake8
-import matplotlib  # TODO remove after transition to ipynb is complete?
-matplotlib.use("agg", warn=False)
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # TODO remove after transition to ipynb is complete?
 from nbconvert.exporters import PythonExporter
 from dolfinx import MPI
+plt.switch_backend("Agg")  # TODO remove after transition to ipynb is complete?
+
 
 def pytest_ignore_collect(path, config):
     if path.ext == ".py" and path.new(ext=".ipynb").exists():  # ignore .py files obtained from previous runs
         return True
     else:
         return False
+
 
 def pytest_collect_file(path, parent):
     """
@@ -54,12 +55,10 @@ def pytest_collect_file(path, parent):
             if "data" not in path.dirname:  # skip running mesh generation notebooks
                 return TutorialFile(path.new(ext=".py"), parent)
     elif path.ext == ".py":  # TODO remove after transition to ipynb is complete? assert never py files?
-        if (
-            path.basename not in "conftest.py"  # do not run pytest configuration file
-                or
-            "data" not in path.dirname  # skip running mesh generation notebooks
-        ):
+        if (path.basename not in "conftest.py"  # do not run pytest configuration file
+                or "data" not in path.dirname):  # skip running mesh generation notebooks
             return TutorialFile(path, parent)
+
 
 def pytest_pycollect_makemodule(path, parent):
     """
@@ -69,11 +68,13 @@ def pytest_pycollect_makemodule(path, parent):
         assert not path.new(ext=".ipynb").exists(), "Please run pytest on jupyter notebooks, not plain python files."
         return DoNothingFile(path, parent)  # TODO remove after transition to ipynb is complete?
 
+
 def pytest_runtest_teardown(item, nextitem):
     # Do the normal teardown
     item.teardown()
     # Add a MPI barrier in parallel
     MPI.barrier(MPI.comm_world)
+
 
 class TutorialFile(pytest.File):
     """
@@ -82,6 +83,7 @@ class TutorialFile(pytest.File):
 
     def collect(self):
         yield TutorialItem("run_tutorial -> " + os.path.relpath(str(self.fspath), str(self.parent.fspath)), self)
+
 
 class TutorialItem(pytest.Item):
     """
@@ -96,10 +98,11 @@ class TutorialItem(pytest.Item):
         spec = importlib.util.spec_from_file_location(self.name, str(self.parent.fspath))
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        plt.close("all") # do not trigger matplotlib max_open_warning
+        plt.close("all")  # do not trigger matplotlib max_open_warning
 
     def reportinfo(self):
         return self.fspath, 0, self.name
+
 
 class DoNothingFile(pytest.File):
     """
