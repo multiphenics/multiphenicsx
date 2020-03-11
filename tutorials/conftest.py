@@ -17,11 +17,13 @@
 #
 
 import os
+import re
 import importlib
 import pytest
 import pytest_flake8
 import matplotlib.pyplot as plt  # TODO remove after transition to ipynb is complete?
 from nbconvert.exporters import PythonExporter
+import nbconvert.filters
 from dolfinx import MPI
 plt.switch_backend("Agg")  # TODO remove after transition to ipynb is complete?
 
@@ -39,8 +41,21 @@ def pytest_collect_file(path, parent):
     """
     if path.ext == ".ipynb":
         # Convert .ipynb notebooks to plain .py files
-        exporter = PythonExporter()
-        exporter.exclude_markdown = True
+        def comment_lines(text, prefix="# "):
+            regex = re.compile(r".{1,80}(?:\s+|$)")
+            input_lines = text.split("\n")
+            output_lines = [split_line.rstrip() for line in input_lines for split_line in regex.findall(line)]
+            output = prefix + ("\n" + prefix).join(output_lines)
+            return output.replace(prefix + "\n", prefix.rstrip(" ") + "\n")
+
+        def ipython2python(code):
+            return nbconvert.filters.ipython2python(code).rstrip("\n") + "\n"
+
+        filters = {
+            "comment_lines": comment_lines,
+            "ipython2python": ipython2python
+        }
+        exporter = PythonExporter(filters=filters)
         exporter.exclude_input_prompt = True
         code, _ = exporter.from_filename(path)
         code = code.rstrip("\n") + "\n"
