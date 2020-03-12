@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>
+<Xdmf Version="3.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <Domain>
+    <Grid Name="mesh" GridType="Uniform">
+      <Topology NumberOfElements="11180" TopologyType="PolyLine" NodesPerElement="2">
+        <DataItem Dimensions="11180 2" NumberType="Int" Format="HDF">vorticity_reduction_boundaries.h5:/MeshFunction/0/mesh/topology</DataItem>
+      </Topology>
+      <Geometry GeometryType="XY">
+        <DataItem Dimensions="3823 2" Format="HDF">vorticity_reduction_boundaries.h5:/MeshFunction/0/mesh/geometry</DataItem>
+      </Geometry>
+      <Attribute Name="m" AttributeType="Scalar" Center="Cell">
+        <DataItem Dimensions="11180 1" Format="HDF">vorticity_reduction_boundaries.h5:/MeshFunction/0/values</DataItem>
+      </Attribute>
+    </Grid>
+  </Domain>
+</Xdmf>
