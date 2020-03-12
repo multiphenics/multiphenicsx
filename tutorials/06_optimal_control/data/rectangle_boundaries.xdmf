@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>
+<Xdmf Version="3.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <Domain>
+    <Grid Name="mesh" GridType="Uniform">
+      <Topology NumberOfElements="5710" TopologyType="PolyLine" NodesPerElement="2">
+        <DataItem Dimensions="5710 2" NumberType="Int" Format="HDF">rectangle_boundaries.h5:/MeshFunction/0/mesh/topology</DataItem>
+      </Topology>
+      <Geometry GeometryType="XY">
+        <DataItem Dimensions="1971 2" Format="HDF">rectangle_boundaries.h5:/MeshFunction/0/mesh/geometry</DataItem>
+      </Geometry>
+      <Attribute Name="m" AttributeType="Scalar" Center="Cell">
+        <DataItem Dimensions="5710 1" Format="HDF">rectangle_boundaries.h5:/MeshFunction/0/values</DataItem>
+      </Attribute>
+    </Grid>
+  </Domain>
+</Xdmf>
