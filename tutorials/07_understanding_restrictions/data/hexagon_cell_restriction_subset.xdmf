@@ -4,7 +4,7 @@
   <Domain>
     <Grid Name="mesh" GridType="Uniform">
       <Topology NumberOfElements="6" TopologyType="Triangle" NodesPerElement="3">
-        <DataItem Dimensions="6 3" NumberType="UInt" Format="HDF">hexagon_cell_restriction_subset.h5:/MeshFunction/0/mesh/topology</DataItem>
+        <DataItem Dimensions="6 3" NumberType="Int" Format="HDF">hexagon_cell_restriction_subset.h5:/MeshFunction/0/mesh/topology</DataItem>
       </Topology>
       <Geometry GeometryType="XY">
         <DataItem Dimensions="8 2" Format="HDF">hexagon_cell_restriction_subset.h5:/MeshFunction/0/mesh/geometry</DataItem>

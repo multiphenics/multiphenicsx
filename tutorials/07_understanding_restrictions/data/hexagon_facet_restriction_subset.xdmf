@@ -4,7 +4,7 @@
   <Domain>
     <Grid Name="mesh" GridType="Uniform">
       <Topology NumberOfElements="12" TopologyType="PolyLine" NodesPerElement="2">
-        <DataItem Dimensions="12 2" NumberType="UInt" Format="HDF">hexagon_facet_restriction_subset.h5:/MeshFunction/0/mesh/topology</DataItem>
+        <DataItem Dimensions="12 2" NumberType="Int" Format="HDF">hexagon_facet_restriction_subset.h5:/MeshFunction/0/mesh/topology</DataItem>
       </Topology>
       <Geometry GeometryType="XY">
         <DataItem Dimensions="8 2" Format="HDF">hexagon_facet_restriction_subset.h5:/MeshFunction/0/mesh/geometry</DataItem>
