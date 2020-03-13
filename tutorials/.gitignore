@@ -2,3 +2,4 @@
 tutorial_*.py
 xtutorial_*.py
 generate_mesh*.py
+xgenerate_mesh*.py
