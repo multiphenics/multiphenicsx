@@ -4,7 +4,7 @@
   <Domain>
     <Grid Name="mesh" GridType="Uniform">
       <Topology NumberOfElements="8895" TopologyType="Triangle" NodesPerElement="3">
-        <DataItem Dimensions="8895 3" NumberType="UInt" Format="HDF">bifurcation.h5:/Mesh/mesh/topology</DataItem>
+        <DataItem Dimensions="8895 3" NumberType="Int" Format="HDF">bifurcation.h5:/Mesh/mesh/topology</DataItem>
       </Topology>
       <Geometry GeometryType="XY">
         <DataItem Dimensions="4629 2" Format="HDF">bifurcation.h5:/Mesh/mesh/geometry</DataItem>
