@@ -68,11 +68,17 @@ def pytest_collect_file(path, parent):
             return pytest_flake8.pytest_collect_file(path.new(ext=".py"), parent)
         else:
             if "data" not in path.dirname:  # skip running mesh generation notebooks
-                return TutorialFile(path.new(ext=".py"), parent)
+                if not path.basename.startswith("x"):
+                    return TutorialFile(path.new(ext=".py"), parent)
+                else:
+                    return DoNothingFile(path.new(ext=".py"), parent)
     elif path.ext == ".py":  # TODO remove after transition to ipynb is complete? assert never py files?
         if (path.basename not in "conftest.py"  # do not run pytest configuration file
                 or "data" not in path.dirname):  # skip running mesh generation notebooks
-            return TutorialFile(path, parent)
+            if not path.basename.startswith("x"):
+                return TutorialFile(path, parent)
+            else:
+                return DoNothingFile(path, parent)
 
 
 def pytest_pycollect_makemodule(path, parent):
