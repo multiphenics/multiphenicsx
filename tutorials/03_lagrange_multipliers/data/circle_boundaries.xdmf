@@ -3,14 +3,14 @@
 <Xdmf Version="3.0" xmlns:xi="http://www.w3.org/2001/XInclude">
   <Domain>
     <Grid Name="mesh" GridType="Uniform">
-      <Topology NumberOfElements="1685" TopologyType="PolyLine" NodesPerElement="2">
-        <DataItem Dimensions="1685 2" NumberType="UInt" Format="HDF">circle_boundaries.h5:/MeshFunction/0/mesh/topology</DataItem>
+      <Topology NumberOfElements="1682" TopologyType="PolyLine" NodesPerElement="2">
+        <DataItem Dimensions="1682 2" NumberType="Int" Format="HDF">circle_boundaries.h5:/MeshFunction/0/mesh/topology</DataItem>
       </Topology>
       <Geometry GeometryType="XY">
-        <DataItem Dimensions="588 2" Format="HDF">circle_boundaries.h5:/MeshFunction/0/mesh/geometry</DataItem>
+        <DataItem Dimensions="587 2" Format="HDF">circle_boundaries.h5:/MeshFunction/0/mesh/geometry</DataItem>
       </Geometry>
       <Attribute Name="m" AttributeType="Scalar" Center="Cell">
-        <DataItem Dimensions="1685 1" Format="HDF">circle_boundaries.h5:/MeshFunction/0/values</DataItem>
+        <DataItem Dimensions="1682 1" Format="HDF">circle_boundaries.h5:/MeshFunction/0/values</DataItem>
       </Attribute>
     </Grid>
   </Domain>
