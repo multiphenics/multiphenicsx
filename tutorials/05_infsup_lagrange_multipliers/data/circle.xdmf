@@ -4,7 +4,7 @@
   <Domain>
     <Grid Name="mesh" GridType="Uniform">
       <Topology NumberOfElements="1160" TopologyType="Triangle" NodesPerElement="3">
-        <DataItem Dimensions="1160 3" NumberType="UInt" Format="HDF">circle.h5:/Mesh/mesh/topology</DataItem>
+        <DataItem Dimensions="1160 3" NumberType="Int" Format="HDF">circle.h5:/Mesh/mesh/topology</DataItem>
       </Topology>
       <Geometry GeometryType="XY">
         <DataItem Dimensions="620 2" Format="HDF">circle.h5:/Mesh/mesh/geometry</DataItem>
