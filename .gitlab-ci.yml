@@ -29,7 +29,7 @@ flake8_tutorials:
     - pytest --flake8 -m flake8 -vv --html=pytest_flake8_tutorials.html --self-contained-html
   artifacts:
     paths:
-      - pytest_flake8_tutorials.html
+      - tutorials/pytest_flake8_tutorials.html
     when: on_failure
 
 flake8_tests:
@@ -43,7 +43,7 @@ flake8_tests:
     - pytest --flake8 -m flake8 -vv --html=pytest_flake8_tests.html --self-contained-html
   artifacts:
     paths:
-      - pytest_flake8_tests.html
+      - $HOME/dolfinx/python/test/unit/pytest_flake8_tests.html
     when: on_failure
 
 flake8_core:
@@ -58,7 +58,7 @@ flake8_core:
     - pytest --flake8 -m flake8 -vv --html=pytest_flake8_core.html --self-contained-html
   artifacts:
     paths:
-      - pytest_flake8_core.html
+      - /usr/local/lib/python3.7/dist-packages/dolfinx/pytest_flake8_core.html
     when: on_failure
 
 tutorials_serial:
@@ -72,7 +72,7 @@ tutorials_serial:
     - pytest -n auto -vv --html=pytest_tutorials_serial.html --self-contained-html
   artifacts:
     paths:
-      - pytest_tutorials_serial.html
+      - tutorials/pytest_tutorials_serial.html
     when: on_failure
 
 tests_serial:
@@ -86,35 +86,7 @@ tests_serial:
     - pytest -n auto -vv --html=pytest_tests_serial.html --self-contained-html
   artifacts:
     paths:
-      - pytest_tests_serial.html
-    when: on_failure
-
-.tutorials_parallel:
-  image:
-    name: $TESTING_IMAGE
-  stage: test
-  before_script:
-    - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
-    - python3 -c "import multiphenics"
-  script:
-    - mpirun -n 2 pytest -vv --html=pytest_tutorials_parallel.html --self-contained-html tutorials
-  artifacts:
-    paths:
-      - pytest_tutorials_parallel.html
-    when: on_failure
-
-.tests_parallel:
-  image:
-    name: $TESTING_IMAGE
-  stage: test
-  before_script:
-    - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
-    - python3 -c "import multiphenics"
-  script:
-    - mpirun -n 2 pytest -vv --html=pytest_tests_parallel.html --self-contained-html tests
-  artifacts:
-    paths:
-      - pytest_tests_parallel.html
+      - $HOME/dolfinx/python/test/unit/pytest_tests_serial.html
     when: on_failure
 
 release:
