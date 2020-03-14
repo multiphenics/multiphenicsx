@@ -83,6 +83,7 @@ tests_serial:
     - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
   script:
     - cd $HOME/dolfinx/python/test/unit
+    - rm -rf fem/test_fem_pipeline*py
     - pytest -n auto -vv --html=pytest_tests_serial.html --self-contained-html
   artifacts:
     paths:
