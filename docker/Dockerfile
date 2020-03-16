@@ -27,14 +27,16 @@ RUN pip3 install --no-cache-dir git+https://github.com/FEniCS/fiat.git && \
 # Clone and install dolfinx from fork
 WORKDIR /root
 
-RUN git clone https://github.com/fenics/dolfinx.git && \
+RUN git config --global user.name "GitLab CI" && \
+    git config --global user.email "multiphenics@gitlab.ci" && \
+    git clone https://github.com/fenics/dolfinx.git && \
     cd dolfinx && \
     git remote add fork https://github.com/francesco-ballarin/dolfinx.git && \
     git fetch fork && \
-    git checkout migration && \
-    git config --global user.name "GitLab CI" && \
-    git config --global user.email "multiphenics@gitlab.ci" && \
-    git rebase master
+    git checkout -b gitlab_ci && \
+    git merge francesco/xdmf_mf_connectivity && \
+    git merge francesco/form_integrals_int && \
+    git merge migration
 
 WORKDIR /tmp
 
