@@ -103,3 +103,21 @@ release:
     - docker push $RELEASE_IMAGE
   only:
     - fenicsx
+
+release-jupyter:
+  image: docker:latest
+  services:
+    - docker:dind
+  stage: release
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - echo "FROM $TESTING_IMAGE" >> docker/DockerfileJupyter
+    - echo "WORKDIR /root" >> docker/DockerfileJupyter
+    - echo "ADD https://github.com/krallin/tini/releases/download/v0.18.0/tini /tini" >> docker/DockerfileJupyter
+    - echo "RUN chmod +x /tini && pip3 install --no-cache-dir jupyter jupyterlab" >> docker/DockerfileJupyter
+    - echo "ENTRYPOINT [\"/tini\", \"--\", \"jupyter\", \"notebook\", \"--ip\", \"0.0.0.0\", \"--no-browser\", \"--allow-root\"]" >> docker/DockerfileJupyter
+    - docker build --pull -t ${RELEASE_IMAGE}-jupyter -f docker/DockerfileJupyter .
+    - docker push ${RELEASE_IMAGE}-jupyter
+  only:
+    - fenicsx
