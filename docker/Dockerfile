@@ -32,11 +32,12 @@ RUN git config --global user.name "GitLab CI" && \
     git clone https://github.com/fenics/dolfinx.git && \
     cd dolfinx && \
     git remote add fork https://github.com/francesco-ballarin/dolfinx.git && \
+    git fetch origin && \
     git fetch fork && \
     git checkout -b gitlab_ci && \
-    git merge francesco/xdmf_mf_connectivity && \
-    git merge francesco/form_integrals_int && \
-    git merge migration
+    git merge origin/francesco/xdmf_mf_connectivity && \
+    git merge origin/francesco/form_integrals_int && \
+    git merge fork/migration
 
 WORKDIR /tmp
 
@@ -61,5 +62,8 @@ RUN apt-get -qq update && \
     pip3 -q install --upgrade nbconvert pytest pytest-flake8 "pytest-html<2.1.0" pytest-instafail pytest-xdist && \
     sed -i "s/pytest_report_header/DISABLED_pytest_report_header/g" /usr/local/lib/python3.7/dist-packages/pytest_metadata/plugin.py && \
     cat /dev/null > $FENICS_HOME/WELCOME
+
+# Copy multiphenics clone
+COPY . /root/multiphenics
 
 WORKDIR /root
