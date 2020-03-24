@@ -53,12 +53,12 @@ flake8_core:
   before_script:
     - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
   script:
-    - cd /usr/local/lib/python3.8/dist-packages/dolfinx/
+    - cd /usr/local/lib/python3.8/dist-packages/
     - cp $HOME/dolfinx/python/setup.cfg .
-    - pytest --flake8 -m flake8 -vv --html=pytest_flake8_core.html --self-contained-html
+    - pytest --flake8 -m flake8 -vv --html=pytest_flake8_core.html --self-contained-html dolfinx
   artifacts:
     paths:
-      - /usr/local/lib/python3.8/dist-packages/dolfinx/pytest_flake8_core.html
+      - /usr/local/lib/python3.8/dist-packages/pytest_flake8_core.html
     when: on_failure
 
 tutorials_serial:
