@@ -3,12 +3,21 @@
 <Xdmf Version="3.0" xmlns:xi="http://www.w3.org/2001/XInclude">
   <Domain>
     <Grid Name="mesh" GridType="Uniform">
-      <Topology NumberOfElements="1160" TopologyType="Triangle" NodesPerElement="3">
+      <Topology TopologyType="Triangle" NumberOfElements="1160" NodesPerElement="3">
         <DataItem Dimensions="1160 3" NumberType="Int" Format="HDF">circle.h5:/Mesh/mesh/topology</DataItem>
       </Topology>
       <Geometry GeometryType="XY">
         <DataItem Dimensions="620 2" Format="HDF">circle.h5:/Mesh/mesh/geometry</DataItem>
       </Geometry>
+    </Grid>
+    <Grid Name="boundaries" GridType="Uniform">
+      <xi:include xpointer="xpointer(/Xdmf/Domain/Grid/Geometry)" />
+      <Topology TopologyType="PolyLine" NumberOfElements="78" NodesPerElement="2">
+        <DataItem Dimensions="78 2" NumberType="Int" Format="HDF">circle.h5:/MeshTags/boundaries/topology</DataItem>
+      </Topology>
+      <Attribute Name="boundaries" AttributeType="Scalar" Center="Cell">
+        <DataItem Dimensions="78 1" Format="HDF">circle.h5:/MeshTags/boundaries/Values</DataItem>
+      </Attribute>
     </Grid>
   </Domain>
 </Xdmf>
