@@ -3,12 +3,48 @@
 <Xdmf Version="3.0" xmlns:xi="http://www.w3.org/2001/XInclude">
   <Domain>
     <Grid Name="mesh" GridType="Uniform">
-      <Topology NumberOfElements="6" TopologyType="Triangle" NodesPerElement="3">
+      <Topology TopologyType="Triangle" NumberOfElements="6" NodesPerElement="3">
         <DataItem Dimensions="6 3" NumberType="Int" Format="HDF">hexagon.h5:/Mesh/mesh/topology</DataItem>
       </Topology>
       <Geometry GeometryType="XY">
-        <DataItem Dimensions="8 2" Format="HDF">hexagon.h5:/Mesh/mesh/geometry</DataItem>
+        <DataItem Dimensions="7 2" Format="HDF">hexagon.h5:/Mesh/mesh/geometry</DataItem>
       </Geometry>
+    </Grid>
+    <Grid Name="cell_restriction_all" GridType="Uniform">
+      <xi:include xpointer="xpointer(/Xdmf/Domain/Grid/Geometry)" />
+      <Topology TopologyType="Triangle" NumberOfElements="6" NodesPerElement="3">
+        <DataItem Dimensions="6 3" NumberType="Int" Format="HDF">hexagon.h5:/MeshTags/cell_restriction_all/topology</DataItem>
+      </Topology>
+      <Attribute Name="cell_restriction_all" AttributeType="Scalar" Center="Cell">
+        <DataItem Dimensions="6 1" Format="HDF">hexagon.h5:/MeshTags/cell_restriction_all/Values</DataItem>
+      </Attribute>
+    </Grid>
+    <Grid Name="cell_restriction_subset" GridType="Uniform">
+      <xi:include xpointer="xpointer(/Xdmf/Domain/Grid/Geometry)" />
+      <Topology TopologyType="Triangle" NumberOfElements="3" NodesPerElement="3">
+        <DataItem Dimensions="3 3" NumberType="Int" Format="HDF">hexagon.h5:/MeshTags/cell_restriction_subset/topology</DataItem>
+      </Topology>
+      <Attribute Name="cell_restriction_subset" AttributeType="Scalar" Center="Cell">
+        <DataItem Dimensions="3 1" Format="HDF">hexagon.h5:/MeshTags/cell_restriction_subset/Values</DataItem>
+      </Attribute>
+    </Grid>
+    <Grid Name="facet_restriction_all" GridType="Uniform">
+      <xi:include xpointer="xpointer(/Xdmf/Domain/Grid/Geometry)" />
+      <Topology TopologyType="PolyLine" NumberOfElements="12" NodesPerElement="2">
+        <DataItem Dimensions="12 2" NumberType="Int" Format="HDF">hexagon.h5:/MeshTags/facet_restriction_all/topology</DataItem>
+      </Topology>
+      <Attribute Name="facet_restriction_all" AttributeType="Scalar" Center="Cell">
+        <DataItem Dimensions="12 1" Format="HDF">hexagon.h5:/MeshTags/facet_restriction_all/Values</DataItem>
+      </Attribute>
+    </Grid>
+    <Grid Name="facet_restriction_subset" GridType="Uniform">
+      <xi:include xpointer="xpointer(/Xdmf/Domain/Grid/Geometry)" />
+      <Topology TopologyType="PolyLine" NumberOfElements="2" NodesPerElement="2">
+        <DataItem Dimensions="2 2" NumberType="Int" Format="HDF">hexagon.h5:/MeshTags/facet_restriction_subset/topology</DataItem>
+      </Topology>
+      <Attribute Name="facet_restriction_subset" AttributeType="Scalar" Center="Cell">
+        <DataItem Dimensions="2 1" Format="HDF">hexagon.h5:/MeshTags/facet_restriction_subset/Values</DataItem>
+      </Attribute>
     </Grid>
   </Domain>
 </Xdmf>
