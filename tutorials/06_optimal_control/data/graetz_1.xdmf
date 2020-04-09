@@ -3,12 +3,30 @@
 <Xdmf Version="3.0" xmlns:xi="http://www.w3.org/2001/XInclude">
   <Domain>
     <Grid Name="mesh" GridType="Uniform">
-      <Topology NumberOfElements="2458" TopologyType="Triangle" NodesPerElement="3">
+      <Topology TopologyType="Triangle" NumberOfElements="2458" NodesPerElement="3">
         <DataItem Dimensions="2458 3" NumberType="Int" Format="HDF">graetz_1.h5:/Mesh/mesh/topology</DataItem>
       </Topology>
       <Geometry GeometryType="XY">
         <DataItem Dimensions="1300 2" Format="HDF">graetz_1.h5:/Mesh/mesh/geometry</DataItem>
       </Geometry>
+    </Grid>
+    <Grid Name="subdomains" GridType="Uniform">
+      <xi:include xpointer="xpointer(/Xdmf/Domain/Grid/Geometry)" />
+      <Topology TopologyType="Triangle" NumberOfElements="2458" NodesPerElement="3">
+        <DataItem Dimensions="2458 3" NumberType="Int" Format="HDF">graetz_1.h5:/MeshTags/subdomains/topology</DataItem>
+      </Topology>
+      <Attribute Name="subdomains" AttributeType="Scalar" Center="Cell">
+        <DataItem Dimensions="2458 1" Format="HDF">graetz_1.h5:/MeshTags/subdomains/Values</DataItem>
+      </Attribute>
+    </Grid>
+    <Grid Name="boundaries" GridType="Uniform">
+      <xi:include xpointer="xpointer(/Xdmf/Domain/Grid/Geometry)" />
+      <Topology TopologyType="PolyLine" NumberOfElements="140" NodesPerElement="2">
+        <DataItem Dimensions="140 2" NumberType="Int" Format="HDF">graetz_1.h5:/MeshTags/boundaries/topology</DataItem>
+      </Topology>
+      <Attribute Name="boundaries" AttributeType="Scalar" Center="Cell">
+        <DataItem Dimensions="140 1" Format="HDF">graetz_1.h5:/MeshTags/boundaries/Values</DataItem>
+      </Attribute>
     </Grid>
   </Domain>
 </Xdmf>
