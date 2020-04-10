@@ -24,7 +24,7 @@ import pytest_flake8
 import matplotlib.pyplot as plt  # TODO remove after transition to ipynb is complete?
 from nbconvert.exporters import PythonExporter
 import nbconvert.filters
-from dolfinx import MPI
+from mpi4py import MPI
 plt.switch_backend("Agg")  # TODO remove after transition to ipynb is complete?
 
 
@@ -59,7 +59,7 @@ def pytest_collect_file(path, parent):
         exporter.exclude_input_prompt = True
         code, _ = exporter.from_filename(path)
         code = code.rstrip("\n") + "\n"
-        if MPI.rank(MPI.comm_world) == 0:
+        if MPI.COMM_WORLD.rank == 0:
             with open(path.new(ext=".py"), "w", encoding="utf-8") as f:
                 f.write(code)
         # Collect the corresponding .py file
@@ -94,7 +94,7 @@ def pytest_runtest_teardown(item, nextitem):
     # Do the normal teardown
     item.teardown()
     # Add a MPI barrier in parallel
-    MPI.barrier(MPI.comm_world)
+    MPI.COMM_WORLD.Barrier()
 
 
 class TutorialFile(pytest.File):
