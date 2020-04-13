@@ -35,7 +35,6 @@ RUN git config --global user.name "GitLab CI" && \
     git fetch origin && \
     git fetch fork && \
     git checkout -b gitlab_ci && \
-    git merge origin/francesco/init_connectivity && \
     git merge fork/migration
 
 WORKDIR /tmp
