@@ -103,7 +103,8 @@ class TutorialFile(pytest.File):
     """
 
     def collect(self):
-        yield TutorialItem.from_parent(parent=self, name="run_tutorial -> " + os.path.relpath(str(self.fspath), str(self.parent.fspath)))
+        yield TutorialItem.from_parent(
+            parent=self, name="run_tutorial -> " + os.path.relpath(str(self.fspath), str(self.parent.fspath)))
 
 
 class TutorialItem(pytest.Item):
