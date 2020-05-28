@@ -12,11 +12,11 @@
     </Grid>
     <Grid Name="subdomains" GridType="Uniform">
       <xi:include xpointer="xpointer(/Xdmf/Domain/Grid/Geometry)" />
-      <Topology TopologyType="Triangle" NumberOfElements="0" NodesPerElement="3">
-        <DataItem Dimensions="0 3" NumberType="Int" Format="HDF">square.h5:/MeshTags/subdomains/topology</DataItem>
+      <Topology TopologyType="Triangle" NumberOfElements="2048" NodesPerElement="3">
+        <DataItem Dimensions="2048 3" NumberType="Int" Format="HDF">square.h5:/MeshTags/subdomains/topology</DataItem>
       </Topology>
       <Attribute Name="subdomains" AttributeType="Scalar" Center="Cell">
-        <DataItem Dimensions="0 1" Format="HDF">square.h5:/MeshTags/subdomains/Values</DataItem>
+        <DataItem Dimensions="2048 1" Format="HDF">square.h5:/MeshTags/subdomains/Values</DataItem>
       </Attribute>
     </Grid>
     <Grid Name="boundaries" GridType="Uniform">
