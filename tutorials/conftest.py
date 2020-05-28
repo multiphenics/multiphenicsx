@@ -69,25 +69,25 @@ def pytest_collect_file(path, parent):
         else:
             if "data" not in path.dirname:  # skip running mesh generation notebooks
                 if not path.basename.startswith("x"):
-                    return TutorialFile(path.new(ext=".py"), parent)
+                    return TutorialFile.from_parent(parent=parent, fspath=path.new(ext=".py"))
                 else:
-                    return DoNothingFile(path.new(ext=".py"), parent)
+                    return DoNothingFile.from_parent(parent=parent, fspath=path.new(ext=".py"))
     elif path.ext == ".py":  # TODO remove after transition to ipynb is complete? assert never py files?
         if (path.basename not in "conftest.py"  # do not run pytest configuration file
                 or "data" not in path.dirname):  # skip running mesh generation notebooks
             if not path.basename.startswith("x"):
-                return TutorialFile(path, parent)
+                return TutorialFile.from_parent(parent=parent, fspath=path)
             else:
-                return DoNothingFile(path, parent)
+                return DoNothingFile.from_parent(parent=parent, fspath=path)
 
 
 def pytest_pycollect_makemodule(path, parent):
     """
     Disable running .py files produced by previous runs, as they may get out of sync with the corresponding .ipynb file.
     """
-    if path.ext == ".py":
+    if path.ext == ".py":  # TODO remove after transition to ipynb is complete?
         assert not path.new(ext=".ipynb").exists(), "Please run pytest on jupyter notebooks, not plain python files."
-        return DoNothingFile(path, parent)  # TODO remove after transition to ipynb is complete?
+        return DoNothingFile.from_parent(parent=parent, fspath=path)
 
 
 def pytest_runtest_teardown(item, nextitem):
@@ -103,7 +103,7 @@ class TutorialFile(pytest.File):
     """
 
     def collect(self):
-        yield TutorialItem("run_tutorial -> " + os.path.relpath(str(self.fspath), str(self.parent.fspath)), self)
+        yield TutorialItem.from_parent(parent=self, name="run_tutorial -> " + os.path.relpath(str(self.fspath), str(self.parent.fspath)))
 
 
 class TutorialItem(pytest.Item):
