@@ -16,7 +16,7 @@
 # along with multiphenics. If not, see <http://www.gnu.org/licenses/>.
 #
 
-FROM dolfinx/dev-env-real
+FROM dolfinx/dev-env
 MAINTAINER Francesco Ballarin <francesco.ballarin@sissa.it>
 
 # Install FIAT, UFL and FFCX (development versions, master branch)
@@ -38,6 +38,8 @@ RUN git config --global user.name "GitLab CI" && \
     git merge fork/migration
 
 WORKDIR /tmp
+
+ENV PETSC_ARCH "linux-gnu-real-32"
 
 RUN mkdir build && \
     cd build && \
