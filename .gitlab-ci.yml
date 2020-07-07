@@ -23,7 +23,7 @@ flake8_tutorials:
     name: $TESTING_IMAGE
   stage: test
   before_script:
-    - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
+    - export DOLFINX_JIT_CACHE_DIR=$CI_PROJECT_DIR/.fenicsx_cache
   script:
     - cd tutorials
     - pytest --flake8 -m flake8 -vv --html=pytest_flake8_tutorials.html --self-contained-html
@@ -37,7 +37,7 @@ flake8_tests:
     name: $TESTING_IMAGE
   stage: test
   before_script:
-    - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
+    - export DOLFINX_JIT_CACHE_DIR=$CI_PROJECT_DIR/.fenicsx_cache
   script:
     - cd $HOME/dolfinx/python/test/unit
     - pytest --flake8 -m flake8 -vv --html=pytest_flake8_tests.html --self-contained-html
@@ -51,7 +51,7 @@ flake8_core:
     name: $TESTING_IMAGE
   stage: test
   before_script:
-    - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
+    - export DOLFINX_JIT_CACHE_DIR=$CI_PROJECT_DIR/.fenicsx_cache
   script:
     - cd /usr/local/lib/python3.8/dist-packages/
     - cp $HOME/dolfinx/python/setup.cfg .
@@ -66,7 +66,7 @@ tutorials_serial:
     name: $TESTING_IMAGE
   stage: test
   before_script:
-    - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
+    - export DOLFINX_JIT_CACHE_DIR=$CI_PROJECT_DIR/.fenicsx_cache
   script:
     - cd tutorials
     - pytest -n auto -vv --html=pytest_tutorials_serial.html --self-contained-html
@@ -80,7 +80,7 @@ tests_serial:
     name: $TESTING_IMAGE
   stage: test
   before_script:
-    - export FENICS_CACHE_DIR=$CI_PROJECT_DIR/.fenics_cache
+    - export DOLFINX_JIT_CACHE_DIR=$CI_PROJECT_DIR/.fenicsx_cache
   script:
     - cd $HOME/dolfinx/python/test/unit
     - rm -rf fem/test_custom_jit_kernels.py fem/test_fem_pipeline*py function/test_function.py
