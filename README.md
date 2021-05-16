@@ -38,9 +38,9 @@ Several tutorials are provided in the [**tutorials** subfolder](https://gitlab.c
 * **Tutorial 9**: applications of **multiphenics** to multiphysics problems. [We are looking forward to receiving further multiphysics examples from our users!](https://gitlab.com/multiphenics/multiphenics/issues/10)
 
 ### 4. Authors and contributors
-**multiphenics** is currently developed and maintained at [SISSA mathLab](http://mathlab.sissa.it/) by [Dr. Francesco Ballarin](http://people.sissa.it/~fballarin/), under the supervision of [Prof. Gianluigi Rozza](http://people.sissa.it/~grozza/) in the framework of the [AROMA-CFD ERC CoG project](http://people.sissa.it/~grozza/aroma-cfd/). Please see the [AUTHORS file](https://gitlab.com/multiphenics/multiphenics/raw/master/AUTHORS) for a list of contributors.
+**multiphenics** is currently developed and maintained at the [Catholic University of the Sacred Heart](https://www.unicatt.it/) by [Dr. Francesco Ballarin](https://www.francescoballarin.it) in collaboration with [Prof. Gianluigi Rozza](https://people.sissa.it/~grozza/)'s group at [SISSA mathLab](http://mathlab.sissa.it/). The financial support of the [AROMA-CFD ERC CoG project](https://people.sissa.it/~grozza/aroma-cfd/) is gratefully acknowledged. Please see the [AUTHORS file](https://gitlab.com/multiphenics/multiphenics/raw/master/AUTHORS) for a list of contributors.
 
-Contact us by [email](mailto:francesco.ballarin@sissa.it) for further information or questions about **multiphenics**, or open an issue on [our issue tracker](https://gitlab.com/multiphenics/multiphenics/issues). **multiphenics** is at an early development stage, so contributions improving either the code or the documentation are welcome, both as patches or [merge requests](https://gitlab.com/multiphenics/multiphenics/merge_requests).
+Contact us by [email](mailto:francesco.ballarin@unicatt.it) for further information or questions about **multiphenics**, or open an issue on [our issue tracker](https://gitlab.com/multiphenics/multiphenics/issues). **multiphenics** is at an early development stage, so contributions improving either the code or the documentation are welcome, both as patches or [merge requests](https://gitlab.com/multiphenics/multiphenics/merge_requests).
 
 ### 5. Related resources
 * Block matrix support in [DOLFIN-X](https://github.com/FEniCS/dolfinx), either as MatNest or monolithic matrices. In **multiphenics** we always assemble block matrices into a monolithic matrix, and also support possible restriction of the unknowns to subdomains and/or boundaries.
@@ -49,7 +49,7 @@ Contact us by [email](mailto:francesco.ballarin@sissa.it) for further informatio
 * [CutFEM](http://www.cutfem.org/), an unfitted finite element framework for multi-physics problems that relies on the FEniCS project.
 * [CBC.Block](https://bitbucket.org/fenics-apps/cbc.block/) for the definition of block matrices and vectors in FEniCS.
 * Weak imposition of Dirichlet Dirichlet boundary conditions by Lagrange multipliers is a frequently asked question on FEniCS support forums [[1](https://fenicsproject.org/qa/), [2](https://fenicsproject.discourse.group/)]. Some answers provide possible solutions to the problem (e.g. constraining the useless degrees of freedom by DirichletBC), which however may result in an unnecessarily large system to be solved. **multiphenics** handles subdomain/boundary restricted variables in an efficient and automatic way.
-* Please contact us by [email](mailto:francesco.ballarin@sissa.it) if you have other related resources.
+* Please contact us by [email](mailto:francesco.ballarin@unicatt.it) if you have other related resources.
 
 ### 6. How to cite
 If you use **multiphenics** in your work, please cite the [multiphenics website](http://mathlab.sissa.it/multiphenics).
