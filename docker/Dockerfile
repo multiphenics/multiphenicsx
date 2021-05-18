@@ -14,7 +14,7 @@ COPY . /tmp/multiphenicsx
 WORKDIR /tmp/multiphenicsx
 RUN python3 setup.py -q install
 
-WORKDIR $HOME
+WORKDIR /root
 RUN mkdir multiphenicsx && \
     mv /tmp/multiphenicsx/tests multiphenicsx/ && \
     mv /tmp/multiphenicsx/tutorials multiphenicsx/ && \
