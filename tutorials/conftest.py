@@ -9,11 +9,11 @@ import re
 import importlib
 import pytest
 import pytest_flake8
-import matplotlib.pyplot as plt  # TODO remove after transition to ipynb is complete?
+import matplotlib.pyplot as plt
 from nbconvert.exporters import PythonExporter
 import nbconvert.filters
 from mpi4py import MPI
-plt.switch_backend("Agg")  # TODO remove after transition to ipynb is complete?
+plt.switch_backend("Agg")
 
 
 def pytest_ignore_collect(path, config):
@@ -55,27 +55,44 @@ def pytest_collect_file(path, parent):
         if config.getoption("--flake8"):
             return pytest_flake8.pytest_collect_file(path.new(ext=".py"), parent)
         else:
-            if "data" not in path.dirname:  # skip running mesh generation notebooks
-                if not path.basename.startswith("x"):
-                    return TutorialFile.from_parent(parent=parent, fspath=path.new(ext=".py"))
-                else:
-                    return DoNothingFile.from_parent(parent=parent, fspath=path.new(ext=".py"))
-    elif path.ext == ".py":  # TODO remove after transition to ipynb is complete? assert never py files?
-        if (path.basename not in "conftest.py"  # do not run pytest configuration file
-                or "data" not in path.dirname):  # skip running mesh generation notebooks
             if not path.basename.startswith("x"):
-                return TutorialFile.from_parent(parent=parent, fspath=path)
+                return TutorialFile.from_parent(parent=parent, fspath=path.new(ext=".py"))
             else:
-                return DoNothingFile.from_parent(parent=parent, fspath=path)
+                return DoNothingFile.from_parent(parent=parent, fspath=path.new(ext=".py"))
+    elif path.ext == ".py":
+        assert not path.new(ext=".ipynb").exists(), "Please run pytest on jupyter notebooks, not plain python files."
+        return DoNothingFile.from_parent(parent=parent, fspath=path)
 
 
 def pytest_pycollect_makemodule(path, parent):
     """
     Disable running .py files produced by previous runs, as they may get out of sync with the corresponding .ipynb file.
     """
-    if path.ext == ".py":  # TODO remove after transition to ipynb is complete?
+    if path.ext == ".py":
         assert not path.new(ext=".ipynb").exists(), "Please run pytest on jupyter notebooks, not plain python files."
         return DoNothingFile.from_parent(parent=parent, fspath=path)
+
+
+def pytest_addoption(parser):
+    parser.addoption("--meshgen", action="store_true", help="run mesh generation notebooks")
+
+
+def pytest_collection_modifyitems(session, config, items):
+    """
+    Collect mesh generation notebooks first.
+    """
+    mesh_generation_items = list()
+    tutorial_items = list()
+    for item in items:
+        if "generate_mesh" in item.name:
+            mesh_generation_items.append(item)
+        else:
+            tutorial_items.append(item)
+    if config.getoption("--flake8") or (config.getoption("--meshgen") and MPI.COMM_WORLD.size == 1):
+        items[:] = mesh_generation_items + tutorial_items
+    else:
+        config.hook.pytest_deselected(items=mesh_generation_items)
+        items[:] = tutorial_items
 
 
 def pytest_runtest_teardown(item, nextitem):
@@ -92,7 +109,7 @@ class TutorialFile(pytest.File):
 
     def collect(self):
         yield TutorialItem.from_parent(
-            parent=self, name="run_tutorial -> " + os.path.relpath(str(self.fspath), str(self.parent.fspath)))
+            parent=self, name=os.path.relpath(str(self.fspath), str(self.parent.fspath)))
 
 
 class TutorialItem(pytest.Item):

@@ -4,9 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-3.0-or-later
 
-import os
 import numpy as np
-import gmsh
 from mpi4py import MPI
 from dolfinx.io import extract_gmsh_geometry, extract_gmsh_topology_and_markers, ufl_mesh_from_gmsh
 from dolfinx.cpp.io import perm_gmsh, extract_local_entities
@@ -80,7 +78,7 @@ def gmsh_to_fenicsx(model, gdim):
     adj = AdjacencyList_int32(local_entities)
     ct = create_meshtags(mesh, mesh.topology.dim,
                          adj, np.int32(local_values))
-    ct.name = "Cell tags"
+    ct.name = "subdomains"
 
     # Create MeshTags for facets
     facet_type = cell_entity_type(to_type(str(ufl_domain.ufl_cell())),
@@ -95,6 +93,6 @@ def gmsh_to_fenicsx(model, gdim):
     adj = AdjacencyList_int32(local_entities)
     ft = create_meshtags(mesh, mesh.topology.dim - 1,
                          adj, np.int32(local_values))
-    ft.name = "Facet tags"
+    ft.name = "boundaries"
 
     return mesh, ct, ft
