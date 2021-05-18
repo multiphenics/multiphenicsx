@@ -67,9 +67,9 @@ jobs:
       - name: Build the docker release image
         run: docker build --pull -t ${RELEASE_IMAGE} -f docker/Dockerfile .
       - name: Try importing the library inside the docker image
-        run: docker run -i --rm ${RELEASE_IMAGE} "python3 -c 'import multiphenicsx'"
+        run: docker run -i --rm ${RELEASE_IMAGE} bash -c "python3 -c 'import multiphenicsx'"
       - name: Run unit tests (serial) to verify that the docker image is working
-        run: docker run -i --rm ${RELEASE_IMAGE} "cd multiphenicsx && pytest -n auto tests/unit"
+        run: docker run -i --rm ${RELEASE_IMAGE} bash -c "cd multiphenicsx && pytest -n auto tests/unit"
       - name: Log into the docker registry
         run: docker login -u ${{ secrets.CI_REGISTRY_USER }} -p ${{ secrets.CI_REGISTRY_PASSWORD }}
       - name: Push to the docker registry
