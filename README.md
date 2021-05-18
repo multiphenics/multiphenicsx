@@ -1,5 +1,5 @@
 ## multiphenicsx -- easy prototyping of multiphysics problems in FEniCSx ##
-![multiphenicsx -- easy prototyping of multiphysics problems in FEniCSx](https://gitlab.com/multiphenics/multiphenics/raw/fenicsx/docs/multiphenicsx-logo-small.png "multiphenicsx -- easy prototyping of multiphysics problems in FEniCSx")
+![multiphenicsx -- easy prototyping of multiphysics problems in FEniCSx](https://raw.githubusercontent.com/multiphenics/multiphenicsx/main/docs/multiphenicsx-logo-small.png "multiphenicsx -- easy prototyping of multiphysics problems in FEniCSx")
 
 ### 0. Introduction
 **multiphenicsx** is a python library that aims at providing tools in **FEniCSx** for an easy prototyping of multiphysics problems on conforming meshes. In particular, it facilitates the definition of subdomain/boundary restricted variables.
@@ -10,11 +10,7 @@
 ### 2. Installation and usage
 Simply clone the **multiphenicsx** public repository
 ```
-git clone https://gitlab.com/multiphenics/multiphenics.git multiphenicsx
-```
-switch to the `fenicsx` branch
-```
-git checkout fenicsx
+git clone https://github.com/multiphenics/multiphenicsx.git
 ```
 and install the package by typing
 ```
@@ -28,7 +24,7 @@ $FENICS_HOME/multiphenicsx
 ```
 
 ### 3. Tutorials
-Several tutorials are provided in the [**tutorials** subfolder](https://gitlab.com/multiphenics/multiphenics/tree/fenicsx/tutorials).
+Several tutorials are provided in the [**tutorials** subfolder](https://github.com/multiphenics/multiphenicsx/tree/main/tutorials).
 * **Tutorial 1**: block Poisson test case, to introduce the block notation used in the library.
 * **Tutorial 2**: Navier-Stokes problem using block matrices.
 * **Tutorial 3**: weak imposition of Dirichlet boundary conditions by Lagrange multipliers using block matrices and discarding interior degrees of freedom.
@@ -37,12 +33,12 @@ Several tutorials are provided in the [**tutorials** subfolder](https://gitlab.c
 * **Tutorial 6**: several examples on optimal control problems, with different state equations (elliptic, Stokes, Navier-Stokes), control (distributed or boundary) and observation (distributed or boundary).
 * **Tutorial 7**: generation of restrictions for meshes obtained from gmsh.
 * **Tutorial 8**: how to get the list of degrees of freedom associated to a specific restriction, and use it e.g. to perform local modifications to assembled tensors.
-* **Tutorial 9**: applications of **multiphenicsx** to multiphysics problems. [We are looking forward to receiving further multiphysics examples from our users!](https://gitlab.com/multiphenics/multiphenics/issues/10)
+* **Tutorial 9**: applications of **multiphenicsx** to multiphysics problems. We are looking forward to receiving further multiphysics examples from our users!
 
 ### 4. Authors and contributors
-**multiphenicsx** is currently developed and maintained at the [Catholic University of the Sacred Heart](https://www.unicatt.it/) by [Dr. Francesco Ballarin](https://www.francescoballarin.it) in collaboration with [Prof. Gianluigi Rozza](https://people.sissa.it/~grozza/)'s group at [SISSA mathLab](http://mathlab.sissa.it/). The financial support of the [AROMA-CFD ERC CoG project](https://people.sissa.it/~grozza/aroma-cfd/) is gratefully acknowledged. Please see the [AUTHORS file](https://gitlab.com/multiphenics/multiphenics/raw/fenicsx/AUTHORS) for a list of contributors.
+**multiphenicsx** is currently developed and maintained at the [Catholic University of the Sacred Heart](https://www.unicatt.it/) by [Dr. Francesco Ballarin](https://www.francescoballarin.it) in collaboration with [Prof. Gianluigi Rozza](https://people.sissa.it/~grozza/)'s group at [SISSA mathLab](http://mathlab.sissa.it/). The financial support of the [AROMA-CFD ERC CoG project](https://people.sissa.it/~grozza/aroma-cfd/) is gratefully acknowledged. Please see the [AUTHORS file](https://github.com/multiphenics/multiphenicsx/blob/main/AUTHORS) for a list of contributors.
 
-Contact us by [email](mailto:francesco.ballarin@unicatt.it) for further information or questions about **multiphenicsx**, or open an issue on [our issue tracker](https://gitlab.com/multiphenics/multiphenics/issues). **multiphenicsx** is at an early development stage, so contributions improving either the code or the documentation are welcome, both as patches or [merge requests](https://gitlab.com/multiphenics/multiphenics/merge_requests).
+Contact us by [email](mailto:francesco.ballarin@unicatt.it) for further information or questions about **multiphenicsx**, or open an issue on [our issue tracker](https://github.com/multiphenics/multiphenicsx/issues). **multiphenicsx** is at an early development stage, so contributions improving either the code or the documentation are welcome, both as patches or [pull requests](https://github.com/multiphenics/multiphenicsx/pulls).
 
 ### 5. Related resources
 * Block matrix support in [DOLFINx](https://github.com/FEniCS/dolfinx), either as MatNest or monolithic matrices. In **multiphenicsx** we also support possible restriction of the unknowns to subdomains and/or boundaries.
