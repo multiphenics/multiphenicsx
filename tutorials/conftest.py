@@ -89,8 +89,12 @@ def pytest_collection_modifyitems(session, config, items):
             mesh_generation_items.append(item)
         else:
             tutorial_items.append(item)
-    if config.getoption("--flake8") or (config.getoption("--meshgen") and MPI.COMM_WORLD.size == 1):
+    if config.getoption("--flake8"):
         items[:] = mesh_generation_items + tutorial_items
+    elif config.getoption("--meshgen"):
+        assert MPI.COMM_WORLD.size == 1
+        config.hook.pytest_deselected(items=tutorial_items)
+        items[:] = mesh_generation_items
     else:
         config.hook.pytest_deselected(items=mesh_generation_items)
         items[:] = tutorial_items

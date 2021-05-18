@@ -52,6 +52,9 @@ jobs:
       - name: Run tutorials (parallel)
         run: |
           mpirun -n 2 pytest tutorials
+      - name: Run mesh generation in tutorials (serial)
+        run: |
+          pytest -n auto --meshgen tutorials
 
   docker:
     if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main'
