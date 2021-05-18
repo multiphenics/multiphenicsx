@@ -28,6 +28,7 @@ setup(name="multiphenicsx",
           "Topic :: Software Development :: Libraries :: Python Modules",
       ],
       packages=find_packages(),
+      include_package_data=True,
       install_requires=[
           "pytest-runner"
       ],
