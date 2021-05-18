@@ -34,6 +34,7 @@ jobs:
         run: |
           pip3 -q install --upgrade itkwidgets matplotlib nbconvert Pygments pytest pytest-flake8 pytest-xdist pyvista sympy
           python3 setup.py -q install
+          python3 -c "import multiphenicsx"
       - name: Run flake8 checks
         run: |
           pytest --flake8 -m flake8
