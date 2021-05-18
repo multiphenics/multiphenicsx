@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-3.0-or-later
 
+import gc
 import os
 import re
 import importlib
@@ -95,9 +96,21 @@ def pytest_collection_modifyitems(session, config, items):
         items[:] = tutorial_items
 
 
+def pytest_runtest_setup(item):
+    # Do the normal setup
+    item.setup()
+    # Disable garbage collection
+    gc.disable()
+
+
 def pytest_runtest_teardown(item, nextitem):
     # Do the normal teardown
     item.teardown()
+    # Re-enable garbage collection
+    gc.enable()
+    # Run garbage gollection
+    del item
+    gc.collect()
     # Add a MPI barrier in parallel
     MPI.COMM_WORLD.Barrier()
 

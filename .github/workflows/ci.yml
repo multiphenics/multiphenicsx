@@ -32,9 +32,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install multiphenicsx
         run: |
-          pip3 -q install --upgrade itkwidgets matplotlib nbconvert Pygments pytest pytest-flake8 pytest-gc pytest-xdist pyvista sympy
-          PYTEST_GC_PLUGIN=$(python3 -c 'import os, pytest; print(os.path.join(os.path.dirname(pytest.__file__) + "_gc", "plugin.py"))')
-          sed -i "s/fixture(scope,/fixture(scope=scope,/g" ${PYTEST_GC_PLUGIN}
+          pip3 -q install --upgrade itkwidgets matplotlib nbconvert Pygments pytest pytest-flake8 pytest-xdist pyvista sympy
           python3 setup.py -q install
       - name: Run flake8 checks
         run: |
@@ -44,13 +42,13 @@ jobs:
           pytest -n auto tests/unit
       - name: Run unit tests (parallel)
         run: |
-          mpirun -n 2 pytest --gc-disable --gc-scope function tests/unit
+          mpirun -n 2 pytest tests/unit
       - name: Run tutorials (serial)
         run: |
           pytest -n auto tutorials
       - name: Run tutorials (parallel)
         run: |
-          mpirun -n 2 pytest --gc-disable --gc-scope function tutorials
+          mpirun -n 2 pytest tutorials
 
   docker:
     if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main'
