@@ -1,0 +1,31 @@
+name: Rebase dolfinx fork
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  rebase:
+    if: >-
+      (github.event_name == 'schedule' && github.repository == 'multiphenics/multiphenicsx')
+      || (github.event_name != 'schedule')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set username and email
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "multiphenicsx@github.actions"
+      - name: Clone dolfinx repository
+        run: |
+          git clone https://github.com/fenics/dolfinx.git
+      - name: Add dolfinx fork
+        run: |
+          cd dolfinx
+          git remote add fork https://github.com/francesco-ballarin/dolfinx.git
+          git fetch fork
+      - name: Rebase dolfinx fork
+        run: |
+          cd dolfinx
+          git checkout -b github_actions
+          git merge fork/migration
