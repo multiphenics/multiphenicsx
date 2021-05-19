@@ -18,21 +18,21 @@ python3 setup.py install
 ```
 
 #### 2.1. multiphenicsx docker image
-If you want to try **multiphenicsx** out but do not have **FEniCSx** already installed, you can [pull our docker image from Docker Hub](https://hub.docker.com/r/multiphenics/multiphenics/). All required dependencies are already installed. **multiphenicsx** tutorials and tests are located at
+If you want to try **multiphenicsx** out but do not have **FEniCSx** already installed, you can [pull our docker image from Docker Hub](https://hub.docker.com/r/multiphenics/multiphenicsx/). All required dependencies are already installed. **multiphenicsx** tutorials and tests are located at
 ```
-$FENICS_HOME/multiphenicsx
+/root/multiphenicsx
 ```
 
 ### 3. Tutorials
 Several tutorials are provided in the [**tutorials** subfolder](https://github.com/multiphenics/multiphenicsx/tree/main/tutorials).
-* **Tutorial 1**: block Poisson test case, to introduce the block notation used in the library.
+* **Tutorial 1**: block Poisson test case, to introduce facilities used in the library.
 * **Tutorial 2**: Navier-Stokes problem using block matrices.
 * **Tutorial 3**: weak imposition of Dirichlet boundary conditions by Lagrange multipliers using block matrices and discarding interior degrees of freedom.
 * **Tutorial 4**: computation of the inf-sup constant for a Stokes problem assembled using block matrices.
 * **Tutorial 5**: computation of the inf-sup constant for the problem presented in tutorial 3.
 * **Tutorial 6**: several examples on optimal control problems, with different state equations (elliptic, Stokes, Navier-Stokes), control (distributed or boundary) and observation (distributed or boundary).
-* **Tutorial 7**: generation of restrictions for meshes obtained from gmsh.
-* **Tutorial 8**: how to get the list of degrees of freedom associated to a specific restriction, and use it e.g. to perform local modifications to assembled tensors.
+* **Tutorial 7**: understanding how restriction works in CG and DG spaces.
+* **Tutorial 8**: how to use a restriction to perform local modifications to assembled tensors.
 * **Tutorial 9**: applications of **multiphenicsx** to multiphysics problems. We are looking forward to receiving further multiphysics examples from our users!
 
 ### 4. Authors and contributors
