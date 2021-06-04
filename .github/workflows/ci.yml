@@ -40,6 +40,9 @@ jobs:
       - name: Run flake8 checks
         run: |
           pytest --flake8 -m flake8
+          pytest --flake8 -m flake8 .github
+      - name: Check for stray outputs, counts and metadata in ipynb files
+        uses: ./.github/actions/jupyter/check_metadata
       - name: Run unit tests (serial)
         run: |
           pytest -n auto tests/unit
