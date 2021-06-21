@@ -41,7 +41,7 @@ def get_function_spaces():
         lambda mesh: TensorFunctionSpace(mesh, ("Lagrange", 1)),
         lambda mesh: TensorFunctionSpace(mesh, ("Lagrange", 2)),
         lambda mesh: TaylorHoodFunctionSpace(mesh, ("Lagrange", 1)),
-        lambda mesh: TaylorHoodFunctionSpace(mesh, ("Lagrange", 2))
+        # lambda mesh: TaylorHoodFunctionSpace(mesh, ("Lagrange", 2))
     )
 
 
