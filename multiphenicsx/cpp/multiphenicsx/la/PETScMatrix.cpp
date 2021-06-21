@@ -4,6 +4,7 @@
 //
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
+#include <cassert>
 #include <vector>
 #include <dolfinx/la/PETScVector.h>  // for dolfinx::la::petsc_error
 #include <multiphenicsx/la/PETScMatrix.h>
