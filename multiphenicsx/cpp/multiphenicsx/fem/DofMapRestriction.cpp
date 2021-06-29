@@ -44,7 +44,7 @@ void DofMapRestriction::_map_owned_dofs(std::shared_ptr<const DofMap> dofmap,
   }
 
   // Prepare temporary index map, neglecting ghosts.
-  MPI_Comm comm = dofmap->index_map->comm();
+  MPI_Comm comm = dofmap->index_map->comm(common::IndexMap::Direction::forward);
   std::vector<std::int64_t> empty_ghosts;
   std::vector<int> empty_ranks;
   index_map.reset(new common::IndexMap(comm, restricted_owned_size, empty_ranks, empty_ghosts, empty_ranks));
@@ -72,7 +72,7 @@ void DofMapRestriction::_map_ghost_dofs(std::shared_ptr<const DofMap> dofmap,
   std::vector<std::int64_t> restricted_global_indices = index_map->global_indices();
   std::vector<std::int64_t> unrestricted_global_indices = dofmap->index_map->global_indices();
   const std::vector<int> unrestricted_ghost_owners = dofmap->index_map->ghost_owner_rank();
-  MPI_Comm comm = dofmap->index_map->comm();
+  MPI_Comm comm = dofmap->index_map->comm(common::IndexMap::Direction::forward);
   const std::uint32_t mpi_rank = dolfinx::MPI::rank(comm);
   const std::uint32_t mpi_size = dolfinx::MPI::size(comm);
   std::vector<std::vector<std::int64_t>> send_buffer(mpi_size);
