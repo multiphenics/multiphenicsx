@@ -39,7 +39,7 @@ def compile_code(package_name, package_code, **kwargs):
     except KeyError:
         compiler_args = []
     compiler_args.append("-std=c++17")
-    compiler_args.extend("-D" + dm for dm in dolfinx_pc["define_macros"])
+    compiler_args.extend("-D" + dm for dm in dolfinx_pc["define_macros"] if "-NOTFOUND" not in dm)
 
     # Set libraries
     try:
