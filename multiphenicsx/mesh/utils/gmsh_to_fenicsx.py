@@ -7,10 +7,10 @@
 import numpy as np
 from mpi4py import MPI
 from dolfinx.io import extract_gmsh_geometry, extract_gmsh_topology_and_markers, ufl_mesh_from_gmsh
-from dolfinx.cpp.io import perm_gmsh, extract_local_entities
-from dolfinx.cpp.mesh import to_type, cell_entity_type
+from dolfinx.cpp.io import extract_local_entities, perm_gmsh
+from dolfinx.cpp.mesh import cell_entity_type, to_type
 from dolfinx.cpp.graph import AdjacencyList_int32
-from dolfinx.mesh import create_meshtags, create_mesh
+from dolfinx.mesh import create_mesh, create_meshtags
 
 
 def gmsh_to_fenicsx(model, gdim):
@@ -82,7 +82,7 @@ def gmsh_to_fenicsx(model, gdim):
 
     # Create MeshTags for facets
     facet_type = cell_entity_type(to_type(str(ufl_domain.ufl_cell())),
-                                  mesh.topology.dim - 1)
+                                  mesh.topology.dim - 1, 0)
     gmsh_facet_perm = perm_gmsh(facet_type, num_facet_nodes)
     marked_facets = marked_facets[:, gmsh_facet_perm]
 
