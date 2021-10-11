@@ -8,11 +8,14 @@ import cppimport
 import hashlib
 import os
 import sys
+import dolfinx.pkgconfig
 from dolfinx import wrappers
-from dolfinx.jit import dolfinx_pc, get_parameters
+from dolfinx.jit import get_parameters
 
 
 def compile_code(package_name, package_code, **kwargs):
+    dolfinx_pc = dolfinx.pkgconfig.parse("dolfinx")
+
     # Set other sources
     try:
         sources = kwargs["sources"]
