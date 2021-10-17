@@ -10,21 +10,22 @@ import functools
 import typing
 from contextlib import ExitStack
 
+import numpy as np
 from petsc4py import PETSc
 
 import dolfinx.cpp as dcpp
-from dolfinx.fem.dirichletbc import DirichletBC
+from dolfinx.fem.dirichletbc import bcs_by_block, DirichletBC
 from dolfinx.fem.form import Form
-from dolfinx.fem.assemble import Coefficients, _create_cpp_form, pack_coefficients, pack_constants
+from dolfinx.fem.assemble import Coefficients, _cpp_dirichletbc, _create_cpp_form, pack_coefficients, pack_constants
 
 from multiphenicsx.cpp import cpp as mcpp
 
 
 def _get_block_function_spaces(block_form):
-    assert isinstance(block_form, list)
-    assert all(isinstance(block_form_, (dcpp.fem.Form, list)) for block_form_ in block_form)
+    cpp_Form = dcpp.fem.Form_float64 if PETSc.ScalarType == np.float64 else dcpp.fem.Form_complex128
+    assert all(isinstance(block_form_, (cpp_Form, list)) for block_form_ in block_form)
     if isinstance(block_form[0], list):
-        assert all(isinstance(form, dcpp.fem.Form) or form is None for block_form_ in block_form
+        assert all(isinstance(form, cpp_Form) or form is None for block_form_ in block_form
                    for form in block_form_)
         _a = block_form
         rows = len(_a)
@@ -75,8 +76,7 @@ def _same_dofmap(dofmap1, dofmap2):
 
 # -- Vector instantiation ----------------------------------------------------
 
-
-def create_vector(L: typing.Union[Form, dcpp.fem.Form],
+def create_vector(L: Form,
                   restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None) -> PETSc.Vec:
     dofmap = _create_cpp_form(L).function_spaces[0].dofmap
     if restriction is None:
@@ -89,7 +89,7 @@ def create_vector(L: typing.Union[Form, dcpp.fem.Form],
     return dcpp.la.create_vector(index_map, index_map_bs)
 
 
-def create_vector_block(L: typing.List[typing.Union[Form, dcpp.fem.Form]],
+def create_vector_block(L: typing.List[Form],
                         restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None) -> PETSc.Vec:
     function_spaces = _get_block_function_spaces(_create_cpp_form(L))
     dofmaps = [function_space.dofmap for function_space in function_spaces]
@@ -102,7 +102,7 @@ def create_vector_block(L: typing.List[typing.Union[Form, dcpp.fem.Form]],
     return dcpp.fem.create_vector_block(index_maps)
 
 
-def create_vector_nest(L: typing.List[typing.Union[Form, dcpp.fem.Form]],
+def create_vector_nest(L: typing.List[Form],
                        restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None) -> PETSc.Vec:
     function_spaces = _get_block_function_spaces(_create_cpp_form(L))
     dofmaps = [function_space.dofmap for function_space in function_spaces]
@@ -117,8 +117,7 @@ def create_vector_nest(L: typing.List[typing.Union[Form, dcpp.fem.Form]],
 
 # -- Matrix instantiation ----------------------------------------------------
 
-
-def create_matrix(a: typing.Union[Form, dcpp.fem.Form],
+def create_matrix(a: Form,
                   restriction: typing.Optional[typing.Tuple[mcpp.fem.DofMapRestriction]] = None,
                   mat_type=None) -> PETSc.Mat:
     _a = _create_cpp_form(a)
@@ -190,14 +189,14 @@ def _create_matrix_block_or_nest(a, restriction, mat_type, cpp_create_function):
         return cpp_create_function(mesh, index_maps, index_maps_bs, integral_types, dofmaps_lists)
 
 
-def create_matrix_block(a: typing.List[typing.List[typing.Union[Form, dcpp.fem.Form]]],
+def create_matrix_block(a: typing.List[typing.List[Form]],
                         restriction: typing.Optional[typing.Tuple[
                                                      typing.List[mcpp.fem.DofMapRestriction]]] = None,
                         mat_type=None) -> PETSc.Mat:
     return _create_matrix_block_or_nest(a, restriction, mat_type, mcpp.fem.create_matrix_block)
 
 
-def create_matrix_nest(a: typing.List[typing.List[typing.Union[Form, dcpp.fem.Form]]],
+def create_matrix_nest(a: typing.List[typing.List[Form]],
                        restriction: typing.Optional[typing.Tuple[
                                                     typing.List[mcpp.fem.DofMapRestriction]]] = None,
                        mat_types=None) -> PETSc.Mat:
@@ -207,8 +206,7 @@ def create_matrix_nest(a: typing.List[typing.List[typing.Union[Form, dcpp.fem.Fo
 # -- Scalar assembly ---------------------------------------------------------
 
 
-def assemble_scalar(M: typing.Union[Form, dcpp.fem.Form],
-                    coeffs=Coefficients(None, None)) -> PETSc.ScalarType:
+def assemble_scalar(M: Form, coeffs=Coefficients(None, None)) -> PETSc.ScalarType:
     """Assemble functional. The returned value is local and not
     accumulated across processes.
 
@@ -218,8 +216,8 @@ def assemble_scalar(M: typing.Union[Form, dcpp.fem.Form],
          coeffs[1] if coeffs[1] is not None else pack_coefficients(_M))
     return dcpp.fem.assemble_scalar(_M, c[0], c[1])
 
-# -- Vector assembly ---------------------------------------------------------
 
+# -- Vector assembly ---------------------------------------------------------
 
 def _VecSubVectorWrapperBase(CppWrapperClass):
 
@@ -444,7 +442,7 @@ NestVecSubVectorWrapper = NestVecSubVectorWrapperBase(VecSubVectorWrapper)
 
 
 @functools.singledispatch
-def assemble_vector(L: typing.Union[Form, dcpp.fem.Form],
+def assemble_vector(L: Form,
                     coeffs=Coefficients(None, None),
                     restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None) -> PETSc.Vec:
     """Assemble linear form into a new PETSc vector. The returned vector is
@@ -460,8 +458,8 @@ def assemble_vector(L: typing.Union[Form, dcpp.fem.Form],
 
 
 @assemble_vector.register(PETSc.Vec)
-def _(b: typing.Union[PETSc.Vec],
-      L: typing.Union[Form, dcpp.fem.Form],
+def _(b: PETSc.Vec,
+      L: Form,
       coeffs=Coefficients(None, None),
       restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None) -> PETSc.Vec:
     """Assemble linear form into an existing PETSc vector. The vector is
@@ -482,7 +480,7 @@ def _(b: typing.Union[PETSc.Vec],
 
 
 @functools.singledispatch
-def assemble_vector_nest(L: typing.Union[Form, dcpp.fem.Form],
+def assemble_vector_nest(L: Form,
                          coeffs=Coefficients(None, None),
                          restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None) -> PETSc.Vec:
     """Assemble linear forms into a new nested PETSc (VecNest) vector.
@@ -500,7 +498,7 @@ def assemble_vector_nest(L: typing.Union[Form, dcpp.fem.Form],
 
 @assemble_vector_nest.register(PETSc.Vec)
 def _(b: PETSc.Vec,
-      L: typing.List[typing.Union[Form, dcpp.fem.Form]],
+      L: typing.List[Form],
       coeffs=Coefficients(None, None),
       restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None) -> PETSc.Vec:
     """Assemble linear forms into a nested PETSc (VecNest) vector. The
@@ -521,8 +519,8 @@ def _(b: PETSc.Vec,
 
 # FIXME: Revise this interface
 @functools.singledispatch
-def assemble_vector_block(L: typing.List[typing.Union[Form, dcpp.fem.Form]],
-                          a: typing.List[typing.List[typing.Union[Form, dcpp.fem.Form]]],
+def assemble_vector_block(L: typing.List[Form],
+                          a: typing.List[typing.List[Form]],
                           bcs: typing.List[DirichletBC] = [],
                           x0: typing.Optional[PETSc.Vec] = None,
                           scale: float = 1.0,
@@ -543,8 +541,8 @@ def assemble_vector_block(L: typing.List[typing.Union[Form, dcpp.fem.Form]],
 
 @assemble_vector_block.register(PETSc.Vec)
 def _(b: PETSc.Vec,
-      L: typing.List[typing.Union[Form, dcpp.fem.Form]],
-      a: typing.List[typing.List[typing.Union[Form, dcpp.fem.Form]]],
+      L: typing.List[Form],
+      a: typing.List[typing.List[Form]],
       bcs: typing.List[DirichletBC] = [],
       x0: typing.Optional[PETSc.Vec] = None,
       scale: float = 1.0,
@@ -567,27 +565,28 @@ def _(b: PETSc.Vec,
     dofmaps = [function_space.dofmap for function_space in function_spaces[0]]
     dofmaps_x0 = [function_space.dofmap for function_space in function_spaces[1]]
 
-    bcs1 = dcpp.fem.bcs_cols(_a, bcs)
+    bcs1 = bcs_by_block(function_spaces[1], bcs)
     with BlockVecSubVectorWrapper(b, dofmaps, restriction) as block_b, \
             BlockVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0) as block_x0:
-        for b_sub, a_sub, L_sub, bcs1_sub, constant_L, coeff_L, constant_a, coeff_a in zip(
-                block_b, _a, _L, bcs1, c_L[0], c_L[1], c_a[0], c_a[1]):
+        for b_sub, L_sub, a_sub, constant_L, coeff_L, constant_a, coeff_a in zip(
+                block_b, _L, _a, c_L[0], c_L[1], c_a[0], c_a[1]):
             dcpp.fem.assemble_vector(b_sub, L_sub, constant_L, coeff_L)
-            for a_sub_, bcs1_sub_, x0_sub, constant_a_sub, coeff_a_sub in zip(
-                    a_sub, bcs1_sub, block_x0, constant_a, coeff_a):
+            for a_sub_, bcs1_sub, x0_sub, constant_a_sub, coeff_a_sub in zip(
+                    a_sub, bcs1, block_x0, constant_a, coeff_a):
                 if x0_sub is None:
-                    x0_sub_list = []
+                    x0_sub_as_list = []
                 else:
-                    x0_sub_list = [x0_sub]
+                    x0_sub_as_list = [x0_sub]
                 dcpp.fem.apply_lifting(
-                    b_sub, [a_sub_], [constant_a_sub], [coeff_a_sub], [bcs1_sub_], x0_sub_list, scale)
+                    b_sub, [a_sub_], [constant_a_sub], [coeff_a_sub], _cpp_dirichletbc([bcs1_sub]),
+                    x0_sub_as_list, scale)
     b.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
 
-    bcs0 = dcpp.fem.bcs_rows(_L, bcs)
+    bcs0 = bcs_by_block(function_spaces[0], bcs)
     with BlockVecSubVectorWrapper(b, dofmaps, restriction) as block_b, \
             BlockVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0) as block_x0:
         for b_sub, bcs0_sub, x0_sub in zip(block_b, bcs0, block_x0):
-            dcpp.fem.set_bc(b_sub, bcs0_sub, x0_sub, scale)
+            dcpp.fem.set_bc(b_sub, _cpp_dirichletbc(bcs0_sub), x0_sub, scale)
     return b
 
 
@@ -779,7 +778,7 @@ class NestMatSubMatrixWrapper(object):
 
 
 @functools.singledispatch
-def assemble_matrix(a: typing.Union[Form, dcpp.fem.Form],
+def assemble_matrix(a: Form,
                     bcs: typing.List[DirichletBC] = [],
                     diagonal: float = 1.0,
                     coeffs=Coefficients(None, None),
@@ -795,7 +794,7 @@ def assemble_matrix(a: typing.Union[Form, dcpp.fem.Form],
 
 @assemble_matrix.register(PETSc.Mat)
 def _(A: PETSc.Mat,
-      a: typing.Union[Form, dcpp.fem.Form],
+      a: Form,
       bcs: typing.List[DirichletBC] = [],
       diagonal: float = 1.0,
       coeffs=Coefficients(None, None),
@@ -809,20 +808,20 @@ def _(A: PETSc.Mat,
     function_spaces = _a.function_spaces
     if restriction is None:
         # Assemble form
-        dcpp.fem.assemble_matrix_petsc(A, _a, c[0], c[1], bcs)
+        dcpp.fem.assemble_matrix_petsc(A, _a, c[0], c[1], _cpp_dirichletbc(bcs))
 
         if function_spaces[0].id == function_spaces[1].id:
             # Flush to enable switch from add to set in the matrix
             A.assemble(PETSc.Mat.AssemblyType.FLUSH)
 
             # Set diagonal
-            dcpp.fem.insert_diagonal(A, function_spaces[0], bcs, diagonal)
+            dcpp.fem.insert_diagonal(A, function_spaces[0], _cpp_dirichletbc(bcs), diagonal)
     else:
         dofmaps = (function_spaces[0].dofmap, function_spaces[1].dofmap)
 
         # Assemble form
         with MatSubMatrixWrapper(A, dofmaps, restriction) as A_sub:
-            dcpp.fem.assemble_matrix_petsc(A_sub, _a, c[0], c[1], bcs)
+            dcpp.fem.assemble_matrix_petsc(A_sub, _a, c[0], c[1], _cpp_dirichletbc(bcs))
 
         if function_spaces[0].id == function_spaces[1].id:
             # Flush to enable switch from add to set in the matrix
@@ -830,13 +829,13 @@ def _(A: PETSc.Mat,
 
             # Set diagonal
             with MatSubMatrixWrapper(A, dofmaps, restriction) as A_sub:
-                dcpp.fem.insert_diagonal(A_sub, function_spaces[0], bcs, diagonal)
+                dcpp.fem.insert_diagonal(A_sub, function_spaces[0], _cpp_dirichletbc(bcs), diagonal)
     return A
 
 
 # FIXME: Revise this interface
 @functools.singledispatch
-def assemble_matrix_nest(a: typing.List[typing.List[typing.Union[Form, dcpp.fem.Form]]],
+def assemble_matrix_nest(a: typing.List[typing.List[Form]],
                          bcs: typing.List[DirichletBC] = [], mat_types=[],
                          diagonal: float = 1.0,
                          coeffs=Coefficients(None, None),
@@ -850,7 +849,7 @@ def assemble_matrix_nest(a: typing.List[typing.List[typing.Union[Form, dcpp.fem.
 
 @assemble_matrix_nest.register(PETSc.Mat)
 def _(A: PETSc.Mat,
-      a: typing.List[typing.List[typing.Union[Form, dcpp.fem.Form]]],
+      a: typing.List[typing.List[Form]],
       bcs: typing.List[DirichletBC] = [],
       diagonal: float = 1.0,
       coeffs=Coefficients(None, None),
@@ -871,7 +870,7 @@ def _(A: PETSc.Mat,
             if a_sub is not None:
                 const_sub = c[0][i][j]
                 coeff_sub = c[1][i][j]
-                dcpp.fem.assemble_matrix_petsc(A_sub, a_sub, const_sub, coeff_sub, bcs)
+                dcpp.fem.assemble_matrix_petsc(A_sub, a_sub, const_sub, coeff_sub, _cpp_dirichletbc(bcs))
 
     # Flush to enable switch from add to set in the matrix
     A.assemble(PETSc.Mat.AssemblyType.FLUSH)
@@ -882,14 +881,14 @@ def _(A: PETSc.Mat,
             if function_spaces[0][i].id == function_spaces[1][j].id:
                 a_sub = _a[i][j]
                 if a_sub is not None:
-                    dcpp.fem.insert_diagonal(A_sub, function_spaces[0][i], bcs, diagonal)
+                    dcpp.fem.insert_diagonal(A_sub, function_spaces[0][i], _cpp_dirichletbc(bcs), diagonal)
 
     return A
 
 
 # FIXME: Revise this interface
 @functools.singledispatch
-def assemble_matrix_block(a: typing.List[typing.List[typing.Union[Form, dcpp.fem.Form]]],
+def assemble_matrix_block(a: typing.List[typing.List[Form]],
                           bcs: typing.List[DirichletBC] = [],
                           diagonal: float = 1.0,
                           coeffs=Coefficients(None, None),
@@ -903,7 +902,7 @@ def assemble_matrix_block(a: typing.List[typing.List[typing.Union[Form, dcpp.fem
 
 @assemble_matrix_block.register(PETSc.Mat)
 def _(A: PETSc.Mat,
-      a: typing.List[typing.List[typing.Union[Form, dcpp.fem.Form]]],
+      a: typing.List[typing.List[Form]],
       bcs: typing.List[DirichletBC] = [],
       diagonal: float = 1.0,
       coeffs=Coefficients(None, None),
@@ -924,7 +923,7 @@ def _(A: PETSc.Mat,
             if a_sub is not None:
                 const_sub = c[0][i][j]
                 coeff_sub = c[1][i][j]
-                dcpp.fem.assemble_matrix_petsc(A_sub, a_sub, const_sub, coeff_sub, bcs, True)
+                dcpp.fem.assemble_matrix_petsc(A_sub, a_sub, const_sub, coeff_sub, _cpp_dirichletbc(bcs), True)
 
     # Flush to enable switch from add to set in the matrix
     A.assemble(PETSc.Mat.AssemblyType.FLUSH)
@@ -935,15 +934,15 @@ def _(A: PETSc.Mat,
             if function_spaces[0][i].id == function_spaces[1][j].id:
                 a_sub = _a[i][j]
                 if a_sub is not None:
-                    dcpp.fem.insert_diagonal(A_sub, function_spaces[0][i], bcs, diagonal)
+                    dcpp.fem.insert_diagonal(A_sub, function_spaces[0][i], _cpp_dirichletbc(bcs), diagonal)
 
     return A
 
 
 # -- Modifiers for Dirichlet conditions ---------------------------------------
 
-def apply_lifting(b: typing.Union[PETSc.Vec],
-                  a: typing.List[typing.Union[Form, dcpp.fem.Form]],
+def apply_lifting(b: PETSc.Vec,
+                  a: typing.List[Form],
                   bcs: typing.List[typing.List[DirichletBC]],
                   x0: typing.Optional[typing.List[PETSc.Vec]] = None,
                   scale: float = 1.0,
@@ -972,23 +971,24 @@ def apply_lifting(b: typing.Union[PETSc.Vec],
     if restriction is None:
         with b.localForm() as b_local, NestVecSubVectorReadWrapper(x0, dofmaps_x0) as nest_x0:
             if x0 is None:
-                x0 = []
+                x0_as_list = []
             else:
-                x0 = [x0_ for x0_ in nest_x0]
-            dcpp.fem.apply_lifting(b_local.array_w, _a, c[0], c[1], bcs, x0, scale)
+                x0_as_list = [x0_ for x0_ in nest_x0]
+            dcpp.fem.apply_lifting(b_local.array_w, _a, c[0], c[1], _cpp_dirichletbc(bcs), x0_as_list, scale)
     else:
         with VecSubVectorWrapper(b, restriction.dofmap, restriction) as b_sub, \
                 NestVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0) as nest_x0:
             for a_sub, bcs_sub, x0_sub in zip(_a, bcs, nest_x0):
                 if x0_sub is None:
-                    x0_sub_list = []
+                    x0_sub_as_list = []
                 else:
-                    x0_sub_list = [x0_sub]
-                dcpp.fem.apply_lifting(b_sub, [a_sub], c[0], c[1], [bcs_sub], x0_sub_list, scale)
+                    x0_sub_as_list = [x0_sub]
+                dcpp.fem.apply_lifting(
+                    b_sub, [a_sub], c[0], c[1], _cpp_dirichletbc([bcs_sub]), x0_sub_as_list, scale)
 
 
 def apply_lifting_nest(b: PETSc.Vec,
-                       a: typing.List[typing.List[typing.Union[Form, dcpp.fem.Form]]],
+                       a: typing.List[typing.List[Form]],
                        bcs: typing.List[DirichletBC],
                        x0: typing.Optional[PETSc.Vec] = None,
                        scale: float = 1.0,
@@ -1004,18 +1004,19 @@ def apply_lifting_nest(b: PETSc.Vec,
     function_spaces = _get_block_function_spaces(_a)
     dofmaps = [function_space.dofmap for function_space in function_spaces[0]]
     dofmaps_x0 = [function_space.dofmap for function_space in function_spaces[1]]
-    bcs1 = dcpp.fem.bcs_cols(_a, bcs)
+    bcs1 = bcs_by_block(function_spaces[1], bcs)
     with NestVecSubVectorWrapper(b, dofmaps, restriction) as nest_b, \
             NestVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0) as nest_x0:
-        for b_sub, a_sub, constants_a, coeffs_a, bcs1_sub in zip(nest_b, _a, c[0], c[1], bcs1):
-            for a_sub_, bcs1_sub_, x0_sub, constant_a_sub, coeff_a_sub in zip(
-                    a_sub, bcs1_sub, nest_x0, constants_a, coeffs_a):
+        for b_sub, a_sub, constants_a, coeffs_a in zip(nest_b, _a, c[0], c[1]):
+            for a_sub_, bcs1_sub, x0_sub, constant_a_sub, coeff_a_sub in zip(
+                    a_sub, bcs1, nest_x0, constants_a, coeffs_a):
                 if x0_sub is None:
-                    x0_sub_list = []
+                    x0_sub_as_list = []
                 else:
-                    x0_sub_list = [x0_sub]
+                    x0_sub_as_list = [x0_sub]
                 dcpp.fem.apply_lifting(
-                    b_sub, [a_sub_], [constant_a_sub], [coeff_a_sub], [bcs1_sub_], x0_sub_list, scale)
+                    b_sub, [a_sub_], [constant_a_sub], [coeff_a_sub], _cpp_dirichletbc([bcs1_sub]),
+                    x0_sub_as_list, scale)
     return b
 
 
@@ -1033,11 +1034,11 @@ def set_bc(b: typing.Union[PETSc.Vec],
     if restriction is None:
         if x0 is not None:
             x0 = x0.array_r
-        dcpp.fem.set_bc(b.array_w, bcs, x0, scale)
+        dcpp.fem.set_bc(b.array_w, _cpp_dirichletbc(bcs), x0, scale)
     else:
         with VecSubVectorWrapper(b, restriction.dofmap, restriction, ghosted=False) as b_sub, \
                 VecSubVectorReadWrapper(x0, restriction.dofmap, restriction, ghosted=False) as x0_sub:
-            dcpp.fem.set_bc(b_sub, bcs, x0_sub, scale)
+            dcpp.fem.set_bc(b_sub, _cpp_dirichletbc(bcs), x0_sub, scale)
 
 
 def set_bc_nest(b: PETSc.Vec,
@@ -1060,4 +1061,4 @@ def set_bc_nest(b: PETSc.Vec,
     with NestVecSubVectorWrapper(b, dofmaps, restriction, ghosted=False) as nest_b, \
             NestVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0, ghosted=False) as nest_x0:
         for b_sub, bcs_sub, x0_sub in zip(nest_b, bcs, nest_x0):
-            dcpp.fem.set_bc(b_sub, bcs_sub, x0_sub, scale)
+            dcpp.fem.set_bc(b_sub, _cpp_dirichletbc(bcs_sub), x0_sub, scale)
