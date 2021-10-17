@@ -530,12 +530,12 @@ def test_nest_vector_assembly_with_restriction(mesh, subdomains, FunctionSpaces,
             restricted_solution_sub[:] = unrestricted_solution_sub
     unrestricted_vector_nonlinear = assemble_vector_nest(block_linear_form)
     apply_lifting_nest(unrestricted_vector_nonlinear, block_bilinear_form, bcs_flattened, unrestricted_solution)
-    for unrestricted_vector_sub in unrestricted_vector_linear.getNestSubVecs():
+    for unrestricted_vector_sub in unrestricted_vector_nonlinear.getNestSubVecs():
         unrestricted_vector_sub.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
     restricted_vector_nonlinear = assemble_vector_nest(block_linear_form, restriction=dofmap_restriction)
     apply_lifting_nest(restricted_vector_nonlinear, block_bilinear_form, bcs_flattened, restricted_solution,
                        restriction=dofmap_restriction, restriction_x0=dofmap_restriction)
-    for restricted_vector_sub in restricted_vector_linear.getNestSubVecs():
+    for restricted_vector_sub in restricted_vector_nonlinear.getNestSubVecs():
         restricted_vector_sub.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
     assert_vector_equal(unrestricted_vector_nonlinear, restricted_vector_nonlinear, dofmap_restriction)
     set_bc_nest(unrestricted_vector_nonlinear, bcs_pair, unrestricted_solution)
