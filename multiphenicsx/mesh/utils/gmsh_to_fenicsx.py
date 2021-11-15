@@ -7,7 +7,7 @@
 import numpy as np
 from mpi4py import MPI
 from dolfinx.io import extract_gmsh_geometry, extract_gmsh_topology_and_markers, ufl_mesh_from_gmsh
-from dolfinx.cpp.io import extract_local_entities, perm_gmsh
+from dolfinx.cpp.io import distribute_entity_data, perm_gmsh
 from dolfinx.cpp.mesh import cell_entity_type, to_type
 from dolfinx.cpp.graph import AdjacencyList_int32
 from dolfinx.mesh import create_mesh, create_meshtags
@@ -43,7 +43,7 @@ def gmsh_to_fenicsx(model, gdim):
     cell_dimensions = np.zeros(num_cell_types, dtype=np.int32)
     for i, element in enumerate(topologies.keys()):
         properties = model.mesh.getElementProperties(element)
-        name, dim, order, num_nodes, local_coords, _ = properties
+        name, dim, order, num_nodes, coords, _ = properties
         cell_information[i] = {"id": element, "dim": dim,
                                "num_nodes": num_nodes}
         cell_dimensions[i] = dim
@@ -72,12 +72,12 @@ def gmsh_to_fenicsx(model, gdim):
     mesh = create_mesh(MPI.COMM_WORLD, cells, x[:, :gdim], ufl_domain)
 
     # Create MeshTags for cells
-    local_entities, local_values = extract_local_entities(
+    entities, values = distribute_entity_data(
         mesh, mesh.topology.dim, cells, cell_values)
     mesh.topology.create_connectivity(mesh.topology.dim, 0)
-    adj = AdjacencyList_int32(local_entities)
+    adj = AdjacencyList_int32(entities)
     ct = create_meshtags(mesh, mesh.topology.dim,
-                         adj, np.int32(local_values))
+                         adj, np.int32(values))
     ct.name = "subdomains"
 
     # Create MeshTags for facets
@@ -86,13 +86,13 @@ def gmsh_to_fenicsx(model, gdim):
     gmsh_facet_perm = perm_gmsh(facet_type, num_facet_nodes)
     marked_facets = marked_facets[:, gmsh_facet_perm]
 
-    local_entities, local_values = extract_local_entities(
+    entities, values = distribute_entity_data(
         mesh, mesh.topology.dim - 1, marked_facets, facet_values)
     mesh.topology.create_connectivity(
         mesh.topology.dim - 1, mesh.topology.dim)
-    adj = AdjacencyList_int32(local_entities)
+    adj = AdjacencyList_int32(entities)
     ft = create_meshtags(mesh, mesh.topology.dim - 1,
-                         adj, np.int32(local_values))
+                         adj, np.int32(values))
     ft.name = "boundaries"
 
     return mesh, ct, ft
