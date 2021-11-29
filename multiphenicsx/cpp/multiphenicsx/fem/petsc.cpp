@@ -26,7 +26,7 @@ Mat multiphenicsx::fem::create_matrix(
   const std::array<std::shared_ptr<const common::IndexMap>, 2> index_maps_shared_ptr
     {{std::shared_ptr<const common::IndexMap>(&index_maps[0].get(), [](const common::IndexMap*){}),
       std::shared_ptr<const common::IndexMap>(&index_maps[1].get(), [](const common::IndexMap*){})}};
-  la::SparsityPattern pattern(mesh.mpi_comm(), index_maps_shared_ptr, index_maps_bs);
+  la::SparsityPattern pattern(mesh.comm(), index_maps_shared_ptr, index_maps_bs);
   if (integral_types.count(fem::IntegralType::cell) > 0)
   {
     sparsitybuild::cells(pattern, mesh.topology(), dofmaps);
@@ -51,7 +51,7 @@ Mat multiphenicsx::fem::create_matrix(
   // Finalise communication
   pattern.assemble();
 
-  return la::create_petsc_matrix(mesh.mpi_comm(), pattern, matrix_type);
+  return la::create_petsc_matrix(mesh.comm(), pattern, matrix_type);
 }
 //-----------------------------------------------------------------------------
 Mat multiphenicsx::fem::create_matrix_block(
@@ -90,7 +90,7 @@ Mat multiphenicsx::fem::create_matrix_block(
         const std::array<int, 2> index_maps_bs_row_col
           {{index_maps_bs[0][row], index_maps_bs[1][col]}};
         patterns[row].push_back(
-            std::make_unique<la::SparsityPattern>(mesh.mpi_comm(), index_maps_row_col, index_maps_bs_row_col));
+            std::make_unique<la::SparsityPattern>(mesh.comm(), index_maps_row_col, index_maps_bs_row_col));
         assert(patterns[row].back());
 
         auto& sp = patterns[row].back();
@@ -151,14 +151,14 @@ Mat multiphenicsx::fem::create_matrix_block(
   for (std::size_t row = 0; row < rows; ++row)
     for (std::size_t col = 0; col < cols; ++col)
       p[row].push_back(patterns[row][col].get());
-  la::SparsityPattern pattern(mesh.mpi_comm(), p, maps_and_bs, index_maps_bs);
+  la::SparsityPattern pattern(mesh.comm(), p, maps_and_bs, index_maps_bs);
   pattern.assemble();
 
   // FIXME: Add option to pass customised local-to-global map to PETSc
   // Mat constructor
 
   // Initialise matrix
-  Mat A = la::create_petsc_matrix(mesh.mpi_comm(), pattern, matrix_type);
+  Mat A = la::create_petsc_matrix(mesh.comm(), pattern, matrix_type);
 
   // Create row and column local-to-global maps (field0, field1, field2,
   // etc), i.e. ghosts of field0 appear before owned indices of field1
@@ -249,7 +249,7 @@ Mat multiphenicsx::fem::create_matrix_nest(
 
   // Initialise block (MatNest) matrix
   Mat A;
-  MatCreate(mesh.mpi_comm(), &A);
+  MatCreate(mesh.comm(), &A);
   MatSetType(A, MATNEST);
   MatNestSetSubMats(A, rows, nullptr, cols, nullptr, mats.data());
   MatSetUp(A);

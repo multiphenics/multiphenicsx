@@ -21,8 +21,8 @@ MatSubMatrixWrapper::MatSubMatrixWrapper(
   PetscErrorCode ierr;
 
   // Get communicator from matrix object
-  MPI_Comm mpi_comm = MPI_COMM_NULL;
-  ierr = PetscObjectGetComm((PetscObject) A, &mpi_comm);
+  MPI_Comm comm = MPI_COMM_NULL;
+  ierr = PetscObjectGetComm((PetscObject) A, &comm);
   if (ierr != 0) petsc_error(ierr, __FILE__, "PetscObjectGetComm");
 
   // Sub matrix inherits block size of the index sets. Check that they
@@ -130,15 +130,15 @@ MatSubMatrixWrapper::MatSubMatrixWrapper(
   }
 
   // Get communicator from submatrix object
-  MPI_Comm mpi_comm = MPI_COMM_NULL;
-  ierr = PetscObjectGetComm((PetscObject) _sub_matrix, &mpi_comm);
+  MPI_Comm comm = MPI_COMM_NULL;
+  ierr = PetscObjectGetComm((PetscObject) _sub_matrix, &comm);
   if (ierr != 0) petsc_error(ierr, __FILE__, "PetscObjectGetComm");
 
   // Create submatrix local-to-global maps as index set
   std::array<ISLocalToGlobalMapping, 2> petsc_local_to_global_submatrix;
   for (std::size_t i = 0; i < 2; ++i)
   {
-    ierr = ISLocalToGlobalMappingCreate(mpi_comm, bs[i], stl_local_to_global_submatrix[i].size(),
+    ierr = ISLocalToGlobalMappingCreate(comm, bs[i], stl_local_to_global_submatrix[i].size(),
                                         stl_local_to_global_submatrix[i].data(), PETSC_COPY_VALUES,
                                         &petsc_local_to_global_submatrix[i]);
     if (ierr != 0) petsc_error(ierr, __FILE__, "ISLocalToGlobalMappingCreate");
