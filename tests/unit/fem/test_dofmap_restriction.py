@@ -8,8 +8,8 @@ import numpy as np
 import pytest
 from mpi4py import MPI
 
-from dolfinx import FunctionSpace, TensorFunctionSpace, UnitSquareMesh, VectorFunctionSpace
-from dolfinx.fem import locate_dofs_topological
+from dolfinx.fem import FunctionSpace, locate_dofs_topological, TensorFunctionSpace, VectorFunctionSpace
+from dolfinx.generation import UnitSquareMesh
 from dolfinx.mesh import locate_entities
 from ufl import FiniteElement, MixedElement, VectorElement
 
