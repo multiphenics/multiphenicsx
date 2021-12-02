@@ -38,7 +38,7 @@ void la(py::module& m)
   py::enum_<multiphenicsx::la::GhostBlockLayout>(m, "GhostBlockLayout")
       .value("intertwined", multiphenicsx::la::GhostBlockLayout::intertwined)
       .value("trailing", multiphenicsx::la::GhostBlockLayout::trailing);
-  m.def("create_petsc_index_sets", &multiphenicsx::la::create_petsc_index_sets,
+  m.def("create_petsc_index_sets", &multiphenicsx::la::petsc::create_index_sets,
         py::arg("maps"), py::arg("is_bs"), py::arg("ghosted") = true,
         py::arg("ghost_block_layout") = multiphenicsx::la::GhostBlockLayout::intertwined,
         py::return_value_policy::take_ownership);

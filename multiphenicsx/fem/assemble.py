@@ -86,7 +86,7 @@ def create_vector(L: Form,
         assert _same_dofmap(restriction.dofmap, dofmap)
         index_map = restriction.index_map
         index_map_bs = restriction.index_map_bs
-    return dcpp.la.create_vector(index_map, index_map_bs)
+    return dcpp.la.create_petsc_vector(index_map, index_map_bs)
 
 
 def create_vector_block(L: typing.List[Form],

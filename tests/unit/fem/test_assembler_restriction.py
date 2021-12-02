@@ -414,8 +414,8 @@ def test_vector_assembly_with_restriction(mesh, subdomain, FunctionSpace, dirich
     set_bc(restricted_vector_linear, bcs, restriction=dofmap_restriction)
     assert_vector_equal(unrestricted_vector_linear, restricted_vector_linear, dofmap_restriction)
     # BC application for nonlinear problems
-    unrestricted_solution = _cpp.la.create_vector(V.dofmap.index_map, V.dofmap.index_map_bs)
-    restricted_solution = _cpp.la.create_vector(dofmap_restriction.index_map, dofmap_restriction.index_map_bs)
+    unrestricted_solution = _cpp.la.create_petsc_vector(V.dofmap.index_map, V.dofmap.index_map_bs)
+    restricted_solution = _cpp.la.create_petsc_vector(dofmap_restriction.index_map, dofmap_restriction.index_map_bs)
     with unrestricted_solution.localForm() as unrestricted_solution_local, \
             get_function(V).vector.localForm() as function_local:
         active_dofs_bs = [V.dofmap.index_map_bs * d + s

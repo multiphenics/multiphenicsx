@@ -51,7 +51,7 @@ Mat multiphenicsx::fem::create_matrix(
   // Finalise communication
   pattern.assemble();
 
-  return la::create_petsc_matrix(mesh.comm(), pattern, matrix_type);
+  return la::petsc::create_matrix(mesh.comm(), pattern, matrix_type);
 }
 //-----------------------------------------------------------------------------
 Mat multiphenicsx::fem::create_matrix_block(
@@ -158,7 +158,7 @@ Mat multiphenicsx::fem::create_matrix_block(
   // Mat constructor
 
   // Initialise matrix
-  Mat A = la::create_petsc_matrix(mesh.comm(), pattern, matrix_type);
+  Mat A = la::petsc::create_matrix(mesh.comm(), pattern, matrix_type);
 
   // Create row and column local-to-global maps (field0, field1, field2,
   // etc), i.e. ghosts of field0 appear before owned indices of field1

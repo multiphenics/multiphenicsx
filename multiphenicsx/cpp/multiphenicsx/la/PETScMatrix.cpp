@@ -6,10 +6,9 @@
 
 #include <cassert>
 #include <vector>
-#include <dolfinx/la/PETScVector.h>  // for dolfinx::la::petsc_error
+#include <dolfinx/la/PETScVector.h>  // for dolfinx::la::petsc::error
 #include <multiphenicsx/la/PETScMatrix.h>
 
-using dolfinx::la::petsc_error;
 using multiphenicsx::la::MatSubMatrixWrapper;
 
 //-----------------------------------------------------------------------------
@@ -23,24 +22,24 @@ MatSubMatrixWrapper::MatSubMatrixWrapper(
   // Get communicator from matrix object
   MPI_Comm comm = MPI_COMM_NULL;
   ierr = PetscObjectGetComm((PetscObject) A, &comm);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "PetscObjectGetComm");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "PetscObjectGetComm");
 
   // Sub matrix inherits block size of the index sets. Check that they
   // are consistent with the ones of the global matrix.
   std::vector<PetscInt> bs_A(2);
   ierr = MatGetBlockSizes(A, &bs_A[0], &bs_A[1]);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "MatGetBlockSizes");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "MatGetBlockSizes");
   std::vector<PetscInt> bs_is(2);
   ierr = ISGetBlockSize(_is[0], &bs_is[0]);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "ISGetBlockSize");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "ISGetBlockSize");
   ierr = ISGetBlockSize(_is[1], &bs_is[1]);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "ISGetBlockSize");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "ISGetBlockSize");
   assert(bs_A[0] == bs_is[0]);
   assert(bs_A[1] == bs_is[1]);
 
   // Extract sub matrix
   ierr = MatGetLocalSubMatrix(A, _is[0], _is[1], &_sub_matrix);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "MatGetLocalSubMatrix");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "MatGetLocalSubMatrix");
 }
 //-----------------------------------------------------------------------------
 MatSubMatrixWrapper::MatSubMatrixWrapper(
@@ -64,7 +63,7 @@ MatSubMatrixWrapper::MatSubMatrixWrapper(
   // Get sub matrix (i.e., index sets) block sizes
   std::vector<PetscInt> bs(2);
   ierr = MatGetBlockSizes(_sub_matrix, &bs[0], &bs[1]);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "MatGetBlockSizes");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "MatGetBlockSizes");
 
   // Compare sub matrix block sizes with unrestricted_to_restricted_bs:
   // they should either be the same (typically the case of restricted matrices or restricted
@@ -89,7 +88,7 @@ MatSubMatrixWrapper::MatSubMatrixWrapper(
   // Get matrix local-to-global map
   std::array<ISLocalToGlobalMapping, 2> petsc_local_to_global_matrix;
   ierr = MatGetLocalToGlobalMapping(A, &petsc_local_to_global_matrix[0], &petsc_local_to_global_matrix[1]);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "MatGetLocalToGlobalMapping");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "MatGetLocalToGlobalMapping");
 
   // Allocate data for submatrix local-to-global maps in an STL vector
   std::array<std::vector<PetscInt>, 2> stl_local_to_global_submatrix;
@@ -97,12 +96,12 @@ MatSubMatrixWrapper::MatSubMatrixWrapper(
   {
     PetscInt unrestricted_is_size;
     ierr = ISBlockGetLocalSize(unrestricted_index_sets[i], &unrestricted_is_size);
-    if (ierr != 0) petsc_error(ierr, __FILE__, "ISGetLocalSize");
+    if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "ISGetLocalSize");
     stl_local_to_global_submatrix[i].resize(unrestricted_is_size);
 
     const PetscInt *restricted_indices;
     ierr = ISBlockGetIndices(restricted_index_sets[i], &restricted_indices);
-    if (ierr != 0) petsc_error(ierr, __FILE__, "ISGetIndices");
+    if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "ISGetIndices");
 
     std::vector<PetscInt> restricted_local_index(1);
     std::vector<PetscInt> restricted_global_index(1);
@@ -126,13 +125,13 @@ MatSubMatrixWrapper::MatSubMatrixWrapper(
     }
 
     ierr = ISBlockRestoreIndices(restricted_index_sets[i], &restricted_indices);
-    if (ierr != 0) petsc_error(ierr, __FILE__, "ISRestoreIndices");
+    if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "ISRestoreIndices");
   }
 
   // Get communicator from submatrix object
   MPI_Comm comm = MPI_COMM_NULL;
   ierr = PetscObjectGetComm((PetscObject) _sub_matrix, &comm);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "PetscObjectGetComm");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "PetscObjectGetComm");
 
   // Create submatrix local-to-global maps as index set
   std::array<ISLocalToGlobalMapping, 2> petsc_local_to_global_submatrix;
@@ -141,19 +140,19 @@ MatSubMatrixWrapper::MatSubMatrixWrapper(
     ierr = ISLocalToGlobalMappingCreate(comm, bs[i], stl_local_to_global_submatrix[i].size(),
                                         stl_local_to_global_submatrix[i].data(), PETSC_COPY_VALUES,
                                         &petsc_local_to_global_submatrix[i]);
-    if (ierr != 0) petsc_error(ierr, __FILE__, "ISLocalToGlobalMappingCreate");
+    if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "ISLocalToGlobalMappingCreate");
   }
 
   // Set submatrix local-to-global maps
   ierr = MatSetLocalToGlobalMapping(_sub_matrix, petsc_local_to_global_submatrix[0],
                                     petsc_local_to_global_submatrix[1]);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "MatSetLocalToGlobalMapping");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "MatSetLocalToGlobalMapping");
 
   // Clean up submatrix local-to-global maps
   for (std::size_t i = 0; i < 2; ++i)
   {
     ierr = ISLocalToGlobalMappingDestroy(&petsc_local_to_global_submatrix[i]);
-    if (ierr != 0) petsc_error(ierr, __FILE__, "ISLocalToGlobalMappingDestroy");
+    if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "ISLocalToGlobalMappingDestroy");
   }
 }
 //-----------------------------------------------------------------------------
@@ -171,7 +170,7 @@ void MatSubMatrixWrapper::restore()
   PetscErrorCode ierr;
   assert(_sub_matrix);
   ierr = MatRestoreLocalSubMatrix(_global_matrix, _is[0], _is[1], &_sub_matrix);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "MatRestoreLocalSubMatrix");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "MatRestoreLocalSubMatrix");
 
   // Clear pointers
   _sub_matrix = nullptr;

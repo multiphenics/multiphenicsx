@@ -4,16 +4,15 @@
 //
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#include <dolfinx/la/PETScVector.h>  // for dolfinx::la::petsc_error
+#include <dolfinx/la/PETScVector.h>  // for dolfinx::la::petsc::error
 #include <multiphenicsx/la/PETScVector.h>
 
 using namespace dolfinx;
-using dolfinx::la::petsc_error;
 using multiphenicsx::la::VecSubVectorReadWrapper;
 using multiphenicsx::la::VecSubVectorWrapper;
 
 //-----------------------------------------------------------------------------
-std::vector<IS> multiphenicsx::la::create_petsc_index_sets(
+std::vector<IS> multiphenicsx::la::petsc::create_index_sets(
     const std::vector<
         std::pair<std::reference_wrapper<const common::IndexMap>, int>>& maps,
     const std::vector<int> is_bs, bool ghosted, GhostBlockLayout ghost_block_layout)
@@ -104,19 +103,19 @@ VecSubVectorReadWrapper::VecSubVectorReadWrapper(
   // Get number of entries to extract from x
   PetscInt is_size;
   ierr = ISGetLocalSize(index_set, &is_size);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "ISGetLocalSize");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "ISGetLocalSize");
 
   // Get indices of entries to extract from x
   const PetscInt *indices;
   ierr = ISGetIndices(index_set, &indices);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "ISGetIndices");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "ISGetIndices");
 
   // Fetch vector content from x
   Vec x_local_form;
   if (_ghosted)
   {
     ierr = VecGhostGetLocalForm(x, &x_local_form);
-    if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostGetLocalForm");
+    if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "VecGhostGetLocalForm");
   }
   else
   {
@@ -124,16 +123,16 @@ VecSubVectorReadWrapper::VecSubVectorReadWrapper(
   }
   _content.resize(is_size, 0.);
   ierr = VecGetValues(x_local_form, is_size, indices, _content.data());
-  if (ierr != 0) petsc_error(ierr, __FILE__, "VecGetValues");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "VecGetValues");
   if (_ghosted)
   {
     ierr = VecGhostRestoreLocalForm(x, &x_local_form);
-    if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostRestoreLocalForm");
+    if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "VecGhostRestoreLocalForm");
   }
 
   // Restore indices
   ierr = ISRestoreIndices(index_set, &indices);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "ISRestoreIndices");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "ISRestoreIndices");
 }
 //-----------------------------------------------------------------------------
 VecSubVectorReadWrapper::VecSubVectorReadWrapper(
@@ -150,19 +149,19 @@ VecSubVectorReadWrapper::VecSubVectorReadWrapper(
   // Get number of entries to extract from x
   PetscInt restricted_is_size;
   ierr = ISGetLocalSize(restricted_index_set, &restricted_is_size);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "ISGetLocalSize");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "ISGetLocalSize");
 
   // Get indices of entries to extract from x
   const PetscInt *restricted_indices;
   ierr = ISGetIndices(restricted_index_set, &restricted_indices);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "ISGetIndices");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "ISGetIndices");
 
   // Fetch vector content from x
   Vec x_local_form;
   if (_ghosted)
   {
     ierr = VecGhostGetLocalForm(x, &x_local_form);
-    if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostGetLocalForm");
+    if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "VecGhostGetLocalForm");
   }
   else
   {
@@ -170,21 +169,21 @@ VecSubVectorReadWrapper::VecSubVectorReadWrapper(
   }
   std::vector<PetscScalar> restricted_content(restricted_is_size, 0.);
   ierr = VecGetValues(x_local_form, restricted_is_size, restricted_indices, restricted_content.data());
-  if (ierr != 0) petsc_error(ierr, __FILE__, "VecGetValues");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "VecGetValues");
   if (_ghosted)
   {
     ierr = VecGhostRestoreLocalForm(x, &x_local_form);
-    if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostRestoreLocalForm");
+    if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "VecGhostRestoreLocalForm");
   }
 
   // Restore indices
   ierr = ISRestoreIndices(restricted_index_set, &restricted_indices);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "ISRestoreIndices");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "ISRestoreIndices");
 
   // Get number of entries to be stored in _content
   PetscInt unrestricted_is_size;
   ierr = ISGetLocalSize(unrestricted_index_set, &unrestricted_is_size);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "ISGetLocalSize");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "ISGetLocalSize");
 
   // Assign vector content to an STL vector indexed with respect to the unrestricted index set
   _content.resize(unrestricted_is_size, 0.);
@@ -217,7 +216,7 @@ VecSubVectorWrapper::VecSubVectorWrapper(
   // Get number of entries stored in _content
   PetscInt is_size;
   ierr = ISGetLocalSize(index_set, &is_size);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "ISGetLocalSize");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "ISGetLocalSize");
 
   // Fill in _restricted_to_unrestricted attribute with the identity map
   for (PetscInt index = 0; index < is_size; index++)
@@ -242,7 +241,7 @@ VecSubVectorWrapper::VecSubVectorWrapper(
   // Get number of entries stored in _content
   PetscInt unrestricted_is_size;
   ierr = ISGetLocalSize(unrestricted_index_set, &unrestricted_is_size);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "ISGetLocalSize");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "ISGetLocalSize");
 
   // Fill in _restricted_to_unrestricted attribute
   for (PetscInt unrestricted_index = 0; unrestricted_index < unrestricted_is_size; unrestricted_index++)
@@ -272,7 +271,7 @@ void VecSubVectorWrapper::restore()
   // Get indices of entries to restore in x
   const PetscInt *restricted_indices;
   ierr = ISGetIndices(_is, &restricted_indices);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "ISGetIndices");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "ISGetIndices");
 
   // Restrict values from content attribute
   std::vector<PetscScalar> restricted_values(_restricted_to_unrestricted.size());
@@ -288,7 +287,7 @@ void VecSubVectorWrapper::restore()
   if (_ghosted)
   {
     ierr = VecGhostGetLocalForm(_global_vector, &global_vector_local_form);
-    if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostGetLocalForm");
+    if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "VecGhostGetLocalForm");
   }
   else
   {
@@ -296,20 +295,20 @@ void VecSubVectorWrapper::restore()
   }
   PetscScalar* array_local_form;
   ierr = VecGetArray(global_vector_local_form, &array_local_form);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "VecGetArray");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "VecGetArray");
   for (std::size_t i = 0; i < restricted_values.size(); ++i)
     array_local_form[restricted_indices[i]] = restricted_values[i];
   ierr = VecRestoreArray(global_vector_local_form, &array_local_form);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "VecRestoreArray");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "VecRestoreArray");
   if (_ghosted)
   {
     ierr = VecGhostRestoreLocalForm(_global_vector, &global_vector_local_form);
-    if (ierr != 0) petsc_error(ierr, __FILE__, "VecGhostRestoreLocalForm");
+    if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "VecGhostRestoreLocalForm");
   }
 
   // Restore indices
   ierr = ISRestoreIndices(_is, &restricted_indices);
-  if (ierr != 0) petsc_error(ierr, __FILE__, "ISRestoreIndices");
+  if (ierr != 0) dolfinx::la::petsc::error(ierr, __FILE__, "ISRestoreIndices");
 
   // Clear storage
   _is = nullptr;

@@ -23,6 +23,9 @@ enum class GhostBlockLayout
   trailing      // [owned_0, owned_1, ..., ghost_0, ghost_1, ...], as used by block vectors
 };
 
+/// Tools for creating PETSc objects
+namespace petsc
+{
 /// @todo This function could take just the local sizes
 ///
 /// Compute PETSc IndexSets (IS) for a stack of index maps. E.g., if
@@ -41,11 +44,13 @@ enum class GhostBlockLayout
 ///                               IS used for block vectors should provide
 ///                               GhostBlockLayout::trailing.
 /// @returns Vector of PETSc Index Sets, created on` PETSC_COMM_SELF`
-std::vector<IS> create_petsc_index_sets(
+std::vector<IS> create_index_sets(
     const std::vector<
         std::pair<std::reference_wrapper<const dolfinx::common::IndexMap>, int>>& maps,
     const std::vector<int> is_bs, bool ghosted = true,
     GhostBlockLayout ghost_block_layout = GhostBlockLayout::intertwined);
+
+} // namespace petsc
 
 /// Read-only wrapper around a local subvector of a Vec object, used in combination with DofMapRestriction
 class VecSubVectorReadWrapper
