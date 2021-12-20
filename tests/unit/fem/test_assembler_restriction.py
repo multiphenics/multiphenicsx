@@ -12,8 +12,7 @@ from petsc4py import PETSc
 
 from dolfinx import cpp as _cpp
 from dolfinx.fem import DirichletBC, Function, FunctionSpace, locate_dofs_topological, VectorFunctionSpace
-from dolfinx.generation import UnitSquareMesh
-from dolfinx.mesh import locate_entities
+from dolfinx.mesh import create_unit_square, locate_entities
 from ufl import dx, inner, MixedElement, TestFunction, TrialFunction
 
 from multiphenicsx.fem import (
@@ -30,7 +29,7 @@ from test_dofmap_restriction import ActiveDofs, CellsSubDomain, FacetsSubDomain,
 # Mesh
 @pytest.fixture
 def mesh():
-    return UnitSquareMesh(MPI.COMM_WORLD, 4, 4)
+    return create_unit_square(MPI.COMM_WORLD, 4, 4)
 
 
 # Subdomain parametrization

@@ -9,8 +9,7 @@ import pytest
 from mpi4py import MPI
 
 from dolfinx.fem import FunctionSpace, locate_dofs_topological, TensorFunctionSpace, VectorFunctionSpace
-from dolfinx.generation import UnitSquareMesh
-from dolfinx.mesh import locate_entities
+from dolfinx.mesh import create_unit_square, locate_entities
 from ufl import FiniteElement, MixedElement, VectorElement
 
 from multiphenicsx.fem import DofMapRestriction
@@ -19,7 +18,7 @@ from multiphenicsx.fem import DofMapRestriction
 # Mesh
 @pytest.fixture
 def mesh():
-    return UnitSquareMesh(MPI.COMM_WORLD, 4, 4)
+    return create_unit_square(MPI.COMM_WORLD, 4, 4)
 
 
 # Auxiliary generation of a mixed function space
