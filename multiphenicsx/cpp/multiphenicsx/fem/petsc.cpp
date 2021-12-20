@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
 #include <dolfinx/la/SparsityPattern.h>
-#include <dolfinx/la/PETScMatrix.h>
+#include <dolfinx/la/petsc.h>
 #include <multiphenicsx/fem/petsc.h>
 #include <multiphenicsx/fem/sparsitybuild.h>
 
@@ -14,7 +14,7 @@ using dolfinx::fem::IntegralType;
 namespace sparsitybuild = multiphenicsx::fem::sparsitybuild;
 
 //-----------------------------------------------------------------------------
-Mat multiphenicsx::fem::create_matrix(
+Mat multiphenicsx::fem::petsc::create_matrix(
     const mesh::Mesh& mesh,
     std::array<std::reference_wrapper<const common::IndexMap>, 2> index_maps,
     const std::array<int, 2> index_maps_bs,
@@ -54,7 +54,7 @@ Mat multiphenicsx::fem::create_matrix(
   return la::petsc::create_matrix(mesh.comm(), pattern, matrix_type);
 }
 //-----------------------------------------------------------------------------
-Mat multiphenicsx::fem::create_matrix_block(
+Mat multiphenicsx::fem::petsc::create_matrix_block(
     const mesh::Mesh& mesh,
     std::array<std::vector<std::reference_wrapper<const common::IndexMap>>, 2> index_maps,
     const std::array<std::vector<int>, 2> index_maps_bs,
@@ -206,7 +206,7 @@ Mat multiphenicsx::fem::create_matrix_block(
   return A;
 }
 //-----------------------------------------------------------------------------
-Mat multiphenicsx::fem::create_matrix_nest(
+Mat multiphenicsx::fem::petsc::create_matrix_nest(
     const mesh::Mesh& mesh,
     std::array<std::vector<std::reference_wrapper<const common::IndexMap>>, 2> index_maps,
     const std::array<std::vector<int>, 2> index_maps_bs,
@@ -237,7 +237,7 @@ Mat multiphenicsx::fem::create_matrix_nest(
     {
       if (integral_types[i][j].size() > 0)
       {
-        mats[i * cols + j] = multiphenicsx::fem::create_matrix(
+        mats[i * cols + j] = multiphenicsx::fem::petsc::create_matrix(
           mesh, {{index_maps[0][i], index_maps[1][j]}},
           {{index_maps_bs[0][i], index_maps_bs[1][j]}},
           integral_types[i][j],

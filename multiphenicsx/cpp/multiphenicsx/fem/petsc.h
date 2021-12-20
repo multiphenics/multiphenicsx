@@ -24,6 +24,10 @@ namespace fem
 
 using dolfinx::fem::IntegralType;
 
+/// Helper functions for assembly into PETSc data structures
+namespace petsc
+{
+
 /// Create a matrix.
 /// @param[in] mesh The mesh
 /// @param[in] index_maps A pair of index maps. Row index map is given by index_maps[0], column index map is given
@@ -89,5 +93,6 @@ Mat create_matrix_nest(
     const std::array<std::vector<const dolfinx::graph::AdjacencyList<std::int32_t>*>, 2>& dofmaps,
     const std::vector<std::vector<std::string>>& matrix_types);
 
+} // namespace petsc
 } // namespace fem
 } // namespace multiphenicsx

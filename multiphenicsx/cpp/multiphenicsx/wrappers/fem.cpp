@@ -62,9 +62,9 @@ namespace
 
 namespace multiphenicsx_wrappers
 {
-void fem(py::module& m)
+void fem_petsc_module(py::module& m)
 {
-  // utils
+  // Create PETSc matrices
   m.def("create_matrix",
         [](const dolfinx::mesh::Mesh& mesh,
            std::vector<std::reference_wrapper<const dolfinx::common::IndexMap>> index_maps_,
@@ -90,7 +90,7 @@ void fem(py::module& m)
           // TODO Remove this when pybind11#2122 is fixed.
           auto integral_types = convert_vector_to_set(integral_types_);
           //
-          return multiphenicsx::fem::create_matrix(
+          return multiphenicsx::fem::petsc::create_matrix(
                    mesh, index_maps, index_maps_bs, integral_types, dofmaps, matrix_type);
         },
         py::return_value_policy::take_ownership,
@@ -112,7 +112,7 @@ void fem(py::module& m)
           // TODO Remove this when pybind11#2122 is fixed.
           auto integral_types = convert_vector_to_set(integral_types_);
           //
-          return multiphenicsx::fem::create_matrix_block(
+          return multiphenicsx::fem::petsc::create_matrix_block(
                    mesh, index_maps, index_maps_bs,integral_types, dofmaps, matrix_type);
         },
         py::return_value_policy::take_ownership,
@@ -134,7 +134,7 @@ void fem(py::module& m)
           // TODO Remove this when pybind11#2122 is fixed.
           auto integral_types = convert_vector_to_set(integral_types_);
           //
-          return multiphenicsx::fem::create_matrix_nest(
+          return multiphenicsx::fem::petsc::create_matrix_nest(
                    mesh, index_maps, index_maps_bs, integral_types, dofmaps, matrix_types);
         },
         py::return_value_policy::take_ownership,
@@ -142,6 +142,15 @@ void fem(py::module& m)
         py::arg("integral_types"), py::arg("dofmaps"),
         py::arg("matrix_types") = std::vector<std::vector<std::string>>(),
         "Create nested sparse matrix for bilinear forms.");
+}
+
+void fem(py::module& m)
+{
+  py::module petsc_mod
+      = m.def_submodule("petsc", "PETSc-specific finite element module");
+  fem_petsc_module(petsc_mod);
+
+  // utils
   m.def("get_integral_types_from_form", &multiphenicsx::fem::get_integral_types_from_form<PetscScalar>,
         "Extract integral types from a Form.");
 

@@ -414,8 +414,8 @@ def test_vector_assembly_with_restriction(mesh, subdomain, FunctionSpace, dirich
     set_bc(restricted_vector_linear, bcs, restriction=dofmap_restriction)
     assert_vector_equal(unrestricted_vector_linear, restricted_vector_linear, dofmap_restriction)
     # BC application for nonlinear problems
-    unrestricted_solution = _cpp.la.create_petsc_vector(V.dofmap.index_map, V.dofmap.index_map_bs)
-    restricted_solution = _cpp.la.create_petsc_vector(dofmap_restriction.index_map, dofmap_restriction.index_map_bs)
+    unrestricted_solution = _cpp.la.petsc.create_vector(V.dofmap.index_map, V.dofmap.index_map_bs)
+    restricted_solution = _cpp.la.petsc.create_vector(dofmap_restriction.index_map, dofmap_restriction.index_map_bs)
     with unrestricted_solution.localForm() as unrestricted_solution_local, \
             get_function(V).vector.localForm() as function_local:
         active_dofs_bs = [V.dofmap.index_map_bs * d + s
@@ -454,10 +454,10 @@ def test_block_vector_assembly_with_restriction(mesh, subdomains, FunctionSpaces
                                                      restriction=dofmap_restriction)
     assert_vector_equal(unrestricted_vector_linear, restricted_vector_linear, dofmap_restriction)
     # Assembly for nonlinear problems
-    unrestricted_solution = _cpp.fem.create_vector_block([(V_.dofmap.index_map, V_.dofmap.index_map_bs)
-                                                          for V_ in V])
-    restricted_solution = _cpp.fem.create_vector_block([(restriction.index_map, restriction.index_map_bs)
-                                                        for restriction in dofmap_restriction])
+    unrestricted_solution = _cpp.fem.petsc.create_vector_block([(V_.dofmap.index_map, V_.dofmap.index_map_bs)
+                                                                for V_ in V])
+    restricted_solution = _cpp.fem.petsc.create_vector_block([(restriction.index_map, restriction.index_map_bs)
+                                                              for restriction in dofmap_restriction])
     with BlockVecSubVectorWrapper(unrestricted_solution, dofmaps) as unrestricted_solution_wrapper:
         for (active_dofs_sub, unrestricted_solution_sub_local, function_sub, dofmap_sub) in zip(
                 active_dofs, unrestricted_solution_wrapper, get_function_pair(*V), dofmaps):
@@ -513,10 +513,10 @@ def test_nest_vector_assembly_with_restriction(mesh, subdomains, FunctionSpaces,
     set_bc_nest(restricted_vector_linear, bcs_pair, restriction=dofmap_restriction)
     assert_vector_equal(unrestricted_vector_linear, restricted_vector_linear, dofmap_restriction)
     # BC application for nonlinear problems
-    unrestricted_solution = _cpp.fem.create_vector_nest([(V_.dofmap.index_map, V_.dofmap.index_map_bs)
-                                                         for V_ in V])
-    restricted_solution = _cpp.fem.create_vector_nest([(restriction.index_map, restriction.index_map_bs)
-                                                       for restriction in dofmap_restriction])
+    unrestricted_solution = _cpp.fem.petsc.create_vector_nest([(V_.dofmap.index_map, V_.dofmap.index_map_bs)
+                                                               for V_ in V])
+    restricted_solution = _cpp.fem.petsc.create_vector_nest([(restriction.index_map, restriction.index_map_bs)
+                                                             for restriction in dofmap_restriction])
     with NestVecSubVectorWrapper(unrestricted_solution, dofmaps) as unrestricted_solution_wrapper:
         for (active_dofs_sub, unrestricted_solution_sub_local, function_sub, dofmap_sub) in zip(
                 active_dofs, unrestricted_solution_wrapper, get_function_pair(*V), dofmaps):

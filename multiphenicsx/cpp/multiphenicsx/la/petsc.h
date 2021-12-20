@@ -8,13 +8,15 @@
 
 #include <map>
 #include <vector>
+#include <petscmat.h>
 #include <petscvec.h>
 #include <dolfinx/common/IndexMap.h>
 
-namespace multiphenicsx
+namespace multiphenicsx::la
 {
 
-namespace la
+/// Tools for creating PETSc objects
+namespace petsc
 {
 /// Ghost block layout types
 enum class GhostBlockLayout
@@ -23,9 +25,6 @@ enum class GhostBlockLayout
   trailing      // [owned_0, owned_1, ..., ghost_0, ghost_1, ...], as used by block vectors
 };
 
-/// Tools for creating PETSc objects
-namespace petsc
-{
 /// @todo This function could take just the local sizes
 ///
 /// Compute PETSc IndexSets (IS) for a stack of index maps. E.g., if
@@ -50,7 +49,46 @@ std::vector<IS> create_index_sets(
     const std::vector<int> is_bs, bool ghosted = true,
     GhostBlockLayout ghost_block_layout = GhostBlockLayout::intertwined);
 
-} // namespace petsc
+/// Wrapper around a local submatrix of a Mat object, used in combination with DofMapRestriction
+class MatSubMatrixWrapper
+{
+public:
+  /// Constructor (for cases without restriction)
+  MatSubMatrixWrapper(Mat A,
+                      std::array<IS, 2> index_sets),
+
+  /// Constructor (for cases with restriction)
+  MatSubMatrixWrapper(Mat A,
+                      std::array<IS, 2> unrestricted_index_sets,
+                      std::array<IS, 2> restricted_index_sets,
+                      std::array<std::map<std::int32_t, std::int32_t>, 2> unrestricted_to_restricted,
+                      std::array<int, 2> unrestricted_to_restricted_bs);
+
+  /// Destructor
+  ~MatSubMatrixWrapper();
+
+  /// Copy constructor (deleted)
+  MatSubMatrixWrapper(const MatSubMatrixWrapper& A) = delete;
+
+  /// Move constructor (deleted)
+  MatSubMatrixWrapper(MatSubMatrixWrapper&& A) = delete;
+
+  /// Assignment operator (deleted)
+  MatSubMatrixWrapper& operator=(const MatSubMatrixWrapper& A) = delete;
+
+  /// Move assignment operator (deleted)
+  MatSubMatrixWrapper& operator=(MatSubMatrixWrapper&& A) = delete;
+
+  /// Restore PETSc Mat object
+  void restore();
+
+  /// Pointer to submatrix
+  Mat mat() const;
+private:
+  Mat _global_matrix;
+  Mat _sub_matrix;
+  std::array<IS, 2> _is;
+};
 
 /// Read-only wrapper around a local subvector of a Vec object, used in combination with DofMapRestriction
 class VecSubVectorReadWrapper
@@ -132,5 +170,6 @@ private:
   IS _is;
   std::map<std::int32_t, std::int32_t> _restricted_to_unrestricted;
 };
-} // namespace la
-} // namespace multiphenicsx
+
+} // namespace petsc
+} // namespace multiphenicsx::la

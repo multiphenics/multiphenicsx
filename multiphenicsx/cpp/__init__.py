@@ -18,8 +18,7 @@ cpp = compile_package(
     "fem/sparsitybuild.cpp",
     "fem/petsc.cpp",
     "fem/utils.cpp",
-    "la/PETScMatrix.cpp",
-    "la/PETScVector.cpp"
+    "la/petsc.cpp"
 )
 
 __all__ = [
