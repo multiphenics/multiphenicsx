@@ -1,5 +1,5 @@
-# Copyright (C) 2015-2021 by the RBniCS authors
-# Copyright (C) 2016-2021 by the multiphenicsx authors
+# Copyright (C) 2015-2022 by the RBniCS authors
+# Copyright (C) 2016-2022 by the multiphenicsx authors
 #
 # This file is part of multiphenicsx.
 #
