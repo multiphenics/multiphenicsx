@@ -1,0 +1,11 @@
+coverage
+flake8-annotations
+flake8-docstrings
+flake8-import-restrictions
+flake8-isort
+flake8-quotes
+ipyparallel
+nbconvert
+nbqa
+nbval
+pytest
