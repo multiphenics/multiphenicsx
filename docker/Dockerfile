@@ -7,13 +7,10 @@
 FROM dolfinx/dolfinx AS multiphenicsx
 MAINTAINER Francesco Ballarin <francesco.ballarin@unicatt.it>
 
-RUN pip3 -q install --upgrade --no-cache-dir \
-        itkwidgets matplotlib nbconvert Pygments pytest pytest-flake8 pytest-xdist pyvista sympy
-
 COPY . /tmp/multiphenicsx
 
 WORKDIR /tmp/multiphenicsx
-RUN python3 setup.py -q install
+RUN pip3 -q install . && pip3 -q install -r tests/requirements.txt
 
 WORKDIR /root
 RUN mkdir multiphenicsx && \
@@ -27,7 +24,7 @@ FROM multiphenicsx AS jupyter
 
 WORKDIR /root
 
-RUN pip3 install --upgrade --no-cache-dir jupyter
+RUN pip3 -q install --upgrade --no-cache-dir jupyter
 
 EXPOSE 8888/tcp
 ENV SHELL /bin/bash
