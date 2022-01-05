@@ -3,14 +3,17 @@
 # This file is part of multiphenicsx.
 #
 # SPDX-License-Identifier: LGPL-3.0-or-later
+"""multiphenicsx cpp module."""
 
 import os
-from mpi4py import MPI
+
+import mpi4py
+
+from multiphenicsx.cpp.compile_code import compile_code
 from multiphenicsx.cpp.compile_package import compile_package
 
-# Compile package
-cpp = compile_package(
-    MPI.COMM_WORLD,
+cpp_library = compile_package(
+    mpi4py.MPI.COMM_WORLD,
     "multiphenicsx",
     os.path.dirname(os.path.abspath(__file__)),
     # Files are manually sorted to handle dependencies
@@ -21,6 +24,6 @@ cpp = compile_package(
     "la/petsc.cpp"
 )
 
-__all__ = [
-    "cpp"
-]
+del mpi4py
+
+del os

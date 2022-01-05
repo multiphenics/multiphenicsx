@@ -3,17 +3,25 @@
 # This file is part of multiphenicsx.
 #
 # SPDX-License-Identifier: LGPL-3.0-or-later
+"""Compile a C++ package using cppimport."""
 
 import glob
-import mpi4py
 import os
+import types
+import typing
+
+import dolfinx.jit
+import mpi4py
 import petsc4py
-from dolfinx.jit import mpi_jit_decorator
+
 from multiphenicsx.cpp.compile_code import compile_code
 
 
-@mpi_jit_decorator
-def compile_package(package_name, package_root, *args):
+@dolfinx.jit.mpi_jit_decorator
+def compile_package(
+    package_name: str, package_root: str, *args: str, **kwargs: typing.Union[str, typing.List[str]]
+) -> types.ModuleType:
+    """Compile a C++ package."""
     # Remove extension from files
     files = [os.path.splitext(f)[0] for f in args]
 
@@ -32,12 +40,12 @@ def compile_package(package_name, package_root, *args):
         all_package_files = set(
             glob.glob(os.path.join(package_root, package_name, "[!wrappers]*", "*." + extension)))
         sorted_package_files = set(files_to_check)
-        if len(sorted_package_files) > len(all_package_files):
-            raise AssertionError(
+        if len(sorted_package_files) > len(all_package_files):  # pragma: no cover
+            raise RuntimeError(
                 "Input " + typename + " list contains more files than ones present in the library. "
                 + "The files " + str(sorted_package_files - all_package_files) + " seem not to exist.")
-        elif len(sorted_package_files) < len(all_package_files):
-            raise AssertionError(
+        elif len(sorted_package_files) < len(all_package_files):  # pragma: no cover
+            raise RuntimeError(
                 "Input " + typename + " list is not complete. "
                 + "The files " + str(all_package_files - sorted_package_files) + " are missing.")
         else:
@@ -58,11 +66,8 @@ def compile_package(package_name, package_root, *args):
         package_pybind11_sources.append(
             os.path.join(package_root, package_name, "wrappers", package_submodule + ".cpp"))
 
-    # Read in content of main package file
-    package_code = open(os.path.join(package_root, package_name, "wrappers", package_name + ".cpp")).read()
-
-    # Prepare kwargs to be passed to cppimport
-    kwargs = dict()
+    # Get the main package file
+    package_file = os.path.join(package_root, package_name, "wrappers", package_name + ".cpp")
 
     # Setup sources for compilation
     kwargs["sources"] = package_sources + package_pybind11_sources
@@ -78,4 +83,4 @@ def compile_package(package_name, package_root, *args):
     kwargs["include_dirs"] = include_dirs
 
     # Compile C++ module and return
-    return compile_code(package_name, package_code, **kwargs)
+    return compile_code(package_name, package_file, **kwargs)
