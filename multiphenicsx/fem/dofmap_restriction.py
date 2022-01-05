@@ -3,25 +3,27 @@
 # This file is part of multiphenicsx.
 #
 # SPDX-License-Identifier: LGPL-3.0-or-later
+"""Restriction of a DofMap to a list of active degrees of freedom."""
 
 import typing
 
 import dolfinx.cpp as dcpp
-from dolfinx.fem.dofmap import DofMap
+import dolfinx.fem
 
-from multiphenicsx.cpp import cpp as mcpp
+from multiphenicsx.cpp import cpp_library as mcpp
 
 
 class DofMapRestriction(mcpp.fem.DofMapRestriction):
+    """Restriction of a DofMap to a list of active degrees of freedom."""
+
     def __init__(
-            self,
-            dofmap: typing.Union[dcpp.fem.DofMap, DofMap],
-            restriction: typing.List[int]):
-        """Restriction of a DofMap to a list of active degrees of freedom
-        """
+        self,
+        dofmap: typing.Union[dcpp.fem.DofMap, dolfinx.fem.DofMap],
+        restriction: typing.List[int]
+    ) -> None:
         # Extract cpp dofmap
         try:
             _dofmap = dofmap._cpp_object
-        except AttributeError:
+        except AttributeError:  # pragma: no cover
             _dofmap = dofmap
         super().__init__(_dofmap, restriction)

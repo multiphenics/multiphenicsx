@@ -3,26 +3,26 @@
 # This file is part of multiphenicsx.
 #
 # SPDX-License-Identifier: LGPL-3.0-or-later
-
 """Assembly functions for variational forms."""
 
+import contextlib
 import functools
+import types
 import typing
-from contextlib import ExitStack
-
-import numpy as np
-from petsc4py import PETSc
 
 import dolfinx.cpp as dcpp
-from dolfinx.fem.dirichletbc import bcs_by_block, DirichletBC
-from dolfinx.fem.form import Form
-from dolfinx.fem.assemble import Coefficients, _cpp_dirichletbc, _create_cpp_form, pack_coefficients, pack_constants
+import dolfinx.fem
+import dolfinx.fem.assemble
+import numpy as np
+import numpy.typing as npt
+import petsc4py
+import ufl
 
-from multiphenicsx.cpp import cpp as mcpp
+from multiphenicsx.cpp import cpp_library as mcpp
 
 
-def _get_block_function_spaces(block_form):
-    cpp_Form = dcpp.fem.Form_float64 if PETSc.ScalarType == np.float64 else dcpp.fem.Form_complex128
+def _get_block_function_spaces(block_form: typing.List[dolfinx.fem.Form]) -> typing.List[dolfinx.fem.FunctionSpace]:
+    cpp_Form = dcpp.fem.Form_float64 if petsc4py.PETSc.ScalarType == np.float64 else dcpp.fem.Form_complex128
     assert all(isinstance(block_form_, (cpp_Form, list)) for block_form_ in block_form)
     if isinstance(block_form[0], list):
         assert all(isinstance(form, cpp_Form) or form is None for block_form_ in block_form
@@ -60,7 +60,10 @@ def _get_block_function_spaces(block_form):
         return [form.function_spaces[0] for form in block_form]
 
 
-def _same_dofmap(dofmap1, dofmap2):
+def _same_dofmap(
+    dofmap1: typing.Union[dolfinx.fem.DofMap, dcpp.fem.DofMap],
+    dofmap2: typing.Union[dolfinx.fem.DofMap, dcpp.fem.DofMap]
+) -> bool:
     try:
         dofmap1 = dofmap1._cpp_object
     except AttributeError:
@@ -76,9 +79,11 @@ def _same_dofmap(dofmap1, dofmap2):
 
 # -- Vector instantiation ----------------------------------------------------
 
-def create_vector(L: Form,
-                  restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None) -> PETSc.Vec:
-    dofmap = _create_cpp_form(L).function_spaces[0].dofmap
+def create_vector(
+    L: ufl.Form, restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None
+) -> petsc4py.PETSc.Vec:
+    """Create a vector which can be used to assemble the form `L` with restriction `restriction`."""
+    dofmap = dolfinx.fem.assemble._create_cpp_form(L).function_spaces[0].dofmap
     if restriction is None:
         index_map = dofmap.index_map
         index_map_bs = dofmap.index_map_bs
@@ -89,9 +94,11 @@ def create_vector(L: Form,
     return dcpp.la.petsc.create_vector(index_map, index_map_bs)
 
 
-def create_vector_block(L: typing.List[Form],
-                        restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None) -> PETSc.Vec:
-    function_spaces = _get_block_function_spaces(_create_cpp_form(L))
+def create_vector_block(
+    L: typing.List[ufl.Form], restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None
+) -> petsc4py.PETSc.Vec:
+    """Create a block vector which can be used to assemble the forms `L` with restriction `restriction`."""
+    function_spaces = _get_block_function_spaces(dolfinx.fem.assemble._create_cpp_form(L))
     dofmaps = [function_space.dofmap for function_space in function_spaces]
     if restriction is None:
         index_maps = [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps]
@@ -102,9 +109,11 @@ def create_vector_block(L: typing.List[Form],
     return dcpp.fem.petsc.create_vector_block(index_maps)
 
 
-def create_vector_nest(L: typing.List[Form],
-                       restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None) -> PETSc.Vec:
-    function_spaces = _get_block_function_spaces(_create_cpp_form(L))
+def create_vector_nest(
+    L: typing.List[ufl.Form], restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None
+) -> petsc4py.PETSc.Vec:
+    """Create a nest vector which can be used to assemble the forms `L` with restriction `restriction`."""
+    function_spaces = _get_block_function_spaces(dolfinx.fem.assemble._create_cpp_form(L))
     dofmaps = [function_space.dofmap for function_space in function_spaces]
     if restriction is None:
         index_maps = [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps]
@@ -117,10 +126,12 @@ def create_vector_nest(L: typing.List[Form],
 
 # -- Matrix instantiation ----------------------------------------------------
 
-def create_matrix(a: Form,
-                  restriction: typing.Optional[typing.Tuple[mcpp.fem.DofMapRestriction]] = None,
-                  mat_type=None) -> PETSc.Mat:
-    _a = _create_cpp_form(a)
+def create_matrix(
+    a: ufl.Form, restriction: typing.Optional[typing.Tuple[mcpp.fem.DofMapRestriction]] = None,
+    mat_type: typing.Optional[str] = None
+) -> petsc4py.PETSc.Mat:
+    """Create a matrix which can be used to assemble the form `a` with restriction `restriction`."""
+    _a = dolfinx.fem.assemble._create_cpp_form(a)
     assert _a.rank == 2
     mesh = _a.mesh
     function_spaces = _a.function_spaces
@@ -132,8 +143,7 @@ def create_matrix(a: Form,
         assert len(restriction) == 2
         index_maps = [restriction_.index_map for restriction_ in restriction]
         index_maps_bs = [restriction_.index_map_bs for restriction_ in restriction]
-    integral_types = mcpp.fem.get_integral_types_from_form(_a)
-    integral_types = list(integral_types)  # TODO Remove this when pybind11#2122 is fixed.
+    integral_types = list(mcpp.fem.get_integral_types_from_form(_a))
     if restriction is None:
         dofmaps_lists = [function_space.dofmap.list() for function_space in function_spaces]
     else:
@@ -144,8 +154,11 @@ def create_matrix(a: Form,
         return mcpp.fem.petsc.create_matrix(mesh, index_maps, index_maps_bs, integral_types, dofmaps_lists)
 
 
-def _create_matrix_block_or_nest(a, restriction, mat_type, cpp_create_function):
-    _a = _create_cpp_form(a)
+def _create_matrix_block_or_nest(
+    a: ufl.Form, restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]],
+    mat_type: typing.Optional[str], cpp_create_function: typing.Callable
+) -> petsc4py.PETSc.Mat:
+    _a = dolfinx.fem.assemble._create_cpp_form(a)
     function_spaces = _get_block_function_spaces(_a)
     rows, cols = len(function_spaces[0]), len(function_spaces[1])
     mesh = None
@@ -158,87 +171,92 @@ def _create_matrix_block_or_nest(a, restriction, mat_type, cpp_create_function):
     assert all(function_space.mesh == mesh for function_space in function_spaces[0])
     assert all(function_space.mesh == mesh for function_space in function_spaces[1])
     if restriction is None:
-        index_maps = ([function_spaces[0][i].dofmap.index_map for i in range(rows)],
-                      [function_spaces[1][j].dofmap.index_map for j in range(cols)])
-        index_maps_bs = ([function_spaces[0][i].dofmap.index_map_bs for i in range(rows)],
-                         [function_spaces[1][j].dofmap.index_map_bs for j in range(cols)])
+        index_maps = (
+            [function_spaces[0][i].dofmap.index_map for i in range(rows)],
+            [function_spaces[1][j].dofmap.index_map for j in range(cols)])
+        index_maps_bs = (
+            [function_spaces[0][i].dofmap.index_map_bs for i in range(rows)],
+            [function_spaces[1][j].dofmap.index_map_bs for j in range(cols)])
     else:
         assert len(restriction) == 2
         assert len(restriction[0]) == rows
         assert len(restriction[1]) == cols
-        index_maps = ([restriction[0][i].index_map for i in range(rows)],
-                      [restriction[1][j].index_map for j in range(cols)])
-        index_maps_bs = ([restriction[0][i].index_map_bs for i in range(rows)],
-                         [restriction[1][j].index_map_bs for j in range(cols)])
+        index_maps = (
+            [restriction[0][i].index_map for i in range(rows)],
+            [restriction[1][j].index_map for j in range(cols)])
+        index_maps_bs = (
+            [restriction[0][i].index_map_bs for i in range(rows)],
+            [restriction[1][j].index_map_bs for j in range(cols)])
     integral_types = [[set() for _ in range(cols)] for _ in range(rows)]
     for i in range(rows):
         for j in range(cols):
             if _a[i][j] is not None:
                 integral_types[i][j].update(mcpp.fem.get_integral_types_from_form(_a[i][j]))
-    integral_types = [[list(integral_types[row][col]) for col in range(cols)]
-                      for row in range(rows)]  # TODO Remove this when pybind11#2122 is fixed.
+    integral_types = [[
+        list(integral_types[row][col]) for col in range(cols)] for row in range(rows)]
     if restriction is None:
-        dofmaps_lists = ([function_spaces[0][i].dofmap.list() for i in range(rows)],
-                         [function_spaces[1][j].dofmap.list() for j in range(cols)])
+        dofmaps_lists = (
+            [function_spaces[0][i].dofmap.list() for i in range(rows)],
+            [function_spaces[1][j].dofmap.list() for j in range(cols)])
     else:
-        dofmaps_lists = ([restriction[0][i].list() for i in range(rows)],
-                         [restriction[1][j].list() for j in range(cols)])
+        dofmaps_lists = (
+            [restriction[0][i].list() for i in range(rows)],
+            [restriction[1][j].list() for j in range(cols)])
     if mat_type is not None:
         return cpp_create_function(mesh, index_maps, index_maps_bs, integral_types, dofmaps_lists, mat_type)
     else:
         return cpp_create_function(mesh, index_maps, index_maps_bs, integral_types, dofmaps_lists)
 
 
-def create_matrix_block(a: typing.List[typing.List[Form]],
-                        restriction: typing.Optional[typing.Tuple[
-                                                     typing.List[mcpp.fem.DofMapRestriction]]] = None,
-                        mat_type=None) -> PETSc.Mat:
+def create_matrix_block(
+    a: typing.List[typing.List[ufl.Form]],
+    restriction: typing.Optional[typing.Tuple[typing.List[mcpp.fem.DofMapRestriction]]] = None,
+    mat_type: typing.Optional[str] = None
+) -> petsc4py.PETSc.Mat:
+    """Create a block matrix which can be used to assemble the form `a` with restriction `restriction`."""
     return _create_matrix_block_or_nest(a, restriction, mat_type, mcpp.fem.petsc.create_matrix_block)
 
 
-def create_matrix_nest(a: typing.List[typing.List[Form]],
-                       restriction: typing.Optional[typing.Tuple[
-                                                    typing.List[mcpp.fem.DofMapRestriction]]] = None,
-                       mat_types=None) -> PETSc.Mat:
+def create_matrix_nest(
+    a: typing.List[typing.List[ufl.Form]],
+    restriction: typing.Optional[typing.Tuple[typing.List[mcpp.fem.DofMapRestriction]]] = None,
+    mat_types: typing.Optional[typing.List[str]] = None
+) -> petsc4py.PETSc.Mat:
+    """Create a nest matrix which can be used to assemble the form `a` with restriction `restriction`."""
     return _create_matrix_block_or_nest(a, restriction, mat_types, mcpp.fem.petsc.create_matrix_nest)
-
-
-# -- Scalar assembly ---------------------------------------------------------
-
-
-def assemble_scalar(M: Form, coeffs=Coefficients(None, None)) -> PETSc.ScalarType:
-    """Assemble functional. The returned value is local and not
-    accumulated across processes.
-
-    """
-    _M = _create_cpp_form(M)
-    c = (coeffs[0] if coeffs[0] is not None else pack_constants(_M),
-         coeffs[1] if coeffs[1] is not None else pack_coefficients(_M))
-    return dcpp.fem.assemble_scalar(_M, c[0], c[1])
 
 
 # -- Vector assembly ---------------------------------------------------------
 
-def _VecSubVectorWrapperBase(CppWrapperClass):
+def _VecSubVectorWrapperBase(CppWrapperClass: typing.Type) -> typing.Type:
 
     class _VecSubVectorWrapperBase_Class(object):
-        def __init__(self,
-                     b: PETSc.Vec, unrestricted_index_set: PETSc.IS,
-                     restricted_index_set: typing.Optional[PETSc.IS] = None,
-                     unrestricted_to_restricted: typing.Optional[typing.Dict[int, int]] = None,
-                     unrestricted_to_restricted_bs: typing.Optional[int] = None):
+        """Wrap a PETSc Vec object."""
+
+        def __init__(
+            self, b: petsc4py.PETSc.Vec, unrestricted_index_set: petsc4py.PETSc.IS,
+            restricted_index_set: typing.Optional[petsc4py.PETSc.IS] = None,
+            unrestricted_to_restricted: typing.Optional[typing.Dict[int, int]] = None,
+            unrestricted_to_restricted_bs: typing.Optional[int] = None
+        ) -> None:
             if restricted_index_set is None:
                 assert unrestricted_to_restricted is None
                 assert unrestricted_to_restricted_bs is None
                 self._cpp_object = CppWrapperClass(b, unrestricted_index_set)
             else:
-                self._cpp_object = CppWrapperClass(b, unrestricted_index_set, restricted_index_set,
-                                                   unrestricted_to_restricted, unrestricted_to_restricted_bs)
+                self._cpp_object = CppWrapperClass(
+                    b, unrestricted_index_set, restricted_index_set,
+                    unrestricted_to_restricted, unrestricted_to_restricted_bs)
 
-        def __enter__(self):
+        def __enter__(self) -> npt.NDArray[petsc4py.PETSc.ScalarType]:
+            """Return Vec content when entering the context."""
             return self._cpp_object.content
 
-        def __exit__(self, exception_type, exception_value, traceback):
+        def __exit__(
+            self, exception_type: typing.Type[BaseException], exception_value: BaseException,
+            traceback: types.TracebackType
+        ) -> None:
+            """Do nothing when leaving the context."""
             pass
 
     return _VecSubVectorWrapperBase_Class
@@ -248,21 +266,29 @@ _VecSubVectorReadWrapper = _VecSubVectorWrapperBase(mcpp.la.petsc.VecSubVectorRe
 
 
 class _VecSubVectorWrapper(_VecSubVectorWrapperBase(mcpp.la.petsc.VecSubVectorWrapper)):
-    def __exit__(self, exception_type, exception_value, traceback):
+    def __exit__(
+        self, exception_type: typing.Type[BaseException], exception_value: BaseException,
+        traceback: types.TracebackType
+    ) -> None:
+        """Restore the Vec content when leaving the context."""
         self._cpp_object.restore()
 
 
-def VecSubVectorWrapperBase(_VecSubVectorWrapperClass):
+def VecSubVectorWrapperBase(_VecSubVectorWrapperClass: typing.Type) -> typing.Type:
+    """Return the base class to wrap VecSubVectorWrapper or VecSubVectorReadWrapper."""
 
     class VecSubVectorWrapperBase_Class(object):
-        def __init__(self,
-                     b: typing.Union[PETSc.Vec, None], dofmap: dcpp.fem.DofMap,
-                     restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None,
-                     ghosted: bool = True):
+        """Wrap a PETSc Vec object."""
+
+        def __init__(
+            self, b: typing.Union[petsc4py.PETSc.Vec, None], dofmap: dcpp.fem.DofMap,
+            restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None,
+            ghosted: bool = True
+        ) -> None:
             if b is None:
                 self._wrapper = None
             else:
-                if restriction is None:
+                if restriction is None:  # pragma: no cover
                     index_map = (dofmap.index_map, dofmap.index_map_bs)
                     index_set = mcpp.la.petsc.create_index_sets(
                         [index_map], [dofmap.index_map_bs], ghosted=ghosted,
@@ -284,18 +310,24 @@ def VecSubVectorWrapperBase(_VecSubVectorWrapperClass):
                         ghost_block_layout=mcpp.la.petsc.GhostBlockLayout.trailing)[0]
                     unrestricted_to_restricted = restriction.unrestricted_to_restricted
                     unrestricted_to_restricted_bs = restriction.index_map_bs
-                    self._wrapper = _VecSubVectorWrapperClass(b, unrestricted_index_set, restricted_index_set,
-                                                              unrestricted_to_restricted, unrestricted_to_restricted_bs)
+                    self._wrapper = _VecSubVectorWrapperClass(
+                        b, unrestricted_index_set, restricted_index_set,
+                        unrestricted_to_restricted, unrestricted_to_restricted_bs)
                     self._unrestricted_index_set = unrestricted_index_set
                     self._restricted_index_set = restricted_index_set
                     self._unrestricted_to_restricted = unrestricted_to_restricted
                     self._unrestricted_to_restricted_bs = unrestricted_to_restricted_bs
 
-        def __enter__(self):
+        def __enter__(self) -> npt.NDArray[petsc4py.PETSc.ScalarType]:
+            """Return Vec content when entering the context."""
             if self._wrapper is not None:
                 return self._wrapper.__enter__()
 
-        def __exit__(self, exception_type, exception_value, traceback):
+        def __exit__(
+            self, exception_type: typing.Type[BaseException], exception_value: BaseException,
+            traceback: types.TracebackType
+        ) -> None:
+            """Restore the Vec content when leaving the context."""
             if self._wrapper is not None:
                 self._wrapper.__exit__(exception_type, exception_value, traceback)
                 self._unrestricted_index_set.destroy()
@@ -311,12 +343,18 @@ VecSubVectorReadWrapper = VecSubVectorWrapperBase(_VecSubVectorReadWrapper)
 VecSubVectorWrapper = VecSubVectorWrapperBase(_VecSubVectorWrapper)
 
 
-def BlockVecSubVectorWrapperBase(_VecSubVectorWrapperClass):
+def BlockVecSubVectorWrapperBase(_VecSubVectorWrapperClass: typing.Type) -> typing.Type:
+    """Return the base class to wrap BlockVecSubVectorWrapper or BlockVecSubVectorReadWrapper."""
+
     class BlockVecSubVectorWrapperBase_Class(object):
-        def __init__(self,
-                     b: typing.Union[PETSc.Vec, None], dofmaps: typing.List[dcpp.fem.DofMap],
-                     restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None,
-                     ghosted: bool = True):
+        """Wrap a PETSc Vec object with multiple blocks."""
+
+        def __init__(
+            self, b: typing.Union[petsc4py.PETSc.Vec, None],
+            dofmaps: typing.List[dcpp.fem.DofMap],
+            restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None,
+            ghosted: bool = True
+        ) -> None:
             self._b = b
             self._len = len(dofmaps)
             if b is not None:
@@ -331,48 +369,54 @@ def BlockVecSubVectorWrapperBase(_VecSubVectorWrapperClass):
                     self._unrestricted_to_restricted_bs = None
                 else:
                     assert len(dofmaps) == len(restriction)
-                    assert all([_same_dofmap(dofmap, restriction_.dofmap)
-                                for (dofmap, restriction_) in zip(dofmaps, restriction)])
-                    unrestricted_index_maps = [(dofmap.index_map, dofmap.index_map_bs)
-                                               for dofmap in dofmaps]
+                    assert all([
+                        _same_dofmap(dofmap, restriction_.dofmap)
+                        for (dofmap, restriction_) in zip(dofmaps, restriction)])
+                    unrestricted_index_maps = [
+                        (dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps]
                     unrestricted_index_sets = mcpp.la.petsc.create_index_sets(
                         unrestricted_index_maps, [1] * len(unrestricted_index_maps),
                         ghost_block_layout=mcpp.la.petsc.GhostBlockLayout.trailing)
-                    restricted_index_maps = [(restriction_.index_map, restriction_.index_map_bs)
-                                             for restriction_ in restriction]
+                    restricted_index_maps = [
+                        (restriction_.index_map, restriction_.index_map_bs) for restriction_ in restriction]
                     restricted_index_sets = mcpp.la.petsc.create_index_sets(
                         restricted_index_maps, [1] * len(restricted_index_maps),
                         ghosted=ghosted, ghost_block_layout=mcpp.la.petsc.GhostBlockLayout.trailing)
-                    unrestricted_to_restricted = [restriction_.unrestricted_to_restricted
-                                                  for restriction_ in restriction]
-                    unrestricted_to_restricted_bs = [restriction_.index_map_bs
-                                                     for restriction_ in restriction]
+                    unrestricted_to_restricted = [
+                        restriction_.unrestricted_to_restricted for restriction_ in restriction]
+                    unrestricted_to_restricted_bs = [
+                        restriction_.index_map_bs for restriction_ in restriction]
                     self._unrestricted_index_sets = unrestricted_index_sets
                     self._restricted_index_sets = restricted_index_sets
                     self._unrestricted_to_restricted = unrestricted_to_restricted
                     self._unrestricted_to_restricted_bs = unrestricted_to_restricted_bs
 
-        def __iter__(self):
-            with ExitStack() as wrapper_stack:
+        def __iter__(self) -> typing.Iterable[npt.NDArray[petsc4py.PETSc.ScalarType]]:
+            """Iterate over blocks."""
+            with contextlib.ExitStack() as wrapper_stack:
                 for index in range(self._len):
                     if self._b is None:
                         yield None
                     else:
                         if self._restricted_index_sets is None:
-                            wrapper = _VecSubVectorWrapperClass(self._b,
-                                                                self._unrestricted_index_sets[index])
+                            wrapper = _VecSubVectorWrapperClass(
+                                self._b, self._unrestricted_index_sets[index])
                         else:
-                            wrapper = _VecSubVectorWrapperClass(self._b,
-                                                                self._unrestricted_index_sets[index],
-                                                                self._restricted_index_sets[index],
-                                                                self._unrestricted_to_restricted[index],
-                                                                self._unrestricted_to_restricted_bs[index])
+                            wrapper = _VecSubVectorWrapperClass(
+                                self._b, self._unrestricted_index_sets[index],
+                                self._restricted_index_sets[index], self._unrestricted_to_restricted[index],
+                                self._unrestricted_to_restricted_bs[index])
                         yield wrapper_stack.enter_context(wrapper)
 
-        def __enter__(self):
+        def __enter__(self) -> "BlockVecSubVectorWrapperBase_Class":
+            """Return this context."""
             return self
 
-        def __exit__(self, exception_type, exception_value, traceback):
+        def __exit__(
+            self, exception_type: typing.Type[BaseException], exception_value: BaseException,
+            traceback: types.TracebackType
+        ) -> None:
+            """Clean up when leaving the context."""
             if self._b is not None:
                 for index_set in self._unrestricted_index_sets:
                     index_set.destroy()
@@ -389,13 +433,18 @@ BlockVecSubVectorReadWrapper = BlockVecSubVectorWrapperBase(_VecSubVectorReadWra
 BlockVecSubVectorWrapper = BlockVecSubVectorWrapperBase(_VecSubVectorWrapper)
 
 
-def NestVecSubVectorWrapperBase(VecSubVectorWrapperClass):
+def NestVecSubVectorWrapperBase(VecSubVectorWrapperClass: typing.Type) -> typing.Type:
+    """Return the base class to wrap NestVecSubVectorWrapper or NestVecSubVectorReadWrapper."""
+
     class NestVecSubVectorWrapperBase_Class(object):
-        def __init__(self,
-                     b: typing.Union[PETSc.Vec, typing.List[PETSc.Vec], None],
-                     dofmaps: typing.List[dcpp.fem.DofMap],
-                     restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None,
-                     ghosted: bool = True):
+        """Wrap a PETSc Vec object with nested blocks."""
+
+        def __init__(
+            self, b: typing.Union[petsc4py.PETSc.Vec, typing.List[petsc4py.PETSc.Vec], None],
+            dofmaps: typing.List[dcpp.fem.DofMap],
+            restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None,
+            ghosted: bool = True
+        ) -> None:
             if b is not None:
                 if isinstance(b, list):
                     self._b = b
@@ -408,8 +457,9 @@ def NestVecSubVectorWrapperBase(VecSubVectorWrapperClass):
             self._restriction = restriction
             self._ghosted = ghosted
 
-        def __iter__(self):
-            with ExitStack() as wrapper_stack:
+        def __iter__(self) -> typing.Iterable[npt.NDArray[petsc4py.PETSc.ScalarType]]:
+            """Iterate over blocks."""
+            with contextlib.ExitStack() as wrapper_stack:
                 for index, b_index in enumerate(self._b):
                     if b_index is None:
                         yield None
@@ -420,16 +470,19 @@ def NestVecSubVectorWrapperBase(VecSubVectorWrapperClass):
                             else:
                                 yield b_index.array_w
                         else:
-                            wrapper = VecSubVectorWrapperClass(b_index,
-                                                               self._dofmaps[index],
-                                                               self._restriction[index],
-                                                               ghosted=self._ghosted)
+                            wrapper = VecSubVectorWrapperClass(
+                                b_index, self._dofmaps[index], self._restriction[index], ghosted=self._ghosted)
                             yield wrapper_stack.enter_context(wrapper)
 
-        def __enter__(self):
+        def __enter__(self) -> "NestVecSubVectorWrapperBase_Class":
+            """Return this context."""
             return self
 
-        def __exit__(self, exception_type, exception_value, traceback):
+        def __exit__(
+            self, exception_type: typing.Type[BaseException], exception_value: BaseException,
+            traceback: types.TracebackType
+        ) -> None:
+            """Do nothing when leaving the context."""
             pass
 
     return NestVecSubVectorWrapperBase_Class
@@ -442,34 +495,39 @@ NestVecSubVectorWrapper = NestVecSubVectorWrapperBase(VecSubVectorWrapper)
 
 
 @functools.singledispatch
-def assemble_vector(L: Form,
-                    coeffs=Coefficients(None, None),
-                    restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None) -> PETSc.Vec:
-    """Assemble linear form into a new PETSc vector. The returned vector is
-    not finalised, i.e. ghost values are not accumulated on the owning
-    processes.
-
+def assemble_vector(
+    L: ufl.Form,
+    coeffs: typing.Optional[dolfinx.fem.assemble.Coefficients] = dolfinx.fem.assemble.Coefficients(None, None),
+    restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None
+) -> petsc4py.PETSc.Vec:
     """
-    _L = _create_cpp_form(L)
+    Assemble linear form into a new PETSc vector.
+
+    The returned vector is not finalised, i.e. ghost values are not accumulated
+    on the owning processes.
+    """
+    _L = dolfinx.fem.assemble._create_cpp_form(L)
     b = create_vector(_L, restriction)
     with b.localForm() as b_local:
         b_local.set(0.0)
     return assemble_vector(b, _L, coeffs, restriction)
 
 
-@assemble_vector.register(PETSc.Vec)
-def _(b: PETSc.Vec,
-      L: Form,
-      coeffs=Coefficients(None, None),
-      restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None) -> PETSc.Vec:
-    """Assemble linear form into an existing PETSc vector. The vector is
-    not zeroed before assembly and it is not finalised, i.e. ghost
-    values are not accumulated on the owning processes.
-
+@assemble_vector.register(petsc4py.PETSc.Vec)
+def _(
+    b: petsc4py.PETSc.Vec, L: ufl.Form,
+    coeffs: typing.Optional[dolfinx.fem.assemble.Coefficients] = dolfinx.fem.assemble.Coefficients(None, None),
+    restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None
+) -> petsc4py.PETSc.Vec:
     """
-    _L = _create_cpp_form(L)
-    c = (coeffs[0] if coeffs[0] is not None else pack_constants(_L),
-         coeffs[1] if coeffs[1] is not None else pack_coefficients(_L))
+    Assemble linear form into an existing PETSc vector.
+
+    The vector is not zeroed before assembly and it is not finalised, i.e. ghost
+    values are not accumulated on the owning processes.
+    """
+    _L = dolfinx.fem.assemble._create_cpp_form(L)
+    c = (coeffs[0] if coeffs[0] is not None else dolfinx.fem.pack_constants(_L),
+         coeffs[1] if coeffs[1] is not None else dolfinx.fem.pack_coefficients(_L))
     if restriction is None:
         with b.localForm() as b_local:
             dcpp.fem.assemble_vector(b_local.array_w, _L, c[0], c[1])
@@ -480,15 +538,18 @@ def _(b: PETSc.Vec,
 
 
 @functools.singledispatch
-def assemble_vector_nest(L: Form,
-                         coeffs=Coefficients(None, None),
-                         restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None) -> PETSc.Vec:
-    """Assemble linear forms into a new nested PETSc (VecNest) vector.
+def assemble_vector_nest(
+    L: ufl.Form,
+    coeffs: typing.Optional[dolfinx.fem.assemble.Coefficients] = dolfinx.fem.assemble.Coefficients(None, None),
+    restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None
+) -> petsc4py.PETSc.Vec:
+    """
+    Assemble linear forms into a new nested PETSc (VecNest) vector.
+
     The returned vector is not finalised, i.e. ghost values are not
     accumulated on the owning processes.
-
     """
-    _L = _create_cpp_form(L)
+    _L = dolfinx.fem.assemble._create_cpp_form(L)
     b = create_vector_nest(_L, restriction)
     for b_sub in b.getNestSubVecs():
         with b_sub.localForm() as b_local:
@@ -496,19 +557,21 @@ def assemble_vector_nest(L: Form,
     return assemble_vector_nest(b, L, coeffs, restriction)
 
 
-@assemble_vector_nest.register(PETSc.Vec)
-def _(b: PETSc.Vec,
-      L: typing.List[Form],
-      coeffs=Coefficients(None, None),
-      restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None) -> PETSc.Vec:
-    """Assemble linear forms into a nested PETSc (VecNest) vector. The
-    vector is not zeroed before assembly and it is not finalised, i.e.
-    ghost values are not accumulated on the owning processes.
-
+@assemble_vector_nest.register(petsc4py.PETSc.Vec)
+def _(
+    b: petsc4py.PETSc.Vec, L: typing.List[ufl.Form],
+    coeffs: typing.Optional[dolfinx.fem.assemble.Coefficients] = dolfinx.fem.assemble.Coefficients(None, None),
+    restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None
+) -> petsc4py.PETSc.Vec:
     """
-    _L = _create_cpp_form(L)
-    c = (coeffs[0] if coeffs[0] is not None else pack_constants(_L),
-         coeffs[1] if coeffs[1] is not None else pack_coefficients(_L))
+    Assemble linear forms into a nested PETSc (VecNest) vector.
+
+    The vector is not zeroed before assembly and it is not finalised, i.e.
+    ghost values are not accumulated on the owning processes.
+    """
+    _L = dolfinx.fem.assemble._create_cpp_form(L)
+    c = (coeffs[0] if coeffs[0] is not None else dolfinx.fem.pack_constants(_L),
+         coeffs[1] if coeffs[1] is not None else dolfinx.fem.pack_coefficients(_L))
     function_spaces = _get_block_function_spaces(_L)
     dofmaps = [function_space.dofmap for function_space in function_spaces]
     with NestVecSubVectorWrapper(b, dofmaps, restriction) as nest_b:
@@ -517,55 +580,59 @@ def _(b: PETSc.Vec,
     return b
 
 
-# FIXME: Revise this interface
 @functools.singledispatch
-def assemble_vector_block(L: typing.List[Form],
-                          a: typing.List[typing.List[Form]],
-                          bcs: typing.List[DirichletBC] = [],
-                          x0: typing.Optional[PETSc.Vec] = None,
-                          scale: float = 1.0,
-                          coeffs_L=Coefficients(None, None),
-                          coeffs_a=Coefficients(None, None),
-                          restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None,
-                          restriction_x0: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None) -> PETSc.Vec:
-    """Assemble linear forms into a monolithic vector. The vector is not
-    finalised, i.e. ghost values are not accumulated.
-
+def assemble_vector_block(
+    L: typing.List[ufl.Form], a: typing.List[typing.List[ufl.Form]],
+    bcs: typing.Optional[typing.List[dolfinx.fem.DirichletBC]] = [],
+    x0: typing.Optional[petsc4py.PETSc.Vec] = None,
+    scale: typing.Optional[float] = 1.0,
+    coeffs_L: typing.Optional[dolfinx.fem.assemble.Coefficients] = dolfinx.fem.assemble.Coefficients(None, None),
+    coeffs_a: typing.Optional[dolfinx.fem.assemble.Coefficients] = dolfinx.fem.assemble.Coefficients(None, None),
+    restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None,
+    restriction_x0: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None
+) -> petsc4py.PETSc.Vec:
     """
-    _L = _create_cpp_form(L)
+    Assemble linear forms into a monolithic vector.
+
+    The vector is not finalised, i.e. ghost values are not accumulated.
+    """
+    _L = dolfinx.fem.assemble._create_cpp_form(L)
     b = create_vector_block(_L, restriction)
     with b.localForm() as b_local:
         b_local.set(0.0)
     return assemble_vector_block(b, _L, a, bcs, x0, scale, coeffs_L, coeffs_a, restriction, restriction_x0)
 
 
-@assemble_vector_block.register(PETSc.Vec)
-def _(b: PETSc.Vec,
-      L: typing.List[Form],
-      a: typing.List[typing.List[Form]],
-      bcs: typing.List[DirichletBC] = [],
-      x0: typing.Optional[PETSc.Vec] = None,
-      scale: float = 1.0,
-      coeffs_L=Coefficients(None, None),
-      coeffs_a=Coefficients(None, None),
-      restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None,
-      restriction_x0: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None) -> PETSc.Vec:
-    """Assemble linear forms into a monolithic vector. The vector is not
-    zeroed and it is not finalised, i.e. ghost values are not
-    accumulated.
-
+@assemble_vector_block.register(petsc4py.PETSc.Vec)
+def _(
+    b: petsc4py.PETSc.Vec, L: typing.List[ufl.Form], a: typing.List[typing.List[ufl.Form]],
+    bcs: typing.Optional[typing.List[dolfinx.fem.DirichletBC]] = [],
+    x0: typing.Optional[petsc4py.PETSc.Vec] = None,
+    scale: typing.Optional[float] = 1.0,
+    coeffs_L: typing.Optional[dolfinx.fem.assemble.Coefficients] = dolfinx.fem.assemble.Coefficients(None, None),
+    coeffs_a: typing.Optional[dolfinx.fem.assemble.Coefficients] = dolfinx.fem.assemble.Coefficients(None, None),
+    restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None,
+    restriction_x0: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None
+) -> petsc4py.PETSc.Vec:
     """
-    _L = _create_cpp_form(L)
-    _a = _create_cpp_form(a)
-    c_L = (coeffs_L[0] if coeffs_L[0] is not None else pack_constants(_L),
-           coeffs_L[1] if coeffs_L[1] is not None else pack_coefficients(_L))
-    c_a = (coeffs_a[0] if coeffs_a[0] is not None else pack_constants(_a),
-           coeffs_a[1] if coeffs_a[1] is not None else pack_coefficients(_a))
+    Assemble linear forms into a monolithic vector.
+
+    The vector is not zeroed and it is not finalised, i.e. ghost values are not
+    accumulated.
+    """
+    _L = dolfinx.fem.assemble._create_cpp_form(L)
+    _a = dolfinx.fem.assemble._create_cpp_form(a)
+    c_L = (
+        coeffs_L[0] if coeffs_L[0] is not None else dolfinx.fem.pack_constants(_L),
+        coeffs_L[1] if coeffs_L[1] is not None else dolfinx.fem.pack_coefficients(_L))
+    c_a = (
+        coeffs_a[0] if coeffs_a[0] is not None else dolfinx.fem.pack_constants(_a),
+        coeffs_a[1] if coeffs_a[1] is not None else dolfinx.fem.pack_coefficients(_a))
     function_spaces = _get_block_function_spaces(_a)
     dofmaps = [function_space.dofmap for function_space in function_spaces[0]]
     dofmaps_x0 = [function_space.dofmap for function_space in function_spaces[1]]
 
-    bcs1 = bcs_by_block(function_spaces[1], bcs)
+    bcs1 = dolfinx.fem.bcs_by_block(function_spaces[1], bcs)
     with BlockVecSubVectorWrapper(b, dofmaps, restriction) as block_b, \
             BlockVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0) as block_x0:
         for b_sub, L_sub, a_sub, constant_L, coeff_L, constant_a, coeff_a in zip(
@@ -578,15 +645,16 @@ def _(b: PETSc.Vec,
                 else:
                     x0_sub_as_list = [x0_sub]
                 dcpp.fem.apply_lifting(
-                    b_sub, [a_sub_], [constant_a_sub], [coeff_a_sub], _cpp_dirichletbc([bcs1_sub]),
+                    b_sub, [a_sub_], [constant_a_sub], [coeff_a_sub],
+                    dolfinx.fem.assemble._cpp_dirichletbc([bcs1_sub]),
                     x0_sub_as_list, scale)
-    b.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+    b.ghostUpdate(addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
 
-    bcs0 = bcs_by_block(function_spaces[0], bcs)
+    bcs0 = dolfinx.fem.bcs_by_block(function_spaces[0], bcs)
     with BlockVecSubVectorWrapper(b, dofmaps, restriction) as block_b, \
             BlockVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0) as block_x0:
         for b_sub, bcs0_sub, x0_sub in zip(block_b, bcs0, block_x0):
-            dcpp.fem.set_bc(b_sub, _cpp_dirichletbc(bcs0_sub), x0_sub, scale)
+            dcpp.fem.set_bc(b_sub, dolfinx.fem.assemble._cpp_dirichletbc(bcs0_sub), x0_sub, scale)
     return b
 
 
@@ -594,11 +662,14 @@ def _(b: PETSc.Vec,
 
 
 class _MatSubMatrixWrapper(object):
-    def __init__(self,
-                 A: PETSc.Mat, unrestricted_index_sets: typing.Tuple[PETSc.IS],
-                 restricted_index_sets: typing.Optional[typing.Tuple[PETSc.IS]] = None,
-                 unrestricted_to_restricted: typing.Optional[typing.Tuple[typing.Dict[int, int]]] = None,
-                 unrestricted_to_restricted_bs: typing.Optional[typing.Tuple[int]] = None):
+    """Wrap a PETSc Mat object."""
+
+    def __init__(
+        self, A: petsc4py.PETSc.Mat, unrestricted_index_sets: typing.Tuple[petsc4py.PETSc.IS],
+        restricted_index_sets: typing.Optional[typing.Tuple[petsc4py.PETSc.IS]] = None,
+        unrestricted_to_restricted: typing.Optional[typing.Tuple[typing.Dict[int, int]]] = None,
+        unrestricted_to_restricted_bs: typing.Optional[typing.Tuple[int]] = None
+    ) -> None:
         if restricted_index_sets is None:
             assert unrestricted_to_restricted is None
             assert unrestricted_to_restricted_bs is None
@@ -610,23 +681,33 @@ class _MatSubMatrixWrapper(object):
                 unrestricted_to_restricted,
                 unrestricted_to_restricted_bs)
 
-    def __enter__(self):
+    def __enter__(self) -> petsc4py.PETSc.Mat:
+        """Return submatrix content."""
         return self._cpp_object.mat()
 
-    def __exit__(self, exception_type, exception_value, traceback):
+    def __exit__(
+        self, exception_type: typing.Type[BaseException], exception_value: BaseException,
+        traceback: types.TracebackType
+    ) -> None:
+        """Restore submatrix content."""
         self._cpp_object.restore()
 
 
 class MatSubMatrixWrapper(object):
-    def __init__(self,
-                 A: PETSc.Mat, dofmaps: typing.Tuple[dcpp.fem.DofMap],
-                 restriction: typing.Optional[typing.Tuple[mcpp.fem.DofMapRestriction]] = None):
+    """Wrap a PETSc Mat object."""
+
+    def __init__(
+        self, A: petsc4py.PETSc.Mat, dofmaps: typing.Tuple[dcpp.fem.DofMap],
+        restriction: typing.Optional[typing.Tuple[mcpp.fem.DofMapRestriction]] = None
+    ) -> None:
         assert len(dofmaps) == 2
-        if restriction is None:
-            index_maps = ((dofmaps[0].index_map, dofmaps[0].index_map_bs),
-                          (dofmaps[1].index_map, dofmaps[1].index_map_bs))
-            index_sets = (mcpp.la.petsc.create_index_sets([index_maps[0]], [dofmaps[0].index_map_bs])[0],
-                          mcpp.la.petsc.create_index_sets([index_maps[1]], [dofmaps[1].index_map_bs])[0])
+        if restriction is None:  # pragma: no cover
+            index_maps = (
+                (dofmaps[0].index_map, dofmaps[0].index_map_bs),
+                (dofmaps[1].index_map, dofmaps[1].index_map_bs))
+            index_sets = (
+                mcpp.la.petsc.create_index_sets([index_maps[0]], [dofmaps[0].index_map_bs])[0],
+                mcpp.la.petsc.create_index_sets([index_maps[1]], [dofmaps[1].index_map_bs])[0])
             self._wrapper = _MatSubMatrixWrapper(A, index_sets)
             self._unrestricted_index_sets = index_sets
             self._restricted_index_sets = None
@@ -635,34 +716,45 @@ class MatSubMatrixWrapper(object):
         else:
             assert len(restriction) == 2
             assert all([_same_dofmap(dofmaps[i], restriction[i].dofmap) for i in range(2)])
-            unrestricted_index_maps = ((dofmaps[0].index_map, dofmaps[0].index_map_bs),
-                                       (dofmaps[1].index_map, dofmaps[1].index_map_bs))
-            unrestricted_index_sets = (mcpp.la.petsc.create_index_sets([unrestricted_index_maps[0]],
-                                                                       [dofmaps[0].index_map_bs])[0],
-                                       mcpp.la.petsc.create_index_sets([unrestricted_index_maps[1]],
-                                                                       [dofmaps[1].index_map_bs])[0])
-            restricted_index_maps = ((restriction[0].index_map, restriction[0].index_map_bs),
-                                     (restriction[1].index_map, restriction[1].index_map_bs))
-            restricted_index_sets = (mcpp.la.petsc.create_index_sets([restricted_index_maps[0]],
-                                                                     [restriction[0].index_map_bs])[0],
-                                     mcpp.la.petsc.create_index_sets([restricted_index_maps[1]],
-                                                                     [restriction[1].index_map_bs])[0])
-            unrestricted_to_restricted = (restriction[0].unrestricted_to_restricted,
-                                          restriction[1].unrestricted_to_restricted)
-            unrestricted_to_restricted_bs = (restriction[0].index_map_bs,
-                                             restriction[1].index_map_bs)
-            self._wrapper = _MatSubMatrixWrapper(A, unrestricted_index_sets,
-                                                 restricted_index_sets, unrestricted_to_restricted,
-                                                 unrestricted_to_restricted_bs)
+            unrestricted_index_maps = (
+                (dofmaps[0].index_map, dofmaps[0].index_map_bs),
+                (dofmaps[1].index_map, dofmaps[1].index_map_bs))
+            unrestricted_index_sets = (
+                mcpp.la.petsc.create_index_sets(
+                    [unrestricted_index_maps[0]], [dofmaps[0].index_map_bs])[0],
+                mcpp.la.petsc.create_index_sets(
+                    [unrestricted_index_maps[1]], [dofmaps[1].index_map_bs])[0])
+            restricted_index_maps = (
+                (restriction[0].index_map, restriction[0].index_map_bs),
+                (restriction[1].index_map, restriction[1].index_map_bs))
+            restricted_index_sets = (
+                mcpp.la.petsc.create_index_sets(
+                    [restricted_index_maps[0]], [restriction[0].index_map_bs])[0],
+                mcpp.la.petsc.create_index_sets(
+                    [restricted_index_maps[1]], [restriction[1].index_map_bs])[0])
+            unrestricted_to_restricted = (
+                restriction[0].unrestricted_to_restricted,
+                restriction[1].unrestricted_to_restricted)
+            unrestricted_to_restricted_bs = (
+                restriction[0].index_map_bs,
+                restriction[1].index_map_bs)
+            self._wrapper = _MatSubMatrixWrapper(
+                A, unrestricted_index_sets, restricted_index_sets, unrestricted_to_restricted,
+                unrestricted_to_restricted_bs)
             self._unrestricted_index_sets = unrestricted_index_sets
             self._restricted_index_sets = restricted_index_sets
             self._unrestricted_to_restricted = unrestricted_to_restricted
             self._unrestricted_to_restricted_bs = unrestricted_to_restricted_bs
 
-    def __enter__(self):
+    def __enter__(self) -> petsc4py.PETSc.Mat:
+        """Return submatrix content."""
         return self._wrapper.__enter__()
 
-    def __exit__(self, exception_type, exception_value, traceback):
+    def __exit__(
+        self, exception_type: typing.Type[BaseException], exception_value: BaseException,
+        traceback: types.TracebackType
+    ) -> None:
+        """Restore submatrix content."""
         self._wrapper.__exit__(exception_type, exception_value, traceback)
         self._unrestricted_index_sets[0].destroy()
         self._unrestricted_index_sets[1].destroy()
@@ -672,16 +764,21 @@ class MatSubMatrixWrapper(object):
 
 
 class BlockMatSubMatrixWrapper(object):
-    def __init__(self,
-                 A: PETSc.Mat, dofmaps: typing.Tuple[typing.List[dcpp.fem.DofMap]],
-                 restriction: typing.Optional[typing.Tuple[typing.List[mcpp.fem.DofMapRestriction]]] = None):
+    """Wrap a PETSc Mat object with several blocks."""
+
+    def __init__(
+        self, A: petsc4py.PETSc.Mat, dofmaps: typing.Tuple[typing.List[dcpp.fem.DofMap]],
+        restriction: typing.Optional[typing.Tuple[typing.List[mcpp.fem.DofMapRestriction]]] = None
+    ) -> None:
         self._A = A
         assert len(dofmaps) == 2
         if restriction is None:
-            index_maps = ([(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps[0]],
-                          [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps[1]])
-            index_sets = (mcpp.la.petsc.create_index_sets(index_maps[0], [1] * len(index_maps[0])),
-                          mcpp.la.petsc.create_index_sets(index_maps[1], [1] * len(index_maps[1])))
+            index_maps = (
+                [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps[0]],
+                [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps[1]])
+            index_sets = (
+                mcpp.la.petsc.create_index_sets(index_maps[0], [1] * len(index_maps[0])),
+                mcpp.la.petsc.create_index_sets(index_maps[1], [1] * len(index_maps[1])))
             self._unrestricted_index_sets = index_sets
             self._restricted_index_sets = None
             self._unrestricted_to_restricted = None
@@ -690,55 +787,64 @@ class BlockMatSubMatrixWrapper(object):
             assert len(restriction) == 2
             for i in range(2):
                 assert len(dofmaps[i]) == len(restriction[i])
-                assert all([_same_dofmap(dofmap, restriction_.dofmap)
-                            for (dofmap, restriction_) in zip(dofmaps[i], restriction[i])])
-            unrestricted_index_maps = ([(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps[0]],
-                                       [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps[1]])
-            unrestricted_index_sets = (mcpp.la.petsc.create_index_sets(unrestricted_index_maps[0],
-                                                                       [1] * len(unrestricted_index_maps[0])),
-                                       mcpp.la.petsc.create_index_sets(unrestricted_index_maps[1],
-                                                                       [1] * len(unrestricted_index_maps[1])))
-            restricted_index_maps = ([(restriction_.index_map, restriction_.index_map_bs)
-                                      for restriction_ in restriction[0]],
-                                     [(restriction_.index_map, restriction_.index_map_bs)
-                                      for restriction_ in restriction[1]])
-            restricted_index_sets = (mcpp.la.petsc.create_index_sets(restricted_index_maps[0],
-                                                                     [1] * len(restricted_index_maps[0])),
-                                     mcpp.la.petsc.create_index_sets(restricted_index_maps[1],
-                                                                     [1] * len(restricted_index_maps[1])))
-            unrestricted_to_restricted = ([restriction_.unrestricted_to_restricted for restriction_ in restriction[0]],
-                                          [restriction_.unrestricted_to_restricted for restriction_ in restriction[1]])
-            unrestricted_to_restricted_bs = ([restriction_.index_map_bs for restriction_ in restriction[0]],
-                                             [restriction_.index_map_bs for restriction_ in restriction[1]])
+                assert all(
+                    [_same_dofmap(dofmap, restriction_.dofmap)
+                     for (dofmap, restriction_) in zip(dofmaps[i], restriction[i])])
+            unrestricted_index_maps = (
+                [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps[0]],
+                [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps[1]])
+            unrestricted_index_sets = (
+                mcpp.la.petsc.create_index_sets(
+                    unrestricted_index_maps[0], [1] * len(unrestricted_index_maps[0])),
+                mcpp.la.petsc.create_index_sets(
+                    unrestricted_index_maps[1], [1] * len(unrestricted_index_maps[1])))
+            restricted_index_maps = (
+                [(restriction_.index_map, restriction_.index_map_bs) for restriction_ in restriction[0]],
+                [(restriction_.index_map, restriction_.index_map_bs) for restriction_ in restriction[1]])
+            restricted_index_sets = (
+                mcpp.la.petsc.create_index_sets(
+                    restricted_index_maps[0], [1] * len(restricted_index_maps[0])),
+                mcpp.la.petsc.create_index_sets(
+                    restricted_index_maps[1], [1] * len(restricted_index_maps[1])))
+            unrestricted_to_restricted = (
+                [restriction_.unrestricted_to_restricted for restriction_ in restriction[0]],
+                [restriction_.unrestricted_to_restricted for restriction_ in restriction[1]])
+            unrestricted_to_restricted_bs = (
+                [restriction_.index_map_bs for restriction_ in restriction[0]],
+                [restriction_.index_map_bs for restriction_ in restriction[1]])
             self._unrestricted_index_sets = unrestricted_index_sets
             self._restricted_index_sets = restricted_index_sets
             self._unrestricted_to_restricted = unrestricted_to_restricted
             self._unrestricted_to_restricted_bs = unrestricted_to_restricted_bs
 
-    def __iter__(self):
-        with ExitStack() as wrapper_stack:
+    def __iter__(self) -> typing.Iterable[typing.Tuple[int, petsc4py.PETSc.Mat]]:
+        """Iterate wrapper over blocks."""
+        with contextlib.ExitStack() as wrapper_stack:
             for index0, _ in enumerate(self._unrestricted_index_sets[0]):
                 for index1, _ in enumerate(self._unrestricted_index_sets[1]):
                     if self._restricted_index_sets is None:
-                        wrapper = _MatSubMatrixWrapper(self._A,
-                                                       (self._unrestricted_index_sets[0][index0],
-                                                        self._unrestricted_index_sets[1][index1]))
+                        wrapper = _MatSubMatrixWrapper(
+                            self._A,
+                            (self._unrestricted_index_sets[0][index0], self._unrestricted_index_sets[1][index1]))
                     else:
-                        wrapper = _MatSubMatrixWrapper(self._A,
-                                                       (self._unrestricted_index_sets[0][index0],
-                                                        self._unrestricted_index_sets[1][index1]),
-                                                       (self._restricted_index_sets[0][index0],
-                                                        self._restricted_index_sets[1][index1]),
-                                                       (self._unrestricted_to_restricted[0][index0],
-                                                        self._unrestricted_to_restricted[1][index1]),
-                                                       (self._unrestricted_to_restricted_bs[0][index0],
-                                                        self._unrestricted_to_restricted_bs[1][index1]))
+                        wrapper = _MatSubMatrixWrapper(
+                            self._A,
+                            (self._unrestricted_index_sets[0][index0], self._unrestricted_index_sets[1][index1]),
+                            (self._restricted_index_sets[0][index0], self._restricted_index_sets[1][index1]),
+                            (self._unrestricted_to_restricted[0][index0], self._unrestricted_to_restricted[1][index1]),
+                            (self._unrestricted_to_restricted_bs[0][index0],
+                             self._unrestricted_to_restricted_bs[1][index1]))
                     yield (index0, index1, wrapper_stack.enter_context(wrapper))
 
-    def __enter__(self):
+    def __enter__(self) -> "BlockMatSubMatrixWrapper":
+        """Return this wrapper."""
         return self
 
-    def __exit__(self, exception_type, exception_value, traceback):
+    def __exit__(
+        self, exception_type: typing.Type[BaseException], exception_value: BaseException,
+        traceback: types.TracebackType
+    ) -> None:
+        """Clean up."""
         for i in range(2):
             for index_set in self._unrestricted_index_sets[i]:
                 index_set.destroy()
@@ -749,131 +855,148 @@ class BlockMatSubMatrixWrapper(object):
 
 
 class NestMatSubMatrixWrapper(object):
-    def __init__(self,
-                 A: PETSc.Mat, dofmaps: typing.Tuple[typing.List[dcpp.fem.DofMap]],
-                 restriction: typing.Optional[typing.Tuple[typing.List[mcpp.fem.DofMapRestriction]]] = None):
+    """Wrap a PETSc Mat object with nested blocks."""
+
+    def __init__(
+        self, A: petsc4py.PETSc.Mat, dofmaps: typing.Tuple[typing.List[dcpp.fem.DofMap]],
+        restriction: typing.Optional[typing.Tuple[typing.List[mcpp.fem.DofMapRestriction]]] = None
+    ) -> None:
         self._A = A
         self._dofmaps = dofmaps
         self._restriction = restriction
 
-    def __iter__(self):
-        with ExitStack() as wrapper_stack:
+    def __iter__(self) -> typing.Iterable[typing.Tuple[int, petsc4py.PETSc.Mat]]:
+        """Iterate wrapper over blocks."""
+        with contextlib.ExitStack() as wrapper_stack:
             for index0, _ in enumerate(self._dofmaps[0]):
                 for index1, _ in enumerate(self._dofmaps[1]):
                     A_sub = self._A.getNestSubMatrix(index0, index1)
                     if self._restriction is None:
                         wrapper_content = A_sub
                     else:
-                        wrapper = MatSubMatrixWrapper(A_sub,
-                                                      (self._dofmaps[0][index0], self._dofmaps[1][index1]),
-                                                      (self._restriction[0][index0], self._restriction[1][index1]))
+                        wrapper = MatSubMatrixWrapper(
+                            A_sub,
+                            (self._dofmaps[0][index0], self._dofmaps[1][index1]),
+                            (self._restriction[0][index0], self._restriction[1][index1]))
                         wrapper_content = wrapper_stack.enter_context(wrapper)
                     yield (index0, index1, wrapper_content)
 
-    def __enter__(self):
+    def __enter__(self) -> "NestMatSubMatrixWrapper":
+        """Return this wrapper."""
         return self
 
-    def __exit__(self, exception_type, exception_value, traceback):
+    def __exit__(
+        self, exception_type: typing.Type[BaseException], exception_value: BaseException,
+        traceback: types.TracebackType
+    ) -> None:
+        """Do nothing."""
         pass
 
 
 @functools.singledispatch
-def assemble_matrix(a: Form,
-                    bcs: typing.List[DirichletBC] = [],
-                    diagonal: float = 1.0,
-                    coeffs=Coefficients(None, None),
-                    restriction: typing.Optional[typing.Tuple[mcpp.fem.DofMapRestriction]] = None) -> PETSc.Mat:
-    """Assemble bilinear form into a matrix. The returned matrix is not
-    finalised, i.e. ghost values are not accumulated.
-
+def assemble_matrix(
+    a: ufl.Form, bcs: typing.Optional[typing.List[dolfinx.fem.DirichletBC]] = [],
+    mat_type: typing.Optional[str] = None, diagonal: typing.Optional[float] = 1.0,
+    coeffs: typing.Optional[dolfinx.fem.assemble.Coefficients] = dolfinx.fem.assemble.Coefficients(None, None),
+    restriction: typing.Optional[typing.Tuple[mcpp.fem.DofMapRestriction]] = None
+) -> petsc4py.PETSc.Mat:
     """
-    _a = _create_cpp_form(a)
-    A = create_matrix(_a, restriction)
+    Assemble bilinear form into a matrix.
+
+    The returned matrix is not finalised, i.e. ghost values are not accumulated.
+    """
+    _a = dolfinx.fem.assemble._create_cpp_form(a)
+    A = create_matrix(_a, restriction, mat_type)
     return assemble_matrix(A, _a, bcs, diagonal, coeffs, restriction)
 
 
-@assemble_matrix.register(PETSc.Mat)
-def _(A: PETSc.Mat,
-      a: Form,
-      bcs: typing.List[DirichletBC] = [],
-      diagonal: float = 1.0,
-      coeffs=Coefficients(None, None),
-      restriction: typing.Optional[typing.Tuple[mcpp.fem.DofMapRestriction]] = None) -> PETSc.Mat:
-    """Assemble bilinear form into a matrix. The returned matrix is not
-    finalised, i.e. ghost values are not accumulated.
+@assemble_matrix.register(petsc4py.PETSc.Mat)
+def _(
+    A: petsc4py.PETSc.Mat, a: ufl.Form, bcs: typing.Optional[typing.List[dolfinx.fem.DirichletBC]] = [],
+    diagonal: typing.Optional[float] = 1.0,
+    coeffs: typing.Optional[dolfinx.fem.assemble.Coefficients] = dolfinx.fem.assemble.Coefficients(None, None),
+    restriction: typing.Optional[typing.Tuple[mcpp.fem.DofMapRestriction]] = None
+) -> petsc4py.PETSc.Mat:
     """
-    _a = _create_cpp_form(a)
-    c = (coeffs[0] if coeffs[0] is not None else pack_constants(_a),
-         coeffs[1] if coeffs[1] is not None else pack_coefficients(_a))
+    Assemble bilinear form into a matrix.
+
+    The returned matrix is not finalised, i.e. ghost values are not accumulated.
+    """
+    _a = dolfinx.fem.assemble._create_cpp_form(a)
+    c = (coeffs[0] if coeffs[0] is not None else dolfinx.fem.pack_constants(_a),
+         coeffs[1] if coeffs[1] is not None else dolfinx.fem.pack_coefficients(_a))
     function_spaces = _a.function_spaces
     if restriction is None:
         # Assemble form
-        dcpp.fem.petsc.assemble_matrix(A, _a, c[0], c[1], _cpp_dirichletbc(bcs))
+        dcpp.fem.petsc.assemble_matrix(A, _a, c[0], c[1], dolfinx.fem.assemble._cpp_dirichletbc(bcs))
 
         if function_spaces[0].id == function_spaces[1].id:
             # Flush to enable switch from add to set in the matrix
-            A.assemble(PETSc.Mat.AssemblyType.FLUSH)
+            A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)
 
             # Set diagonal
-            dcpp.fem.petsc.insert_diagonal(A, function_spaces[0], _cpp_dirichletbc(bcs), diagonal)
+            dcpp.fem.petsc.insert_diagonal(
+                A, function_spaces[0], dolfinx.fem.assemble._cpp_dirichletbc(bcs), diagonal)
     else:
         dofmaps = (function_spaces[0].dofmap, function_spaces[1].dofmap)
 
         # Assemble form
         with MatSubMatrixWrapper(A, dofmaps, restriction) as A_sub:
-            dcpp.fem.petsc.assemble_matrix(A_sub, _a, c[0], c[1], _cpp_dirichletbc(bcs))
+            dcpp.fem.petsc.assemble_matrix(A_sub, _a, c[0], c[1], dolfinx.fem.assemble._cpp_dirichletbc(bcs))
 
         if function_spaces[0].id == function_spaces[1].id:
             # Flush to enable switch from add to set in the matrix
-            A.assemble(PETSc.Mat.AssemblyType.FLUSH)
+            A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)
 
             # Set diagonal
             with MatSubMatrixWrapper(A, dofmaps, restriction) as A_sub:
-                dcpp.fem.petsc.insert_diagonal(A_sub, function_spaces[0], _cpp_dirichletbc(bcs), diagonal)
+                dcpp.fem.petsc.insert_diagonal(
+                    A_sub, function_spaces[0], dolfinx.fem.assemble._cpp_dirichletbc(bcs), diagonal)
     return A
 
 
-# FIXME: Revise this interface
 @functools.singledispatch
-def assemble_matrix_nest(a: typing.List[typing.List[Form]],
-                         bcs: typing.List[DirichletBC] = [], mat_types=[],
-                         diagonal: float = 1.0,
-                         coeffs=Coefficients(None, None),
-                         restriction: typing.Optional[typing.Tuple[
-                                                      typing.List[mcpp.fem.DofMapRestriction]]] = None) -> PETSc.Mat:
-    """Assemble bilinear forms into matrix"""
-    _a = _create_cpp_form(a)
+def assemble_matrix_nest(
+    a: typing.List[typing.List[ufl.Form]], bcs: typing.Optional[typing.List[dolfinx.fem.DirichletBC]] = [],
+    mat_types: typing.Optional[typing.List[str]] = [], diagonal: typing.Optional[float] = 1.0,
+    coeffs: typing.Optional[dolfinx.fem.assemble.Coefficients] = dolfinx.fem.assemble.Coefficients(None, None),
+    restriction: typing.Optional[typing.Tuple[typing.List[mcpp.fem.DofMapRestriction]]] = None
+) -> petsc4py.PETSc.Mat:
+    """Assemble bilinear forms into matrix."""
+    _a = dolfinx.fem.assemble._create_cpp_form(a)
     A = create_matrix_nest(_a, restriction, mat_types)
     return assemble_matrix_nest(A, _a, bcs, diagonal, coeffs, restriction)
 
 
-@assemble_matrix_nest.register(PETSc.Mat)
-def _(A: PETSc.Mat,
-      a: typing.List[typing.List[Form]],
-      bcs: typing.List[DirichletBC] = [],
-      diagonal: float = 1.0,
-      coeffs=Coefficients(None, None),
-      restriction: typing.Optional[typing.Tuple[
-                                   typing.List[mcpp.fem.DofMapRestriction]]] = None) -> PETSc.Mat:
-    """Assemble bilinear forms into matrix"""
-    _a = _create_cpp_form(a)
+@assemble_matrix_nest.register(petsc4py.PETSc.Mat)
+def _(
+    A: petsc4py.PETSc.Mat,
+    a: typing.List[typing.List[ufl.Form]], bcs: typing.Optional[typing.List[dolfinx.fem.DirichletBC]] = [],
+    diagonal: typing.Optional[float] = 1.0,
+    coeffs: typing.Optional[dolfinx.fem.assemble.Coefficients] = dolfinx.fem.assemble.Coefficients(None, None),
+    restriction: typing.Optional[typing.Tuple[typing.List[mcpp.fem.DofMapRestriction]]] = None
+) -> petsc4py.PETSc.Mat:
+    """Assemble bilinear forms into matrix."""
+    _a = dolfinx.fem.assemble._create_cpp_form(a)
     function_spaces = _get_block_function_spaces(_a)
-    dofmaps = ([function_space.dofmap for function_space in function_spaces[0]],
-               [function_space.dofmap for function_space in function_spaces[1]])
+    dofmaps = (
+        [function_space.dofmap for function_space in function_spaces[0]],
+        [function_space.dofmap for function_space in function_spaces[1]])
 
     # Assemble form
-    c = (coeffs[0] if coeffs[0] is not None else pack_constants(_a),
-         coeffs[1] if coeffs[1] is not None else pack_coefficients(_a))
+    c = (coeffs[0] if coeffs[0] is not None else dolfinx.fem.pack_constants(_a),
+         coeffs[1] if coeffs[1] is not None else dolfinx.fem.pack_coefficients(_a))
     with NestMatSubMatrixWrapper(A, dofmaps, restriction) as nest_A:
         for i, j, A_sub in nest_A:
             a_sub = _a[i][j]
             if a_sub is not None:
                 const_sub = c[0][i][j]
                 coeff_sub = c[1][i][j]
-                dcpp.fem.petsc.assemble_matrix(A_sub, a_sub, const_sub, coeff_sub, _cpp_dirichletbc(bcs))
+                dcpp.fem.petsc.assemble_matrix(
+                    A_sub, a_sub, const_sub, coeff_sub, dolfinx.fem.assemble._cpp_dirichletbc(bcs))
 
     # Flush to enable switch from add to set in the matrix
-    A.assemble(PETSc.Mat.AssemblyType.FLUSH)
+    A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)
 
     # Set diagonal
     with NestMatSubMatrixWrapper(A, dofmaps, restriction) as nest_A:
@@ -881,40 +1004,41 @@ def _(A: PETSc.Mat,
             if function_spaces[0][i].id == function_spaces[1][j].id:
                 a_sub = _a[i][j]
                 if a_sub is not None:
-                    dcpp.fem.petsc.insert_diagonal(A_sub, function_spaces[0][i], _cpp_dirichletbc(bcs), diagonal)
+                    dcpp.fem.petsc.insert_diagonal(
+                        A_sub, function_spaces[0][i], dolfinx.fem.assemble._cpp_dirichletbc(bcs), diagonal)
 
     return A
 
 
-# FIXME: Revise this interface
 @functools.singledispatch
-def assemble_matrix_block(a: typing.List[typing.List[Form]],
-                          bcs: typing.List[DirichletBC] = [],
-                          diagonal: float = 1.0,
-                          coeffs=Coefficients(None, None),
-                          restriction: typing.Optional[typing.Tuple[
-                                                       typing.List[mcpp.fem.DofMapRestriction]]] = None) -> PETSc.Mat:
-    """Assemble bilinear forms into matrix"""
-    _a = _create_cpp_form(a)
-    A = create_matrix_block(_a, restriction)
+def assemble_matrix_block(
+    a: typing.List[typing.List[ufl.Form]], bcs: typing.Optional[typing.List[dolfinx.fem.DirichletBC]] = [],
+    mat_type: typing.Optional[str] = None, diagonal: typing.Optional[float] = 1.0,
+    coeffs: typing.Optional[dolfinx.fem.assemble.Coefficients] = dolfinx.fem.assemble.Coefficients(None, None),
+    restriction: typing.Optional[typing.Tuple[typing.List[mcpp.fem.DofMapRestriction]]] = None
+) -> petsc4py.PETSc.Mat:
+    """Assemble bilinear forms into matrix."""
+    _a = dolfinx.fem.assemble._create_cpp_form(a)
+    A = create_matrix_block(_a, restriction, mat_type)
     return assemble_matrix_block(A, _a, bcs, diagonal, coeffs, restriction)
 
 
-@assemble_matrix_block.register(PETSc.Mat)
-def _(A: PETSc.Mat,
-      a: typing.List[typing.List[Form]],
-      bcs: typing.List[DirichletBC] = [],
-      diagonal: float = 1.0,
-      coeffs=Coefficients(None, None),
-      restriction: typing.Optional[typing.Tuple[
-                                   typing.List[mcpp.fem.DofMapRestriction]]] = None) -> PETSc.Mat:
-    """Assemble bilinear forms into matrix"""
-    _a = _create_cpp_form(a)
-    c = (coeffs[0] if coeffs[0] is not None else pack_constants(_a),
-         coeffs[1] if coeffs[1] is not None else pack_coefficients(_a))
+@assemble_matrix_block.register(petsc4py.PETSc.Mat)
+def _(
+    A: petsc4py.PETSc.Mat,
+    a: typing.List[typing.List[ufl.Form]], bcs: typing.Optional[typing.List[dolfinx.fem.DirichletBC]] = [],
+    diagonal: typing.Optional[float] = 1.0,
+    coeffs: typing.Optional[dolfinx.fem.assemble.Coefficients] = dolfinx.fem.assemble.Coefficients(None, None),
+    restriction: typing.Optional[typing.Tuple[typing.List[mcpp.fem.DofMapRestriction]]] = None
+) -> petsc4py.PETSc.Mat:
+    """Assemble bilinear forms into matrix."""
+    _a = dolfinx.fem.assemble._create_cpp_form(a)
+    c = (coeffs[0] if coeffs[0] is not None else dolfinx.fem.pack_constants(_a),
+         coeffs[1] if coeffs[1] is not None else dolfinx.fem.pack_coefficients(_a))
     function_spaces = _get_block_function_spaces(_a)
-    dofmaps = ([function_space.dofmap for function_space in function_spaces[0]],
-               [function_space.dofmap for function_space in function_spaces[1]])
+    dofmaps = (
+        [function_space.dofmap for function_space in function_spaces[0]],
+        [function_space.dofmap for function_space in function_spaces[1]])
 
     # Assemble form
     with BlockMatSubMatrixWrapper(A, dofmaps, restriction) as block_A:
@@ -923,10 +1047,11 @@ def _(A: PETSc.Mat,
             if a_sub is not None:
                 const_sub = c[0][i][j]
                 coeff_sub = c[1][i][j]
-                dcpp.fem.petsc.assemble_matrix(A_sub, a_sub, const_sub, coeff_sub, _cpp_dirichletbc(bcs), True)
+                dcpp.fem.petsc.assemble_matrix(
+                    A_sub, a_sub, const_sub, coeff_sub, dolfinx.fem.assemble._cpp_dirichletbc(bcs), True)
 
     # Flush to enable switch from add to set in the matrix
-    A.assemble(PETSc.Mat.AssemblyType.FLUSH)
+    A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)
 
     # Set diagonal
     with BlockMatSubMatrixWrapper(A, dofmaps, restriction) as block_A:
@@ -934,22 +1059,26 @@ def _(A: PETSc.Mat,
             if function_spaces[0][i].id == function_spaces[1][j].id:
                 a_sub = _a[i][j]
                 if a_sub is not None:
-                    dcpp.fem.petsc.insert_diagonal(A_sub, function_spaces[0][i], _cpp_dirichletbc(bcs), diagonal)
+                    dcpp.fem.petsc.insert_diagonal(
+                        A_sub, function_spaces[0][i], dolfinx.fem.assemble._cpp_dirichletbc(bcs), diagonal)
 
     return A
 
 
 # -- Modifiers for Dirichlet conditions ---------------------------------------
 
-def apply_lifting(b: PETSc.Vec,
-                  a: typing.List[Form],
-                  bcs: typing.List[typing.List[DirichletBC]],
-                  x0: typing.Optional[typing.List[PETSc.Vec]] = None,
-                  scale: float = 1.0,
-                  coeffs=Coefficients(None, None),
-                  restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None,
-                  restriction_x0: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None) -> None:
-    """Modify RHS vector b for lifting of Dirichlet boundary conditions.
+def apply_lifting(
+    b: petsc4py.PETSc.Vec, a: typing.List[ufl.Form],
+    bcs: typing.Optional[typing.List[dolfinx.fem.DirichletBC]] = [],
+    x0: typing.Optional[typing.List[petsc4py.PETSc.Vec]] = None,
+    scale: typing.Optional[float] = 1.0,
+    coeffs: typing.Optional[dolfinx.fem.assemble.Coefficients] = dolfinx.fem.assemble.Coefficients(None, None),
+    restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None,
+    restriction_x0: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None
+) -> None:
+    """
+    Modify RHS vector b for lifting of Dirichlet boundary conditions.
+
     It modifies b such that:
 
         b <- b - scale * A_j (g_j - x0_j)
@@ -963,9 +1092,9 @@ def apply_lifting(b: PETSc.Vec,
     Ghost contributions are not accumulated (not sent to owner). Caller
     is responsible for calling VecGhostUpdateBegin/End.
     """
-    _a = _create_cpp_form(a)
-    c = (coeffs[0] if coeffs[0] is not None else pack_constants(_a),
-         coeffs[1] if coeffs[1] is not None else pack_coefficients(_a))
+    _a = dolfinx.fem.assemble._create_cpp_form(a)
+    c = (coeffs[0] if coeffs[0] is not None else dolfinx.fem.pack_constants(_a),
+         coeffs[1] if coeffs[1] is not None else dolfinx.fem.pack_coefficients(_a))
     function_spaces = [form.function_spaces[1] for form in _a]
     dofmaps_x0 = [function_space.dofmap for function_space in function_spaces]
     if restriction is None:
@@ -974,7 +1103,8 @@ def apply_lifting(b: PETSc.Vec,
                 x0_as_list = []
             else:
                 x0_as_list = [x0_ for x0_ in nest_x0]
-            dcpp.fem.apply_lifting(b_local.array_w, _a, c[0], c[1], _cpp_dirichletbc(bcs), x0_as_list, scale)
+            dcpp.fem.apply_lifting(
+                b_local.array_w, _a, c[0], c[1], dolfinx.fem.assemble._cpp_dirichletbc(bcs), x0_as_list, scale)
     else:
         with VecSubVectorWrapper(b, restriction.dofmap, restriction) as b_sub, \
                 NestVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0) as nest_x0:
@@ -984,27 +1114,27 @@ def apply_lifting(b: PETSc.Vec,
                 else:
                     x0_sub_as_list = [x0_sub]
                 dcpp.fem.apply_lifting(
-                    b_sub, [a_sub], c[0], c[1], _cpp_dirichletbc([bcs_sub]), x0_sub_as_list, scale)
+                    b_sub, [a_sub], c[0], c[1], dolfinx.fem.assemble._cpp_dirichletbc([bcs_sub]), x0_sub_as_list,
+                    scale)
 
 
-def apply_lifting_nest(b: PETSc.Vec,
-                       a: typing.List[typing.List[Form]],
-                       bcs: typing.List[DirichletBC],
-                       x0: typing.Optional[PETSc.Vec] = None,
-                       scale: float = 1.0,
-                       coeffs=Coefficients(None, None),
-                       restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None,
-                       restriction_x0: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None) -> PETSc.Vec:
-    """Modify nested vector for lifting of Dirichlet boundary conditions.
-
-    """
-    _a = _create_cpp_form(a)
-    c = (coeffs[0] if coeffs[0] is not None else pack_constants(_a),
-         coeffs[1] if coeffs[1] is not None else pack_coefficients(_a))
+def apply_lifting_nest(
+    b: petsc4py.PETSc.Vec, a: typing.List[typing.List[ufl.Form]],
+    bcs: typing.Optional[typing.List[dolfinx.fem.DirichletBC]] = [],
+    x0: typing.Optional[petsc4py.PETSc.Vec] = None,
+    scale: typing.Optional[float] = 1.0,
+    coeffs: typing.Optional[dolfinx.fem.assemble.Coefficients] = dolfinx.fem.assemble.Coefficients(None, None),
+    restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None,
+    restriction_x0: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None
+) -> petsc4py.PETSc.Vec:
+    """Modify nested vector for lifting of Dirichlet boundary conditions."""
+    _a = dolfinx.fem.assemble._create_cpp_form(a)
+    c = (coeffs[0] if coeffs[0] is not None else dolfinx.fem.pack_constants(_a),
+         coeffs[1] if coeffs[1] is not None else dolfinx.fem.pack_coefficients(_a))
     function_spaces = _get_block_function_spaces(_a)
     dofmaps = [function_space.dofmap for function_space in function_spaces[0]]
     dofmaps_x0 = [function_space.dofmap for function_space in function_spaces[1]]
-    bcs1 = bcs_by_block(function_spaces[1], bcs)
+    bcs1 = dolfinx.fem.bcs_by_block(function_spaces[1], bcs)
     with NestVecSubVectorWrapper(b, dofmaps, restriction) as nest_b, \
             NestVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0) as nest_x0:
         for b_sub, a_sub, constants_a, coeffs_a in zip(nest_b, _a, c[0], c[1]):
@@ -1015,42 +1145,45 @@ def apply_lifting_nest(b: PETSc.Vec,
                 else:
                     x0_sub_as_list = [x0_sub]
                 dcpp.fem.apply_lifting(
-                    b_sub, [a_sub_], [constant_a_sub], [coeff_a_sub], _cpp_dirichletbc([bcs1_sub]),
+                    b_sub, [a_sub_], [constant_a_sub], [coeff_a_sub],
+                    dolfinx.fem.assemble._cpp_dirichletbc([bcs1_sub]),
                     x0_sub_as_list, scale)
     return b
 
 
-def set_bc(b: typing.Union[PETSc.Vec],
-           bcs: typing.List[DirichletBC],
-           x0: typing.Optional[PETSc.Vec] = None,
-           scale: float = 1.0,
-           restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None) -> None:
-    """Insert boundary condition values into vector. Only local (owned)
-    entries are set, hence communication after calling this function is
-    not required unless ghost entries need to be updated to the boundary
-    condition value.
+def set_bc(
+    b: petsc4py.PETSc.Vec, bcs: typing.Optional[typing.List[dolfinx.fem.DirichletBC]] = [],
+    x0: typing.Optional[petsc4py.PETSc.Vec] = None,
+    scale: typing.Optional[float] = 1.0,
+    restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None
+) -> None:
+    """
+    Insert boundary condition values into vector.
 
+    Only local (owned) entries are set, hence communication after calling this function is
+    not required unless ghost entries need to be updated to the boundary condition value.
     """
     if restriction is None:
         if x0 is not None:
             x0 = x0.array_r
-        dcpp.fem.set_bc(b.array_w, _cpp_dirichletbc(bcs), x0, scale)
+        dcpp.fem.set_bc(b.array_w, dolfinx.fem.assemble._cpp_dirichletbc(bcs), x0, scale)
     else:
         with VecSubVectorWrapper(b, restriction.dofmap, restriction, ghosted=False) as b_sub, \
                 VecSubVectorReadWrapper(x0, restriction.dofmap, restriction, ghosted=False) as x0_sub:
-            dcpp.fem.set_bc(b_sub, _cpp_dirichletbc(bcs), x0_sub, scale)
+            dcpp.fem.set_bc(b_sub, dolfinx.fem.assemble._cpp_dirichletbc(bcs), x0_sub, scale)
 
 
-def set_bc_nest(b: PETSc.Vec,
-                bcs: typing.List[typing.List[DirichletBC]],
-                x0: typing.Optional[PETSc.Vec] = None,
-                scale: float = 1.0,
-                restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None) -> None:
-    """Insert boundary condition values into nested vector. Only local (owned)
-    entries are set, hence communication after calling this function is
-    not required unless the ghost entries need to be updated to the
-    boundary condition value.
+def set_bc_nest(
+    b: petsc4py.PETSc.Vec, bcs: typing.Optional[typing.List[dolfinx.fem.DirichletBC]] = [],
+    x0: typing.Optional[petsc4py.PETSc.Vec] = None,
+    scale: typing.Optional[float] = 1.0,
+    restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None
+) -> None:
+    """
+    Insert boundary condition values into nested vector.
 
+    Only local (owned) entries are set, hence communication after calling this function is
+    not required unless the ghost entries need to be updated to the boundary condition value.
     """
     if restriction is None:
         dofmaps = [None] * len(b.getNestSubVecs())
@@ -1061,4 +1194,4 @@ def set_bc_nest(b: PETSc.Vec,
     with NestVecSubVectorWrapper(b, dofmaps, restriction, ghosted=False) as nest_b, \
             NestVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0, ghosted=False) as nest_x0:
         for b_sub, bcs_sub, x0_sub in zip(nest_b, bcs, nest_x0):
-            dcpp.fem.set_bc(b_sub, _cpp_dirichletbc(bcs_sub), x0_sub, scale)
+            dcpp.fem.set_bc(b_sub, dolfinx.fem.assemble._cpp_dirichletbc(bcs_sub), x0_sub, scale)
