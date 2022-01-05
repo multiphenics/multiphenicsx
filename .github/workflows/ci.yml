@@ -8,7 +8,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: "0 21 * * *"
+    - cron: "0 3 * * *"
   workflow_dispatch:
 
 jobs:
@@ -28,37 +28,75 @@ jobs:
       )
     runs-on: ubuntu-latest
     container: dolfinx/dolfinx
+    strategy:
+      matrix:
+        petsc_arch: [real, complex]
+      fail-fast: false
     steps:
       - uses: actions/checkout@v2
-      - name: Install multiphenicsx
+      - name: Set PETSc scalar type
         run: |
-          pip3 -q install --upgrade itkwidgets matplotlib nbconvert Pygments pytest pytest-flake8 pytest-xdist pyvista sympy
+          . /usr/local/bin/dolfinx-${{ matrix.petsc_arch }}-mode
+          echo "PETSC_ARCH=$PETSC_ARCH" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
+      - name: Install dependencies
+        run: |
+          pip3 -q install -r requirements.txt -r tests/requirements.txt -r tutorials/requirements.txt
           PYVISTA_INIT=$(python3 -c 'import os, pyvista; print(os.path.join(os.path.dirname(pyvista.__file__), "__init__.py"))')
           sed -i "s/os.makedirs(USER_DATA_PATH)/os.makedirs(USER_DATA_PATH, exist_ok=True)/g" ${PYVISTA_INIT}
-          python3 setup.py -q install
-          python3 -c "import multiphenicsx"
+      - name: Install multiphenicsx
+        run: |
+          pip3 install .
+          python3 -c "import multiphenicsx.cpp"
       - name: Run flake8 checks
         run: |
-          pytest --flake8 -m flake8
+          flake8 .
+          nbqa flake8 .
       - name: Check for stray outputs, counts and metadata in ipynb files
         uses: RBniCS/check-jupyter-metadata-action@main
         with:
           pattern: "tutorials/**/*.ipynb"
+      - name: Run documentation generation
+        run: |
+          cd docs && make html
       - name: Run unit tests (serial)
+        id: run_unit_tests_serial
         run: |
-          pytest -n auto tests/unit
+          COVERAGE_FILE=.coverage_unit_serial coverage run --source=multiphenicsx -m pytest -n auto tests/unit
       - name: Run unit tests (parallel)
+        id: run_unit_tests_parallel
         run: |
-          mpirun -n 2 pytest tests/unit
+          COVERAGE_FILE=.coverage_unit_parallel mpirun -n 2 coverage run --source=multiphenicsx --parallel-mode -m pytest tests/unit
+      - name: Run notebooks tests (serial)
+        id: run_notebooks_tests_serial
+        run: |
+          COVERAGE_FILE=.coverage_notebooks_serial coverage run --source=multiphenicsx -m pytest -n auto --dist loadscope tests/notebooks
+      - name: Run notebooks tests (parallel)
+        id: run_notebooks_tests_parallel
+        run: |
+          COVERAGE_FILE=.coverage_notebooks_parallel coverage run --source=multiphenicsx -m pytest --np 2 tests/notebooks
+      - name: Combine coverage reports
+        run: |
+          coverage combine .coverage*
+          coverage report --fail-under=100 --show-missing --skip-covered
       - name: Run tutorials (serial)
+        id: run_tutorials_serial
         run: |
-          pytest -n auto tutorials
+          pytest -n auto --dist loadscope tutorials
       - name: Run tutorials (parallel)
+        id: run_tutorials_parallel
         run: |
-          mpirun -n 2 pytest tutorials
+          pytest --np 2 tutorials
       - name: Run mesh generation in tutorials (serial)
+        id: run_mesh_generation_serial
         run: |
-          pytest -n auto --meshgen tutorials
+          pytest -n auto --dist loadscope --meshgen tutorials
+      - name: Run mesh generation in tutorials (parallel)
+        id: run_mesh_generation_parallel
+        run: |
+          pytest --meshgen --np 2 tutorials
 
   docker:
     if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main'
@@ -71,7 +109,7 @@ jobs:
       - name: Build the docker release image
         run: docker build --pull --target multiphenicsx -t ${RELEASE_IMAGE}:latest -f docker/Dockerfile .
       - name: Try importing the library inside the docker image
-        run: docker run -i --rm ${RELEASE_IMAGE} bash -c "python3 -c 'import multiphenicsx'"
+        run: docker run -i --rm ${RELEASE_IMAGE} bash -c "python3 -c 'import multiphenicsx.cpp'"
       - name: Run unit tests (serial) to verify that the docker image is working
         run: docker run -i --rm ${RELEASE_IMAGE}:latest bash -c "cd multiphenicsx && pytest -n auto tests/unit"
       - name: Build the docker jupyter image
