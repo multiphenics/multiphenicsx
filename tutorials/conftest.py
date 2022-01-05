@@ -3,96 +3,36 @@
 # This file is part of multiphenicsx.
 #
 # SPDX-License-Identifier: LGPL-3.0-or-later
+"""pytest configuration file for tutorials tests."""
 
-import gc
 import os
-import re
-import importlib
-import pytest
-import pytest_flake8
-import matplotlib.pyplot as plt
-from nbconvert.exporters import PythonExporter
-import nbconvert.filters
-from mpi4py import MPI
-plt.switch_backend("Agg")
+import typing
+
+import _pytest.config
+import _pytest.main
+import _pytest.nodes
+
+import multiphenicsx.test.notebooks
 
 
-def pytest_ignore_collect(path, config):
-    if path.ext == ".py" and path.new(ext=".ipynb").exists():  # ignore .py files obtained from previous runs
-        return True
-    else:
-        return False
-
-
-def pytest_collect_file(path, parent):
-    """
-    Collect tutorial files.
-    """
-    if path.ext == ".ipynb":
-        # Convert .ipynb notebooks to plain .py files
-        def comment_lines(text, prefix="# "):
-            regex = re.compile(r".{1,80}(?:\s+|$)")
-            input_lines = text.split("\n")
-            output_lines = [split_line.rstrip() for line in input_lines for split_line in regex.findall(line)]
-            output = prefix + ("\n" + prefix).join(output_lines)
-            return output.replace(prefix + "\n", prefix.rstrip(" ") + "\n")
-
-        def ipython2python(code):
-            return nbconvert.filters.ipython2python(code).rstrip("\n") + "\n"
-
-        filters = {
-            "comment_lines": comment_lines,
-            "ipython2python": ipython2python
-        }
-        exporter = PythonExporter(filters=filters)
-        exporter.exclude_input_prompt = True
-        code, _ = exporter.from_filename(path)
-        code = code.rstrip("\n") + "\n"
-        if MPI.COMM_WORLD.rank == 0:
-            with open(path.new(ext=".py"), "w", encoding="utf-8") as f:
-                f.write(code)
-        # Collect the corresponding .py file
-        config = parent.config
-        if config.getoption("--flake8"):
-            return pytest_flake8.pytest_collect_file(path.new(ext=".py"), parent)
-        else:
-            if not path.basename.startswith("x"):
-                return TutorialFile.from_parent(parent=parent, fspath=path.new(ext=".py"))
-            else:
-                return DoNothingFile.from_parent(parent=parent, fspath=path.new(ext=".py"))
-    elif path.ext == ".py":
-        assert not path.new(ext=".ipynb").exists(), "Please run pytest on jupyter notebooks, not plain python files."
-        return DoNothingFile.from_parent(parent=parent, fspath=path)
-
-
-def pytest_pycollect_makemodule(path, parent):
-    """
-    Disable running .py files produced by previous runs, as they may get out of sync with the corresponding .ipynb file.
-    """
-    if path.ext == ".py":
-        assert not path.new(ext=".ipynb").exists(), "Please run pytest on jupyter notebooks, not plain python files."
-        return DoNothingFile.from_parent(parent=parent, fspath=path)
-
-
-def pytest_addoption(parser):
+def pytest_addoption(parser: _pytest.main.Parser) -> None:
+    """Add options to set the number of processes and whether to run mesh generation notebooks or tutorials."""
+    multiphenicsx.test.notebooks.addoption(parser)
     parser.addoption("--meshgen", action="store_true", help="run mesh generation notebooks")
 
 
-def pytest_collection_modifyitems(session, config, items):
-    """
-    Collect mesh generation notebooks first.
-    """
+def pytest_collection_modifyitems(
+    session: _pytest.main.Session, config: _pytest.config.Config, items: typing.List[_pytest.nodes.Item]
+) -> None:
+    """Deselect notebooks based on the value of the --meshgen option."""
     mesh_generation_items = list()
     tutorial_items = list()
     for item in items:
-        if "generate_mesh" in item.name:
+        if "generate_mesh" in item.parent.name:
             mesh_generation_items.append(item)
         else:
             tutorial_items.append(item)
-    if config.getoption("--flake8"):
-        items[:] = mesh_generation_items + tutorial_items
-    elif config.getoption("--meshgen"):
-        assert MPI.COMM_WORLD.size == 1
+    if config.getoption("--meshgen"):
         config.hook.pytest_deselected(items=tutorial_items)
         items[:] = mesh_generation_items
     else:
@@ -100,58 +40,19 @@ def pytest_collection_modifyitems(session, config, items):
         items[:] = tutorial_items
 
 
-def pytest_runtest_setup(item):
-    # Do the normal setup
-    item.setup()
-    # Disable garbage collection
-    gc.disable()
+def pytest_runtest_setup(item: _pytest.nodes.Item) -> None:
+    """Insert skips on cell failure."""
+    multiphenicsx.test.notebooks.runtest_setup(item)
+    # Create a symbolic link to the data folder when running on the temporary ipyparallel copy of the notebook
+    if item.config.option.np > 1 and item.name == "Cell 0":
+        dest_data = str(item.parent.fspath.new(basename="data"))
+        src_data = dest_data.replace(os.sep + ".ipynb_mpi" + os.sep, os.sep)
+        if os.path.exists(dest_data):
+            os.unlink(dest_data)
+        if os.path.exists(src_data):
+            os.symlink(src_data, dest_data)
 
 
-def pytest_runtest_teardown(item, nextitem):
-    # Do the normal teardown
-    item.teardown()
-    # Re-enable garbage collection
-    gc.enable()
-    # Run garbage gollection
-    del item
-    gc.collect()
-    # Add a MPI barrier in parallel
-    MPI.COMM_WORLD.Barrier()
-
-
-class TutorialFile(pytest.File):
-    """
-    Custom file handler for tutorial files.
-    """
-
-    def collect(self):
-        yield TutorialItem.from_parent(
-            parent=self, name=os.path.relpath(str(self.fspath), str(self.parent.fspath)))
-
-
-class TutorialItem(pytest.Item):
-    """
-    Handle the execution of the tutorial.
-    """
-
-    def __init__(self, name, parent):
-        super(TutorialItem, self).__init__(name, parent)
-
-    def runtest(self):
-        os.chdir(self.parent.fspath.dirname)
-        spec = importlib.util.spec_from_file_location(self.name, str(self.parent.fspath))
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        plt.close("all")  # do not trigger matplotlib max_open_warning
-
-    def reportinfo(self):
-        return self.fspath, 0, self.name
-
-
-class DoNothingFile(pytest.File):
-    """
-    Custom file handler to avoid running twice python files explicitly provided on the command line.
-    """
-
-    def collect(self):
-        return []
+pytest_collect_file = multiphenicsx.test.notebooks.collect_file
+pytest_runtest_makereport = multiphenicsx.test.notebooks.runtest_makereport
+pytest_runtest_teardown = multiphenicsx.test.notebooks.runtest_teardown
