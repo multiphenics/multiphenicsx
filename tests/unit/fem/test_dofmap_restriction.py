@@ -3,118 +3,60 @@
 # This file is part of multiphenicsx.
 #
 # SPDX-License-Identifier: LGPL-3.0-or-later
+"""Tests for multiphenicsx.fem.dofmap_restriction module."""
 
+import typing
+
+import dolfinx.fem
+import dolfinx.mesh
+import mpi4py
 import numpy as np
 import pytest
-from mpi4py import MPI
 
-from dolfinx.fem import FunctionSpace, locate_dofs_topological, TensorFunctionSpace, VectorFunctionSpace
-from dolfinx.mesh import create_unit_square, locate_entities
-from ufl import FiniteElement, MixedElement, VectorElement
-
-from multiphenicsx.fem import DofMapRestriction
+import common  # noqa
+import multiphenicsx.fem
 
 
-# Mesh
 @pytest.fixture
-def mesh():
-    return create_unit_square(MPI.COMM_WORLD, 4, 4)
+def mesh() -> dolfinx.mesh.Mesh:
+    """Generate a unit square mesh for use in tests in this file."""
+    return dolfinx.mesh.create_unit_square(mpi4py.MPI.COMM_WORLD, 4, 4)
 
 
-# Auxiliary generation of a mixed function space
-def TaylorHoodFunctionSpace(mesh, family_degree):
-    (family, degree) = family_degree
-    V_element = VectorElement(family, mesh.ufl_cell(), degree + 1)
-    Q_element = FiniteElement(family, mesh.ufl_cell(), degree)
-    taylor_hood_element = MixedElement(V_element, Q_element)
-    return FunctionSpace(mesh, taylor_hood_element)
-
-
-# Function space parametrization
-def get_function_spaces():
-    return (
-        lambda mesh: FunctionSpace(mesh, ("Lagrange", 1)),
-        lambda mesh: FunctionSpace(mesh, ("Lagrange", 2)),
-        lambda mesh: VectorFunctionSpace(mesh, ("Lagrange", 1)),
-        lambda mesh: VectorFunctionSpace(mesh, ("Lagrange", 2)),
-        lambda mesh: TensorFunctionSpace(mesh, ("Lagrange", 1)),
-        lambda mesh: TensorFunctionSpace(mesh, ("Lagrange", 2)),
-        lambda mesh: TaylorHoodFunctionSpace(mesh, ("Lagrange", 1)),
-        # lambda mesh: TaylorHoodFunctionSpace(mesh, ("Lagrange", 2))
-    )
-
-
-# Definition of some representative subdomains
-def CellsAll():
-    def cells_all(x):
-        return np.full(x.shape[1], True)
-    cells_all.codimension = 0
-    return cells_all
-
-
-def CellsSubDomain(X, Y):
-    def cells_subdomain(x):
-        return np.logical_and(x[0] <= X, x[1] <= Y)
-    cells_subdomain.codimension = 0
-    return cells_subdomain
-
-
-def FacetsAll():
-    def facets_all(x):
-        return np.full(x.shape[1], True)
-    facets_all.codimension = 1
-    return facets_all
-
-
-def FacetsSubDomain(X=None, Y=None, on_boundary=False):
-    eps = np.finfo(float).eps
-    assert ((X is not None and Y is None and on_boundary is False)
-            or (X is None and Y is not None and on_boundary is False)
-            or (X is None and Y is None and on_boundary is True))
-    if X is not None:
-        def facets_subdomain(x):
-            return np.logical_and(x[0] >= X - eps, x[0] <= X + eps)
-    elif Y is not None:
-        def facets_subdomain(x):
-            return np.logical_and(x[1] >= Y - eps, x[1] <= Y + eps)
-    elif on_boundary is True:
-        def facets_subdomain(x):
-            return np.logical_or(
-                np.logical_or(x[0] <= eps, x[0] >= 1. - eps),
-                np.logical_or(x[1] <= eps, x[1] >= 1. - eps)
-            )
-    facets_subdomain.codimension = 1
-    return facets_subdomain
-
-
-# Auxiliary function for definition of a list of active dofs
-def ActiveDofs(V, subdomain):
-    if subdomain is not None:
-        entities_dim = V.mesh.topology.dim - subdomain.codimension
-        entities = locate_entities(V.mesh, entities_dim, subdomain)
-        return locate_dofs_topological(V, entities_dim, entities)
-    else:
-        return np.arange(0, V.dofmap.index_map.size_local + V.dofmap.index_map.num_ghosts)
-
-
-# Subdomain parametrization
-def get_subdomains():
+def get_subdomains() -> typing.Tuple[typing.Callable]:
+    """Generate subdomain parametrization."""
     return (
         # Cells restrictions
-        CellsAll(),
-        CellsSubDomain(0.5, 0.5),
+        common.CellsAll(),
+        common.CellsSubDomain(0.5, 0.5),
         # Facets restrictions
-        FacetsAll(),
-        FacetsSubDomain(on_boundary=True),
-        FacetsSubDomain(X=1.0),
-        FacetsSubDomain(Y=0.0),
-        FacetsSubDomain(X=0.75),
-        FacetsSubDomain(Y=0.25)
+        common.FacetsAll(),
+        common.FacetsSubDomain(on_boundary=True),
+        common.FacetsSubDomain(X=1.0),
+        common.FacetsSubDomain(Y=0.0),
+        common.FacetsSubDomain(X=0.75),
+        common.FacetsSubDomain(Y=0.25)
     )
 
 
-# Run checks on DofMapRestriction in the case where restriction is a strict subset of the available dofs
-def assert_dofmap_restriction_is_subset_of_dofmap(mesh, dofmap, dofmap_restriction):
+def get_function_spaces() -> typing.Tuple[typing.Callable]:
+    """Generate function space parametrization."""
+    return (
+        lambda mesh: dolfinx.fem.FunctionSpace(mesh, ("Lagrange", 1)),
+        lambda mesh: dolfinx.fem.FunctionSpace(mesh, ("Lagrange", 2)),
+        lambda mesh: dolfinx.fem.VectorFunctionSpace(mesh, ("Lagrange", 1)),
+        lambda mesh: dolfinx.fem.VectorFunctionSpace(mesh, ("Lagrange", 2)),
+        lambda mesh: dolfinx.fem.TensorFunctionSpace(mesh, ("Lagrange", 1)),
+        lambda mesh: dolfinx.fem.TensorFunctionSpace(mesh, ("Lagrange", 2)),
+        lambda mesh: common.TaylorHoodFunctionSpace(mesh, ("Lagrange", 1)),
+        # lambda mesh: common.TaylorHoodFunctionSpace(mesh, ("Lagrange", 2))
+    )
+
+
+def assert_dofmap_restriction_is_subset_of_dofmap(
+    mesh: dolfinx.mesh.Mesh, dofmap: dolfinx.fem.DofMap, dofmap_restriction: multiphenicsx.fem.DofMapRestriction
+) -> None:
+    """Run checks on DofMapRestriction in the case where restriction is a strict subset of the available dofs."""
     # Get local dimensions
     unrestricted_local_dimension = (dofmap.index_map.local_range[1]
                                     - dofmap.index_map.local_range[0])
@@ -137,8 +79,10 @@ def assert_dofmap_restriction_is_subset_of_dofmap(mesh, dofmap, dofmap_restricti
                               [restricted_to_unrestricted[d] for d in restricted_cell_dofs])
 
 
-# Run stricter checks on DofMapRestriction in the case where restriction actually contains all available dofs
-def assert_dofmap_restriction_is_same_as_dofmap(mesh, dofmap, dofmap_restriction):
+def assert_dofmap_restriction_is_same_as_dofmap(
+    mesh: dolfinx.mesh.Mesh, dofmap: dolfinx.fem.DofMap, dofmap_restriction: multiphenicsx.fem.DofMapRestriction
+) -> None:
+    """Run stricter checks on DofMapRestriction in the case where restriction actually contains all available dofs."""
     # Assert that local dimensions are the same
     unrestricted_local_dimension = (dofmap.index_map.local_range[1]
                                     - dofmap.index_map.local_range[0])
@@ -170,20 +114,24 @@ def assert_dofmap_restriction_is_same_as_dofmap(mesh, dofmap, dofmap_restriction
                               [restricted_global_indices[d] for d in restricted_cell_dofs])
 
 
-# Test for DofMapRestriction in the case where restriction actually contains all available dofs
 @pytest.mark.parametrize("FunctionSpace", get_function_spaces())
-def test_dofmap_restriction_is_same_as_dofmap(mesh, FunctionSpace):
+def test_dofmap_restriction_is_same_as_dofmap(
+    mesh: dolfinx.mesh.Mesh, FunctionSpace: typing.Callable
+) -> None:
+    """Test for DofMapRestriction in the case where restriction actually contains all available dofs."""
     V = FunctionSpace(mesh)
-    active_dofs = ActiveDofs(V, subdomain=None)
-    dofmap_restriction = DofMapRestriction(V.dofmap, active_dofs)
+    active_dofs = common.ActiveDofs(V, subdomain=None)
+    dofmap_restriction = multiphenicsx.fem.DofMapRestriction(V.dofmap, active_dofs)
     assert_dofmap_restriction_is_same_as_dofmap(mesh, V.dofmap, dofmap_restriction)
 
 
-# Test for DofMapRestriction in the case where restriction is a strict subset of the available dofs
 @pytest.mark.parametrize("subdomain", get_subdomains())
 @pytest.mark.parametrize("FunctionSpace", get_function_spaces())
-def test_dofmap_restriction_is_subset_of_dofmap(mesh, subdomain, FunctionSpace):
+def test_dofmap_restriction_is_subset_of_dofmap(
+    mesh: dolfinx.mesh.Mesh, subdomain: typing.Callable, FunctionSpace: typing.Callable
+) -> None:
+    """Test for DofMapRestriction in the case where restriction is a strict subset of the available dofs."""
     V = FunctionSpace(mesh)
-    active_dofs = ActiveDofs(V, subdomain)
-    dofmap_restriction = DofMapRestriction(V.dofmap, active_dofs)
+    active_dofs = common.ActiveDofs(V, subdomain)
+    dofmap_restriction = multiphenicsx.fem.DofMapRestriction(V.dofmap, active_dofs)
     assert_dofmap_restriction_is_subset_of_dofmap(mesh, V.dofmap, dofmap_restriction)
