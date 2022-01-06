@@ -125,7 +125,7 @@ def get_linear_form(V: dolfinx.fem.FunctionSpace) -> ufl.Form:
     """Generate linear forms employed in the vector test case."""
     v = ufl.TestFunction(V)
     f = get_function(V)
-    return ufl.inner(f, v) * ufl.dx
+    return dolfinx.fem.form(ufl.inner(f, v) * ufl.dx)
 
 
 def get_block_linear_form(
@@ -135,7 +135,7 @@ def get_block_linear_form(
     v1, v2 = ufl.TestFunction(V1), ufl.TestFunction(V2)
     assert V1.mesh == V2.mesh
     f1, f2 = get_function_pair(V1, V2)
-    return [ufl.inner(f1, v1) * ufl.dx, ufl.inner(f2, v2) * ufl.dx]
+    return dolfinx.fem.form([ufl.inner(f1, v1) * ufl.dx, ufl.inner(f2, v2) * ufl.dx])
 
 
 def get_bilinear_form(V: dolfinx.fem.FunctionSpace) -> ufl.Form:
@@ -145,10 +145,10 @@ def get_bilinear_form(V: dolfinx.fem.FunctionSpace) -> ufl.Form:
     f = get_function(V)
     shape = V.ufl_element().value_shape()
     if len(shape) == 0:
-        return f * ufl.inner(u, v) * ufl.dx
+        form = f * ufl.inner(u, v) * ufl.dx
     elif len(shape) == 1:
-        return sum(
-            f[i] * ufl.inner(u[i], v[i]) for i in range(shape[0])) * ufl.dx
+        form = sum(f[i] * ufl.inner(u[i], v[i]) for i in range(shape[0])) * ufl.dx
+    return dolfinx.fem.form(form)
 
 
 def get_block_bilinear_form(
@@ -209,7 +209,7 @@ def get_block_bilinear_form(
             block_form[1][0] = sum(
                 f2[i % shape_2[0]] * ufl.inner(u1[i % shape_1[0]], v2[i % shape_2[0]])
                 for i in range(max(shape_1[0], shape_2[0]))) * ufl.dx
-    return block_form
+    return dolfinx.fem.form(block_form)
 
 
 def get_mat_types() -> typing.List[str]:
@@ -234,14 +234,14 @@ def locate_boundary_dofs(
 
 def get_boundary_conditions(offset: int = 0) -> typing.Tuple[typing.Callable]:
     """Generate boundary conditions employed in the non-block/nest test cases."""
-    def _get_boundary_conditions(V: dolfinx.fem.FunctionSpace) -> typing.List[dolfinx.fem.DirichletBC]:
+    def _get_boundary_conditions(V: dolfinx.fem.FunctionSpace) -> typing.List[dolfinx.fem.DirichletBCMetaClass]:
         num_sub_elements = V.ufl_element().num_sub_elements()
         if num_sub_elements == 0:
             bc1_fun = dolfinx.fem.Function(V)
             with bc1_fun.vector.localForm() as local_form:
                 local_form.set(1. + offset)
             bdofs = locate_boundary_dofs(V)
-            return [dolfinx.fem.DirichletBC(bc1_fun, bdofs)]
+            return [dolfinx.fem.dirichletbc(bc1_fun, bdofs)]
         else:
             bc1 = list()
             for i in range(num_sub_elements):
@@ -249,7 +249,7 @@ def get_boundary_conditions(offset: int = 0) -> typing.Tuple[typing.Callable]:
                 with bc1_fun.vector.localForm() as local_form:
                     local_form.set(i + 1. + offset)
                 bdofs = locate_boundary_dofs(V.sub(i), bc1_fun.function_space)
-                bc1.append(dolfinx.fem.DirichletBC(bc1_fun, bdofs, V.sub(i)))
+                bc1.append(dolfinx.fem.dirichletbc(bc1_fun, bdofs, V.sub(i)))
             return bc1
 
     return (lambda _: [],
