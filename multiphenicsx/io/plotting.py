@@ -12,7 +12,6 @@ import dolfinx.fem
 import dolfinx.mesh
 import dolfinx.plot
 import numpy as np
-import numpy.typing as npt
 import petsc4py
 
 try:
@@ -71,7 +70,7 @@ def _plot_mesh_pyvista(mesh: dolfinx.mesh.Mesh) -> None:
         plotter.show()
 
 
-def plot_mesh_entities(mesh: dolfinx.mesh.Mesh, dim: int, entities: npt.NDArray[int]) -> None:
+def plot_mesh_entities(mesh: dolfinx.mesh.Mesh, dim: int, entities: np.typing.NDArray[int]) -> None:
     """
     Plot dolfinx.mesh.Mesh with pyvista, highlighting the provided `dim`-dimensional entities.
 
@@ -103,7 +102,7 @@ def plot_mesh_tags(mesh_tags: dolfinx.mesh.MeshTags) -> None:
 
 
 def _plot_mesh_entities_pyvista(
-    mesh: dolfinx.mesh.Mesh, dim: int, indices: npt.NDArray[int], values: npt.NDArray[int]
+    mesh: dolfinx.mesh.Mesh, dim: int, indices: np.typing.NDArray[int], values: np.typing.NDArray[int]
 ) -> None:
     num_cells = mesh.topology.index_map(dim).size_local + mesh.topology.index_map(dim).num_ghosts
     all_values = np.zeros(num_cells)
@@ -244,8 +243,8 @@ def _plot_vector_field_pyvista(
 
 
 def _extract_part(
-    values: npt.NDArray[petsc4py.PETSc.ScalarType], name: str, part: str
-) -> typing.Tuple[npt.NDArray[float], str]:
+    values: np.typing.NDArray[petsc4py.PETSc.ScalarType], name: str, part: str
+) -> typing.Tuple[np.typing.NDArray[float], str]:
     if np.issubdtype(petsc4py.PETSc.ScalarType, np.complexfloating):  # pragma: no cover
         if part == "real":
             values = values.real

@@ -14,7 +14,6 @@ import dolfinx.cpp as dcpp
 import dolfinx.fem
 import dolfinx.fem.assemble
 import numpy as np
-import numpy.typing as npt
 import petsc4py
 
 from multiphenicsx.cpp import cpp_library as mcpp
@@ -249,7 +248,7 @@ def _VecSubVectorWrapperBase(CppWrapperClass: typing.Type) -> typing.Type:
                     b, unrestricted_index_set, restricted_index_set,
                     unrestricted_to_restricted, unrestricted_to_restricted_bs)
 
-        def __enter__(self) -> npt.NDArray[petsc4py.PETSc.ScalarType]:
+        def __enter__(self) -> np.typing.NDArray[petsc4py.PETSc.ScalarType]:
             """Return Vec content when entering the context."""
             return self._cpp_object.content
 
@@ -319,7 +318,7 @@ def VecSubVectorWrapperBase(_VecSubVectorWrapperClass: typing.Type) -> typing.Ty
                     self._unrestricted_to_restricted = unrestricted_to_restricted
                     self._unrestricted_to_restricted_bs = unrestricted_to_restricted_bs
 
-        def __enter__(self) -> npt.NDArray[petsc4py.PETSc.ScalarType]:
+        def __enter__(self) -> np.typing.NDArray[petsc4py.PETSc.ScalarType]:
             """Return Vec content when entering the context."""
             if self._wrapper is not None:
                 return self._wrapper.__enter__()
@@ -392,7 +391,7 @@ def BlockVecSubVectorWrapperBase(_VecSubVectorWrapperClass: typing.Type) -> typi
                     self._unrestricted_to_restricted = unrestricted_to_restricted
                     self._unrestricted_to_restricted_bs = unrestricted_to_restricted_bs
 
-        def __iter__(self) -> typing.Iterable[npt.NDArray[petsc4py.PETSc.ScalarType]]:
+        def __iter__(self) -> typing.Iterable[np.typing.NDArray[petsc4py.PETSc.ScalarType]]:
             """Iterate over blocks."""
             with contextlib.ExitStack() as wrapper_stack:
                 for index in range(self._len):
@@ -458,7 +457,7 @@ def NestVecSubVectorWrapperBase(VecSubVectorWrapperClass: typing.Type) -> typing
             self._restriction = restriction
             self._ghosted = ghosted
 
-        def __iter__(self) -> typing.Iterable[npt.NDArray[petsc4py.PETSc.ScalarType]]:
+        def __iter__(self) -> typing.Iterable[np.typing.NDArray[petsc4py.PETSc.ScalarType]]:
             """Iterate over blocks."""
             with contextlib.ExitStack() as wrapper_stack:
                 for index, b_index in enumerate(self._b):

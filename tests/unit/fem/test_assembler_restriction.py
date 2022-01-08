@@ -13,7 +13,6 @@ import dolfinx.fem
 import dolfinx.mesh
 import mpi4py
 import numpy as np
-import numpy.typing as npt
 import petsc4py
 import pytest
 import scipy.sparse
@@ -74,23 +73,23 @@ def get_function(
 ) -> dolfinx.fem.Function:
     """Generate function employed in form definition."""
     if preprocess_x is None:
-        def preprocess_x(x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+        def preprocess_x(x: np.typing.NDArray[np.float64]) -> np.typing.NDArray[np.float64]:
             return x
 
     shape = V.ufl_element().value_shape()
     if len(shape) == 0:
-        def f(x: npt.NDArray[np.float64]) -> npt.NDArray[petsc4py.PETSc.ScalarType]:
+        def f(x: np.typing.NDArray[np.float64]) -> np.typing.NDArray[petsc4py.PETSc.ScalarType]:
             x = preprocess_x(x)
             return 2 * x[0] + 4 * x[1] * x[1]
     elif len(shape) == 1 and shape[0] == 2:
-        def f(x: npt.NDArray[np.float64]) -> npt.NDArray[petsc4py.PETSc.ScalarType]:
+        def f(x: np.typing.NDArray[np.float64]) -> np.typing.NDArray[petsc4py.PETSc.ScalarType]:
             x = preprocess_x(x)
             return np.stack([
                 2 * x[0] + 4 * x[1] * x[1],
                 3 * x[0] + 5 * x[1] * x[1]
             ], axis=0)
     elif len(shape) == 1 and shape[0] == 3:
-        def f(x: npt.NDArray[np.float64]) -> npt.NDArray[petsc4py.PETSc.ScalarType]:
+        def f(x: np.typing.NDArray[np.float64]) -> np.typing.NDArray[petsc4py.PETSc.ScalarType]:
             x = preprocess_x(x)
             return np.stack([
                 2 * x[0] + 4 * x[1] * x[1],
@@ -222,7 +221,7 @@ def get_mat_types() -> typing.List[str]:
 
 def locate_boundary_dofs(
     V: dolfinx.fem.FunctionSpace, collapsed_V: typing.Optional[dolfinx.fem.FunctionSpace] = None
-) -> npt.NDArray[np.int64]:
+) -> np.typing.NDArray[np.int64]:
     """Locate DOFs on the boundary."""
     entities_dim = V.mesh.topology.dim - 1
     entities = dolfinx.mesh.locate_entities(V.mesh, entities_dim, common.FacetsSubDomain(on_boundary=True))
@@ -350,14 +349,14 @@ def get_global_restricted_to_unrestricted(
         raise RuntimeError("Invalid argument provided to gather_global_restriction_map")
 
 
-def to_numpy_vector(vec: petsc4py.PETSc.Vec) -> npt.NDArray[petsc4py.PETSc.ScalarType]:
+def to_numpy_vector(vec: petsc4py.PETSc.Vec) -> np.typing.NDArray[petsc4py.PETSc.ScalarType]:
     """Convert distributed PETSc Vec to a dense allgather-ed numpy array."""
     local_np_vec = vec.getArray()
     comm = vec.getComm().tompi4py()
     return np.hstack(comm.allgather(local_np_vec))
 
 
-def to_numpy_matrix(mat: petsc4py.PETSc.Mat) -> npt.NDArray[petsc4py.PETSc.ScalarType]:
+def to_numpy_matrix(mat: petsc4py.PETSc.Mat) -> np.typing.NDArray[petsc4py.PETSc.ScalarType]:
     """Convert distributed PETSc Mat to a dense allgather-ed numpy matrix."""
     ai, aj, av = mat.getValuesCSR()
     local_np_mat = scipy.sparse.csr_matrix((av, aj, ai), shape=(mat.getLocalSize()[0], mat.getSize()[1])).toarray()

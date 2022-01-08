@@ -19,3 +19,19 @@ except ImportError:  # pragma: no cover
     pass
 else:
     import slepc4py.SLEPc  # noqa: F401
+
+
+# We require a very small subset of the numpy typing library, namely NDArray. To avoid enforcing
+# a requirement numpy>=1.21.0, we mock numpy.typing.NDArray for older numpy versions.
+import typing
+import types  # noqa: I001
+
+import numpy
+
+try:
+    import numpy.typing
+except ImportError:  # pragma: no cover
+    numpy.typing = types.ModuleType("typing", "Mock numpy.typing module")
+finally:
+    if not hasattr(numpy.typing, "NDArray"):
+        numpy.typing.NDArray = typing.Iterable
