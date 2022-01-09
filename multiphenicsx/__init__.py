@@ -35,3 +35,16 @@ except ImportError:  # pragma: no cover
 finally:
     if not hasattr(numpy.typing, "NDArray"):
         numpy.typing.NDArray = typing.Iterable
+
+# Clean up imported names so that they are not visible to end users
+del typing
+del types
+
+del mpi4py
+del numpy
+del petsc4py
+
+try:
+    del slepc4py
+except NameError:  # pragma: no cover
+    pass
