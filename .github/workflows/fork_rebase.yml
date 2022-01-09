@@ -29,3 +29,9 @@ jobs:
           cd dolfinx
           git checkout -b github_actions
           git merge fork/migration
+      - name: Warn if scheduled workflow is about to be disabled
+        if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main' && github.event_name == 'schedule'
+        uses: fem-on-colab/warn-workflow-about-to-be-disabled-action@main
+        with:
+          workflow-filename: fork_rebase.yml
+          days-elapsed: 55

@@ -97,6 +97,12 @@ jobs:
         id: run_mesh_generation_parallel
         run: |
           pytest --meshgen --np 2 tutorials
+      - name: Warn if scheduled workflow is about to be disabled
+        if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main' && github.event_name == 'schedule'
+        uses: fem-on-colab/warn-workflow-about-to-be-disabled-action@main
+        with:
+          workflow-filename: ci.yml
+          days-elapsed: 55
 
   docker:
     if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main'
