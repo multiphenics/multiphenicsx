@@ -18,7 +18,7 @@ setuptools.setup(
     long_description="Easy prototyping of multiphysics problems on conforming meshes in FEniCSx",
     author="Francesco Ballarin (and contributors)",
     author_email="francesco.ballarin@unicatt.it",
-    version="0.1.dev1",
+    version="0.2.0",
     license="GNU Library or Lesser General Public License (LGPL)",
     url="http://mathlab.sissa.it/multiphenics",
     classifiers=[
