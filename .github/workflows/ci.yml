@@ -49,7 +49,11 @@ jobs:
         run: |
           flake8 .
           nbqa flake8 .
-      - name: Check for stray outputs, counts and metadata in ipynb files
+      - name: Check for stray outputs, counts and metadata in notebooks test files
+        uses: RBniCS/check-jupyter-metadata-action@main
+        with:
+          pattern: "tests/notebooks/data/*.ipynb"
+      - name: Check for stray outputs, counts and metadata in tutorial files
         uses: RBniCS/check-jupyter-metadata-action@main
         with:
           pattern: "tutorials/**/*.ipynb"
