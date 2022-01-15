@@ -109,12 +109,16 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build the docker release image
         run: docker build --pull --target multiphenicsx -t ${RELEASE_IMAGE}:latest -f docker/Dockerfile .
-      - name: Try importing the library inside the docker image
-        run: docker run -i --rm ${RELEASE_IMAGE} bash -c "python3 -c 'import multiphenicsx.cpp'"
-      - name: Run unit tests (serial) to verify that the docker image is working
+      - name: Try importing the library inside the docker release image
+        run: docker run -i --rm ${RELEASE_IMAGE}:latest python3 -c "import multiphenicsx.cpp"
+      - name: Run unit tests (serial) to verify that the docker release image is working
         run: docker run -i --rm ${RELEASE_IMAGE}:latest bash -c "cd multiphenicsx && pytest -n auto tests/unit"
       - name: Build the docker jupyter image
         run: docker build --pull --target jupyter -t ${RELEASE_IMAGE}:jupyter -f docker/Dockerfile .
+      - name: Try importing the library inside the docker jupyter image
+        run: docker run -i --rm --entrypoint /usr/bin/env ${RELEASE_IMAGE}:jupyter python3 -c "import multiphenicsx.cpp"
+      - name: Run tutorials (serial) to verify that the docker jupyter image is working
+        run: docker run -i --rm --entrypoint /usr/bin/env ${RELEASE_IMAGE}:jupyter bash -c "cd multiphenicsx && pytest -n auto --dist loadscope tutorials"
       - name: Log into the docker registry
         run: docker login -u ${{ secrets.CI_REGISTRY_USER }} -p ${{ secrets.CI_REGISTRY_PASSWORD }}
       - name: Push to the docker registry
