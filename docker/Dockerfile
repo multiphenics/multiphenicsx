@@ -10,6 +10,21 @@ MAINTAINER Francesco Ballarin <francesco.ballarin@unicatt.it>
 COPY . /tmp/multiphenicsx
 
 WORKDIR /tmp/multiphenicsx
+RUN pip3 -q install .[tests]
+
+WORKDIR /root
+RUN mkdir multiphenicsx && \
+    mv /tmp/multiphenicsx/tests multiphenicsx/ && \
+    rm -rf /tmp/multiphenicsx
+
+########################################
+
+FROM dolfinx/lab AS jupyter
+MAINTAINER Francesco Ballarin <francesco.ballarin@unicatt.it>
+
+COPY . /tmp/multiphenicsx
+
+WORKDIR /tmp/multiphenicsx
 RUN pip3 -q install .[tests,tutorials]
 
 WORKDIR /root
@@ -18,14 +33,5 @@ RUN mkdir multiphenicsx && \
     mv /tmp/multiphenicsx/tutorials multiphenicsx/ && \
     rm -rf /tmp/multiphenicsx
 
-########################################
-
-FROM multiphenicsx AS jupyter
-
-WORKDIR /root
-
-RUN pip3 -q install --upgrade --no-cache-dir jupyter
-
-EXPOSE 8888/tcp
-ENV SHELL /bin/bash
+# We use jupyter notebook rather than jupyter lab because itkwidgets are not yet supported in jupyter lab 3.
 ENTRYPOINT ["jupyter", "notebook", "--ip", "0.0.0.0", "--no-browser", "--allow-root"]
