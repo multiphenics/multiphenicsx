@@ -1,6 +1,0 @@
-gmsh
-itkwidgets
-plotly
-pyvista
-slepc4py
-sympy

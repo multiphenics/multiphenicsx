@@ -14,7 +14,7 @@ git clone https://github.com/multiphenics/multiphenicsx.git
 ```
 and install the package by typing
 ```
-python3 setup.py install
+pip3 install .[tutorials]
 ```
 
 #### 2.1. multiphenicsx docker image

@@ -9,6 +9,7 @@
 *.py[cod]
 *.xdmf
 .coverage*
+.eggs
 .pytest_cache
 build
 dist
