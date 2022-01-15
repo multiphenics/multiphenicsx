@@ -23,8 +23,8 @@ else:
 
 # We require a very small subset of the numpy typing library, namely NDArray. To avoid enforcing
 # a requirement numpy>=1.21.0, we mock numpy.typing.NDArray for older numpy versions.
+import types
 import typing
-import types  # noqa: I001
 
 import numpy
 

@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 """Tests for multiphenicsx.mesh.gmsh_to_fenicsx module."""
 
-import gmsh
 import mpi4py
 import pytest
 
@@ -17,6 +16,7 @@ import multiphenicsx.mesh
     reason="Mesh is so small that it cannot be partitioned by more than 2 processors.")
 def test_gmsh_to_fenicsx() -> None:
     """Check that gmsh_to_fenicsx executes without errors."""
+    gmsh = pytest.importorskip("gmsh")
     gmsh.initialize()
     gmsh.model.add("mesh_test_gmsh_to_fenicsx")
 

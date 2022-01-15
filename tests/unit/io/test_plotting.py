@@ -30,16 +30,19 @@ def mesh_2d() -> dolfinx.mesh.Mesh:
 
 def test_plot_mesh_1d(mesh_1d: dolfinx.mesh.Mesh) -> None:
     """Check that plot_mesh executes without errors (1D case)."""
+    pytest.importorskip("plotly")
     multiphenicsx.io.plot_mesh(mesh_1d)
 
 
 def test_plot_mesh_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
     """Check that plot_mesh executes without errors (2D case)."""
+    pytest.importorskip("pyvista")
     multiphenicsx.io.plot_mesh(mesh_2d)
 
 
 def test_plot_mesh_entities_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
     """Check that plot_mesh_entities executes without errors (2D mesh, 2D entities)."""
+    pytest.importorskip("pyvista")
     cell_entities = dolfinx.mesh.locate_entities(
         mesh_2d, mesh_2d.topology.dim, lambda x: np.full((x.shape[1], ), True))
     multiphenicsx.io.plot_mesh_entities(mesh_2d, mesh_2d.topology.dim, cell_entities)
@@ -47,6 +50,7 @@ def test_plot_mesh_entities_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
 
 def test_plot_mesh_entities_boundary_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
     """Check that plot_mesh_entities executes without errors (2D mesh, 1D entities)."""
+    pytest.importorskip("pyvista")
     boundary_entities = dolfinx.mesh.locate_entities_boundary(
         mesh_2d, mesh_2d.topology.dim - 1, lambda x: np.full((x.shape[1], ), True))
     multiphenicsx.io.plot_mesh_entities(mesh_2d, mesh_2d.topology.dim - 1, boundary_entities)
@@ -54,6 +58,7 @@ def test_plot_mesh_entities_boundary_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
 
 def test_plot_mesh_tags_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
     """Check that plot_mesh_tags executes without errors (2D mesh, 2D tags)."""
+    pytest.importorskip("pyvista")
     cell_entities = dolfinx.mesh.locate_entities(
         mesh_2d, mesh_2d.topology.dim, lambda x: np.full((x.shape[1], ), True))
     cell_tags = dolfinx.mesh.MeshTags(
@@ -63,6 +68,7 @@ def test_plot_mesh_tags_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
 
 def test_plot_mesh_tags_boundary_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
     """Check that plot_mesh_tags executes without errors (2D mesh, 1D tags)."""
+    pytest.importorskip("pyvista")
     boundary_entities = dolfinx.mesh.locate_entities_boundary(
         mesh_2d, mesh_2d.topology.dim - 1, lambda x: np.full((x.shape[1], ), True))
     boundary_tags = dolfinx.mesh.MeshTags(
@@ -72,6 +78,7 @@ def test_plot_mesh_tags_boundary_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
 
 def test_plot_scalar_field_1d(mesh_1d: dolfinx.mesh.Mesh) -> None:
     """Check that plot_scalar_field executes without errors (1D case)."""
+    pytest.importorskip("plotly")
     V = dolfinx.fem.FunctionSpace(mesh_1d, ("Lagrange", 1))
     u = dolfinx.fem.Function(V)
     with u.vector.localForm() as u_local:
@@ -85,6 +92,7 @@ def test_plot_scalar_field_1d(mesh_1d: dolfinx.mesh.Mesh) -> None:
 
 def test_plot_scalar_field_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
     """Check that plot_scalar_field executes without errors (2D case)."""
+    pytest.importorskip("pyvista")
     V = dolfinx.fem.FunctionSpace(mesh_2d, ("Lagrange", 1))
     u = dolfinx.fem.Function(V)
     with u.vector.localForm() as u_local:
@@ -99,6 +107,7 @@ def test_plot_scalar_field_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
 
 def test_plot_vector_field_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
     """Check that plot_vector_field executes without errors (2D case)."""
+    pytest.importorskip("pyvista")
     V = dolfinx.fem.VectorFunctionSpace(mesh_2d, ("Lagrange", 1))
     u = dolfinx.fem.Function(V)
     with u.vector.localForm() as u_local:

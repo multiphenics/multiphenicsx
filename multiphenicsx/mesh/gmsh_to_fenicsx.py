@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 """Utilities to convert a gmsh model to dolfinx."""
 
-
+import types
 import typing
 
 import dolfinx.cpp
@@ -17,7 +17,8 @@ import numpy as np
 try:
     import gmsh
 except ImportError:  # pragma: no cover
-    pass
+    gmsh = types.ModuleType("gmsh", "Mock gmsh module")
+    gmsh.model = object
 
 
 def gmsh_to_fenicsx(model: gmsh.model, gdim: int) -> typing.Tuple[

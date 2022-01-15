@@ -6,6 +6,7 @@
 """Utilities for plotting dolfinx objects with plotly and pyvista."""
 
 import os
+import types
 import typing
 
 import dolfinx.fem
@@ -22,7 +23,8 @@ except ImportError:  # pragma: no cover
 try:
     import pyvista
 except ImportError:  # pragma: no cover
-    pass
+    pyvista = types.ModuleType("pyvista", "Mock pyvista module")
+    pyvista.UnstructuredGrid = object
 
 
 def _dolfinx_to_pyvista_mesh(mesh: dolfinx.mesh.Mesh, dim: int = None) -> pyvista.UnstructuredGrid:
