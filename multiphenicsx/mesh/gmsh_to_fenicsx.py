@@ -33,6 +33,15 @@ def gmsh_to_fenicsx(model: gmsh.model, gdim: int) -> typing.Tuple[
     gdim: int
         Geometrical dimension of problem.
 
+    Returns
+    -------
+    dolfinx.mesh.Mesh
+        The GMSH model as a dolfinx.mesh.Mesh object.
+    dolfinx.mesh.MeshTags
+        The marked subdomains in the GMSH model as a dolfinx.mesh.MeshTags object.
+    dolfinx.mesh.MeshTags
+        The marked boundaries in the GMSH model as a dolfinx.mesh.MeshTags object.
+
     Notes
     -----
     Adapted from [1]_.
