@@ -37,8 +37,8 @@ finally:
         numpy.typing.NDArray = typing.Iterable
 
 # Clean up imported names so that they are not visible to end users
-del typing
 del types
+del typing
 
 del mpi4py
 del numpy
