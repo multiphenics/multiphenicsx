@@ -33,7 +33,7 @@ try:
 except ImportError:  # pragma: no cover
     numpy.typing = types.ModuleType("typing", "Mock numpy.typing module")
 finally:
-    if not hasattr(numpy.typing, "NDArray"):
+    if not hasattr(numpy.typing, "NDArray"):  # pragma: no cover
         numpy.typing.NDArray = typing.Iterable
 
 # Clean up imported names so that they are not visible to end users
