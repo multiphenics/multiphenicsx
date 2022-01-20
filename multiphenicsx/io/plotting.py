@@ -18,13 +18,20 @@ import petsc4py
 try:
     import plotly.graph_objects as go
 except ImportError:  # pragma: no cover
-    pass
+    go = types.ModuleType("go", "Mock plotly.graph_objects module")
+    go.Figure = object
 
 try:
     import pyvista
 except ImportError:  # pragma: no cover
     pyvista = types.ModuleType("pyvista", "Mock pyvista module")
     pyvista.UnstructuredGrid = object
+
+try:
+    import itkwidgets
+except ImportError:  # pragma: no cover
+    itkwidgets = types.ModuleType("itkwidgets", "Mock itkwidgets module")
+    itkwidgets.Viewer = object
 
 
 def _dolfinx_to_pyvista_mesh(mesh: dolfinx.mesh.Mesh, dim: int = None) -> pyvista.UnstructuredGrid:
@@ -38,7 +45,7 @@ def _dolfinx_to_pyvista_mesh(mesh: dolfinx.mesh.Mesh, dim: int = None) -> pyvist
     return pyvista.UnstructuredGrid(pyvista_cells, cell_types, mesh.geometry.x)
 
 
-def plot_mesh(mesh: dolfinx.mesh.Mesh) -> None:
+def plot_mesh(mesh: dolfinx.mesh.Mesh) -> typing.Union[go.Figure, itkwidgets.Viewer]:
     """
     Plot a dolfinx.mesh.Mesh with plotly (in 1D) or pyvista (in 2D or 3D).
 
@@ -46,14 +53,20 @@ def plot_mesh(mesh: dolfinx.mesh.Mesh) -> None:
     ----------
     mesh : dolfinx.mesh.Mesh
         Mesh to be plotted.
+
+    Returns
+    -------
+    typing.Union[plotly.graph_objects.Figure, itkwidgets.Viewer]
+        A plotly.graph_objects.Figure (in 1D) or itkwidgets.Viewer (in 2D or 3D)
+        representing a plot of the mesh.
     """
     if mesh.topology.dim == 1:
-        _plot_mesh_plotly(mesh)
+        return _plot_mesh_plotly(mesh)
     else:
-        _plot_mesh_pyvista(mesh)
+        return _plot_mesh_pyvista(mesh)
 
 
-def _plot_mesh_plotly(mesh: dolfinx.mesh.Mesh) -> None:
+def _plot_mesh_plotly(mesh: dolfinx.mesh.Mesh) -> go.Figure:
     fig = go.Figure(data=go.Scatter(
         x=mesh.geometry.x[:, 0], y=np.zeros(mesh.geometry.x.shape[0]),
         line=dict(color="blue", width=2, dash="solid"),
@@ -61,18 +74,21 @@ def _plot_mesh_plotly(mesh: dolfinx.mesh.Mesh) -> None:
         mode="lines+markers"))
     fig.update_xaxes(title_text="x")
     if "PYTEST_CURRENT_TEST" not in os.environ:  # pragma: no cover
-        fig.show()
+        renderer = None
+    else:
+        renderer = "png"
+    fig.show(renderer=renderer)
+    return fig
 
 
-def _plot_mesh_pyvista(mesh: dolfinx.mesh.Mesh) -> None:
+def _plot_mesh_pyvista(mesh: dolfinx.mesh.Mesh) -> itkwidgets.Viewer:
     grid = _dolfinx_to_pyvista_mesh(mesh)
     plotter = pyvista.PlotterITK()
     plotter.add_mesh(grid)
-    if "PYTEST_CURRENT_TEST" not in os.environ:  # pragma: no cover
-        plotter.show()
+    return plotter.show()
 
 
-def plot_mesh_entities(mesh: dolfinx.mesh.Mesh, dim: int, entities: np.typing.NDArray[int]) -> None:
+def plot_mesh_entities(mesh: dolfinx.mesh.Mesh, dim: int, entities: np.typing.NDArray[int]) -> itkwidgets.Viewer:
     """
     Plot dolfinx.mesh.Mesh with pyvista, highlighting the provided `dim`-dimensional entities.
 
@@ -84,12 +100,17 @@ def plot_mesh_entities(mesh: dolfinx.mesh.Mesh, dim: int, entities: np.typing.ND
         Dimension of the entities
     entities : numpy.typing.NDArray[int]
         Array containing the IDs of the entities to be highlighted.
+
+    Returns
+    -------
+    itkwidgets.Viewer
+        An itkwidgets.Viewer representing a plot of the mesh entities.
     """
     assert mesh.topology.dim > 1
-    _plot_mesh_entities_pyvista(mesh, dim, entities, np.ones_like(entities))
+    return _plot_mesh_entities_pyvista(mesh, dim, entities, np.ones_like(entities))
 
 
-def plot_mesh_tags(mesh_tags: dolfinx.mesh.MeshTags) -> None:
+def plot_mesh_tags(mesh_tags: dolfinx.mesh.MeshTags) -> itkwidgets.Viewer:
     """
     Plot dolfinx.mesh.MeshTags with pyvista.
 
@@ -97,15 +118,20 @@ def plot_mesh_tags(mesh_tags: dolfinx.mesh.MeshTags) -> None:
     ----------
     mesh : dolfinx.mesh.MeshTags
         MeshTags to be plotted. Current implementation is limited to 2D or 3D underlying meshes.
+
+    Returns
+    -------
+    itkwidgets.Viewer
+        An itkwidgets.Viewer representing a plot of the dolfinx.mesh.MeshTags object.
     """
     mesh = mesh_tags.mesh
     assert mesh.topology.dim > 1
-    _plot_mesh_entities_pyvista(mesh, mesh_tags.dim, mesh_tags.indices, mesh_tags.values)
+    return _plot_mesh_entities_pyvista(mesh, mesh_tags.dim, mesh_tags.indices, mesh_tags.values)
 
 
 def _plot_mesh_entities_pyvista(
     mesh: dolfinx.mesh.Mesh, dim: int, indices: np.typing.NDArray[int], values: np.typing.NDArray[int]
-) -> None:
+) -> itkwidgets.Viewer:
     num_cells = mesh.topology.index_map(dim).size_local + mesh.topology.index_map(dim).num_ghosts
     all_values = np.zeros(num_cells)
     for (index, value) in zip(indices, values):
@@ -121,13 +147,12 @@ def _plot_mesh_entities_pyvista(
     grid.set_active_scalars(name)
     plotter = pyvista.PlotterITK()
     plotter.add_mesh(grid)
-    if "PYTEST_CURRENT_TEST" not in os.environ:  # pragma: no cover
-        plotter.show()
+    return plotter.show()
 
 
 def plot_scalar_field(
     scalar_field: dolfinx.fem.Function, name: str, warp_factor: float = 0.0, part: str = "real"
-) -> None:
+) -> typing.Union[go.Figure, itkwidgets.Viewer]:
     """
     Plot a scalar field with plotly (in 1D) or pyvista (in 2D or 3D).
 
@@ -144,36 +169,53 @@ def plot_scalar_field(
     part : str, optional
         Part of the solution (real or imag) to be plotted. By default, the real part is plotted.
         The argument is ignored when plotting a real field.
+
+    Returns
+    -------
+    typing.Union[plotly.graph_objects.Figure, itkwidgets.Viewer]
+        A plotly.graph_objects.Figure (in 1D) or itkwidgets.Viewer (in 2D or 3D)
+        representing a plot of the scalar field.
     """
     mesh = scalar_field.function_space.mesh
     if mesh.topology.dim == 1:
-        _plot_scalar_field_plotly(mesh, scalar_field, name, part)
+        return _plot_scalar_field_plotly(scalar_field, name, part)
     else:
-        _plot_scalar_field_pyvista(mesh, scalar_field, name, warp_factor, part)
+        return _plot_scalar_field_pyvista(scalar_field, name, warp_factor, part)
 
 
 def _plot_scalar_field_plotly(
-    mesh: dolfinx.mesh.Mesh, scalar_field: dolfinx.fem.Function, name: str, part: str
-) -> None:
-    values = scalar_field.compute_point_values().reshape(-1)
+    scalar_field: dolfinx.fem.Function, name: str, part: str
+) -> go.Figure:
+    values = scalar_field.x.array
     values, name = _extract_part(values, name, part)
+    coordinates = scalar_field.function_space.tabulate_dof_coordinates()
+    coordinates = coordinates[:, 0]
+    argsort = coordinates.argsort()
+    coordinates = coordinates[argsort]
+    values = values[argsort]
     fig = go.Figure(data=go.Scatter(
-        x=mesh.geometry.x[:, 0], y=values,
+        x=coordinates, y=values,
         line=dict(color="blue", width=2, dash="solid"),
         marker=dict(color="blue", size=10),
         mode="lines+markers"))
     fig.update_xaxes(title_text="x")
     fig.update_yaxes(title_text=name)
     if "PYTEST_CURRENT_TEST" not in os.environ:  # pragma: no cover
-        fig.show()
+        renderer = None
+    else:
+        renderer = "png"
+    fig.show(renderer=renderer)
+    return fig
 
 
 def _plot_scalar_field_pyvista(
-    mesh: dolfinx.mesh.Mesh, scalar_field: dolfinx.fem.Function, name: str, warp_factor: float, part: str
-) -> None:
-    values = scalar_field.compute_point_values()
+    scalar_field: dolfinx.fem.Function, name: str, warp_factor: float, part: str
+) -> itkwidgets.Viewer:
+    values = scalar_field.x.array
     values, name = _extract_part(values, name, part)
-    grid = _dolfinx_to_pyvista_mesh(mesh)
+    pyvista_cells, cell_types = dolfinx.plot.create_vtk_topology(scalar_field.function_space)
+    coordinates = scalar_field.function_space.tabulate_dof_coordinates()
+    grid = pyvista.UnstructuredGrid(pyvista_cells, cell_types, coordinates)
     grid.point_data[name] = values
     grid.set_active_scalars(name)
     plotter = pyvista.PlotterITK()
@@ -183,14 +225,13 @@ def _plot_scalar_field_pyvista(
         plotter.add_mesh(warped)
     else:
         plotter.add_mesh(grid)
-    if "PYTEST_CURRENT_TEST" not in os.environ:  # pragma: no cover
-        plotter.show()
+    return plotter.show()
 
 
 def plot_vector_field(
     vector_field: dolfinx.fem.Function, name: str, glyph_factor: float = 0.0, warp_factor: float = 0.0,
     part: str = "real"
-) -> None:
+) -> itkwidgets.Viewer:
     """
     Plot a vector field with pyvista.
 
@@ -209,20 +250,28 @@ def plot_vector_field(
     part : str, optional
         Part of the solution (real or imag) to be plotted. By default, the real part is plotted.
         The argument is ignored when plotting a real field.
+
+    Returns
+    -------
+    itkwidgets.Viewer
+        An itkwidgets.Viewer representing a plot of the vector field.
     """
     mesh = vector_field.function_space.mesh
     assert mesh.topology.dim > 1
-    _plot_vector_field_pyvista(mesh, vector_field, name, glyph_factor, warp_factor, part)
+    return _plot_vector_field_pyvista(vector_field, name, glyph_factor, warp_factor, part)
 
 
 def _plot_vector_field_pyvista(
-    mesh: dolfinx.mesh.Mesh, vector_field: dolfinx.fem.Function, name: str, glyph_factor: float,
+    vector_field: dolfinx.fem.Function, name: str, glyph_factor: float,
     warp_factor: float, part: str
-) -> None:
-    grid = _dolfinx_to_pyvista_mesh(mesh)
-    values = np.zeros((mesh.geometry.x.shape[0], 3))
-    values[:, :2] = vector_field.compute_point_values()
+) -> itkwidgets.Viewer:
+    pyvista_cells, cell_types = dolfinx.plot.create_vtk_topology(vector_field.function_space)
+    coordinates = vector_field.function_space.tabulate_dof_coordinates()
+    values = vector_field.x.array.reshape(coordinates.shape[0], vector_field.function_space.dofmap.index_map_bs)
     values, name = _extract_part(values, name, part)
+    if values.shape[1] == 2:
+        values = np.insert(values, values.shape[1], 0.0, axis=1)
+    grid = pyvista.UnstructuredGrid(pyvista_cells, cell_types, coordinates)
     grid.point_data[name] = values
     plotter = pyvista.PlotterITK()
     if glyph_factor == 0.0:
@@ -238,10 +287,10 @@ def _plot_vector_field_pyvista(
         assert warp_factor == 0.0
         glyphs = grid.glyph(orient=name, factor=glyph_factor)
         plotter.add_mesh(glyphs)
+        mesh = vector_field.function_space.mesh
         grid_background = _dolfinx_to_pyvista_mesh(mesh, mesh.topology.dim - 1)
         plotter.add_mesh(grid_background)
-    if "PYTEST_CURRENT_TEST" not in os.environ:  # pragma: no cover
-        plotter.show()
+    return plotter.show()
 
 
 def _extract_part(
