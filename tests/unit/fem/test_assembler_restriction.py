@@ -244,7 +244,7 @@ def get_boundary_conditions(offset: int = 0) -> typing.Tuple[typing.Callable]:
         else:
             bc1 = list()
             for i in range(num_sub_elements):
-                bc1_fun = dolfinx.fem.Function(V.sub(i).collapse())
+                bc1_fun = dolfinx.fem.Function(V.sub(i).collapse()[0])
                 with bc1_fun.vector.localForm() as local_form:
                     local_form.set(i + 1. + offset)
                 bdofs = locate_boundary_dofs(V.sub(i), bc1_fun.function_space)
