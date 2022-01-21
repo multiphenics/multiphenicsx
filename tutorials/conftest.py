@@ -11,13 +11,12 @@ import typing
 import _pytest.config
 import _pytest.main
 import _pytest.nodes
-
-import multiphenicsx.test.notebooks
+import nbvalx.pytest_hooks_notebooks
 
 
 def pytest_addoption(parser: _pytest.main.Parser) -> None:
     """Add options to set the number of processes and whether to run mesh generation notebooks or tutorials."""
-    multiphenicsx.test.notebooks.addoption(parser)
+    nbvalx.pytest_hooks_notebooks.addoption(parser)
     parser.addoption("--meshgen", action="store_true", help="run mesh generation notebooks")
 
 
@@ -42,7 +41,7 @@ def pytest_collection_modifyitems(
 
 def pytest_runtest_setup(item: _pytest.nodes.Item) -> None:
     """Insert skips on cell failure."""
-    multiphenicsx.test.notebooks.runtest_setup(item)
+    nbvalx.pytest_hooks_notebooks.runtest_setup(item)
     # Create a symbolic link to the data folder when running on the temporary ipyparallel copy of the notebook
     if item.config.option.np > 1 and item.name == "Cell 0":
         dest_data = str(item.parent.fspath.new(basename="data"))
@@ -53,6 +52,7 @@ def pytest_runtest_setup(item: _pytest.nodes.Item) -> None:
             os.symlink(src_data, dest_data)
 
 
-pytest_collect_file = multiphenicsx.test.notebooks.collect_file
-pytest_runtest_makereport = multiphenicsx.test.notebooks.runtest_makereport
-pytest_runtest_teardown = multiphenicsx.test.notebooks.runtest_teardown
+pytest_sessionstart = nbvalx.pytest_hooks_notebooks.sessionstart
+pytest_collect_file = nbvalx.pytest_hooks_notebooks.collect_file
+pytest_runtest_makereport = nbvalx.pytest_hooks_notebooks.runtest_makereport
+pytest_runtest_teardown = nbvalx.pytest_hooks_notebooks.runtest_teardown
