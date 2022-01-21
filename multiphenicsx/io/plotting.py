@@ -40,9 +40,9 @@ def _dolfinx_to_pyvista_mesh(mesh: dolfinx.mesh.Mesh, dim: int = None) -> pyvist
     mesh.topology.create_connectivity(dim, dim)
     num_cells = mesh.topology.index_map(dim).size_local + mesh.topology.index_map(dim).num_ghosts
     cell_entities = np.arange(num_cells, dtype=np.int32)
-    pyvista_cells, cell_types = dolfinx.plot.create_vtk_topology(
+    pyvista_cells, cell_types, coordinates = dolfinx.plot.create_vtk_mesh(
         mesh, dim, cell_entities)
-    return pyvista.UnstructuredGrid(pyvista_cells, cell_types, mesh.geometry.x)
+    return pyvista.UnstructuredGrid(pyvista_cells, cell_types, coordinates)
 
 
 def plot_mesh(mesh: dolfinx.mesh.Mesh) -> typing.Union[go.Figure, itkwidgets.Viewer]:
@@ -213,8 +213,7 @@ def _plot_scalar_field_pyvista(
 ) -> itkwidgets.Viewer:
     values = scalar_field.x.array
     values, name = _extract_part(values, name, part)
-    pyvista_cells, cell_types = dolfinx.plot.create_vtk_topology(scalar_field.function_space)
-    coordinates = scalar_field.function_space.tabulate_dof_coordinates()
+    pyvista_cells, cell_types, coordinates = dolfinx.plot.create_vtk_mesh(scalar_field.function_space)
     grid = pyvista.UnstructuredGrid(pyvista_cells, cell_types, coordinates)
     grid.point_data[name] = values
     grid.set_active_scalars(name)
@@ -265,8 +264,7 @@ def _plot_vector_field_pyvista(
     vector_field: dolfinx.fem.Function, name: str, glyph_factor: float,
     warp_factor: float, part: str
 ) -> itkwidgets.Viewer:
-    pyvista_cells, cell_types = dolfinx.plot.create_vtk_topology(vector_field.function_space)
-    coordinates = vector_field.function_space.tabulate_dof_coordinates()
+    pyvista_cells, cell_types, coordinates = dolfinx.plot.create_vtk_mesh(vector_field.function_space)
     values = vector_field.x.array.reshape(coordinates.shape[0], vector_field.function_space.dofmap.index_map_bs)
     values, name = _extract_part(values, name, part)
     if values.shape[1] == 2:
