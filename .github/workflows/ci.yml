@@ -68,13 +68,13 @@ jobs:
           pattern: "tutorials/**/*.ipynb"
       - name: Run tutorials (serial)
         run: |
-          pytest -n auto --dist loadscope tutorials
+          pytest tutorials
       - name: Run tutorials (parallel)
         run: |
           pytest --np 2 tutorials
       - name: Run mesh generation in tutorials (serial)
         run: |
-          pytest -n auto --dist loadscope --meshgen tutorials
+          pytest --meshgen tutorials
       - name: Run mesh generation in tutorials (parallel)
         run: |
           pytest --meshgen --np 2 tutorials
@@ -107,7 +107,7 @@ jobs:
       - name: Try importing the library inside the docker jupyter image
         run: docker run -i --rm --entrypoint /usr/bin/env ${RELEASE_IMAGE}:jupyter python3 -c "import multiphenicsx.cpp"
       - name: Run tutorials (serial) to verify that the docker jupyter image is working
-        run: docker run -i --rm --entrypoint /usr/bin/env ${RELEASE_IMAGE}:jupyter bash -c "cd multiphenicsx && pytest -n auto --dist loadscope tutorials"
+        run: docker run -i --rm --entrypoint /usr/bin/env ${RELEASE_IMAGE}:jupyter bash -c "cd multiphenicsx && pytest tutorials"
       - name: Log into the docker registry
         run: docker login -u ${{ secrets.CI_REGISTRY_USER }} -p ${{ secrets.CI_REGISTRY_PASSWORD }}
       - name: Push to the docker registry
