@@ -65,10 +65,8 @@ jobs:
       - name: Run flake8 checks on tutorial files
         run: |
           NO_TESTS_COLLECTED=5
-          python3 -m pytest --tag-action=create-notebooks tutorials || (($?==$NO_TESTS_COLLECTED))
-          python3 -m pytest --tag-action=create-notebooks --tag-collapse tutorials || (($?==$NO_TESTS_COLLECTED))
-          python3 -m pytest --tag-action=create-notebooks --np=2 tutorials || (($?==$NO_TESTS_COLLECTED))
-          python3 -m pytest --tag-action=create-notebooks --tag-collapse --np=2 tutorials || (($?==$NO_TESTS_COLLECTED))
+          python3 -m pytest --ipynb-action=create-notebooks tutorials || (($?==$NO_TESTS_COLLECTED))
+          python3 -m pytest --ipynb-action=create-notebooks --np=2 tutorials || (($?==$NO_TESTS_COLLECTED))
           nbqa flake8 .
         shell: bash
       - name: Check for stray outputs, counts and metadata in tutorial files
