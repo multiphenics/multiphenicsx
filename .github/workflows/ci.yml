@@ -54,7 +54,7 @@ jobs:
           cd docs && make html
       - name: Run unit tests (serial)
         run: |
-          COVERAGE_FILE=.coverage_unit_serial python3 -m coverage run --source=multiphenicsx -m pytest -n auto tests/unit
+          COVERAGE_FILE=.coverage_unit_serial python3 -m coverage run --source=multiphenicsx -m pytest tests/unit
       - name: Run unit tests (parallel)
         run: |
           COVERAGE_FILE=.coverage_unit_parallel mpirun -n 2 python3 -m coverage run --source=multiphenicsx --parallel-mode -m pytest tests/unit
@@ -99,7 +99,7 @@ jobs:
       - name: Try importing the library inside the docker release image
         run: docker run -i --rm ${RELEASE_IMAGE}:latest python3 -c "import multiphenicsx.cpp"
       - name: Run unit tests (serial) to verify that the docker release image is working
-        run: docker run -i --rm ${RELEASE_IMAGE}:latest bash -c "cd multiphenicsx && pytest -n auto tests/unit"
+        run: docker run -i --rm ${RELEASE_IMAGE}:latest bash -c "cd multiphenicsx && pytest tests/unit"
       - name: Build the docker jupyter image
         run: docker build --pull --target jupyter -t ${RELEASE_IMAGE}:jupyter -f docker/Dockerfile .
       - name: Try importing the library inside the docker jupyter image
