@@ -79,6 +79,13 @@ jobs:
       - name: Run tutorials (parallel)
         run: |
           python3 -m pytest --np 2 tutorials
+      - name: Upload tutorials logs as an artifact in case of failure
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v2
+        with:
+          name: "tutorials-logs-${{ matrix.petsc_arch }}"
+          path: |
+            tutorials/**/.ipynb_pytest/**/*.log*
       - name: Warn if scheduled workflow is about to be disabled
         if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main' && github.event_name == 'schedule'
         uses: fem-on-colab/warn-workflow-about-to-be-disabled-action@main
