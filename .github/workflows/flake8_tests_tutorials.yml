@@ -1,0 +1,108 @@
+name: Run flake8, unit tests and tutorials
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: "Repository to test"
+      library:
+        description: "Import name of the library"
+  workflow_call:
+    inputs:
+      repository:
+        description: "Repository to test"
+        type: string
+      library:
+        description: "Import name of the library"
+        type: string
+    secrets:
+      REPO_ACCESS_TOKEN:
+        description: "GitHub access token with repo scope"
+
+jobs:
+  test:
+    if: >-
+      (
+        (
+          github.event_name == 'schedule'
+          && github.repository == (github.event.inputs || inputs).repository
+        ) || (
+            github.event_name != 'schedule'
+            && !(
+              contains(github.event.head_commit.message, '[ci skip]')
+              || contains(github.event.head_commit.message, '[skip ci]')
+            )
+        )
+      )
+    runs-on: ubuntu-latest
+    container: dolfinx/dolfinx
+    strategy:
+      matrix:
+        petsc_arch: [real, complex]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set PETSc scalar type
+        run: |
+          . /usr/local/bin/dolfinx-${{ matrix.petsc_arch }}-mode
+          echo "PETSC_ARCH=$PETSC_ARCH" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
+      - name: Install library
+        run: |
+          LIBRARY=${{ (github.event.inputs || inputs).library }}
+          python3 -m pip install .[docs,lint,tests,tutorials]
+          python3 -c "import ${LIBRARY}.cpp"
+          wget https://github.com/ipython/ipython/commit/9800157ab0282ce61c37ae6f718d5b2314ddbdbe.diff -O /tmp/ipython-patch && patch -d /usr/local/lib/python3.9/dist-packages/ -p 1 -N < /tmp/ipython-patch
+      - name: Run flake8 checks on python files
+        run: |
+          python3 -m flake8 .
+      - name: Run documentation generation
+        run: |
+          cd docs && make html
+      - name: Run unit tests (serial)
+        run: |
+          LIBRARY=${{ (github.event.inputs || inputs).library }}
+          COVERAGE_FILE=.coverage_unit_serial python3 -m coverage run --source=${LIBRARY} -m pytest tests/unit
+      - name: Run unit tests (parallel)
+        run: |
+          LIBRARY=${{ (github.event.inputs || inputs).library }}
+          COVERAGE_FILE=.coverage_unit_parallel mpirun -n 2 python3 -m coverage run --source=${LIBRARY} --parallel-mode -m pytest tests/unit
+      - name: Combine coverage reports
+        run: |
+          python3 -m coverage combine .coverage*
+          python3 -m coverage report --fail-under=100 --show-missing --skip-covered
+      - name: Run flake8 checks on tutorial files
+        run: |
+          NO_TESTS_COLLECTED=5
+          python3 -m pytest --ipynb-action=create-notebooks tutorials || (($?==$NO_TESTS_COLLECTED))
+          python3 -m pytest --ipynb-action=create-notebooks --tag-collapse tutorials || (($?==$NO_TESTS_COLLECTED))
+          python3 -m pytest --ipynb-action=create-notebooks --np=2 tutorials || (($?==$NO_TESTS_COLLECTED))
+          python3 -m pytest --ipynb-action=create-notebooks --tag-collapse --np=2 tutorials || (($?==$NO_TESTS_COLLECTED))
+          nbqa flake8 .
+        shell: bash
+      - name: Check for stray outputs, counts and metadata in tutorial files
+        uses: RBniCS/check-jupyter-metadata-action@main
+        with:
+          pattern: "tutorials/**/*.ipynb"
+      - name: Run tutorials (serial)
+        run: |
+          python3 -m pytest tutorials
+      - name: Run tutorials (parallel)
+        run: |
+          python3 -m pytest --np 2 tutorials
+      - name: Upload tutorials logs as an artifact in case of failure
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v2
+        with:
+          name: "tutorials-logs-${{ matrix.petsc_arch }}"
+          path: |
+            tutorials/**/.ipynb_pytest/**/*.log*
+      - name: Warn if scheduled workflow is about to be disabled
+        if: github.repository == (github.event.inputs || inputs).repository && github.ref == 'refs/heads/main' && github.event_name == 'schedule'
+        uses: fem-on-colab/warn-workflow-about-to-be-disabled-action@main
+        with:
+          workflow-filename: ci.yml
+          days-elapsed: 55
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
