@@ -13,109 +13,20 @@ on:
 
 jobs:
   test:
-    if: >-
-      (
-        (
-          github.event_name == 'schedule'
-          && github.repository == 'multiphenics/multiphenicsx'
-        ) || (
-            github.event_name != 'schedule'
-            && !(
-              contains(github.event.head_commit.message, '[ci skip]')
-              || contains(github.event.head_commit.message, '[skip ci]')
-            )
-        )
-      )
-    runs-on: ubuntu-latest
-    container: dolfinx/dolfinx
-    strategy:
-      matrix:
-        petsc_arch: [real, complex]
-      fail-fast: false
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set PETSc scalar type
-        run: |
-          . /usr/local/bin/dolfinx-${{ matrix.petsc_arch }}-mode
-          echo "PETSC_ARCH=$PETSC_ARCH" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
-          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
-      - name: Install multiphenicsx
-        run: |
-          python3 -m pip install .[docs,lint,tests,tutorials]
-          python3 -c "import multiphenicsx.cpp"
-          wget https://github.com/ipython/ipython/commit/9800157ab0282ce61c37ae6f718d5b2314ddbdbe.diff -O /tmp/ipython-patch && patch -d /usr/local/lib/python3.9/dist-packages/ -p 1 -N < /tmp/ipython-patch
-      - name: Run flake8 checks on python files
-        run: |
-          python3 -m flake8 .
-      - name: Run documentation generation
-        run: |
-          cd docs && make html
-      - name: Run unit tests (serial)
-        run: |
-          COVERAGE_FILE=.coverage_unit_serial python3 -m coverage run --source=multiphenicsx -m pytest tests/unit
-      - name: Run unit tests (parallel)
-        run: |
-          COVERAGE_FILE=.coverage_unit_parallel mpirun -n 2 python3 -m coverage run --source=multiphenicsx --parallel-mode -m pytest tests/unit
-      - name: Combine coverage reports
-        run: |
-          python3 -m coverage combine .coverage*
-          python3 -m coverage report --fail-under=100 --show-missing --skip-covered
-      - name: Run flake8 checks on tutorial files
-        run: |
-          NO_TESTS_COLLECTED=5
-          python3 -m pytest --ipynb-action=create-notebooks tutorials || (($?==$NO_TESTS_COLLECTED))
-          python3 -m pytest --ipynb-action=create-notebooks --np=2 tutorials || (($?==$NO_TESTS_COLLECTED))
-          nbqa flake8 .
-        shell: bash
-      - name: Check for stray outputs, counts and metadata in tutorial files
-        uses: RBniCS/check-jupyter-metadata-action@main
-        with:
-          pattern: "tutorials/**/*.ipynb"
-      - name: Run tutorials (serial)
-        run: |
-          python3 -m pytest tutorials
-      - name: Run tutorials (parallel)
-        run: |
-          python3 -m pytest --np 2 tutorials
-      - name: Upload tutorials logs as an artifact in case of failure
-        if: failure() || cancelled()
-        uses: actions/upload-artifact@v2
-        with:
-          name: "tutorials-logs-${{ matrix.petsc_arch }}"
-          path: |
-            tutorials/**/.ipynb_pytest/**/*.log*
-      - name: Warn if scheduled workflow is about to be disabled
-        if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main' && github.event_name == 'schedule'
-        uses: fem-on-colab/warn-workflow-about-to-be-disabled-action@main
-        with:
-          workflow-filename: ci.yml
-          days-elapsed: 55
+    uses: multiphenics/multiphenicsx/.github/workflows/flake8_tests_tutorials.yml@main
+    with:
+      repository: "multiphenics/multiphenicsx"
+      library: "multiphenicsx"
+    secrets:
+      REPO_ACCESS_TOKEN: ""
 
   docker:
-    if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    uses: multiphenics/multiphenicsx/.github/workflows/docker.yml@main
     needs: [test]
-    env:
-      RELEASE_IMAGE: multiphenics/multiphenicsx
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build the docker release image
-        run: docker build --pull --target multiphenicsx -t ${RELEASE_IMAGE}:latest -f docker/Dockerfile .
-      - name: Try importing the library inside the docker release image
-        run: docker run -i --rm ${RELEASE_IMAGE}:latest python3 -c "import multiphenicsx.cpp"
-      - name: Run unit tests (serial) to verify that the docker release image is working
-        run: docker run -i --rm ${RELEASE_IMAGE}:latest bash -c "cd multiphenicsx && pytest tests/unit"
-      - name: Build the docker jupyter image
-        run: docker build --pull --target jupyter -t ${RELEASE_IMAGE}:jupyter -f docker/Dockerfile .
-      - name: Try importing the library inside the docker jupyter image
-        run: docker run -i --rm --entrypoint /usr/bin/env ${RELEASE_IMAGE}:jupyter python3 -c "import multiphenicsx.cpp"
-      - name: Run tutorials (serial) to verify that the docker jupyter image is working
-        run: docker run -i --rm --entrypoint /usr/bin/env ${RELEASE_IMAGE}:jupyter bash -c "cd multiphenicsx && pytest tutorials"
-      - name: Log into the docker registry
-        run: docker login -u ${{ secrets.CI_REGISTRY_USER }} -p ${{ secrets.CI_REGISTRY_PASSWORD }}
-      - name: Push to the docker registry
-        run: |
-          docker push ${RELEASE_IMAGE}:latest
-          docker push ${RELEASE_IMAGE}:jupyter
+    with:
+      repository: "multiphenics/multiphenicsx"
+      library: "multiphenicsx"
+      image_name: "multiphenics/multiphenicsx"
+    secrets:
+      CI_REGISTRY_USER: "${{ secrets.CI_REGISTRY_USER }}"
+      CI_REGISTRY_PASSWORD: "${{ secrets.CI_REGISTRY_PASSWORD }}"
