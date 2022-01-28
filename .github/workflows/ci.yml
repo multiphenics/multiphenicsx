@@ -31,3 +31,30 @@ jobs:
     secrets:
       CI_REGISTRY_USER: "${{ secrets.CI_REGISTRY_USER }}"
       CI_REGISTRY_PASSWORD: "${{ secrets.CI_REGISTRY_PASSWORD }}"
+
+  open_in_colab:
+    uses: fem-on-colab/open-in-colab-workflow/.github/workflows/workflow_call.yml@main
+    needs: [test]
+    if: github.ref == 'refs/heads/main'
+    with:
+      work_directory: open_in_colab
+      notebook_pattern: "**/*.ipynb"
+      notebook_preparation: |
+        python3 -m pip install --no-dependencies git+https://github.com/multiphenics/nbvalx.git
+        NO_TESTS_COLLECTED=5
+        python3 -m pytest --ipynb-action=create-notebooks --tag-collapse --work-dir=.ipynb_colab tutorials || (($?==$NO_TESTS_COLLECTED))
+        find tutorials -type d -name .ipynb_colab -exec rsync -avz --remove-source-files --include="*.ipynb" --exclude="*" {}/ {}/.. \;
+        rsync -avz --include "*/" --include="*.ipynb" --exclude="*" tutorials open_in_colab/
+      fem_on_colab_packages: |
+        fenicsx$dolfinx
+        gmsh
+      pip_packages: |
+        itkwidgets pyvista$pyvista%multiphenicsx.io
+        multiphenicsx@https://github.com/multiphenics/multiphenicsx.git
+      test_script: |
+        python3 -m pip install kaleido plotly
+        python3 -m pytest --nbval open_in_colab/tutorials
+      publish_on: github@multiphenics/multiphenics.github.io@open-in-colab-multiphenicsx
+      publish_if_repository: multiphenics/multiphenicsx
+    secrets:
+      REPO_ACCESS_TOKEN: "${{ secrets.REPO_ACCESS_TOKEN }}"
