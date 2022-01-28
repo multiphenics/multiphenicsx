@@ -3,22 +3,22 @@ name: Generate, test and publish docker image
 on:
   workflow_dispatch:
     inputs:
-      repository:
-        description: "Repository to test"
       library:
         description: "Import name of the library"
       image_name:
         description: "Name of the image to be released"
+      release_if_repository:
+        description: "Restrict release deployment to a specific calling repository"
   workflow_call:
     inputs:
-      repository:
-        description: "Repository to test"
-        type: string
       library:
         description: "Import name of the library"
         type: string
       image_name:
         description: "Name of the image to be released"
+        type: string
+      release_if_repository:
+        description: "Restrict release deployment to a specific calling repository"
         type: string
     secrets:
       CI_REGISTRY_USER:
@@ -28,7 +28,6 @@ on:
 
 jobs:
   docker:
-    if: github.repository == (github.event.inputs || inputs).repository && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       RELEASE_IMAGE: ${{ (github.event.inputs || inputs).image_name }}
@@ -48,8 +47,10 @@ jobs:
       - name: Run tutorials (serial) to verify that the docker jupyter image is working
         run: docker run -i --rm --entrypoint /usr/bin/env ${RELEASE_IMAGE}:jupyter bash -c "cd ${LIBRARY} && pytest tutorials"
       - name: Log into the docker registry
+        if: github.repository == (github.event.inputs || inputs).release_if_repository
         run: docker login -u ${{ secrets.CI_REGISTRY_USER }} -p ${{ secrets.CI_REGISTRY_PASSWORD }}
       - name: Push to the docker registry
+        if: github.repository == (github.event.inputs || inputs).release_if_repository
         run: |
           docker push ${RELEASE_IMAGE}:latest
           docker push ${RELEASE_IMAGE}:jupyter

@@ -23,10 +23,11 @@ jobs:
   docker:
     uses: multiphenics/multiphenicsx/.github/workflows/docker.yml@main
     needs: [test]
+    if: github.ref == 'refs/heads/main'
     with:
-      repository: "multiphenics/multiphenicsx"
       library: "multiphenicsx"
       image_name: "multiphenics/multiphenicsx"
+      release_if_repository: "multiphenics/multiphenicsx"
     secrets:
       CI_REGISTRY_USER: "${{ secrets.CI_REGISTRY_USER }}"
       CI_REGISTRY_PASSWORD: "${{ secrets.CI_REGISTRY_PASSWORD }}"
