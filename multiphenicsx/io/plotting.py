@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 """Utilities for plotting dolfinx objects with plotly and pyvista."""
 
-import os
 import types
 import typing
 
@@ -73,11 +72,6 @@ def _plot_mesh_plotly(mesh: dolfinx.mesh.Mesh) -> go.Figure:
         marker=dict(color="blue", size=10),
         mode="lines+markers"))
     fig.update_xaxes(title_text="x")
-    if "PYTEST_CURRENT_TEST" not in os.environ:  # pragma: no cover
-        renderer = None
-    else:
-        renderer = "png"
-    fig.show(renderer=renderer)
     return fig
 
 
@@ -200,11 +194,6 @@ def _plot_scalar_field_plotly(
         mode="lines+markers"))
     fig.update_xaxes(title_text="x")
     fig.update_yaxes(title_text=name)
-    if "PYTEST_CURRENT_TEST" not in os.environ:  # pragma: no cover
-        renderer = None
-    else:
-        renderer = "png"
-    fig.show(renderer=renderer)
     return fig
 
 
