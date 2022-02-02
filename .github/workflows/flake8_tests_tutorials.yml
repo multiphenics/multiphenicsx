@@ -52,6 +52,7 @@ jobs:
       - name: Install library
         run: |
           LIBRARY=${{ (github.event.inputs || inputs).library }}
+          python3 -m pip install --upgrade pip
           python3 -m pip install .[docs,lint,tests,tutorials]
           python3 -c "import ${LIBRARY}.cpp"
           wget https://github.com/ipython/ipython/commit/9800157ab0282ce61c37ae6f718d5b2314ddbdbe.diff -O /tmp/ipython-patch && patch -d /usr/local/lib/python3.9/dist-packages/ -p 1 -N < /tmp/ipython-patch
