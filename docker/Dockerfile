@@ -10,7 +10,7 @@ MAINTAINER Francesco Ballarin <francesco.ballarin@unicatt.it>
 COPY . /tmp/multiphenicsx
 
 WORKDIR /tmp/multiphenicsx
-RUN pip3 -q install .[tests]
+RUN python3 -m pip install --upgrade pip && python3 -m pip -q install .[tests]
 
 WORKDIR /root
 RUN mkdir multiphenicsx && \
@@ -25,7 +25,7 @@ MAINTAINER Francesco Ballarin <francesco.ballarin@unicatt.it>
 COPY . /tmp/multiphenicsx
 
 WORKDIR /tmp/multiphenicsx
-RUN pip3 -q install .[tests,tutorials]
+RUN python3 -m pip install --upgrade pip && python3 -m pip -q install .[tests,tutorials]
 
 WORKDIR /root
 RUN mkdir multiphenicsx && \
