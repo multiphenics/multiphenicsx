@@ -34,16 +34,16 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
-      - name: Set PETSc scalar type
+      - name: Setup container
         run: |
           . /usr/local/bin/dolfinx-${{ matrix.petsc_arch }}-mode
+          python3 -m pip install --upgrade pip
           echo "PETSC_ARCH=$PETSC_ARCH" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
           echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
       - name: Install multiphenicsx
         run: |
-          python3 -m pip install --upgrade pip
           python3 -m pip install .[docs,lint,tests,tutorials]
           python3 -c "import multiphenicsx.cpp"
           wget https://github.com/ipython/ipython/commit/9800157ab0282ce61c37ae6f718d5b2314ddbdbe.diff -O /tmp/ipython-patch && patch -d /usr/local/lib/python3.9/dist-packages/ -p 1 -N < /tmp/ipython-patch
