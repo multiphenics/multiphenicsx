@@ -128,8 +128,9 @@ def _plot_mesh_entities_pyvista(
 ) -> itkwidgets.Viewer:
     num_cells = mesh.topology.index_map(dim).size_local + mesh.topology.index_map(dim).num_ghosts
     all_values = np.zeros(num_cells)
+    if values.shape[0] != num_cells:
+        assert np.all(values != 0), "Zero is used as a placeholder for non-provided entities"
     for (index, value) in zip(indices, values):
-        assert value > 0
         all_values[index] = value
 
     if dim == mesh.topology.dim:

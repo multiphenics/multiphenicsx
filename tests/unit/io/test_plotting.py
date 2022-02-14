@@ -87,26 +87,35 @@ def test_plot_mesh_entities_boundary_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
             tempdir, "mesh_entities")
 
 
-def test_plot_mesh_tags_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
+@pytest.mark.parametrize("fill_value", [0, 1])
+def test_plot_mesh_tags_2d(mesh_2d: dolfinx.mesh.Mesh, fill_value: int) -> None:
     """Check that plot_mesh_tags executes without errors (2D mesh, 2D tags)."""
     pytest.importorskip("pyvista")
     cell_entities = dolfinx.mesh.locate_entities(
         mesh_2d, mesh_2d.topology.dim, lambda x: np.full((x.shape[1], ), True))
     cell_tags = dolfinx.mesh.MeshTags(
-        mesh_2d, mesh_2d.topology.dim, cell_entities, np.ones_like(cell_entities))
+        mesh_2d, mesh_2d.topology.dim, cell_entities,
+        np.full(cell_entities.shape, fill_value=fill_value, dtype=np.int32))
     with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
         write_itkwidgets_image(mesh_2d.comm, multiphenicsx.io.plot_mesh_tags(cell_tags), tempdir, "mesh_tags")
 
 
-def test_plot_mesh_tags_boundary_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
+@pytest.mark.parametrize("fill_value", [0, 1])
+def test_plot_mesh_tags_boundary_2d(mesh_2d: dolfinx.mesh.Mesh, fill_value: int) -> None:
     """Check that plot_mesh_tags executes without errors (2D mesh, 1D tags)."""
     pytest.importorskip("pyvista")
     boundary_entities = dolfinx.mesh.locate_entities_boundary(
         mesh_2d, mesh_2d.topology.dim - 1, lambda x: np.full((x.shape[1], ), True))
     boundary_tags = dolfinx.mesh.MeshTags(
-        mesh_2d, mesh_2d.topology.dim - 1, boundary_entities, np.ones_like(boundary_entities))
-    with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
-        write_itkwidgets_image(mesh_2d.comm, multiphenicsx.io.plot_mesh_tags(boundary_tags), tempdir, "mesh_tags")
+        mesh_2d, mesh_2d.topology.dim - 1, boundary_entities,
+        np.full(boundary_entities.shape, fill_value=fill_value, dtype=np.int32))
+    if fill_value == 0:
+        with pytest.raises(AssertionError) as excinfo:
+            multiphenicsx.io.plot_mesh_tags(boundary_tags)
+        assert str(excinfo.value) == "Zero is used as a placeholder for non-provided entities"
+    elif fill_value == 1:
+        with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
+            write_itkwidgets_image(mesh_2d.comm, multiphenicsx.io.plot_mesh_tags(boundary_tags), tempdir, "mesh_tags")
 
 
 def test_plot_scalar_field_1d(mesh_1d: dolfinx.mesh.Mesh) -> None:
