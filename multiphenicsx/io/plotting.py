@@ -13,6 +13,7 @@ import dolfinx.mesh
 import dolfinx.plot
 import numpy as np
 import petsc4py
+import ufl
 
 try:
     import plotly.graph_objects as go
@@ -146,15 +147,19 @@ def _plot_mesh_entities_pyvista(
 
 
 def plot_scalar_field(
-    scalar_field: dolfinx.fem.Function, name: str, warp_factor: float = 0.0, part: str = "real"
+    scalar_field: typing.Union[dolfinx.fem.Function, typing.Tuple[ufl.core.expr.Expr, dolfinx.fem.FunctionSpace]],
+    name: str, warp_factor: float = 0.0, part: str = "real"
 ) -> typing.Union[go.Figure, itkwidgets.Viewer]:
     """
     Plot a scalar field with plotly (in 1D) or pyvista (in 2D or 3D).
 
     Parameters
     ----------
-    scalar_field : dolfinx.fem.Function
-        Function to be plotted, which contains a scalar field.
+    scalar_field : typing.Union[dolfinx.fem.Function, typing.Tuple[ufl.core.expr.Expr, dolfinx.fem.FunctionSpace]]
+        Expression to be plotted, which contains a scalar field.
+        If the expression is provided as a dolfinx Function, such function will be plotted.
+        If the expression is provided as a tuple containing UFL expression and a dolfinx FunctionSpace,
+        the UFL expression will first be interpolated on the function space and then plotted.
     name : str
         Name of the quantity stored in the scalar field.
     warp_factor : float, optional
@@ -171,6 +176,7 @@ def plot_scalar_field(
         A plotly.graph_objects.Figure (in 1D) or itkwidgets.Viewer (in 2D or 3D)
         representing a plot of the scalar field.
     """
+    scalar_field = _interpolate_if_ufl_expression(scalar_field)
     mesh = scalar_field.function_space.mesh
     if mesh.topology.dim == 1:
         return _plot_scalar_field_plotly(scalar_field, name, part)
@@ -218,7 +224,8 @@ def _plot_scalar_field_pyvista(
 
 
 def plot_vector_field(
-    vector_field: dolfinx.fem.Function, name: str, glyph_factor: float = 0.0, warp_factor: float = 0.0,
+    vector_field: typing.Union[dolfinx.fem.Function, typing.Tuple[ufl.core.expr.Expr, dolfinx.fem.FunctionSpace]],
+    name: str, glyph_factor: float = 0.0, warp_factor: float = 0.0,
     part: str = "real"
 ) -> itkwidgets.Viewer:
     """
@@ -226,8 +233,11 @@ def plot_vector_field(
 
     Parameters
     ----------
-    vector_field : dolfinx.fem.Function
-        Function to be plotted, which contains a vector field.
+    vector_field : typing.Union[dolfinx.fem.Function, typing.Tuple[ufl.core.expr.Expr, dolfinx.fem.FunctionSpace]]
+        Expression to be plotted, which contains a vector field.
+        If the expression is provided as a dolfinx Function, such function will be plotted.
+        If the expression is provided as a tuple containing UFL expression and a dolfinx FunctionSpace,
+        the UFL expression will first be interpolated on the function space and then plotted.
     name : str
         Name of the quantity stored in the vector field.
     glyph_factor : float, optional
@@ -245,6 +255,7 @@ def plot_vector_field(
     itkwidgets.Viewer
         An itkwidgets.Viewer representing a plot of the vector field.
     """
+    vector_field = _interpolate_if_ufl_expression(vector_field)
     mesh = vector_field.function_space.mesh
     assert mesh.topology.dim > 1
     return _plot_vector_field_pyvista(vector_field, name, glyph_factor, warp_factor, part)
@@ -279,6 +290,20 @@ def _plot_vector_field_pyvista(
         grid_background = _dolfinx_to_pyvista_mesh(mesh, mesh.topology.dim - 1)
         plotter.add_mesh(grid_background)
     return plotter.show()
+
+
+def _interpolate_if_ufl_expression(
+    field: typing.Union[dolfinx.fem.Function, typing.Tuple[ufl.core.expr.Expr, dolfinx.fem.FunctionSpace]]
+) -> dolfinx.fem.Function:
+    if isinstance(field, tuple):
+        expression, function_space = field
+        interpolated_field = dolfinx.fem.Function(function_space)
+        interpolated_field.interpolate(
+            dolfinx.fem.Expression(expression, function_space.element.interpolation_points))
+        return interpolated_field
+    else:
+        assert isinstance(field, dolfinx.fem.Function)
+        return field
 
 
 def _extract_part(

@@ -6,6 +6,7 @@
 """Tests for multiphenicsx.io.plotting module."""
 
 import os
+import typing
 
 import dolfinx.mesh
 import mpi4py
@@ -118,7 +119,8 @@ def test_plot_mesh_tags_boundary_2d(mesh_2d: dolfinx.mesh.Mesh, fill_value: int)
             write_itkwidgets_image(mesh_2d.comm, multiphenicsx.io.plot_mesh_tags(boundary_tags), tempdir, "mesh_tags")
 
 
-def test_plot_scalar_field_1d(mesh_1d: dolfinx.mesh.Mesh) -> None:
+@pytest.mark.parametrize("expression_generator", [lambda u, V: u, lambda u, V: (2.0 * u, V)])
+def test_plot_scalar_field_1d(mesh_1d: dolfinx.mesh.Mesh, expression_generator: typing.Callable) -> None:
     """Check that plot_scalar_field executes without errors (1D case)."""
     pytest.importorskip("plotly")
     V = dolfinx.fem.FunctionSpace(mesh_1d, ("Lagrange", 1))
@@ -127,15 +129,19 @@ def test_plot_scalar_field_1d(mesh_1d: dolfinx.mesh.Mesh) -> None:
         u_local[:] = np.arange(u_local.size)
     with nbvalx.tempfile.TemporaryDirectory(mesh_1d.comm) as tempdir:
         if not np.issubdtype(petsc4py.PETSc.ScalarType, np.complexfloating):
-            write_plotly_image(mesh_1d.comm, multiphenicsx.io.plot_scalar_field(u, "u"), tempdir, "u")
+            write_plotly_image(
+                mesh_1d.comm, multiphenicsx.io.plot_scalar_field(expression_generator(u, V), "u"), tempdir, "u")
         else:
             write_plotly_image(
-                mesh_1d.comm, multiphenicsx.io.plot_scalar_field(u, "u", part="real"), tempdir, "real_u")
+                mesh_1d.comm, multiphenicsx.io.plot_scalar_field(expression_generator(u, V), "u", part="real"),
+                tempdir, "real_u")
             write_plotly_image(
-                mesh_1d.comm, multiphenicsx.io.plot_scalar_field(u, "u", part="imag"), tempdir, "imag_u")
+                mesh_1d.comm, multiphenicsx.io.plot_scalar_field(expression_generator(u, V), "u", part="imag"),
+                tempdir, "imag_u")
 
 
-def test_plot_scalar_field_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
+@pytest.mark.parametrize("expression_generator", [lambda u, V: u, lambda u, V: (2.0 * u, V)])
+def test_plot_scalar_field_2d(mesh_2d: dolfinx.mesh.Mesh, expression_generator: typing.Callable) -> None:
     """Check that plot_scalar_field executes without errors (2D case)."""
     pytest.importorskip("pyvista")
     V = dolfinx.fem.FunctionSpace(mesh_2d, ("Lagrange", 1))
@@ -144,17 +150,22 @@ def test_plot_scalar_field_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
         u_local[:] = np.arange(u_local.size)
     with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
         if not np.issubdtype(petsc4py.PETSc.ScalarType, np.complexfloating):
-            write_itkwidgets_image(mesh_2d.comm, multiphenicsx.io.plot_scalar_field(u, "u"), tempdir, "u")
+            write_itkwidgets_image(
+                mesh_2d.comm, multiphenicsx.io.plot_scalar_field(expression_generator(u, V), "u"), tempdir, "u")
         else:
             write_itkwidgets_image(
-                mesh_2d.comm, multiphenicsx.io.plot_scalar_field(u, "u", part="real"), tempdir, "real_u")
+                mesh_2d.comm, multiphenicsx.io.plot_scalar_field(expression_generator(u, V), "u", part="real"),
+                tempdir, "real_u")
             write_itkwidgets_image(
-                mesh_2d.comm, multiphenicsx.io.plot_scalar_field(u, "u", part="imag"), tempdir, "imag_u")
+                mesh_2d.comm, multiphenicsx.io.plot_scalar_field(expression_generator(u, V), "u", part="imag"),
+                tempdir, "imag_u")
         write_itkwidgets_image(
-            mesh_2d.comm, multiphenicsx.io.plot_scalar_field(u, "u", warp_factor=1.0), tempdir, "glyph_u")
+            mesh_2d.comm, multiphenicsx.io.plot_scalar_field(expression_generator(u, V), "u", warp_factor=1.0),
+            tempdir, "glyph_u")
 
 
-def test_plot_vector_field_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
+@pytest.mark.parametrize("expression_generator", [lambda u, V: u, lambda u, V: (2.0 * u, V)])
+def test_plot_vector_field_2d(mesh_2d: dolfinx.mesh.Mesh, expression_generator: typing.Callable) -> None:
     """Check that plot_vector_field executes without errors (2D case)."""
     pytest.importorskip("pyvista")
     V = dolfinx.fem.VectorFunctionSpace(mesh_2d, ("Lagrange", 1))
@@ -163,13 +174,18 @@ def test_plot_vector_field_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
         u_local[:] = np.arange(u_local.size)
     with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
         if not np.issubdtype(petsc4py.PETSc.ScalarType, np.complexfloating):
-            write_itkwidgets_image(mesh_2d.comm, multiphenicsx.io.plot_vector_field(u, "u"), tempdir, "u")
+            write_itkwidgets_image(
+                mesh_2d.comm, multiphenicsx.io.plot_vector_field(expression_generator(u, V), "u"), tempdir, "u")
         else:
             write_itkwidgets_image(
-                mesh_2d.comm, multiphenicsx.io.plot_vector_field(u, "u", part="real"), tempdir, "real_u")
+                mesh_2d.comm, multiphenicsx.io.plot_vector_field(expression_generator(u, V), "u", part="real"),
+                tempdir, "real_u")
             write_itkwidgets_image(
-                mesh_2d.comm, multiphenicsx.io.plot_vector_field(u, "u", part="imag"), tempdir, "imag_u")
+                mesh_2d.comm, multiphenicsx.io.plot_vector_field(expression_generator(u, V), "u", part="imag"),
+                tempdir, "imag_u")
         write_itkwidgets_image(
-            mesh_2d.comm, multiphenicsx.io.plot_vector_field(u, "u", glyph_factor=1.0), tempdir, "glyph_u")
+            mesh_2d.comm, multiphenicsx.io.plot_vector_field(expression_generator(u, V), "u", glyph_factor=1.0),
+            tempdir, "glyph_u")
         write_itkwidgets_image(
-            mesh_2d.comm, multiphenicsx.io.plot_vector_field(u, "u", warp_factor=1.0), tempdir, "warp_u")
+            mesh_2d.comm, multiphenicsx.io.plot_vector_field(expression_generator(u, V), "u", warp_factor=1.0),
+            tempdir, "warp_u")
