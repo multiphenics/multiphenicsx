@@ -8,4 +8,3 @@ API reference
    multiphenicsx.fem
    multiphenicsx.io
    multiphenicsx.mesh
-   multiphenicsx.test
