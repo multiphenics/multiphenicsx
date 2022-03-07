@@ -22,7 +22,7 @@ except ImportError:  # pragma: no cover
 
 
 def gmsh_to_fenicsx(model: gmsh.model, gdim: int) -> typing.Tuple[
-        dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags]:
+        dolfinx.mesh.Mesh, dolfinx.mesh.MeshTagsMetaClass, dolfinx.mesh.MeshTagsMetaClass]:
     """
     Given a GMSH model, create a DOLFINx mesh and MeshTags.
 
@@ -37,10 +37,10 @@ def gmsh_to_fenicsx(model: gmsh.model, gdim: int) -> typing.Tuple[
     -------
     dolfinx.mesh.Mesh
         The GMSH model as a dolfinx.mesh.Mesh object.
-    dolfinx.mesh.MeshTags
-        The marked subdomains in the GMSH model as a dolfinx.mesh.MeshTags object.
-    dolfinx.mesh.MeshTags
-        The marked boundaries in the GMSH model as a dolfinx.mesh.MeshTags object.
+    dolfinx.mesh.MeshTagsMetaClass
+        The marked subdomains in the GMSH model as a dolfinx.mesh.MeshTagsMetaClass object.
+    dolfinx.mesh.MeshTagsMetaClass
+        The marked boundaries in the GMSH model as a dolfinx.mesh.MeshTagsMetaClass object.
 
     Notes
     -----

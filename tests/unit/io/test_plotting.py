@@ -94,7 +94,7 @@ def test_plot_mesh_tags_2d(mesh_2d: dolfinx.mesh.Mesh, fill_value: int) -> None:
     pytest.importorskip("pyvista")
     cell_entities = dolfinx.mesh.locate_entities(
         mesh_2d, mesh_2d.topology.dim, lambda x: np.full((x.shape[1], ), True))
-    cell_tags = dolfinx.mesh.MeshTags(
+    cell_tags = dolfinx.mesh.meshtags(
         mesh_2d, mesh_2d.topology.dim, cell_entities,
         np.full(cell_entities.shape, fill_value=fill_value, dtype=np.int32))
     with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
@@ -107,7 +107,7 @@ def test_plot_mesh_tags_boundary_2d(mesh_2d: dolfinx.mesh.Mesh, fill_value: int)
     pytest.importorskip("pyvista")
     boundary_entities = dolfinx.mesh.locate_entities_boundary(
         mesh_2d, mesh_2d.topology.dim - 1, lambda x: np.full((x.shape[1], ), True))
-    boundary_tags = dolfinx.mesh.MeshTags(
+    boundary_tags = dolfinx.mesh.meshtags(
         mesh_2d, mesh_2d.topology.dim - 1, boundary_entities,
         np.full(boundary_entities.shape, fill_value=fill_value, dtype=np.int32))
     if fill_value == 0:

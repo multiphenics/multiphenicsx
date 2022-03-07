@@ -105,19 +105,19 @@ def plot_mesh_entities(mesh: dolfinx.mesh.Mesh, dim: int, entities: np.typing.ND
     return _plot_mesh_entities_pyvista(mesh, dim, entities, np.ones_like(entities))
 
 
-def plot_mesh_tags(mesh_tags: dolfinx.mesh.MeshTags) -> itkwidgets.Viewer:
+def plot_mesh_tags(mesh_tags: dolfinx.mesh.MeshTagsMetaClass) -> itkwidgets.Viewer:
     """
-    Plot dolfinx.mesh.MeshTags with pyvista.
+    Plot dolfinx.mesh.MeshTagsMetaClass with pyvista.
 
     Parameters
     ----------
-    mesh : dolfinx.mesh.MeshTags
+    mesh : dolfinx.mesh.MeshTagsMetaClass
         MeshTags to be plotted. Current implementation is limited to 2D or 3D underlying meshes.
 
     Returns
     -------
     itkwidgets.Viewer
-        An itkwidgets.Viewer representing a plot of the dolfinx.mesh.MeshTags object.
+        An itkwidgets.Viewer representing a plot of the dolfinx.mesh.MeshTagsMetaClass object.
     """
     mesh = mesh_tags.mesh
     assert mesh.topology.dim > 1
