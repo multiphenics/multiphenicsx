@@ -106,8 +106,7 @@ def gmsh_to_fenicsx(model: gmsh.model, gdim: int) -> typing.Tuple[
         mesh, mesh.topology.dim, cells, cell_values)
     mesh.topology.create_connectivity(mesh.topology.dim, 0)
     adj = dolfinx.cpp.graph.AdjacencyList_int32(entities)
-    ct = dolfinx.mesh.create_meshtags(
-        mesh, mesh.topology.dim, adj, np.int32(values))
+    ct = dolfinx.mesh.meshtags_from_entities(mesh, mesh.topology.dim, adj, np.int32(values))
     ct.name = "subdomains"
 
     # Create MeshTags for facets
@@ -120,8 +119,7 @@ def gmsh_to_fenicsx(model: gmsh.model, gdim: int) -> typing.Tuple[
     mesh.topology.create_connectivity(
         mesh.topology.dim - 1, mesh.topology.dim)
     adj = dolfinx.cpp.graph.AdjacencyList_int32(entities)
-    ft = dolfinx.mesh.create_meshtags(
-        mesh, mesh.topology.dim - 1, adj, np.int32(values))
+    ft = dolfinx.mesh.meshtags_from_entities(mesh, mesh.topology.dim - 1, adj, np.int32(values))
     ft.name = "boundaries"
 
     return mesh, ct, ft
