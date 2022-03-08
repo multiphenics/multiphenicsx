@@ -1204,7 +1204,7 @@ def _(
         # Assemble form
         dcpp.fem.petsc.assemble_matrix(A, a, constants, coeffs, bcs)
 
-        if function_spaces[0].id == function_spaces[1].id:
+        if function_spaces[0] is function_spaces[1]:
             # Flush to enable switch from add to set in the matrix
             A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)
 
@@ -1217,7 +1217,7 @@ def _(
         with MatSubMatrixWrapper(A, dofmaps, restriction) as A_sub:
             dcpp.fem.petsc.assemble_matrix(A_sub, a, constants, coeffs, bcs)
 
-        if function_spaces[0].id == function_spaces[1].id:
+        if function_spaces[0] is function_spaces[1]:
             # Flush to enable switch from add to set in the matrix
             A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)
 
@@ -1325,7 +1325,7 @@ def _(
     # Set diagonal
     with NestMatSubMatrixWrapper(A, dofmaps, restriction) as nest_A:
         for i, j, A_sub in nest_A:
-            if function_spaces[0][i].id == function_spaces[1][j].id:
+            if function_spaces[0][i] is function_spaces[1][j]:
                 a_sub = a[i][j]
                 if a_sub is not None:
                     dcpp.fem.petsc.insert_diagonal(A_sub, function_spaces[0][i], bcs, diagonal)
@@ -1431,7 +1431,7 @@ def _(
     # Set diagonal
     with BlockMatSubMatrixWrapper(A, dofmaps, restriction) as block_A:
         for i, j, A_sub in block_A:
-            if function_spaces[0][i].id == function_spaces[1][j].id:
+            if function_spaces[0][i] is function_spaces[1][j]:
                 a_sub = a[i][j]
                 if a_sub is not None:
                     dcpp.fem.petsc.insert_diagonal(A_sub, function_spaces[0][i], bcs, diagonal)
