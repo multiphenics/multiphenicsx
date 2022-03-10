@@ -7,7 +7,7 @@
 
 import os
 
-import mpi4py
+import mpi4py.MPI
 
 from multiphenicsx.cpp.compile_code import compile_code
 from multiphenicsx.cpp.compile_package import compile_package
@@ -23,7 +23,3 @@ cpp_library = compile_package(
     "fem/utils.cpp",
     "la/petsc.cpp"
 )
-
-del mpi4py
-
-del os

@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 """Tests for multiphenicsx.mesh.gmsh_to_fenicsx module."""
 
-import mpi4py
+import mpi4py.MPI
 import pytest
 
 import multiphenicsx.mesh

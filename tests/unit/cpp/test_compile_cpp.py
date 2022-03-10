@@ -8,7 +8,7 @@
 import os
 
 import dolfinx.jit
-import mpi4py
+import mpi4py.MPI
 import nbvalx.tempfile
 
 import multiphenicsx.cpp
