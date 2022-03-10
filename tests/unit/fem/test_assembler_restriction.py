@@ -13,6 +13,7 @@ import dolfinx.fem
 import dolfinx.mesh
 import mpi4py.MPI
 import numpy as np
+import numpy.typing
 import petsc4py.PETSc
 import pytest
 import scipy.sparse

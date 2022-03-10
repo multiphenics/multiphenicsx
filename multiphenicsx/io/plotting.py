@@ -12,6 +12,7 @@ import dolfinx.fem
 import dolfinx.mesh
 import dolfinx.plot
 import numpy as np
+import numpy.typing
 import petsc4py.PETSc
 import ufl
 
