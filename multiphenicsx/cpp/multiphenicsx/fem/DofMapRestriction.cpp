@@ -168,11 +168,13 @@ void DofMapRestriction::_map_ghost_dofs(std::shared_ptr<const DofMap> dofmap,
   }
 
   // Replace temporary index map with a new one, which now includes ghost local_to_global map
+  std::vector<int> src_ranks_ghost_unique(src_ranks_ghost);
+  std::sort(src_ranks_ghost_unique.begin(), src_ranks_ghost_unique.end());
+  src_ranks_ghost_unique.erase(
+    std::unique(src_ranks_ghost_unique.begin(), src_ranks_ghost_unique.end()), src_ranks_ghost_unique.end());
   index_map.reset(new common::IndexMap(
     comm, index_map->size_local(),
-    dolfinx::MPI::compute_graph_edges(
-        comm, std::set<int>(src_ranks_ghost.begin(), src_ranks_ghost.end())),
-    local_to_global_ghost, src_ranks_ghost));
+    dolfinx::MPI::compute_graph_edges_nbx(comm, src_ranks_ghost_unique), local_to_global_ghost, src_ranks_ghost));
 }
 //-----------------------------------------------------------------------------
 void DofMapRestriction::_compute_cell_dofs(std::shared_ptr<const DofMap> dofmap)
