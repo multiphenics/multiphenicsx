@@ -12,6 +12,41 @@ using namespace dolfinx;
 using dolfinx::fem::DofMap;
 using multiphenicsx::fem::DofMapRestriction;
 
+//---------------------------------------------------------------------------
+template <typename T>
+graph::AdjacencyList<T> all_to_all(MPI_Comm comm,
+                                   const graph::AdjacencyList<T>& send_data)
+{
+  const std::vector<std::int32_t>& send_offsets = send_data.offsets();
+  const std::vector<T>& values_in = send_data.array();
+
+  const int comm_size = dolfinx::MPI::size(comm);
+  assert(send_data.num_nodes() == comm_size);
+
+  // Data size per destination rank
+  std::vector<int> send_size(comm_size);
+  std::adjacent_difference(std::next(send_offsets.begin()), send_offsets.end(),
+                           send_size.begin());
+
+  // Get received data sizes from each rank
+  std::vector<int> recv_size(comm_size);
+  MPI_Alltoall(send_size.data(), 1, dolfinx::MPI::mpi_type<int>(), recv_size.data(), 1,
+               dolfinx::MPI::mpi_type<int>(), comm);
+
+  // Compute receive offset
+  std::vector<std::int32_t> recv_offset(comm_size + 1, 0);
+  std::partial_sum(recv_size.begin(), recv_size.end(),
+                   std::next(recv_offset.begin()));
+
+  // Send/receive data
+  std::vector<T> recv_values(recv_offset.back());
+  MPI_Alltoallv(values_in.data(), send_size.data(), send_offsets.data(),
+                dolfinx::MPI::mpi_type<T>(), recv_values.data(), recv_size.data(),
+                recv_offset.data(), dolfinx::MPI::mpi_type<T>(), comm);
+
+  return graph::AdjacencyList<T>(std::move(recv_values),
+                                 std::move(recv_offset));
+}
 //-----------------------------------------------------------------------------
 DofMapRestriction::DofMapRestriction(std::shared_ptr<const DofMap> dofmap,
                                      const std::vector<std::int32_t>& restriction)
@@ -116,8 +151,7 @@ void DofMapRestriction::_map_ghost_dofs(std::shared_ptr<const DofMap> dofmap,
 
   // Step 1 - communicate
   const graph::AdjacencyList<std::int64_t> received_buffer_1
-      = dolfinx::MPI::all_to_all(
-          comm, graph::AdjacencyList<std::int64_t>(send_buffer));
+      = all_to_all(comm, graph::AdjacencyList<std::int64_t>(send_buffer));
 
   // Step 2 - cleanup sending buffer
   for (auto& send_buffer_r: send_buffer)
@@ -142,8 +176,7 @@ void DofMapRestriction::_map_ghost_dofs(std::shared_ptr<const DofMap> dofmap,
 
   // Step 2 - communicate
   const graph::AdjacencyList<std::int64_t> received_buffer_2
-      = dolfinx::MPI::all_to_all(
-          comm, graph::AdjacencyList<std::int64_t>(send_buffer));
+      = all_to_all(comm, graph::AdjacencyList<std::int64_t>(send_buffer));
 
   // Step 3 - cleanup sending buffer
   for (auto& send_buffer_r: send_buffer)
