@@ -675,7 +675,7 @@ def _(
 
 @functools.singledispatch
 def assemble_vector_nest(
-    L: dolfinx.fem.FormMetaClass,
+    L: typing.List[dolfinx.fem.FormMetaClass],
     constants: typing.Optional[DolfinxConstantsType] = None, coeffs: typing.Optional[DolfinxCoefficientsType] = None,
     restriction: typing.Optional[typing.List[mcpp.fem.DofMapRestriction]] = None
 ) -> petsc4py.PETSc.Vec:
