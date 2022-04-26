@@ -1319,6 +1319,12 @@ def _(
                 const_sub = constants[i][j]
                 coeff_sub = coeffs[i][j]
                 dcpp.fem.petsc.assemble_matrix(A_sub, a_sub, const_sub, coeff_sub, bcs)
+            elif i == j:  # pragma: no cover
+                for bc in bcs:
+                    if function_spaces[0][i].contains(bc.function_space):
+                        raise RuntimeError(
+                            f"Diagonal sub-block ({i}, {j}) cannot be 'None' and have DirichletBC applied."
+                            " Consider assembling a zero block.")
 
     # Flush to enable switch from add to set in the matrix
     A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)
@@ -1425,6 +1431,12 @@ def _(
                 const_sub = constants[i][j]
                 coeff_sub = coeffs[i][j]
                 dcpp.fem.petsc.assemble_matrix(A_sub, a_sub, const_sub, coeff_sub, bcs, True)
+            elif i == j:  # pragma: no cover
+                for bc in bcs:
+                    if function_spaces[0][i].contains(bc.function_space):
+                        raise RuntimeError(
+                            f"Diagonal sub-block ({i}, {j}) cannot be 'None' and have DirichletBC applied."
+                            " Consider assembling a zero block.")
 
     # Flush to enable switch from add to set in the matrix
     A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)
