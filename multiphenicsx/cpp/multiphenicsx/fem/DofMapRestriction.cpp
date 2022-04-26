@@ -106,13 +106,22 @@ void DofMapRestriction::_map_ghost_dofs(std::shared_ptr<const DofMap> dofmap,
   // Fill in local to global map of ghost dofs
   std::vector<std::int64_t> restricted_global_indices = index_map->global_indices();
   std::vector<std::int64_t> unrestricted_global_indices = dofmap->index_map->global_indices();
-  const std::vector<int> unrestricted_ghost_owners = dofmap->index_map->ghost_owner_rank();
+  std::vector<int> unrestricted_ghost_owners;
   MPI_Comm comm = dofmap->index_map->comm();
   const std::uint32_t mpi_rank = dolfinx::MPI::rank(comm);
   const std::uint32_t mpi_size = dolfinx::MPI::size(comm);
   std::vector<std::vector<std::int64_t>> send_buffer(mpi_size);
   std::vector<std::int64_t> local_to_global_ghost(restricted_ghost_size);
   std::vector<int> src_ranks_ghost(restricted_ghost_size);
+
+  {
+    std::vector<int> neighbors = dolfinx::MPI::neighbors(
+        dofmap->index_map->comm(common::IndexMap::Direction::forward))[0];
+    unrestricted_ghost_owners = dofmap->index_map->ghost_owners();
+    std::transform(unrestricted_ghost_owners.cbegin(), unrestricted_ghost_owners.cend(),
+                   unrestricted_ghost_owners.begin(),
+                   [&neighbors](auto r) { return neighbors[r]; });
+  }
 
   // In order to fill in the local to global map of ghost *restricted* dofs,
   // we need to proceed as follows:
