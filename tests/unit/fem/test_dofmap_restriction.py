@@ -100,18 +100,15 @@ def assert_dofmap_restriction_is_same_as_dofmap(
     # Run checks on each cell
     cells_map = mesh.topology.index_map(mesh.topology.dim)
     num_cells = cells_map.size_local + cells_map.num_ghosts
-    unrestricted_global_indices = dofmap.index_map.global_indices()
-    restricted_global_indices = dofmap_restriction.index_map.global_indices()
     for c in range(num_cells):
         unrestricted_cell_dofs = dofmap.cell_dofs(c)
         restricted_cell_dofs = dofmap_restriction.cell_dofs(c)
         # cell_dofs returned by dofmap should be the same as cell_dofs
         # returned by dofmap_restriction
-        assert np.array_equal([d for d in unrestricted_cell_dofs],
-                              [d for d in restricted_cell_dofs])
+        assert np.array_equal(unrestricted_cell_dofs, restricted_cell_dofs)
         # Global numbering should also be the same in dofmap and dofmap_restriction
-        assert np.array_equal([unrestricted_global_indices[d] for d in unrestricted_cell_dofs],
-                              [restricted_global_indices[d] for d in restricted_cell_dofs])
+        assert np.array_equal(dofmap.index_map.local_to_global(unrestricted_cell_dofs),
+                              dofmap_restriction.index_map.local_to_global(restricted_cell_dofs))
 
 
 @pytest.mark.parametrize("FunctionSpace", get_function_spaces())
