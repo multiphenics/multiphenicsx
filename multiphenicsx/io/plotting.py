@@ -27,6 +27,9 @@ try:
 except ImportError:  # pragma: no cover
     pyvista = types.ModuleType("pyvista", "Mock pyvista module")
     pyvista.UnstructuredGrid = object
+    has_pyvista = False
+else:  # pragma: no cover
+    has_pyvista = True
 
 try:
     import itkwidgets
@@ -35,7 +38,7 @@ except ImportError:  # pragma: no cover
     itkwidgets.Viewer = object
 
 
-def _dolfinx_to_pyvista_mesh(mesh: dolfinx.mesh.Mesh, dim: int = None) -> pyvista.UnstructuredGrid:
+def _dolfinx_to_pyvista_mesh(mesh: dolfinx.mesh.Mesh, dim: int = None) -> pyvista.UnstructuredGrid:  # pragma: no cover
     if dim is None:
         dim = mesh.topology.dim
     mesh.topology.create_connectivity(dim, dim)
@@ -64,7 +67,8 @@ def plot_mesh(mesh: dolfinx.mesh.Mesh) -> typing.Union[go.Figure, itkwidgets.Vie
     if mesh.topology.dim == 1:
         return _plot_mesh_plotly(mesh)
     else:
-        return _plot_mesh_pyvista(mesh)
+        if has_pyvista:  # pragma: no cover
+            return _plot_mesh_pyvista(mesh)
 
 
 def _plot_mesh_plotly(mesh: dolfinx.mesh.Mesh) -> go.Figure:
@@ -77,14 +81,16 @@ def _plot_mesh_plotly(mesh: dolfinx.mesh.Mesh) -> go.Figure:
     return fig
 
 
-def _plot_mesh_pyvista(mesh: dolfinx.mesh.Mesh) -> itkwidgets.Viewer:
+def _plot_mesh_pyvista(mesh: dolfinx.mesh.Mesh) -> itkwidgets.Viewer:  # pragma: no cover
     grid = _dolfinx_to_pyvista_mesh(mesh)
     plotter = pyvista.PlotterITK()
     plotter.add_mesh(grid)
     return plotter.show()
 
 
-def plot_mesh_entities(mesh: dolfinx.mesh.Mesh, dim: int, entities: np.typing.NDArray[int]) -> itkwidgets.Viewer:
+def plot_mesh_entities(
+    mesh: dolfinx.mesh.Mesh, dim: int, entities: np.typing.NDArray[int]
+) -> itkwidgets.Viewer:  # pragma: no cover
     """
     Plot dolfinx.mesh.Mesh with pyvista, highlighting the provided `dim`-dimensional entities.
 
@@ -103,10 +109,11 @@ def plot_mesh_entities(mesh: dolfinx.mesh.Mesh, dim: int, entities: np.typing.ND
         An itkwidgets.Viewer representing a plot of the mesh entities.
     """
     assert mesh.topology.dim > 1
-    return _plot_mesh_entities_pyvista(mesh, dim, entities, np.ones_like(entities))
+    if has_pyvista:
+        return _plot_mesh_entities_pyvista(mesh, dim, entities, np.ones_like(entities))
 
 
-def plot_mesh_tags(mesh_tags: dolfinx.mesh.MeshTagsMetaClass) -> itkwidgets.Viewer:
+def plot_mesh_tags(mesh_tags: dolfinx.mesh.MeshTagsMetaClass) -> itkwidgets.Viewer:  # pragma: no cover
     """
     Plot dolfinx.mesh.MeshTagsMetaClass with pyvista.
 
@@ -122,12 +129,13 @@ def plot_mesh_tags(mesh_tags: dolfinx.mesh.MeshTagsMetaClass) -> itkwidgets.View
     """
     mesh = mesh_tags.mesh
     assert mesh.topology.dim > 1
-    return _plot_mesh_entities_pyvista(mesh, mesh_tags.dim, mesh_tags.indices, mesh_tags.values)
+    if has_pyvista:
+        return _plot_mesh_entities_pyvista(mesh, mesh_tags.dim, mesh_tags.indices, mesh_tags.values)
 
 
 def _plot_mesh_entities_pyvista(
     mesh: dolfinx.mesh.Mesh, dim: int, indices: np.typing.NDArray[int], values: np.typing.NDArray[int]
-) -> itkwidgets.Viewer:
+) -> itkwidgets.Viewer:  # pragma: no cover
     num_cells = mesh.topology.index_map(dim).size_local + mesh.topology.index_map(dim).num_ghosts
     all_values = np.zeros(num_cells)
     if values.shape[0] != num_cells:
@@ -182,7 +190,8 @@ def plot_scalar_field(
     if mesh.topology.dim == 1:
         return _plot_scalar_field_plotly(scalar_field, name, part)
     else:
-        return _plot_scalar_field_pyvista(scalar_field, name, warp_factor, part)
+        if has_pyvista:  # pragma: no cover
+            return _plot_scalar_field_pyvista(scalar_field, name, warp_factor, part)
 
 
 def _plot_scalar_field_plotly(
@@ -207,7 +216,7 @@ def _plot_scalar_field_plotly(
 
 def _plot_scalar_field_pyvista(
     scalar_field: dolfinx.fem.Function, name: str, warp_factor: float, part: str
-) -> itkwidgets.Viewer:
+) -> itkwidgets.Viewer:  # pragma: no cover
     values = scalar_field.x.array
     values, name = _extract_part(values, name, part)
     pyvista_cells, cell_types, coordinates = dolfinx.plot.create_vtk_mesh(scalar_field.function_space)
@@ -228,7 +237,7 @@ def plot_vector_field(
     vector_field: typing.Union[dolfinx.fem.Function, typing.Tuple[ufl.core.expr.Expr, dolfinx.fem.FunctionSpace]],
     name: str, glyph_factor: float = 0.0, warp_factor: float = 0.0,
     part: str = "real"
-) -> itkwidgets.Viewer:
+) -> itkwidgets.Viewer:  # pragma: no cover
     """
     Plot a vector field with pyvista.
 
@@ -259,13 +268,14 @@ def plot_vector_field(
     vector_field = _interpolate_if_ufl_expression(vector_field)
     mesh = vector_field.function_space.mesh
     assert mesh.topology.dim > 1
-    return _plot_vector_field_pyvista(vector_field, name, glyph_factor, warp_factor, part)
+    if has_pyvista:
+        return _plot_vector_field_pyvista(vector_field, name, glyph_factor, warp_factor, part)
 
 
 def _plot_vector_field_pyvista(
     vector_field: dolfinx.fem.Function, name: str, glyph_factor: float,
     warp_factor: float, part: str
-) -> itkwidgets.Viewer:
+) -> itkwidgets.Viewer:  # pragma: no cover
     pyvista_cells, cell_types, coordinates = dolfinx.plot.create_vtk_mesh(vector_field.function_space)
     values = vector_field.x.array.reshape(coordinates.shape[0], vector_field.function_space.dofmap.index_map_bs)
     values, name = _extract_part(values, name, part)
