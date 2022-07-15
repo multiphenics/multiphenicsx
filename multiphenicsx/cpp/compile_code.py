@@ -36,7 +36,7 @@ def compile_code(
 
     # Set compiler arguments
     compiler_args = kwargs.get("compiler_args", [])
-    compiler_args.append("-std=c++17")
+    compiler_args.append("-std=c++20")
     compiler_args.extend("-D" + dm for dm in dolfinx_pc["define_macros"] if "-NOTFOUND" not in dm)
 
     # Set libraries
