@@ -25,7 +25,7 @@ MAINTAINER Francesco Ballarin <francesco.ballarin@unicatt.it>
 COPY . /tmp/multiphenicsx
 
 WORKDIR /tmp/multiphenicsx
-RUN python3 -m pip install --upgrade pip && python3 -m pip -q install .[tests,tutorials]
+RUN python3 -m pip install --upgrade pip && python3 -m pip install --upgrade https://dmf.unicatt.it/ballarin/public/zstandard-0.19.0.dev0-cp310-cp310-linux_x86_64.whl && python3 -m pip install --upgrade https://dmf.unicatt.it/ballarin/public/itkwidgets-0.33.0.dev0-py2.py3-none-any.whl && python3 -m pip -q install .[tests,tutorials]
 
 WORKDIR /root
 RUN mkdir multiphenicsx && \
