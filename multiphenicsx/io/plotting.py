@@ -300,7 +300,7 @@ def _interpolate_if_ufl_expression(
         expression, function_space = field
         interpolated_field = dolfinx.fem.Function(function_space)
         interpolated_field.interpolate(
-            dolfinx.fem.Expression(expression, function_space.element.interpolation_points))
+            dolfinx.fem.Expression(expression, function_space.element.interpolation_points()))
         return interpolated_field
     else:
         assert isinstance(field, dolfinx.fem.Function)
