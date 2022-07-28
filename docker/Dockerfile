@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-3.0-or-later
 
-FROM dolfinx/dolfinx AS multiphenicsx
+FROM dolfinx/dolfinx:nightly AS multiphenicsx
 MAINTAINER Francesco Ballarin <francesco.ballarin@unicatt.it>
 
 COPY . /tmp/multiphenicsx
@@ -19,7 +19,7 @@ RUN mkdir multiphenicsx && \
 
 ########################################
 
-FROM dolfinx/lab AS jupyter
+FROM dolfinx/lab:nightly AS jupyter
 MAINTAINER Francesco Ballarin <francesco.ballarin@unicatt.it>
 
 COPY . /tmp/multiphenicsx
