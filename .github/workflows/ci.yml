@@ -48,9 +48,10 @@ jobs:
           python3 -m pip install --upgrade https://dmf.unicatt.it/ballarin/public/itkwidgets-0.33.0.dev0-py2.py3-none-any.whl
           python3 -m pip install .[docs,lint,tests,tutorials]
           python3 -c "import multiphenicsx.cpp"
-      - name: Run flake8 checks on python files
+      - name: Run flake8 and mypy checks on python files
         run: |
           python3 -m flake8 .
+          python3 -m mypy .
       - name: Run documentation generation
         run: |
           cd docs && make html
@@ -64,12 +65,13 @@ jobs:
         run: |
           python3 -m coverage combine .coverage*
           python3 -m coverage report --fail-under=100 --show-missing --skip-covered
-      - name: Run flake8 checks on tutorial files
+      - name: Run flake8 and mypy checks on tutorial files
         run: |
           NO_TESTS_COLLECTED=5
           python3 -m pytest --ipynb-action=create-notebooks tutorials || (($?==$NO_TESTS_COLLECTED))
           python3 -m pytest --ipynb-action=create-notebooks --np=2 tutorials || (($?==$NO_TESTS_COLLECTED))
           python3 -m nbqa flake8 .
+          python3 -m nbqa mypy .
         shell: bash
       - name: Check for stray outputs, counts and metadata in tutorial files
         uses: RBniCS/check-jupyter-metadata-action@main
