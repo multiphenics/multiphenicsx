@@ -9,17 +9,19 @@ import typing
 
 import dolfinx.cpp as dcpp
 import dolfinx.fem
+import numpy as np
+import numpy.typing
 
 from multiphenicsx.cpp import cpp_library as mcpp
 
 
-class DofMapRestriction(mcpp.fem.DofMapRestriction):
+class DofMapRestriction(mcpp.fem.DofMapRestriction):  # type: ignore[misc, no-any-unimported]
     """Restriction of a DofMap to a list of active degrees of freedom."""
 
-    def __init__(
+    def __init__(  # type: ignore[no-any-unimported]
         self,
         dofmap: typing.Union[dcpp.fem.DofMap, dolfinx.fem.DofMap],
-        restriction: typing.List[int]
+        restriction: np.typing.NDArray[np.int32]
     ) -> None:
         # Extract cpp dofmap
         try:

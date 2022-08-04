@@ -17,7 +17,7 @@ import petsc4py
 from multiphenicsx.cpp.compile_code import compile_code
 
 
-@dolfinx.jit.mpi_jit_decorator
+@dolfinx.jit.mpi_jit_decorator  # type: ignore[misc]
 def compile_package(
     package_name: str, package_root: str, *args: str, **kwargs: typing.Union[str, typing.List[str]]
 ) -> types.ModuleType:
@@ -58,11 +58,10 @@ def compile_package(
         [os.path.relpath(f, os.path.join(package_root, package_name))
          for f in glob.glob(os.path.join(package_root, package_name, "[!_]*/"))])
     package_submodules.remove("wrappers")
-    package_submodules = sorted(package_submodules)
 
     # Extract pybind11 files corresponding to each submodule
     package_pybind11_sources = list()
-    for package_submodule in package_submodules:
+    for package_submodule in sorted(package_submodules):
         package_pybind11_sources.append(
             os.path.join(package_root, package_name, "wrappers", package_submodule + ".cpp"))
 
