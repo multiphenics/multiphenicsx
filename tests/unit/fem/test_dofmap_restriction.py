@@ -23,7 +23,7 @@ def mesh() -> dolfinx.mesh.Mesh:
     return dolfinx.mesh.create_unit_square(mpi4py.MPI.COMM_WORLD, 4, 4)
 
 
-def get_subdomains() -> typing.Tuple[typing.Callable]:
+def get_subdomains() -> typing.Tuple[common.SubdomainType, ...]:
     """Generate subdomain parametrization."""
     return (
         # Cells restrictions
@@ -39,15 +39,15 @@ def get_subdomains() -> typing.Tuple[typing.Callable]:
     )
 
 
-def get_function_spaces() -> typing.Tuple[typing.Callable]:
+def get_function_spaces() -> typing.Tuple[common.FunctionSpaceGeneratorType, ...]:
     """Generate function space parametrization."""
     return (
         lambda mesh: dolfinx.fem.FunctionSpace(mesh, ("Lagrange", 1)),
         lambda mesh: dolfinx.fem.FunctionSpace(mesh, ("Lagrange", 2)),
         lambda mesh: dolfinx.fem.VectorFunctionSpace(mesh, ("Lagrange", 1)),
         lambda mesh: dolfinx.fem.VectorFunctionSpace(mesh, ("Lagrange", 2)),
-        lambda mesh: dolfinx.fem.TensorFunctionSpace(mesh, ("Lagrange", 1)),
-        lambda mesh: dolfinx.fem.TensorFunctionSpace(mesh, ("Lagrange", 2)),
+        lambda mesh: dolfinx.fem.TensorFunctionSpace(mesh, ("Lagrange", 1)),  # type: ignore[arg-type]
+        lambda mesh: dolfinx.fem.TensorFunctionSpace(mesh, ("Lagrange", 2)),  # type: ignore[arg-type]
         lambda mesh: common.TaylorHoodFunctionSpace(mesh, ("Lagrange", 1)),
         # lambda mesh: common.TaylorHoodFunctionSpace(mesh, ("Lagrange", 2))
     )
@@ -113,7 +113,7 @@ def assert_dofmap_restriction_is_same_as_dofmap(
 
 @pytest.mark.parametrize("FunctionSpace", get_function_spaces())
 def test_dofmap_restriction_is_same_as_dofmap(
-    mesh: dolfinx.mesh.Mesh, FunctionSpace: typing.Callable
+    mesh: dolfinx.mesh.Mesh, FunctionSpace: common.FunctionSpaceGeneratorType
 ) -> None:
     """Test for DofMapRestriction in the case where restriction actually contains all available dofs."""
     V = FunctionSpace(mesh)
@@ -125,7 +125,7 @@ def test_dofmap_restriction_is_same_as_dofmap(
 @pytest.mark.parametrize("subdomain", get_subdomains())
 @pytest.mark.parametrize("FunctionSpace", get_function_spaces())
 def test_dofmap_restriction_is_subset_of_dofmap(
-    mesh: dolfinx.mesh.Mesh, subdomain: typing.Callable, FunctionSpace: typing.Callable
+    mesh: dolfinx.mesh.Mesh, subdomain: common.SubdomainType, FunctionSpace: common.FunctionSpaceGeneratorType
 ) -> None:
     """Test for DofMapRestriction in the case where restriction is a strict subset of the available dofs."""
     V = FunctionSpace(mesh)

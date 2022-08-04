@@ -19,7 +19,7 @@ def test_compile_code() -> None:
     """Compile a simple C++ function."""
     comm = mpi4py.MPI.COMM_WORLD
 
-    with nbvalx.tempfile.TemporaryDirectory(comm) as tempdir:
+    with nbvalx.tempfile.TemporaryDirectory(comm) as tempdir:  # type: ignore[call-arg]
         if comm.rank == 0:
             code = """
 #include <pybind11/pybind11.h>
@@ -39,7 +39,7 @@ PYBIND11_MODULE(SIGNATURE, m)
         else:
             filename = comm.bcast(None, root=0)
 
-        compile_code = dolfinx.jit.mpi_jit_decorator(multiphenicsx.cpp.compile_code)
+        compile_code = dolfinx.jit.mpi_jit_decorator(multiphenicsx.cpp.compile_code)  # type: ignore[no-untyped-call]
         cpp_library = compile_code(comm, "test_compile_code", filename, output_dir=tempdir)
         assert cpp_library.multiply(2, 3) == 6
 
@@ -48,7 +48,7 @@ def test_compile_package() -> None:
     """Compile a simple C++ package."""
     comm = mpi4py.MPI.COMM_WORLD
 
-    with nbvalx.tempfile.TemporaryDirectory(comm) as tempdir:
+    with nbvalx.tempfile.TemporaryDirectory(comm) as tempdir:  # type: ignore[call-arg]
         if comm.rank == 0:
             package_root = os.path.join(tempdir, "test_compile_package")
             os.makedirs(os.path.join(package_root, "utilities"))
