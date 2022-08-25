@@ -46,8 +46,8 @@ def get_function_spaces() -> typing.Tuple[common.FunctionSpaceGeneratorType, ...
         lambda mesh: dolfinx.fem.FunctionSpace(mesh, ("Lagrange", 2)),
         lambda mesh: dolfinx.fem.VectorFunctionSpace(mesh, ("Lagrange", 1)),
         lambda mesh: dolfinx.fem.VectorFunctionSpace(mesh, ("Lagrange", 2)),
-        lambda mesh: dolfinx.fem.TensorFunctionSpace(mesh, ("Lagrange", 1)),  # type: ignore[arg-type]
-        lambda mesh: dolfinx.fem.TensorFunctionSpace(mesh, ("Lagrange", 2)),  # type: ignore[arg-type]
+        lambda mesh: dolfinx.fem.TensorFunctionSpace(mesh, ("Lagrange", 1)),
+        lambda mesh: dolfinx.fem.TensorFunctionSpace(mesh, ("Lagrange", 2)),
         lambda mesh: common.TaylorHoodFunctionSpace(mesh, ("Lagrange", 1)),
         # lambda mesh: common.TaylorHoodFunctionSpace(mesh, ("Lagrange", 2))
     )
