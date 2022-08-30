@@ -107,14 +107,14 @@ def create_vector(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    L : dolfinx.fem.forms.form_types
+    L
         A linear form
-    restriction : typing.Optional[typing.Tuple[multiphenicsx.cpp.fem.DofMapRestriction]]
+    restriction
         A dofmap restriction. If not provided, the unrestricted tensor will be created.
 
     Returns
     -------
-    petsc4py.PETSc.Vec
+    :
         A PETSc vector with a layout that is compatible with `L` and restriction `restriction`.
     """
     dofmap = L.function_spaces[0].dofmap
@@ -137,14 +137,14 @@ def create_vector_block(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    L : typing.List[dolfinx.fem.forms.form_types]
+    L
         A list of linear forms.
-    restriction : typing.Optional[typing.Tuple[multiphenicsx.cpp.fem.DofMapRestriction]]
+    restriction
         A dofmap restriction. If not provided, the unrestricted tensor will be created.
 
     Returns
     -------
-    petsc4py.PETSc.Vec
+    :
         A PETSc vector with a blocked layout that is compatible with `L` and restriction `restriction`.
     """
     function_spaces = _get_block_function_spaces(L)
@@ -167,14 +167,14 @@ def create_vector_nest(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    L : typing.List[dolfinx.fem.forms.form_types]
+    L
         A list of linear forms.
-    restriction : typing.Optional[typing.Tuple[multiphenicsx.cpp.fem.DofMapRestriction]]
+    restriction
         A dofmap restriction. If not provided, the unrestricted tensor will be created.
 
     Returns
     -------
-    petsc4py.PETSc.Vec
+    :
         A PETSc vector with a nest layout that is compatible with `L` and restriction `restriction`.
     """
     function_spaces = _get_block_function_spaces(L)
@@ -200,16 +200,16 @@ def create_matrix(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    a : dolfinx.fem.forms.form_types
+    a
         A bilinear form
-    restriction : typing.Optional[typing.Tuple[multiphenicsx.cpp.fem.DofMapRestriction]]
+    restriction
         A dofmap restriction. If not provided, the unrestricted tensor will be created.
-    mat_type : typing.Optional[str]
+    mat_type
         The PETSc matrix type (``MatType``).
 
     Returns
     -------
-    petsc4py.PETSc.Mat
+    :
         A PETSc matrix with a layout that is compatible with `a` and restriction `restriction`.
     """
     assert a.rank == 2  # type: ignore[union-attr]
@@ -302,16 +302,16 @@ def create_matrix_block(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    a : typing.List[typing.List[dolfinx.fem.forms.form_types]]
+    a
         A rectangular array of bilinear forms.
-    restriction : typing.Optional[typing.Tuple[multiphenicsx.cpp.fem.DofMapRestriction]]
+    restriction
         A dofmap restriction. If not provided, the unrestricted tensor will be created.
-    mat_type : typing.Optional[str]
+    mat_type
         The PETSc matrix type (``MatType``).
 
     Returns
     -------
-    petsc4py.PETSc.Mat
+    :
         A PETSc matrix with a blocked layout that is compatible with `a` and restriction `restriction`.
     """
     return _create_matrix_block_or_nest(a, restriction, mat_type, mcpp.fem.petsc.create_matrix_block)
@@ -328,16 +328,16 @@ def create_matrix_nest(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    a : typing.List[typing.List[dolfinx.fem.forms.form_types]]
+    a
         A rectangular array of bilinear forms.
-    restriction : typing.Optional[typing.Tuple[multiphenicsx.cpp.fem.DofMapRestriction]]
+    restriction
         A dofmap restriction. If not provided, the unrestricted tensor will be created.
-    mat_types : typing.Optional[typing.List[str]]
+    mat_types
         The PETSc matrix types (``MatType``).
 
     Returns
     -------
-    petsc4py.PETSc.Mat
+    :
         A PETSc matrix with a nest layout that is compatible with `a` and restriction `restriction`.
     """
     return _create_matrix_block_or_nest(a, restriction, mat_types, mcpp.fem.petsc.create_matrix_nest)
@@ -631,18 +631,18 @@ def assemble_vector(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    L : dolfinx.fem.forms.form_types
+    L
         A linear form
-    constants: typing.Optional[DolfinxConstantsType]
+    constants
         Constants that appear in the form. If not provided, any required constants will be computed.
-    coeffs: typing.Optional[DolfinxCoefficientsType]
+    coeffs
         Coefficients that appear in the form. If not provided, any required coefficients will be computed.
-    restriction : typing.Optional[typing.Tuple[multiphenicsx.cpp.fem.DofMapRestriction]]
+    restriction
         A dofmap restriction. If not provided, the unrestricted tensor will be assembled.
 
     Returns
     -------
-    petsc4py.PETSc.Vec
+    :
         The assembled PETSc vector.
 
     Notes
@@ -666,20 +666,20 @@ def _(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    b: petsc4py.PETSc.Vec
+    b
         PETSc vector to assemble the contribution of the linear form into.
-    L : dolfinx.fem.forms.form_types
+    L
         A linear form to assemble into `b`.
-    constants: typing.Optional[DolfinxConstantsType]
+    constants
         Constants that appear in the form. If not provided, any required constants will be computed.
-    coeffs: typing.Optional[DolfinxCoefficientsType]
+    coeffs
         Coefficients that appear in the form. If not provided, any required coefficients will be computed.
-    restriction : typing.Optional[typing.Tuple[multiphenicsx.cpp.fem.DofMapRestriction]]
+    restriction
         A dofmap restriction. If not provided, the unrestricted tensor will be assembled.
 
     Returns
     -------
-    petsc4py.PETSc.Vec
+    :
         The assembled PETSc vector.
 
     Notes
@@ -708,18 +708,18 @@ def assemble_vector_nest(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    L : typing.List[dolfinx.fem.forms.form_types]
+    L
         A list of linear forms.
-    constants: typing.Optional[typing.Sequence[typing.Optional[DolfinxConstantsType]]]
+    constants
         Constants that appear in the form. If not provided, any required constants will be computed.
-    coeffs: typing.Optional[typing.Sequence[typing.Optional[DolfinxCoefficientsType]]]
+    coeffs
         Coefficients that appear in the form. If not provided, any required coefficients will be computed.
-    restriction : typing.Optional[typing.Tuple[multiphenicsx.cpp.fem.DofMapRestriction]]
+    restriction
         A dofmap restriction. If not provided, the unrestricted tensor will be assembled.
 
     Returns
     -------
-    petsc4py.PETSc.Vec
+    :
         The assembled nested PETSc vector.
 
     Notes
@@ -745,20 +745,20 @@ def _(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    b: petsc4py.PETSc.Vec
+    b
         Nested PETSc vector to assemble the contribution of the linear forms into.
-    L : typing.List[dolfinx.fem.forms.form_types]
+    L
         A list of linear forms to assemble into `b`.
-    constants: typing.Optional[typing.Sequence[typing.Optional[DolfinxConstantsType]]]
+    constants
         Constants that appear in the form. If not provided, any required constants will be computed.
-    coeffs: typing.Optional[typing.Sequence[typing.Optional[DolfinxCoefficientsType]]]
+    coeffs
         Coefficients that appear in the form. If not provided, any required coefficients will be computed.
-    restriction : typing.Optional[typing.Tuple[multiphenicsx.cpp.fem.DofMapRestriction]]
+    restriction
         A dofmap restriction. If not provided, the unrestricted tensor will be assembled.
 
     Returns
     -------
-    petsc4py.PETSc.Vec
+    :
         The assembled nested PETSc vector.
 
     Notes
@@ -794,24 +794,24 @@ def assemble_vector_block(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    L : typing.List[dolfinx.fem.forms.form_types]
+    L
         A list of linear forms.
-    bcs: typing.List[dolfinx.fem.DirichletBCMetaClass]
+    bcs
         Optional list of boundary conditions.
-    x0: typing.Optional[petsc4py.PETSc.Vec]
+    x0
         Optional vector storing the solution.
-    scale: float
+    scale
         Optional scaling factor for boundary conditions application.
-    constants_L, constants_a: typing.Optional[typing.Sequence[typing.Optional[DolfinxConstantsType]]]
+    constants_L, constants_a
         Constants that appear in the form. If not provided, any required constants will be computed.
-    coeffs_L, coeffs_a: typing.Optional[typing.Sequence[typing.Optional[DolfinxCoefficientsType]]]]
+    coeffs_L, coeffs_a
         Coefficients that appear in the form. If not provided, any required coefficients will be computed.
-    restriction, restriction_x0 : typing.Optional[typing.Tuple[multiphenicsx.cpp.fem.DofMapRestriction]]
+    restriction, restriction_x0
         A dofmap restriction. If not provided, the unrestricted tensor will be assembled.
 
     Returns
     -------
-    petsc4py.PETSc.Vec
+    :
         The assembled block PETSc vector.
 
     Notes
@@ -845,26 +845,26 @@ def _(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    b: petsc4py.PETSc.Vec
+    b
         Block PETSc vector to assemble the contribution of the linear forms into.
-    L : typing.List[dolfinx.fem.forms.form_types]
+    L
         A list of linear forms to assemble into `b`.
-    bcs: typing.List[dolfinx.fem.DirichletBCMetaClass]
+    bcs
         Optional list of boundary conditions.
-    x0: typing.Optional[petsc4py.PETSc.Vec]
+    x0
         Optional vector storing the solution.
-    scale: float
+    scale
         Optional scaling factor for boundary conditions application.
-    constants_L, constants_a: typing.Optional[typing.Sequence[typing.Optional[DolfinxConstantsType]]]
+    constants_L, constants_a
         Constants that appear in the form. If not provided, any required constants will be computed.
-    coeffs_L, coeffs_a: typing.Optional[typing.Sequence[typing.Optional[DolfinxCoefficientsType]]]
+    coeffs_L, coeffs_a
         Coefficients that appear in the form. If not provided, any required coefficients will be computed.
-    restriction, restriction_x0 : typing.Optional[typing.Tuple[multiphenicsx.cpp.fem.DofMapRestriction]]
+    restriction, restriction_x0
         A dofmap restriction. If not provided, the unrestricted tensor will be assembled.
 
     Returns
     -------
-    petsc4py.PETSc.Vec
+    :
         The assembled block PETSc vector.
 
     Notes
@@ -1165,24 +1165,24 @@ def assemble_matrix(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    a : dolfinx.fem.forms.form_types
+    a
         A bilinear form
-    bcs: typing.List[dolfinx.fem.DirichletBCMetaClass]
+    bcs
         Optional list of boundary conditions.
-    mat_type : typing.Optional[str]
+    mat_type
         The PETSc matrix type (``MatType``).
-    diagonal: float
+    diagonal
         Optional diagonal value for boundary conditions application. Assumes 1 by default.
-    constants: typing.Optional[DolfinxConstantsType]
+    constants
         Constants that appear in the form. If not provided, any required constants will be computed.
-    coeffs: typing.Optional[DolfinxCoefficientsType]
+    coeffs
         Coefficients that appear in the form. If not provided, any required coefficients will be computed.
-    restriction : typing.Optional[typing.Tuple[multiphenicsx.cpp.fem.DofMapRestriction]]
+    restriction
         A dofmap restriction. If not provided, the unrestricted tensor will be assembled.
 
     Returns
     -------
-    petsc4py.PETSc.Mat
+    :
         The assembled PETSc matrix.
 
     Notes
@@ -1206,24 +1206,24 @@ def _(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    A: petsc4py.PETSc.Mat
+    A
         PETSc matrix to assemble the contribution of the bilinear forms into.
-    a : dolfinx.fem.forms.form_types
+    a
         A bilinear form to assemble into `A`.
-    bcs: typing.List[dolfinx.fem.DirichletBCMetaClass]
+    bcs
         Optional list of boundary conditions.
-    diagonal: float
+    diagonal
         Optional diagonal value for boundary conditions application. Assumes 1 by default.
-    constants: typing.Optional[DolfinxConstantsType]
+    constants
         Constants that appear in the form. If not provided, any required constants will be computed.
-    coeffs: typing.Optional[DolfinxCoefficientsType]
+    coeffs
         Coefficients that appear in the form. If not provided, any required coefficients will be computed.
-    restriction : typing.Optional[typing.Tuple[multiphenicsx.cpp.fem.DofMapRestriction]]
+    restriction
         A dofmap restriction. If not provided, the unrestricted tensor will be assembled.
 
     Returns
     -------
-    petsc4py.PETSc.Mat
+    :
         The assembled PETSc matrix.
 
     Notes
@@ -1275,24 +1275,24 @@ def assemble_matrix_nest(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    a : typing.List[typing.List[dolfinx.fem.forms.form_types]]
+    a
         A rectangular array of bilinear forms.
-    bcs: typing.List[dolfinx.fem.DirichletBCMetaClass]
+    bcs
         Optional list of boundary conditions.
-    mat_types : typing.List[str]
+    mat_types
         The PETSc matrix types (``MatType``).
-    diagonal: float
+    diagonal
         Optional diagonal value for boundary conditions application. Assumes 1 by default.
-    constants: typing.Optional[typing.Sequence[typing.Sequence[typing.Optional[DolfinxConstantsType]]]]
+    constants
         Constants that appear in the form. If not provided, any required constants will be computed.
-    coeffs: typing.Optional[typing.Sequence[typing.Sequence[typing.Optional[DolfinxCoefficientsType]]]]
+    coeffs
         Coefficients that appear in the form. If not provided, any required coefficients will be computed.
-    restriction : typing.Optional[typing.Tuple[multiphenicsx.cpp.fem.DofMapRestriction]]
+    restriction
         A dofmap restriction. If not provided, the unrestricted tensor will be assembled.
 
     Returns
     -------
-    petsc4py.PETSc.Mat
+    :
         The assembled nest PETSc matrix.
     """
     A = create_matrix_nest(a, restriction, mat_types)
@@ -1315,24 +1315,24 @@ def _(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    A: petsc4py.PETSc.Mat
+    A
         Nest PETSc matrix to assemble the contribution of the bilinear forms into.
-    a : typing.List[typing.List[dolfinx.fem.forms.form_types]]
+    a
         A rectangular array of bilinear forms to assemble into `A`.
-    bcs: typing.List[dolfinx.fem.DirichletBCMetaClass]
+    bcs
         Optional list of boundary conditions.
-    diagonal: float
+    diagonal
         Optional diagonal value for boundary conditions application. Assumes 1 by default.
-    constants: typing.Optional[typing.Sequence[typing.Sequence[typing.Optional[DolfinxConstantsType]]]]
+    constants
         Constants that appear in the form. If not provided, any required constants will be computed.
-    coeffs: typing.Optional[typing.Sequence[typing.Sequence[typing.Optional[DolfinxCoefficientsType]]]]
+    coeffs
         Coefficients that appear in the form. If not provided, any required coefficients will be computed.
-    restriction : typing.Optional[typing.Tuple[multiphenicsx.cpp.fem.DofMapRestriction]]
+    restriction
         A dofmap restriction. If not provided, the unrestricted tensor will be assembled.
 
     Returns
     -------
-    petsc4py.PETSc.Mat
+    :
         The assembled nest PETSc matrix.
     """
     function_spaces = _get_block_function_spaces(a)
@@ -1390,24 +1390,24 @@ def assemble_matrix_block(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    a : typing.List[typing.List[dolfinx.fem.forms.form_types]]
+    a
         A rectangular array of bilinear forms.
-    bcs: typing.List[dolfinx.fem.DirichletBCMetaClass]
+    bcs
         Optional list of boundary conditions.
-    mat_type : typing.Optional[str]
+    mat_type
         The PETSc matrix type (``MatType``).
-    diagonal: float
+    diagonal
         Optional diagonal value for boundary conditions application. Assumes 1 by default.
-    constants: typing.Optional[typing.Sequence[typing.Sequence[typing.Optional[DolfinxConstantsType]]]]
+    constants
         Constants that appear in the form. If not provided, any required constants will be computed.
-    coeffs: typing.Optional[typing.Sequence[typing.Sequence[typing.Optional[DolfinxCoefficientsType]]]]
+    coeffs
         Coefficients that appear in the form. If not provided, any required coefficients will be computed.
-    restriction : typing.Optional[typing.Tuple[multiphenicsx.cpp.fem.DofMapRestriction]]
+    restriction
         A dofmap restriction. If not provided, the unrestricted tensor will be assembled.
 
     Returns
     -------
-    petsc4py.PETSc.Mat
+    :
         The assembled block PETSc matrix.
     """
     A = create_matrix_block(a, restriction, mat_type)
@@ -1430,24 +1430,24 @@ def _(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    A: petsc4py.PETSc.Mat
+    A
         Block PETSc matrix to assemble the contribution of the bilinear forms into.
-    a : typing.List[typing.List[dolfinx.fem.forms.form_types]]
+    a
         A rectangular array of bilinear forms to assemble into `A`.
-    bcs: typing.List[dolfinx.fem.DirichletBCMetaClass]
+    bcs
         Optional list of boundary conditions.
-    diagonal: float
+    diagonal
         Optional diagonal value for boundary conditions application. Assumes 1 by default.
-    constants: typing.Optional[typing.Sequence[typing.Sequence[typing.Optional[DolfinxConstantsType]]]]
+    constants
         Constants that appear in the form. If not provided, any required constants will be computed.
-    coeffs: typing.Optional[typing.Sequence[typing.Sequence[typing.Optional[DolfinxCoefficientsType]]]]
+    coeffs
         Coefficients that appear in the form. If not provided, any required coefficients will be computed.
-    restriction : typing.Optional[typing.Tuple[multiphenicsx.cpp.fem.DofMapRestriction]]
+    restriction
         A dofmap restriction. If not provided, the unrestricted tensor will be assembled.
 
     Returns
     -------
-    petsc4py.PETSc.Mat
+    :
         The assembled block PETSc matrix.
     """
     constants = [[

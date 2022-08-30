@@ -53,12 +53,12 @@ def plot_mesh(mesh: dolfinx.mesh.Mesh) -> typing.Union[  # type: ignore[no-any-u
 
     Parameters
     ----------
-    mesh : dolfinx.mesh.Mesh
+    mesh
         Mesh to be plotted.
 
     Returns
     -------
-    typing.Union[plotly.graph_objects.Figure, itkwidgets.Viewer]
+    :
         A plotly.graph_objects.Figure (in 1D) or itkwidgets.Viewer (in 2D or 3D)
         representing a plot of the mesh.
     """
@@ -93,16 +93,16 @@ def plot_mesh_entities(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    mesh : dolfinx.mesh.Mesh
+    mesh
         Mesh to be plotted. Current implementation is limited to 2D or 3D meshes.
-    dim : int
+    dim
         Dimension of the entities
-    entities : numpy.typing.NDArray[int]
+    entities
         Array containing the IDs of the entities to be highlighted.
 
     Returns
     -------
-    itkwidgets.Viewer
+    :
         An itkwidgets.Viewer representing a plot of the mesh entities.
     """
     assert mesh.topology.dim > 1
@@ -115,12 +115,12 @@ def plot_mesh_tags(mesh_tags: dolfinx.cpp.mesh.MeshTags_int32) -> itkwidgets.Vie
 
     Parameters
     ----------
-    mesh : dolfinx.cpp.mesh.MeshTags_int32
+    mesh
         MeshTags to be plotted. Current implementation is limited to 2D or 3D underlying meshes.
 
     Returns
     -------
-    itkwidgets.Viewer
+    :
         An itkwidgets.Viewer representing a plot of the dolfinx.cpp.mesh.MeshTags_int32 object.
     """
     mesh = mesh_tags.mesh
@@ -159,24 +159,24 @@ def plot_scalar_field(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    scalar_field : typing.Union[dolfinx.fem.Function, typing.Tuple[ufl.core.expr.Expr, dolfinx.fem.FunctionSpace]]
+    scalar_field
         Expression to be plotted, which contains a scalar field.
         If the expression is provided as a dolfinx Function, such function will be plotted.
         If the expression is provided as a tuple containing UFL expression and a dolfinx FunctionSpace,
         the UFL expression will first be interpolated on the function space and then plotted.
-    name : str
+    name
         Name of the quantity stored in the scalar field.
-    warp_factor : float, optional
+    warp_factor
         This argument is ignored for a field on a 1D mesh.
         For a 2D mesh: if provided then the factor is used to produce a warped representation
         the field; if not provided then the scalar field will be plotted on the mesh.
-    part : str, optional
+    part
         Part of the solution (real or imag) to be plotted. By default, the real part is plotted.
         The argument is ignored when plotting a real field.
 
     Returns
     -------
-    typing.Union[plotly.graph_objects.Figure, itkwidgets.Viewer]
+    :
         A plotly.graph_objects.Figure (in 1D) or itkwidgets.Viewer (in 2D or 3D)
         representing a plot of the scalar field.
     """
@@ -237,26 +237,26 @@ def plot_vector_field(  # type: ignore[no-any-unimported]
 
     Parameters
     ----------
-    vector_field : typing.Union[dolfinx.fem.Function, typing.Tuple[ufl.core.expr.Expr, dolfinx.fem.FunctionSpace]]
+    vector_field
         Expression to be plotted, which contains a vector field.
         If the expression is provided as a dolfinx Function, such function will be plotted.
         If the expression is provided as a tuple containing UFL expression and a dolfinx FunctionSpace,
         the UFL expression will first be interpolated on the function space and then plotted.
-    name : str
+    name
         Name of the quantity stored in the vector field.
-    glyph_factor : float, optional
+    glyph_factor
         If provided, the vector field is represented using a gylph, scaled by this factor.
-    warp_factor : float, optional
+    warp_factor
         If provided then the factor is used to produce a warped representation
         the field; if not provided then the magnitude of the vector field will be plotted on the mesh.
         Only used when `glyph_factor` is not provided.
-    part : str, optional
+    part
         Part of the solution (real or imag) to be plotted. By default, the real part is plotted.
         The argument is ignored when plotting a real field.
 
     Returns
     -------
-    itkwidgets.Viewer
+    :
         An itkwidgets.Viewer representing a plot of the vector field.
     """
     vector_field = _interpolate_if_ufl_expression(vector_field)
