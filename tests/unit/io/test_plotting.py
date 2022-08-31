@@ -64,14 +64,14 @@ def write_itkwidgets_image(
 def test_plot_mesh_1d(mesh_1d: dolfinx.mesh.Mesh) -> None:
     """Check that plot_mesh executes without errors (1D case)."""
     pytest.importorskip("plotly")
-    with nbvalx.tempfile.TemporaryDirectory(mesh_1d.comm) as tempdir:  # type: ignore[call-arg]
+    with nbvalx.tempfile.TemporaryDirectory(mesh_1d.comm) as tempdir:
         write_plotly_image(mesh_1d.comm, multiphenicsx.io.plot_mesh(mesh_1d), tempdir, "mesh")
 
 
 def test_plot_mesh_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
     """Check that plot_mesh executes without errors (2D case)."""
     pytest.importorskip("pyvista")
-    with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:  # type: ignore[call-arg]
+    with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
         write_itkwidgets_image(mesh_2d.comm, multiphenicsx.io.plot_mesh(mesh_2d), tempdir, "mesh")
 
 
@@ -80,7 +80,7 @@ def test_plot_mesh_entities_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
     pytest.importorskip("pyvista")
     cell_entities = dolfinx.mesh.locate_entities(
         mesh_2d, mesh_2d.topology.dim, lambda x: np.full((x.shape[1], ), True))
-    with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:  # type: ignore[call-arg]
+    with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
         write_itkwidgets_image(
             mesh_2d.comm, multiphenicsx.io.plot_mesh_entities(mesh_2d, mesh_2d.topology.dim, cell_entities),
             tempdir, "mesh_entities")
@@ -91,7 +91,7 @@ def test_plot_mesh_entities_boundary_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
     pytest.importorskip("pyvista")
     boundary_entities = dolfinx.mesh.locate_entities_boundary(
         mesh_2d, mesh_2d.topology.dim - 1, lambda x: np.full((x.shape[1], ), True))
-    with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:  # type: ignore[call-arg]
+    with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
         write_itkwidgets_image(
             mesh_2d.comm, multiphenicsx.io.plot_mesh_entities(mesh_2d, mesh_2d.topology.dim - 1, boundary_entities),
             tempdir, "mesh_entities")
@@ -106,7 +106,7 @@ def test_plot_mesh_tags_2d(mesh_2d: dolfinx.mesh.Mesh, fill_value: int) -> None:
     cell_tags = dolfinx.cpp.mesh.MeshTags_int32(
         mesh_2d, mesh_2d.topology.dim, cell_entities,
         np.full(cell_entities.shape, fill_value=fill_value, dtype=np.int32))
-    with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:  # type: ignore[call-arg]
+    with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
         write_itkwidgets_image(mesh_2d.comm, multiphenicsx.io.plot_mesh_tags(cell_tags), tempdir, "mesh_tags")
 
 
@@ -124,7 +124,7 @@ def test_plot_mesh_tags_boundary_2d(mesh_2d: dolfinx.mesh.Mesh, fill_value: int)
             multiphenicsx.io.plot_mesh_tags(boundary_tags)
         assert str(excinfo.value) == "Zero is used as a placeholder for non-provided entities"
     elif fill_value == 1:
-        with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:  # type: ignore[call-arg]
+        with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
             write_itkwidgets_image(mesh_2d.comm, multiphenicsx.io.plot_mesh_tags(boundary_tags), tempdir, "mesh_tags")
 
 
@@ -138,7 +138,7 @@ def test_plot_scalar_field_1d(  # type: ignore[no-any-unimported]
     u = dolfinx.fem.Function(V)
     with u.vector.localForm() as u_local:
         u_local[:] = np.arange(u_local.size)
-    with nbvalx.tempfile.TemporaryDirectory(mesh_1d.comm) as tempdir:  # type: ignore[call-arg]
+    with nbvalx.tempfile.TemporaryDirectory(mesh_1d.comm) as tempdir:
         if not np.issubdtype(petsc4py.PETSc.ScalarType, np.complexfloating):
             write_plotly_image(
                 mesh_1d.comm, multiphenicsx.io.plot_scalar_field(expression_generator(u, V), "u"), tempdir, "u")
@@ -161,7 +161,7 @@ def test_plot_scalar_field_2d(  # type: ignore[no-any-unimported]
     u = dolfinx.fem.Function(V)
     with u.vector.localForm() as u_local:
         u_local[:] = np.arange(u_local.size)
-    with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:  # type: ignore[call-arg]
+    with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
         if not np.issubdtype(petsc4py.PETSc.ScalarType, np.complexfloating):
             write_itkwidgets_image(
                 mesh_2d.comm, multiphenicsx.io.plot_scalar_field(expression_generator(u, V), "u"), tempdir, "u")
@@ -187,7 +187,7 @@ def test_plot_vector_field_2d(  # type: ignore[no-any-unimported]
     u = dolfinx.fem.Function(V)
     with u.vector.localForm() as u_local:
         u_local[:] = np.arange(u_local.size)
-    with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:  # type: ignore[call-arg]
+    with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
         if not np.issubdtype(petsc4py.PETSc.ScalarType, np.complexfloating):
             write_itkwidgets_image(
                 mesh_2d.comm, multiphenicsx.io.plot_vector_field(expression_generator(u, V), "u"), tempdir, "u")

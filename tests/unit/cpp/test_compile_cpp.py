@@ -19,7 +19,7 @@ def test_compile_code() -> None:
     """Compile a simple C++ function."""
     comm = mpi4py.MPI.COMM_WORLD
 
-    with nbvalx.tempfile.TemporaryDirectory(comm) as tempdir:  # type: ignore[call-arg]
+    with nbvalx.tempfile.TemporaryDirectory(comm) as tempdir:
         if comm.rank == 0:
             code = """
 #include <pybind11/pybind11.h>
@@ -48,7 +48,7 @@ def test_compile_package() -> None:
     """Compile a simple C++ package."""
     comm = mpi4py.MPI.COMM_WORLD
 
-    with nbvalx.tempfile.TemporaryDirectory(comm) as tempdir:  # type: ignore[call-arg]
+    with nbvalx.tempfile.TemporaryDirectory(comm) as tempdir:
         if comm.rank == 0:
             package_root = os.path.join(tempdir, "test_compile_package")
             os.makedirs(os.path.join(package_root, "utilities"))
