@@ -56,8 +56,8 @@ def compile_code(
     assert isinstance(linker_args, list)
 
     # Set output directory
-    jit_parameters = dolfinx.jit.get_parameters()
-    output_dir = kwargs.get("output_dir", str(jit_parameters["cache_dir"]))
+    jit_options = dolfinx.jit.get_options()
+    output_dir = kwargs.get("output_dir", str(jit_options["cache_dir"]))
     assert isinstance(output_dir, str)
 
     # Prepare cpp import file
