@@ -144,7 +144,6 @@ jobs:
         fenicsx$dolfinx
         gmsh
       pip_packages: |
-        itkwidgets pyvista$pyvista%multiphenicsx.io
         multiphenicsx@https://github.com/multiphenics/multiphenicsx.git
       test_script: |
         python3 -m pip install kaleido plotly
