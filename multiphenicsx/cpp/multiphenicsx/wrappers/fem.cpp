@@ -162,7 +162,7 @@ void fem(py::module& m)
            py::arg("dofmap"), py::arg("restriction"))
       .def("cell_dofs",
            [](const multiphenicsx::fem::DofMapRestriction& self, int cell) {
-             tcb::span<const std::int32_t> dofs = self.cell_dofs(cell);
+             auto dofs = self.cell_dofs(cell);
              return py::array_t<std::int32_t>(dofs.size(), dofs.data(),
                                               py::cast(self));
            })
