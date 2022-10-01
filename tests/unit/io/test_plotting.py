@@ -9,6 +9,7 @@ import os
 import typing
 
 import dolfinx.cpp
+import dolfinx.fem
 import dolfinx.mesh
 import mpi4py.MPI
 import nbvalx.tempfile
