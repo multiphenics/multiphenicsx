@@ -33,7 +33,7 @@ jobs:
         petsc_arch: [real, complex]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup container
         run: |
           . /usr/local/bin/dolfinx-${{ matrix.petsc_arch }}-mode
@@ -103,7 +103,7 @@ jobs:
     env:
       RELEASE_IMAGE: 'multiphenics/multiphenicsx'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Build the docker release image
         run: docker build --pull --target multiphenicsx -t ${RELEASE_IMAGE}:latest -f docker/Dockerfile .
       - name: Try importing multiphenicsx inside the docker release image
