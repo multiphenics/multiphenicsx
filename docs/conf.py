@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2022 by the multiphenicsx authors
+# Copyright (C) 2016-2023 by the multiphenicsx authors
 #
 # This file is part of multiphenicsx.
 #
@@ -7,7 +7,7 @@
 
 # Project information
 project = "multiphenicsx"
-copyright = "2016-2022, the multiphenicsx authors"
+copyright = "2016-2023, the multiphenicsx authors"
 author = "Francesco Ballarin (and contributors)"
 
 # General configuration
