@@ -15,13 +15,24 @@ import cppimport
 import dolfinx.jit
 import dolfinx.pkgconfig
 import dolfinx.wrappers
+import numpy as np
+import petsc4py.PETSc
 
 
 def compile_code(
     package_name: str, package_file: str, **kwargs: typing.Union[str, typing.List[str]]
 ) -> types.ModuleType:
     """Compile code in a C++ package."""
-    dolfinx_pc = dolfinx.pkgconfig.parse("dolfinx")  # type: ignore[no-untyped-call]
+    dolfinx_pc = dict()
+    has_petsc_complex = np.issubdtype(petsc4py.PETSc.ScalarType, np.complexfloating)
+    for (dolfinx_pc_package, scalar_type_check) in zip(
+        ("dolfinx", "dolfinx_real", "dolfinx_complex"),
+        (True, not has_petsc_complex, has_petsc_complex)
+    ):
+        if dolfinx.pkgconfig.exists(dolfinx_pc_package) and scalar_type_check:  # type: ignore[no-untyped-call]
+            dolfinx_pc.update(dolfinx.pkgconfig.parse(dolfinx_pc_package))  # type: ignore[no-untyped-call]
+            break
+    assert len(dolfinx_pc) > 0
 
     # Set other sources
     sources = kwargs.get("sources", [])
