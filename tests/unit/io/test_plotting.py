@@ -8,7 +8,6 @@
 import os
 import typing
 
-import dolfinx.cpp
 import dolfinx.fem
 import dolfinx.mesh
 import mpi4py.MPI
@@ -20,10 +19,10 @@ import ufl
 
 import multiphenicsx.io
 
-# Use go and itkwidgets from multiphenicsx.io.plotting rather than the actual libraries
+# Use go and pyvista from multiphenicsx.io.plotting rather than the actual libraries
 # to handle the case of missing dependencies
 go_or_mock = multiphenicsx.io.plotting.go
-itkwidgets_or_mock = multiphenicsx.io.plotting.itkwidgets
+pyvista_or_mock = multiphenicsx.io.plotting.pyvista
 
 ExpressionGeneratorType = typing.Callable[
     [dolfinx.fem.Function, dolfinx.fem.FunctionSpace],
@@ -52,13 +51,12 @@ def write_plotly_image(
     fig.write_image(os.path.join(directory, filename + "-" + str(comm.rank) + ".png"))
 
 
-def write_itkwidgets_image(
-    comm: mpi4py.MPI.Intracomm, viewer: itkwidgets_or_mock.Viewer,  # type: ignore[name-defined]
+def write_pyvista_image(
+    comm: mpi4py.MPI.Intracomm, viewer: pyvista_or_mock.trame.jupyter.Widget,
     directory: str, filename: str
 ) -> None:
-    """Write a itkwidgets figure to file."""
-    # Currently untested. itkwidgets suggests to use ipywebrtc, but it does not seem to be working
-    # when called from plain python files (error on no data to export) rather than jupyter notebooks
+    """Write a pyvista figure to file."""
+    # Currently untested. See #3887 in pyvista repo.
     pass
 
 
@@ -73,7 +71,7 @@ def test_plot_mesh_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
     """Check that plot_mesh executes without errors (2D case)."""
     pytest.importorskip("pyvista")
     with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
-        write_itkwidgets_image(mesh_2d.comm, multiphenicsx.io.plot_mesh(mesh_2d), tempdir, "mesh")
+        write_pyvista_image(mesh_2d.comm, multiphenicsx.io.plot_mesh(mesh_2d), tempdir, "mesh")
 
 
 def test_plot_mesh_entities_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
@@ -82,7 +80,7 @@ def test_plot_mesh_entities_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
     cell_entities = dolfinx.mesh.locate_entities(
         mesh_2d, mesh_2d.topology.dim, lambda x: np.full((x.shape[1], ), True))
     with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
-        write_itkwidgets_image(
+        write_pyvista_image(
             mesh_2d.comm, multiphenicsx.io.plot_mesh_entities(mesh_2d, mesh_2d.topology.dim, cell_entities),
             tempdir, "mesh_entities")
 
@@ -93,7 +91,7 @@ def test_plot_mesh_entities_boundary_2d(mesh_2d: dolfinx.mesh.Mesh) -> None:
     boundary_entities = dolfinx.mesh.locate_entities_boundary(
         mesh_2d, mesh_2d.topology.dim - 1, lambda x: np.full((x.shape[1], ), True))
     with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
-        write_itkwidgets_image(
+        write_pyvista_image(
             mesh_2d.comm, multiphenicsx.io.plot_mesh_entities(mesh_2d, mesh_2d.topology.dim - 1, boundary_entities),
             tempdir, "mesh_entities")
 
@@ -104,11 +102,11 @@ def test_plot_mesh_tags_2d(mesh_2d: dolfinx.mesh.Mesh, fill_value: int) -> None:
     pytest.importorskip("pyvista")
     cell_entities = dolfinx.mesh.locate_entities(
         mesh_2d, mesh_2d.topology.dim, lambda x: np.full((x.shape[1], ), True))
-    cell_tags = dolfinx.cpp.mesh.MeshTags_int32(
+    cell_tags = dolfinx.mesh.meshtags(
         mesh_2d, mesh_2d.topology.dim, cell_entities,
         np.full(cell_entities.shape, fill_value=fill_value, dtype=np.int32))
     with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
-        write_itkwidgets_image(mesh_2d.comm, multiphenicsx.io.plot_mesh_tags(cell_tags), tempdir, "mesh_tags")
+        write_pyvista_image(mesh_2d.comm, multiphenicsx.io.plot_mesh_tags(cell_tags), tempdir, "mesh_tags")
 
 
 @pytest.mark.parametrize("fill_value", [0, 1])
@@ -117,7 +115,7 @@ def test_plot_mesh_tags_boundary_2d(mesh_2d: dolfinx.mesh.Mesh, fill_value: int)
     pytest.importorskip("pyvista")
     boundary_entities = dolfinx.mesh.locate_entities_boundary(
         mesh_2d, mesh_2d.topology.dim - 1, lambda x: np.full((x.shape[1], ), True))
-    boundary_tags = dolfinx.cpp.mesh.MeshTags_int32(
+    boundary_tags = dolfinx.mesh.meshtags(
         mesh_2d, mesh_2d.topology.dim - 1, boundary_entities,
         np.full(boundary_entities.shape, fill_value=fill_value, dtype=np.int32))
     if fill_value == 0:
@@ -126,7 +124,7 @@ def test_plot_mesh_tags_boundary_2d(mesh_2d: dolfinx.mesh.Mesh, fill_value: int)
         assert str(excinfo.value) == "Zero is used as a placeholder for non-provided entities"
     elif fill_value == 1:
         with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
-            write_itkwidgets_image(mesh_2d.comm, multiphenicsx.io.plot_mesh_tags(boundary_tags), tempdir, "mesh_tags")
+            write_pyvista_image(mesh_2d.comm, multiphenicsx.io.plot_mesh_tags(boundary_tags), tempdir, "mesh_tags")
 
 
 @pytest.mark.parametrize("expression_generator", [lambda u, V: u, lambda u, V: (2.0 * u, V)])
@@ -164,16 +162,16 @@ def test_plot_scalar_field_2d(  # type: ignore[no-any-unimported]
         u_local[:] = np.arange(u_local.size)
     with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
         if not np.issubdtype(petsc4py.PETSc.ScalarType, np.complexfloating):
-            write_itkwidgets_image(
+            write_pyvista_image(
                 mesh_2d.comm, multiphenicsx.io.plot_scalar_field(expression_generator(u, V), "u"), tempdir, "u")
         else:
-            write_itkwidgets_image(
+            write_pyvista_image(
                 mesh_2d.comm, multiphenicsx.io.plot_scalar_field(expression_generator(u, V), "u", part="real"),
                 tempdir, "real_u")
-            write_itkwidgets_image(
+            write_pyvista_image(
                 mesh_2d.comm, multiphenicsx.io.plot_scalar_field(expression_generator(u, V), "u", part="imag"),
                 tempdir, "imag_u")
-        write_itkwidgets_image(
+        write_pyvista_image(
             mesh_2d.comm, multiphenicsx.io.plot_scalar_field(expression_generator(u, V), "u", warp_factor=1.0),
             tempdir, "glyph_u")
 
@@ -190,18 +188,18 @@ def test_plot_vector_field_2d(  # type: ignore[no-any-unimported]
         u_local[:] = np.arange(u_local.size)
     with nbvalx.tempfile.TemporaryDirectory(mesh_2d.comm) as tempdir:
         if not np.issubdtype(petsc4py.PETSc.ScalarType, np.complexfloating):
-            write_itkwidgets_image(
+            write_pyvista_image(
                 mesh_2d.comm, multiphenicsx.io.plot_vector_field(expression_generator(u, V), "u"), tempdir, "u")
         else:
-            write_itkwidgets_image(
+            write_pyvista_image(
                 mesh_2d.comm, multiphenicsx.io.plot_vector_field(expression_generator(u, V), "u", part="real"),
                 tempdir, "real_u")
-            write_itkwidgets_image(
+            write_pyvista_image(
                 mesh_2d.comm, multiphenicsx.io.plot_vector_field(expression_generator(u, V), "u", part="imag"),
                 tempdir, "imag_u")
-        write_itkwidgets_image(
+        write_pyvista_image(
             mesh_2d.comm, multiphenicsx.io.plot_vector_field(expression_generator(u, V), "u", glyph_factor=1.0),
             tempdir, "glyph_u")
-        write_itkwidgets_image(
+        write_pyvista_image(
             mesh_2d.comm, multiphenicsx.io.plot_vector_field(expression_generator(u, V), "u", warp_factor=1.0),
             tempdir, "warp_u")

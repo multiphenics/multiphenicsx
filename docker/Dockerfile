@@ -25,13 +25,10 @@ MAINTAINER Francesco Ballarin <francesco.ballarin@unicatt.it>
 COPY . /tmp/multiphenicsx
 
 WORKDIR /tmp/multiphenicsx
-RUN python3 -m pip install --upgrade pip && python3 -m pip install --upgrade https://dmf.unicatt.it/ballarin/public/itkwidgets-0.33.0.dev0-py2.py3-none-any.whl && python3 -m pip -q install .[tests,tutorials]
+RUN python3 -m pip install --upgrade pip && python3 -m pip -q install .[tests,tutorials]
 
 WORKDIR /root
 RUN mkdir multiphenicsx && \
     mv /tmp/multiphenicsx/tests multiphenicsx/ && \
     mv /tmp/multiphenicsx/tutorials multiphenicsx/ && \
     rm -rf /tmp/multiphenicsx
-
-# We use jupyter notebook rather than jupyter lab because itkwidgets are not yet supported in jupyter lab 3.
-ENTRYPOINT ["jupyter", "notebook", "--ip", "0.0.0.0", "--no-browser", "--allow-root"]

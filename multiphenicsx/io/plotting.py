@@ -27,12 +27,12 @@ try:
 except ImportError:  # pragma: no cover
     pyvista = types.ModuleType("pyvista", "Mock pyvista module")
     pyvista.UnstructuredGrid = object  # type: ignore[misc, assignment]
-
-try:
-    import itkwidgets
-except ImportError:  # pragma: no cover
-    itkwidgets = types.ModuleType("itkwidgets", "Mock itkwidgets module")
-    itkwidgets.Viewer = object
+    pyvista.trame = types.ModuleType("pyvista", "Mock pyvista.trame module")
+    pyvista.trame.jupyter = types.ModuleType("pyvista", "Mock pyvista.trame.jupyter module")
+    pyvista.trame.jupyter.Widget = object  # type: ignore[misc, assignment]
+else:
+    import pyvista.trame
+    import pyvista.trame.jupyter
 
 
 def _dolfinx_to_pyvista_mesh(mesh: dolfinx.mesh.Mesh, dim: typing.Optional[int] = None) -> pyvista.UnstructuredGrid:
@@ -47,7 +47,7 @@ def _dolfinx_to_pyvista_mesh(mesh: dolfinx.mesh.Mesh, dim: typing.Optional[int] 
 
 
 def plot_mesh(mesh: dolfinx.mesh.Mesh) -> typing.Union[  # type: ignore[no-any-unimported]
-        go.Figure, itkwidgets.Viewer]:
+        go.Figure, pyvista.trame.jupyter.Widget]:
     """
     Plot a dolfinx.mesh.Mesh with plotly (in 1D) or pyvista (in 2D or 3D).
 
@@ -59,7 +59,7 @@ def plot_mesh(mesh: dolfinx.mesh.Mesh) -> typing.Union[  # type: ignore[no-any-u
     Returns
     -------
     :
-        A plotly.graph_objects.Figure (in 1D) or itkwidgets.Viewer (in 2D or 3D)
+        A plotly.graph_objects.Figure (in 1D) or pyvista.trame.jupyter.Widget (in 2D or 3D)
         representing a plot of the mesh.
     """
     if mesh.topology.dim == 1:
@@ -78,16 +78,16 @@ def _plot_mesh_plotly(mesh: dolfinx.mesh.Mesh) -> go.Figure:  # type: ignore[no-
     return fig
 
 
-def _plot_mesh_pyvista(mesh: dolfinx.mesh.Mesh) -> itkwidgets.Viewer:  # type: ignore[no-any-unimported]
+def _plot_mesh_pyvista(mesh: dolfinx.mesh.Mesh) -> pyvista.trame.jupyter.Widget:
     grid = _dolfinx_to_pyvista_mesh(mesh)
-    plotter = pyvista.PlotterITK()  # type: ignore[no-untyped-call]
+    plotter = pyvista.Plotter(notebook=True)  # type: ignore[no-untyped-call]
     plotter.add_mesh(grid)  # type: ignore[no-untyped-call]
-    return plotter.show()  # type: ignore[no-untyped-call]
+    return plotter.show(jupyter_backend="client", return_viewer=True)  # type: ignore[no-any-return, no-untyped-call]
 
 
-def plot_mesh_entities(  # type: ignore[no-any-unimported]
+def plot_mesh_entities(
     mesh: dolfinx.mesh.Mesh, dim: int, entities: np.typing.NDArray[np.int32]
-) -> itkwidgets.Viewer:
+) -> pyvista.trame.jupyter.Widget:
     """
     Plot dolfinx.mesh.Mesh with pyvista, highlighting the provided `dim`-dimensional entities.
 
@@ -103,15 +103,15 @@ def plot_mesh_entities(  # type: ignore[no-any-unimported]
     Returns
     -------
     :
-        An itkwidgets.Viewer representing a plot of the mesh entities.
+        An pyvista.trame.jupyter.Widget representing a plot of the mesh entities.
     """
     assert mesh.topology.dim > 1
     return _plot_mesh_entities_pyvista(mesh, dim, entities, np.ones_like(entities))
 
 
-def plot_mesh_tags(mesh_tags: dolfinx.cpp.mesh.MeshTags_int32) -> itkwidgets.Viewer:  # type: ignore[no-any-unimported]
+def plot_mesh_tags(mesh_tags: dolfinx.mesh.MeshTags) -> pyvista.trame.jupyter.Widget:
     """
-    Plot dolfinx.cpp.mesh.MeshTags_int32 with pyvista.
+    Plot dolfinx.mesh.MeshTags with pyvista.
 
     Parameters
     ----------
@@ -121,16 +121,16 @@ def plot_mesh_tags(mesh_tags: dolfinx.cpp.mesh.MeshTags_int32) -> itkwidgets.Vie
     Returns
     -------
     :
-        An itkwidgets.Viewer representing a plot of the dolfinx.cpp.mesh.MeshTags_int32 object.
+        An pyvista.trame.jupyter.Widget representing a plot of the dolfinx.mesh.MeshTags object.
     """
     mesh = mesh_tags.mesh
     assert mesh.topology.dim > 1
     return _plot_mesh_entities_pyvista(mesh, mesh_tags.dim, mesh_tags.indices, mesh_tags.values)
 
 
-def _plot_mesh_entities_pyvista(  # type: ignore[no-any-unimported]
+def _plot_mesh_entities_pyvista(
     mesh: dolfinx.mesh.Mesh, dim: int, indices: np.typing.NDArray[np.int32], values: np.typing.NDArray[np.int32]
-) -> itkwidgets.Viewer:
+) -> pyvista.trame.jupyter.Widget:
     num_cells = mesh.topology.index_map(dim).size_local + mesh.topology.index_map(dim).num_ghosts
     all_values = np.zeros(num_cells)
     if values.shape[0] != num_cells:
@@ -145,15 +145,15 @@ def _plot_mesh_entities_pyvista(  # type: ignore[no-any-unimported]
     grid = _dolfinx_to_pyvista_mesh(mesh, dim)
     grid.cell_data[name] = all_values
     grid.set_active_scalars(name)
-    plotter = pyvista.PlotterITK()  # type: ignore[no-untyped-call]
+    plotter = pyvista.Plotter(notebook=True)  # type: ignore[no-untyped-call]
     plotter.add_mesh(grid)  # type: ignore[no-untyped-call]
-    return plotter.show()  # type: ignore[no-untyped-call]
+    return plotter.show(jupyter_backend="client", return_viewer=True)  # type: ignore[no-any-return, no-untyped-call]
 
 
 def plot_scalar_field(  # type: ignore[no-any-unimported]
     scalar_field: typing.Union[dolfinx.fem.Function, typing.Tuple[ufl.core.expr.Expr, dolfinx.fem.FunctionSpace]],
     name: str, warp_factor: float = 0.0, part: str = "real"
-) -> typing.Union[go.Figure, itkwidgets.Viewer]:
+) -> typing.Union[go.Figure, pyvista.trame.jupyter.Widget]:
     """
     Plot a scalar field with plotly (in 1D) or pyvista (in 2D or 3D).
 
@@ -177,7 +177,7 @@ def plot_scalar_field(  # type: ignore[no-any-unimported]
     Returns
     -------
     :
-        A plotly.graph_objects.Figure (in 1D) or itkwidgets.Viewer (in 2D or 3D)
+        A plotly.graph_objects.Figure (in 1D) or pyvista.trame.jupyter.Widget (in 2D or 3D)
         representing a plot of the scalar field.
     """
     scalar_field = _interpolate_if_ufl_expression(scalar_field)
@@ -208,30 +208,30 @@ def _plot_scalar_field_plotly(  # type: ignore[no-any-unimported]
     return fig
 
 
-def _plot_scalar_field_pyvista(  # type: ignore[no-any-unimported]
+def _plot_scalar_field_pyvista(
     scalar_field: dolfinx.fem.Function, name: str, warp_factor: float, part: str
-) -> itkwidgets.Viewer:
+) -> pyvista.trame.jupyter.Widget:
     values = scalar_field.x.array
     values, name = _extract_part(values, name, part)
     pyvista_cells, cell_types, coordinates = dolfinx.plot.create_vtk_mesh(scalar_field.function_space)
     grid = pyvista.UnstructuredGrid(pyvista_cells, cell_types, coordinates)
     grid.point_data[name] = values
     grid.set_active_scalars(name)
-    plotter = pyvista.PlotterITK()  # type: ignore[no-untyped-call]
+    plotter = pyvista.Plotter(notebook=True)  # type: ignore[no-untyped-call]
     if warp_factor != 0.0:
         assert warp_factor > 0.0
         warped = grid.warp_by_scalar(factor=warp_factor)  # type: ignore[no-untyped-call]
         plotter.add_mesh(warped)  # type: ignore[no-untyped-call]
     else:
         plotter.add_mesh(grid)  # type: ignore[no-untyped-call]
-    return plotter.show()  # type: ignore[no-untyped-call]
+    return plotter.show(jupyter_backend="client", return_viewer=True)  # type: ignore[no-any-return, no-untyped-call]
 
 
 def plot_vector_field(  # type: ignore[no-any-unimported]
     vector_field: typing.Union[dolfinx.fem.Function, typing.Tuple[ufl.core.expr.Expr, dolfinx.fem.FunctionSpace]],
     name: str, glyph_factor: float = 0.0, warp_factor: float = 0.0,
     part: str = "real"
-) -> itkwidgets.Viewer:
+) -> pyvista.trame.jupyter.Widget:
     """
     Plot a vector field with pyvista.
 
@@ -257,7 +257,7 @@ def plot_vector_field(  # type: ignore[no-any-unimported]
     Returns
     -------
     :
-        An itkwidgets.Viewer representing a plot of the vector field.
+        An pyvista.trame.jupyter.Widget representing a plot of the vector field.
     """
     vector_field = _interpolate_if_ufl_expression(vector_field)
     mesh = vector_field.function_space.mesh
@@ -265,10 +265,10 @@ def plot_vector_field(  # type: ignore[no-any-unimported]
     return _plot_vector_field_pyvista(vector_field, name, glyph_factor, warp_factor, part)
 
 
-def _plot_vector_field_pyvista(  # type: ignore[no-any-unimported]
+def _plot_vector_field_pyvista(
     vector_field: dolfinx.fem.Function, name: str, glyph_factor: float,
     warp_factor: float, part: str
-) -> itkwidgets.Viewer:
+) -> pyvista.trame.jupyter.Widget:
     pyvista_cells, cell_types, coordinates = dolfinx.plot.create_vtk_mesh(vector_field.function_space)
     values = vector_field.x.array.reshape(coordinates.shape[0], vector_field.function_space.dofmap.index_map_bs)
     values, name = _extract_part(values, name, part)
@@ -276,7 +276,7 @@ def _plot_vector_field_pyvista(  # type: ignore[no-any-unimported]
         values = np.insert(values, values.shape[1], 0.0, axis=1)
     grid = pyvista.UnstructuredGrid(pyvista_cells, cell_types, coordinates)
     grid.point_data[name] = values
-    plotter = pyvista.PlotterITK()  # type: ignore[no-untyped-call]
+    plotter = pyvista.Plotter(notebook=True)  # type: ignore[no-untyped-call]
     if glyph_factor == 0.0:
         grid.set_active_vectors(name)
         if warp_factor == 0.0:
@@ -293,7 +293,7 @@ def _plot_vector_field_pyvista(  # type: ignore[no-any-unimported]
         mesh = vector_field.function_space.mesh
         grid_background = _dolfinx_to_pyvista_mesh(mesh, mesh.topology.dim - 1)
         plotter.add_mesh(grid_background)  # type: ignore[no-untyped-call]
-    return plotter.show()  # type: ignore[no-untyped-call]
+    return plotter.show(jupyter_backend="client", return_viewer=True)  # type: ignore[no-any-return, no-untyped-call]
 
 
 def _interpolate_if_ufl_expression(  # type: ignore[no-any-unimported]
