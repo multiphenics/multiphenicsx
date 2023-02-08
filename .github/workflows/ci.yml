@@ -94,32 +94,3 @@ jobs:
         with:
           workflow-filename: ci.yml
           days-elapsed: 55
-
-  docker:
-    needs: [test]
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    env:
-      RELEASE_IMAGE: 'multiphenics/multiphenicsx'
-    steps:
-      - uses: actions/checkout@v3
-      - name: Build the docker release image
-        run: docker build --pull --target multiphenicsx -t ${RELEASE_IMAGE}:latest -f docker/Dockerfile .
-      - name: Try importing multiphenicsx inside the docker release image
-        run: docker run -i --rm ${RELEASE_IMAGE}:latest python3 -c "import multiphenicsx.cpp"
-      - name: Run unit tests (serial) to verify that the docker release image is working
-        run: docker run -i --rm ${RELEASE_IMAGE}:latest bash -c "cd multiphenicsx && pytest tests/unit"
-      - name: Build the docker jupyter image
-        run: docker build --pull --target jupyter -t ${RELEASE_IMAGE}:jupyter -f docker/Dockerfile .
-      - name: Try importing multiphenicsx inside the docker jupyter image
-        run: docker run -i --rm --entrypoint /usr/bin/env ${RELEASE_IMAGE}:jupyter python3 -c "import multiphenicsx.cpp"
-      - name: Run tutorials (serial) to verify that the docker jupyter image is working
-        run: docker run -i --rm --entrypoint /usr/bin/env ${RELEASE_IMAGE}:jupyter bash -c "cd multiphenicsx && pytest tutorials"
-      - name: Log into the docker registry
-        if: github.repository == 'multiphenics/multiphenicsx'
-        run: docker login -u ${{ secrets.CI_REGISTRY_USER }} -p ${{ secrets.CI_REGISTRY_PASSWORD }}
-      - name: Push to the docker registry
-        if: github.repository == 'multiphenics/multiphenicsx'
-        run: |
-          docker push ${RELEASE_IMAGE}:latest
-          docker push ${RELEASE_IMAGE}:jupyter
