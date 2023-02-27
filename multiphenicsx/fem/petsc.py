@@ -573,10 +573,13 @@ def NestVecSubVectorWrapperBase(VecSubVectorWrapperClass: typing.Type) -> typing
             if b is not None:
                 if isinstance(b, list):
                     self._b = b
+                    self._b_destroy = False
                 else:
                     self._b = b.getNestSubVecs()
+                    self._b_destroy = True
                 assert len(self._b) == len(dofmaps)
             else:
+                self._b_destroy = False
                 self._b = [None] * len(dofmaps)
             self._dofmaps = dofmaps
             self._restriction = restriction
@@ -608,8 +611,10 @@ def NestVecSubVectorWrapperBase(VecSubVectorWrapperClass: typing.Type) -> typing
             self, exception_type: typing.Type[BaseException], exception_value: BaseException,
             traceback: types.TracebackType
         ) -> None:
-            """Do nothing when leaving the context."""
-            pass
+            """Clean up when leaving the context."""
+            if self._b_destroy:
+                for b_index in self._b:
+                    b_index.destroy()
 
     return NestVecSubVectorWrapperBase_Class
 
@@ -730,6 +735,7 @@ def assemble_vector_nest(  # type: ignore[no-any-unimported]
     for b_sub in b.getNestSubVecs():
         with b_sub.localForm() as b_local:
             b_local.set(0.0)
+        b_sub.destroy()
     return assemble_vector_nest(b, L, constants, coeffs, restriction)  # type: ignore[call-arg, arg-type]
 
 
@@ -1140,6 +1146,7 @@ class NestMatSubMatrixWrapper(object):
                             (self._restriction[0][index0], self._restriction[1][index1]))
                         wrapper_content = wrapper_stack.enter_context(wrapper)  # type: ignore[arg-type]
                     yield (index0, index1, wrapper_content)
+                    A_sub.destroy()
 
     def __enter__(self) -> "NestMatSubMatrixWrapper":
         """Return this wrapper."""
