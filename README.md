@@ -17,12 +17,6 @@ and install the package by typing
 pip3 install .[tutorials]
 ```
 
-#### 2.1. multiphenicsx docker image
-If you want to try **multiphenicsx** out but do not have **FEniCSx** already installed, you can [pull our docker image from Docker Hub](https://hub.docker.com/r/multiphenics/multiphenicsx/). All required dependencies are already installed. **multiphenicsx** tutorials and tests are located at
-```
-/root/multiphenicsx
-```
-
 ### 3. Tutorials
 Several tutorials are provided in the [**tutorials** subfolder](https://github.com/multiphenics/multiphenicsx/tree/main/tutorials).
 * **Tutorial 1**: block Poisson test case, to introduce facilities used in the library.
