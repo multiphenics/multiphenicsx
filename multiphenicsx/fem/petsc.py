@@ -896,17 +896,14 @@ def _(  # type: ignore[no-any-unimported]
     bcs1 = dolfinx.fem.bcs_by_block(function_spaces[1], bcs)
     with BlockVecSubVectorWrapper(b, dofmaps, restriction) as block_b, \
             BlockVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0) as block_x0:
+        if x0 is not None:
+            block_x0_as_list = [x0_sub.copy() for x0_sub in block_x0]
+        else:
+            block_x0_as_list = []
         for b_sub, L_sub, a_sub, constant_L, coeff_L, constant_a, coeff_a in zip(
                 block_b, L, a, constants_L, coeffs_L, constants_a, coeffs_a):
             dcpp.fem.assemble_vector(b_sub, L_sub, constant_L, coeff_L)
-            for a_sub_, bcs1_sub, x0_sub, constant_a_sub, coeff_a_sub in zip(
-                    a_sub, bcs1, block_x0, constant_a, coeff_a):
-                if x0_sub is None:
-                    x0_sub_as_list = []
-                else:
-                    x0_sub_as_list = [x0_sub]
-                dcpp.fem.apply_lifting(
-                    b_sub, [a_sub_], [constant_a_sub], [coeff_a_sub], [bcs1_sub], x0_sub_as_list, scale)
+            dcpp.fem.apply_lifting(b_sub, a_sub, constant_a, coeff_a, bcs1, block_x0_as_list, scale)
     b.ghostUpdate(addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
 
     bcs0 = dolfinx.fem.bcs_by_block(function_spaces[0], bcs)
