@@ -1509,24 +1509,19 @@ def apply_lifting(  # type: ignore[no-any-unimported]
     """Apply the function :func:`dolfinx.fem.apply_lifting` to a PETSc Vector."""
     function_spaces = [form.function_spaces[1] for form in a]
     dofmaps_x0 = [function_space.dofmap for function_space in function_spaces]
-    if restriction is None:
-        with b.localForm() as b_local, NestVecSubVectorReadWrapper(x0, dofmaps_x0) as nest_x0:
-            if x0 is None:
-                x0_as_list = []
-            else:
-                x0_as_list = [x0_ for x0_ in nest_x0]
-            dolfinx.fem.assemble.apply_lifting(
-                b_local.array_w, a, bcs, x0_as_list, scale, constants, coeffs)
-    else:
-        with VecSubVectorWrapper(b, restriction.dofmap, restriction) as b_sub, \
-                NestVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0) as nest_x0:
-            for a_sub, bcs_sub, x0_sub in zip(a, bcs, nest_x0):
-                if x0_sub is None:
-                    x0_sub_as_list = []
-                else:
-                    x0_sub_as_list = [x0_sub]
+    with NestVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0) as nest_x0:
+        if x0 is not None:
+            x0_as_list = [x0_sub.copy() for x0_sub in nest_x0]
+        else:
+            x0_as_list = []
+        if restriction is None:
+            with b.localForm() as b_local:
                 dolfinx.fem.assemble.apply_lifting(
-                    b_sub, [a_sub], [bcs_sub], x0_sub_as_list, scale, constants, coeffs)
+                    b_local.array_w, a, bcs, x0_as_list, scale, constants, coeffs)
+        else:
+            with VecSubVectorWrapper(b, restriction.dofmap, restriction) as b_sub:
+                dolfinx.fem.assemble.apply_lifting(
+                    b_sub, a, bcs, x0_as_list, scale, constants, coeffs)
 
 
 def apply_lifting_nest(  # type: ignore[no-any-unimported]
@@ -1552,15 +1547,13 @@ def apply_lifting_nest(  # type: ignore[no-any-unimported]
     bcs1 = dolfinx.fem.bcs_by_block(function_spaces[1], bcs)
     with NestVecSubVectorWrapper(b, dofmaps, restriction) as nest_b, \
             NestVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0) as nest_x0:
+        if x0 is not None:
+            x0_as_list = [x0_sub.copy() for x0_sub in nest_x0]
+        else:
+            x0_as_list = []
         for b_sub, a_sub, constants_a, coeffs_a in zip(nest_b, a, constants, coeffs):
-            for a_sub_, bcs1_sub, x0_sub, constant_a_sub, coeff_a_sub in zip(
-                    a_sub, bcs1, nest_x0, constants_a, coeffs_a):
-                if x0_sub is None:
-                    x0_sub_as_list = []
-                else:
-                    x0_sub_as_list = [x0_sub]
-                dolfinx.fem.assemble.apply_lifting(
-                    b_sub, [a_sub_], [bcs1_sub], x0_sub_as_list, scale, [constant_a_sub], [coeff_a_sub])
+            dolfinx.fem.assemble.apply_lifting(
+                b_sub, a_sub, bcs1, x0_as_list, scale, constants_a, coeffs_a)
     return b
 
 
