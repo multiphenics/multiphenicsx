@@ -7,4 +7,3 @@ API reference
    multiphenicsx.cpp
    multiphenicsx.fem
    multiphenicsx.fem.petsc
-   multiphenicsx.io

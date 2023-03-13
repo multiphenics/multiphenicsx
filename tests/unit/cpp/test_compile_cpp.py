@@ -3,7 +3,7 @@
 # This file is part of multiphenicsx.
 #
 # SPDX-License-Identifier: LGPL-3.0-or-later
-"""Tests for multiphenicsx.io.compile_code module."""
+"""Tests for multiphenicsx.cpp.compile_code module."""
 
 import os
 
@@ -12,7 +12,6 @@ import mpi4py.MPI
 import nbvalx.tempfile
 
 import multiphenicsx.cpp
-import multiphenicsx.io
 
 
 def test_compile_code() -> None:
