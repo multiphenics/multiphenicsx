@@ -37,7 +37,6 @@ jobs:
       - name: Setup container
         run: |
           . /usr/local/bin/dolfinx-${{ matrix.petsc_arch }}-mode
-          python3 -m pip install --upgrade pip
           echo "PETSC_ARCH=$PETSC_ARCH" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
