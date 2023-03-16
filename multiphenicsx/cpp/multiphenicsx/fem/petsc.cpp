@@ -84,7 +84,10 @@ Mat multiphenicsx::fem::petsc::create_matrix_block(
   {
     for (std::size_t col = 0; col < cols; ++col)
     {
-      if (integral_types[row][col].size() > 0)
+      int at_least_one_integral_owned = (integral_types[row][col].size() > 0);
+      int at_least_one_integral_global = 0;
+      MPI_Allreduce(&at_least_one_integral_owned, &at_least_one_integral_global, 1, MPI_INT, MPI_SUM, mesh.comm());
+      if (at_least_one_integral_global > 0)
       {
         // Create sparsity pattern for block
         const std::array<std::shared_ptr<const common::IndexMap>, 2> index_maps_row_col
