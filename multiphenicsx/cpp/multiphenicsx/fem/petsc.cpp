@@ -22,29 +22,32 @@ Mat multiphenicsx::fem::petsc::create_matrix(
     std::array<const graph::AdjacencyList<std::int32_t>*, 2> dofmaps,
     const std::string& matrix_type)
 {
+  const int tdim = mesh.topology().dim();
+
   // Build sparsity pattern
   const std::array<std::shared_ptr<const common::IndexMap>, 2> index_maps_shared_ptr
     {{std::shared_ptr<const common::IndexMap>(&index_maps[0].get(), [](const common::IndexMap*){}),
       std::shared_ptr<const common::IndexMap>(&index_maps[1].get(), [](const common::IndexMap*){})}};
   la::SparsityPattern pattern(mesh.comm(), index_maps_shared_ptr, index_maps_bs);
-  if (integral_types.count(fem::IntegralType::cell) > 0)
+  for (auto integral_type : integral_types)
   {
-    sparsitybuild::cells(pattern, mesh.topology(), dofmaps);
-  }
-  if (integral_types.count(fem::IntegralType::interior_facet) > 0
-      or integral_types.count(fem::IntegralType::exterior_facet) > 0)
-  {
-    // FIXME: cleanup these calls? Some of the happen internally again.
-    const int tdim = mesh.topology().dim();
-    mesh.topology_mutable().create_entities(tdim - 1);
-    mesh.topology_mutable().create_connectivity(tdim - 1, tdim);
-    if (integral_types.count(fem::IntegralType::interior_facet) > 0)
+    switch (integral_type)
     {
+    case IntegralType::cell:
+      sparsitybuild::cells(pattern, mesh.topology(), dofmaps);
+      break;
+    case IntegralType::interior_facet:
+      mesh.topology_mutable().create_entities(tdim - 1);
+      mesh.topology_mutable().create_connectivity(tdim - 1, tdim);
       sparsitybuild::interior_facets(pattern, mesh.topology(), dofmaps);
-    }
-    if (integral_types.count(fem::IntegralType::exterior_facet) > 0)
-    {
+      break;
+    case IntegralType::exterior_facet:
+      mesh.topology_mutable().create_entities(tdim - 1);
+      mesh.topology_mutable().create_connectivity(tdim - 1, tdim);
       sparsitybuild::exterior_facets(pattern, mesh.topology(), dofmaps);
+      break;
+    default:
+      throw std::runtime_error("Unsupported integral type");
     }
   }
 
@@ -105,7 +108,6 @@ Mat multiphenicsx::fem::petsc::create_matrix_block(
         if (integral_types[row][col].count(IntegralType::interior_facet) > 0
             or integral_types[row][col].count(IntegralType::exterior_facet) > 0)
         {
-          // FIXME: cleanup these calls? Some of the happen internally again.
           const int tdim = mesh.topology().dim();
           mesh.topology_mutable().create_entities(tdim - 1);
           mesh.topology_mutable().create_connectivity(tdim - 1, tdim);
