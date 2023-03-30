@@ -18,8 +18,8 @@ namespace fem
 using dolfinx::fem::IntegralType;
 
 /// Extract form integral types from a Form
-template <typename T>
-std::set<fem::IntegralType> get_integral_types_from_form(const dolfinx::fem::Form<T>& form)
+template <typename T, std::floating_point U>
+std::set<fem::IntegralType> get_integral_types_from_form(const dolfinx::fem::Form<T, U>& form)
 {
   std::set<fem::IntegralType> all_integral_types{{
     fem::IntegralType::cell, fem::IntegralType::exterior_facet,

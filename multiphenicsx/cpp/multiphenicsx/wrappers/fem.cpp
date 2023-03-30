@@ -151,7 +151,7 @@ void fem(py::module& m)
   fem_petsc_module(petsc_mod);
 
   // utils
-  m.def("get_integral_types_from_form", &multiphenicsx::fem::get_integral_types_from_form<PetscScalar>,
+  m.def("get_integral_types_from_form", &multiphenicsx::fem::get_integral_types_from_form<PetscScalar, double>,
         "Extract integral types from a Form.");
 
   // multiphenicsx::fem::DofMapRestriction
