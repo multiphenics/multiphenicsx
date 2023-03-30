@@ -7,11 +7,11 @@
 
 import typing
 
+import basix.ufl
 import dolfinx.fem
 import dolfinx.mesh
 import numpy as np
 import numpy.typing
-import ufl
 
 SubdomainType = typing.Callable[[np.typing.NDArray[np.float64]], np.typing.NDArray[np.bool_]]
 FunctionSpaceGeneratorType = typing.Callable[[dolfinx.mesh.Mesh], dolfinx.fem.FunctionSpace]
@@ -83,7 +83,7 @@ def TaylorHoodFunctionSpace(
 ) -> dolfinx.fem.FunctionSpace:
     """Define a mixed function space."""
     (family, degree) = family_degree
-    V_element = ufl.VectorElement(family, mesh.ufl_cell(), degree + 1)
-    Q_element = ufl.FiniteElement(family, mesh.ufl_cell(), degree)
-    taylor_hood_element = ufl.MixedElement(V_element, Q_element)
+    V_element = basix.ufl.element(family, mesh.ufl_cell().cellname(), degree + 1, rank=1)
+    Q_element = basix.ufl.element(family, mesh.ufl_cell().cellname(), degree)
+    taylor_hood_element = basix.ufl.mixed_element([V_element, Q_element])
     return dolfinx.fem.FunctionSpace(mesh, taylor_hood_element)

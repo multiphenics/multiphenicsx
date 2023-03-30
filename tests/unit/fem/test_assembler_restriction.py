@@ -8,6 +8,7 @@
 import types
 import typing
 
+import basix.ufl
 import dolfinx.cpp
 import dolfinx.fem
 import dolfinx.mesh
@@ -115,7 +116,7 @@ def get_function(
     except RuntimeError:
         assert len(shape) == 1
 
-        assert isinstance(V.ufl_element(), ufl.MixedElement)
+        assert isinstance(V.ufl_element(), basix.ufl._MixedElement)
         rows = [np.prod(sub_element.value_shape(), dtype=int) for sub_element in V.ufl_element().sub_elements()]
         rows = np.hstack(([0], np.cumsum(rows))).tolist()
 
