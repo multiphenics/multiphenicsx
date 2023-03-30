@@ -66,7 +66,7 @@ void fem_petsc_module(py::module& m)
 {
   // Create PETSc matrices
   m.def("create_matrix",
-        [](const dolfinx::mesh::Mesh& mesh,
+        [](const dolfinx::mesh::Mesh<double>& mesh,
            std::vector<std::reference_wrapper<const dolfinx::common::IndexMap>> index_maps_,
            const std::array<int, 2> index_maps_bs,
            const std::vector<dolfinx::fem::IntegralType>& integral_types_,
@@ -98,7 +98,7 @@ void fem_petsc_module(py::module& m)
         py::arg("integral_types"), py::arg("dofmaps"), py::arg("matrix_type") = std::string(),
         "Create a PETSc Mat for bilinear form.");
   m.def("create_matrix_block",
-        [](const dolfinx::mesh::Mesh& mesh,
+        [](const dolfinx::mesh::Mesh<double>& mesh,
            std::array<std::vector<std::reference_wrapper<const dolfinx::common::IndexMap>>, 2> index_maps,
            const std::array<std::vector<int>, 2> index_maps_bs,
            const std::vector<std::vector<std::vector<dolfinx::fem::IntegralType>>>& integral_types_,
@@ -120,7 +120,7 @@ void fem_petsc_module(py::module& m)
         py::arg("integral_types"), py::arg("dofmaps"), py::arg("matrix_type") = std::string(),
         "Create monolithic sparse matrix for stacked bilinear forms.");
   m.def("create_matrix_nest",
-        [](const dolfinx::mesh::Mesh& mesh,
+        [](const dolfinx::mesh::Mesh<double>& mesh,
            std::array<std::vector<std::reference_wrapper<const dolfinx::common::IndexMap>>, 2> index_maps,
            const std::array<std::vector<int>, 2> index_maps_bs,
            const std::vector<std::vector<std::vector<dolfinx::fem::IntegralType>>>& integral_types_,
