@@ -51,7 +51,7 @@ Mat create_matrix(
     std::array<const dolfinx::graph::AdjacencyList<std::int32_t>*, 2> dofmaps,
     const std::string& matrix_type = std::string())
 {
-  const int tdim = mesh.topology().dim();
+  const int tdim = mesh.topology()->dim();
 
   // Build sparsity pattern
   const std::array<std::shared_ptr<const dolfinx::common::IndexMap>, 2> index_maps_shared_ptr
@@ -63,17 +63,17 @@ Mat create_matrix(
     switch (integral_type)
     {
     case IntegralType::cell:
-      sparsitybuild::cells(pattern, mesh.topology(), dofmaps);
+      sparsitybuild::cells(pattern, *mesh.topology(), dofmaps);
       break;
     case IntegralType::interior_facet:
-      mesh.topology_mutable().create_entities(tdim - 1);
-      mesh.topology_mutable().create_connectivity(tdim - 1, tdim);
-      sparsitybuild::interior_facets(pattern, mesh.topology(), dofmaps);
+      mesh.topology_mutable()->create_entities(tdim - 1);
+      mesh.topology_mutable()->create_connectivity(tdim - 1, tdim);
+      sparsitybuild::interior_facets(pattern, *mesh.topology(), dofmaps);
       break;
     case IntegralType::exterior_facet:
-      mesh.topology_mutable().create_entities(tdim - 1);
-      mesh.topology_mutable().create_connectivity(tdim - 1, tdim);
-      sparsitybuild::exterior_facets(pattern, mesh.topology(), dofmaps);
+      mesh.topology_mutable()->create_entities(tdim - 1);
+      mesh.topology_mutable()->create_connectivity(tdim - 1, tdim);
+      sparsitybuild::exterior_facets(pattern, *mesh.topology(), dofmaps);
       break;
     default:
       throw std::runtime_error("Unsupported integral type");
@@ -153,23 +153,23 @@ Mat create_matrix_block(
         // Build sparsity pattern for block
         if (integral_types[row][col].count(IntegralType::cell) > 0)
         {
-          sparsitybuild::cells(*sp, mesh.topology(),
+          sparsitybuild::cells(*sp, *mesh.topology(),
                                {{dofmaps[0][row], dofmaps[1][col]}});
         }
         if (integral_types[row][col].count(IntegralType::interior_facet) > 0
             or integral_types[row][col].count(IntegralType::exterior_facet) > 0)
         {
-          const int tdim = mesh.topology().dim();
-          mesh.topology_mutable().create_entities(tdim - 1);
-          mesh.topology_mutable().create_connectivity(tdim - 1, tdim);
+          const int tdim = mesh.topology()->dim();
+          mesh.topology_mutable()->create_entities(tdim - 1);
+          mesh.topology_mutable()->create_connectivity(tdim - 1, tdim);
           if (integral_types[row][col].count(IntegralType::interior_facet) > 0)
           {
-            sparsitybuild::interior_facets(*sp, mesh.topology(),
+            sparsitybuild::interior_facets(*sp, *mesh.topology(),
                                            {{dofmaps[0][row], dofmaps[1][col]}});
           }
           if (integral_types[row][col].count(IntegralType::exterior_facet) > 0)
           {
-            sparsitybuild::exterior_facets(*sp, mesh.topology(),
+            sparsitybuild::exterior_facets(*sp, *mesh.topology(),
                                            {{dofmaps[0][row], dofmaps[1][col]}});
           }
         }
