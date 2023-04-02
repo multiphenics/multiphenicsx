@@ -87,8 +87,13 @@ jobs:
           name: "tutorials-logs-${{ matrix.petsc_arch }}"
           path: |
             tutorials/**/.ipynb_pytest/**/*.log*
+
+  warn:
+    runs-on: ubuntu-latest
+    if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main' && github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v3
       - name: Warn if scheduled workflow is about to be disabled
-        if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main' && github.event_name == 'schedule'
         uses: fem-on-colab/warn-workflow-about-to-be-disabled-action@main
         with:
           workflow-filename: ci.yml
