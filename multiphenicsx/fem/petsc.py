@@ -213,25 +213,21 @@ def create_matrix(  # type: ignore[no-any-unimported]
         A PETSc matrix with a layout that is compatible with `a` and restriction `restriction`.
     """
     assert a.rank == 2  # type: ignore[union-attr]
-    mesh = a.mesh
     function_spaces = a.function_spaces
-    assert all(function_space.mesh == mesh for function_space in function_spaces)
+    assert all(function_space.mesh == a.mesh for function_space in function_spaces)
     if restriction is None:
         index_maps = [function_space.dofmap.index_map for function_space in function_spaces]
         index_maps_bs = [function_space.dofmap.index_map_bs for function_space in function_spaces]
+        dofmaps_lists = [function_space.dofmap.list() for function_space in function_spaces]
     else:
         assert len(restriction) == 2
         index_maps = [restriction_.index_map for restriction_ in restriction]
         index_maps_bs = [restriction_.index_map_bs for restriction_ in restriction]
-    integral_types = list(mcpp.fem.get_integral_types_from_form(a))
-    if restriction is None:
-        dofmaps_lists = [function_space.dofmap.list() for function_space in function_spaces]
-    else:
         dofmaps_lists = [restriction_.list() for restriction_ in restriction]
     if mat_type is not None:
-        return mcpp.fem.petsc.create_matrix(mesh, index_maps, index_maps_bs, integral_types, dofmaps_lists, mat_type)
+        return mcpp.fem.petsc.create_matrix(a, index_maps, index_maps_bs, dofmaps_lists, mat_type)
     else:
-        return mcpp.fem.petsc.create_matrix(mesh, index_maps, index_maps_bs, integral_types, dofmaps_lists)
+        return mcpp.fem.petsc.create_matrix(a, index_maps, index_maps_bs, dofmaps_lists)
 
 
 def _create_matrix_block_or_nest(  # type: ignore[no-any-unimported]
@@ -248,6 +244,7 @@ def _create_matrix_block_or_nest(  # type: ignore[no-any-unimported]
         for i in range(rows):
             if a[i][j] is not None:
                 mesh = a[i][j].mesh
+                break
     assert mesh is not None
     assert all(a[i][j] is None or a[i][j].mesh == mesh for i in range(rows) for j in range(cols))
     assert all(function_space.mesh == mesh for function_space in function_spaces[0])
@@ -259,6 +256,9 @@ def _create_matrix_block_or_nest(  # type: ignore[no-any-unimported]
         index_maps_bs = (
             [function_spaces[0][i].dofmap.index_map_bs for i in range(rows)],
             [function_spaces[1][j].dofmap.index_map_bs for j in range(cols)])
+        dofmaps_lists = (
+            [function_spaces[0][i].dofmap.list() for i in range(rows)],
+            [function_spaces[1][j].dofmap.list() for j in range(cols)])
     else:
         assert len(restriction) == 2
         assert len(restriction[0]) == rows
@@ -269,26 +269,13 @@ def _create_matrix_block_or_nest(  # type: ignore[no-any-unimported]
         index_maps_bs = (
             [restriction[0][i].index_map_bs for i in range(rows)],
             [restriction[1][j].index_map_bs for j in range(cols)])
-    integral_types_set: typing.List[typing.List[  # type: ignore[no-any-unimported]
-        typing.Set[dcpp.fem.IntegralType]]] = [[set() for _ in range(cols)] for _ in range(rows)]
-    for i in range(rows):
-        for j in range(cols):
-            if a[i][j] is not None:
-                integral_types_set[i][j].update(mcpp.fem.get_integral_types_from_form(a[i][j]))
-    integral_types = [[
-        list(integral_types_set[row][col]) for col in range(cols)] for row in range(rows)]
-    if restriction is None:
-        dofmaps_lists = (
-            [function_spaces[0][i].dofmap.list() for i in range(rows)],
-            [function_spaces[1][j].dofmap.list() for j in range(cols)])
-    else:
         dofmaps_lists = (
             [restriction[0][i].list() for i in range(rows)],
             [restriction[1][j].list() for j in range(cols)])
     if mat_type is not None:
-        return cpp_create_function(mesh, index_maps, index_maps_bs, integral_types, dofmaps_lists, mat_type)
+        return cpp_create_function(a, index_maps, index_maps_bs, dofmaps_lists, mat_type)
     else:
-        return cpp_create_function(mesh, index_maps, index_maps_bs, integral_types, dofmaps_lists)
+        return cpp_create_function(a, index_maps, index_maps_bs, dofmaps_lists)
 
 
 def create_matrix_block(  # type: ignore[no-any-unimported]

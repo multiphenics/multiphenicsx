@@ -24,17 +24,12 @@ namespace sparsitybuild
 
 /// Iterate over cells and insert entries into sparsity pattern
 void cells(dolfinx::la::SparsityPattern& pattern,
-           const dolfinx::mesh::Topology& topology,
+           std::span<const std::int32_t> cells,
            std::array<const dolfinx::graph::AdjacencyList<std::int32_t>*, 2> dofmaps);
 
 /// Iterate over interior facets and insert entries into sparsity pattern
 void interior_facets(dolfinx::la::SparsityPattern& pattern,
-                     const dolfinx::mesh::Topology& topology,
-                     std::array<const dolfinx::graph::AdjacencyList<std::int32_t>*, 2> dofmaps);
-
-/// Iterate over exterior facets and insert entries into sparsity pattern
-void exterior_facets(dolfinx::la::SparsityPattern& pattern,
-                     const dolfinx::mesh::Topology& topology,
+                     std::span<const std::int32_t> facets,
                      std::array<const dolfinx::graph::AdjacencyList<std::int32_t>*, 2> dofmaps);
 
 } // namespace sparsitybuild

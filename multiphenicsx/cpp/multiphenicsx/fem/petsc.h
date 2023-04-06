@@ -9,15 +9,13 @@
 #include <memory>
 #include <petscmat.h>
 #include <petscvec.h>
-#include <set>
 #include <vector>
 #include <dolfinx/common/IndexMap.h>
 #include <dolfinx/fem/Form.h>
 #include <dolfinx/graph/AdjacencyList.h>
 #include <dolfinx/la/petsc.h>
 #include <dolfinx/la/SparsityPattern.h>
-#include <dolfinx/mesh/Mesh.h>
-#include <multiphenicsx/fem/sparsitybuild.h>
+#include <multiphenicsx/fem/utils.h>
 
 namespace multiphenicsx
 {
@@ -25,159 +23,88 @@ namespace multiphenicsx
 namespace fem
 {
 
-using dolfinx::fem::IntegralType;
-
 /// Helper functions for assembly into PETSc data structures
 namespace petsc
 {
 
-/// Create a matrix.
-/// @param[in] mesh The mesh
+/// Create a matrix
+/// @param[in] a A bilinear form
 /// @param[in] index_maps A pair of index maps. Row index map is given by index_maps[0], column index map is given
-///                       by index_maps[1].
+/// by index_maps[1].
 /// @param[in] index_maps_bs A pair of int, representing the block size of index_maps.
-/// @param[in] integral_types Required integral types
 /// @param[in] dofmaps A pair of AdjacencyList containing the dofmaps. Row dofmap is given by dofmaps[0], while
-///                    column dofmap is given by dofmaps[1].
+/// column dofmap is given by dofmaps[1].
 /// @param[in] matrix_type The PETSc matrix type to create
-/// @return A sparse matrix with a layout and sparsity that matches the one required by the provided index maps
-/// integral types and dofmaps. The caller is responsible for destroying the Mat object.
+/// @return A sparse matrix with a layout and sparsity that matches the
+/// bilinear form. The caller is responsible for destroying the Mat
+/// object.
 template <std::floating_point T>
 Mat create_matrix(
-    const dolfinx::mesh::Mesh<T>& mesh,
-    std::array<std::reference_wrapper<const dolfinx::common::IndexMap>, 2> index_maps,
-    const std::array<int, 2> index_maps_bs,
-    const std::set<dolfinx::fem::IntegralType>& integral_types,
-    std::array<const dolfinx::graph::AdjacencyList<std::int32_t>*, 2> dofmaps,
-    const std::string& matrix_type = std::string())
+  const dolfinx::fem::Form<PetscScalar, T>& a,
+  std::array<std::reference_wrapper<const dolfinx::common::IndexMap>, 2> index_maps,
+  const std::array<int, 2> index_maps_bs,
+  std::array<const dolfinx::graph::AdjacencyList<std::int32_t>*, 2> dofmaps,
+  const std::string& matrix_type = std::string())
 {
-  const int tdim = mesh.topology()->dim();
-
-  // Build sparsity pattern
-  const std::array<std::shared_ptr<const dolfinx::common::IndexMap>, 2> index_maps_shared_ptr
-    {{std::shared_ptr<const dolfinx::common::IndexMap>(&index_maps[0].get(), [](const dolfinx::common::IndexMap*){}),
-      std::shared_ptr<const dolfinx::common::IndexMap>(&index_maps[1].get(), [](const dolfinx::common::IndexMap*){})}};
-  dolfinx::la::SparsityPattern pattern(mesh.comm(), index_maps_shared_ptr, index_maps_bs);
-  for (auto integral_type : integral_types)
-  {
-    switch (integral_type)
-    {
-    case IntegralType::cell:
-      sparsitybuild::cells(pattern, *mesh.topology(), dofmaps);
-      break;
-    case IntegralType::interior_facet:
-      mesh.topology_mutable()->create_entities(tdim - 1);
-      mesh.topology_mutable()->create_connectivity(tdim - 1, tdim);
-      sparsitybuild::interior_facets(pattern, *mesh.topology(), dofmaps);
-      break;
-    case IntegralType::exterior_facet:
-      mesh.topology_mutable()->create_entities(tdim - 1);
-      mesh.topology_mutable()->create_connectivity(tdim - 1, tdim);
-      sparsitybuild::exterior_facets(pattern, *mesh.topology(), dofmaps);
-      break;
-    default:
-      throw std::runtime_error("Unsupported integral type");
-    }
-  }
-
-  // Finalise communication
+  dolfinx::la::SparsityPattern pattern = multiphenicsx::fem::create_sparsity_pattern(
+    a, index_maps, index_maps_bs, dofmaps);
   pattern.assemble();
-
-  return dolfinx::la::petsc::create_matrix(mesh.comm(), pattern, matrix_type);
+  return dolfinx::la::petsc::create_matrix(a.mesh()->comm(), pattern, matrix_type);
 }
 
-/// Initialise monolithic matrix for an array for bilinear forms. Matrix
-/// is not zeroed.
-/// @param[in] mesh The mesh
+/// Initialise a monolithic matrix for an array of bilinear forms
+/// @param[in] a Rectangular array of bilinear forms. The `a(i, j)` form
+/// will correspond to the `(i, j)` block in the returned matrix
 /// @param[in] index_maps A pair of vectors of index maps. Index maps for block (i, j) will be
-///                       constructed from (index_maps[0][i], index_maps[1][j]).
+/// constructed from (index_maps[0][i], index_maps[1][j]).
 /// @param[in] index_maps_bs A pair of vectors of int, representing the block size of the
-///                          corresponding entry in index_maps.
-/// @param[in] integral_types A matrix of required integral types. Required integral types
-///                                 for block (i, j) are deduced from integral_types[i, j].
+/// corresponding entry in index_maps.
 /// @param[in] dofmaps A pair of vectors of AdjacencyList containing the list dofmaps for each block.
-///                    The dofmap pair for block (i, j) will be constructed from
-///                    (dofmaps[0][i], dofmaps[1][j]).
+/// The dofmap pair for block (i, j) will be constructed from (dofmaps[0][i], dofmaps[1][j]).
 /// @param[in] matrix_type The type of PETSc Mat. If empty the PETSc default is
-///                 used.
-/// @return A sparse matrix with a layout and sparsity that matches the one required by the provided index maps
-/// integral types and dofmaps. The caller is responsible for destroying the Mat object.
+/// used.
+/// @return A sparse matrix  with a layout and sparsity that matches the
+/// bilinear forms. The caller is responsible for destroying the Mat
+/// object.
 template <std::floating_point T>
 Mat create_matrix_block(
-    const dolfinx::mesh::Mesh<T>& mesh,
-    std::array<std::vector<std::reference_wrapper<const dolfinx::common::IndexMap>>, 2> index_maps,
-    const std::array<std::vector<int>, 2> index_maps_bs,
-    const std::vector<std::vector<std::set<dolfinx::fem::IntegralType>>>& integral_types,
-    const std::array<std::vector<const dolfinx::graph::AdjacencyList<std::int32_t>*>, 2>& dofmaps,
-    const std::string& matrix_type = std::string())
+  const std::vector<std::vector<const dolfinx::fem::Form<PetscScalar, T>*>>& a,
+  std::array<std::vector<std::reference_wrapper<const dolfinx::common::IndexMap>>, 2> index_maps,
+  const std::array<std::vector<int>, 2> index_maps_bs,
+  const std::array<std::vector<const dolfinx::graph::AdjacencyList<std::int32_t>*>, 2>& dofmaps,
+  const std::string& matrix_type = std::string())
 {
   std::size_t rows = index_maps[0].size();
   assert(index_maps_bs[0].size() == rows);
-  assert(integral_types.size() == rows);
   assert(dofmaps[0].size() == rows);
   std::size_t cols = index_maps[1].size();
-  assert(index_maps_bs[1].size() == cols);
-  assert(std::all_of(integral_types.begin(), integral_types.end(),
-    [&cols](const std::vector<std::set<fem::IntegralType>>& integral_types_){
-    return integral_types_.size() == cols;}));
   assert(index_maps_bs[1].size() == cols);
   assert(dofmaps[1].size() == cols);
 
   // Build sparsity pattern for each block
+  std::shared_ptr<const dolfinx::mesh::Mesh<T>> mesh;
   std::vector<std::vector<std::unique_ptr<dolfinx::la::SparsityPattern>>> patterns(
       rows);
   for (std::size_t row = 0; row < rows; ++row)
   {
     for (std::size_t col = 0; col < cols; ++col)
     {
-      int at_least_one_integral_owned = (integral_types[row][col].size() > 0);
-      int at_least_one_integral_global = 0;
-      MPI_Allreduce(&at_least_one_integral_owned, &at_least_one_integral_global, 1, MPI_INT, MPI_SUM, mesh.comm());
-      if (at_least_one_integral_global > 0)
+      if (const dolfinx::fem::Form<PetscScalar, T>* form = a[row][col]; form)
       {
-        // Create sparsity pattern for block
-        const std::array<std::shared_ptr<const dolfinx::common::IndexMap>, 2> index_maps_row_col
-          {{std::shared_ptr<const dolfinx::common::IndexMap>(
-                &index_maps[0][row].get(), [](const dolfinx::common::IndexMap*){}),
-            std::shared_ptr<const dolfinx::common::IndexMap>(
-                &index_maps[1][col].get(), [](const dolfinx::common::IndexMap*){})}};
-        const std::array<int, 2> index_maps_bs_row_col
-          {{index_maps_bs[0][row], index_maps_bs[1][col]}};
-        patterns[row].push_back(
-            std::make_unique<dolfinx::la::SparsityPattern>(mesh.comm(), index_maps_row_col, index_maps_bs_row_col));
-        assert(patterns[row].back());
-
-        auto& sp = patterns[row].back();
-        assert(sp);
-
-        // Build sparsity pattern for block
-        if (integral_types[row][col].count(IntegralType::cell) > 0)
-        {
-          sparsitybuild::cells(*sp, *mesh.topology(),
-                               {{dofmaps[0][row], dofmaps[1][col]}});
-        }
-        if (integral_types[row][col].count(IntegralType::interior_facet) > 0
-            or integral_types[row][col].count(IntegralType::exterior_facet) > 0)
-        {
-          const int tdim = mesh.topology()->dim();
-          mesh.topology_mutable()->create_entities(tdim - 1);
-          mesh.topology_mutable()->create_connectivity(tdim - 1, tdim);
-          if (integral_types[row][col].count(IntegralType::interior_facet) > 0)
-          {
-            sparsitybuild::interior_facets(*sp, *mesh.topology(),
-                                           {{dofmaps[0][row], dofmaps[1][col]}});
-          }
-          if (integral_types[row][col].count(IntegralType::exterior_facet) > 0)
-          {
-            sparsitybuild::exterior_facets(*sp, *mesh.topology(),
-                                           {{dofmaps[0][row], dofmaps[1][col]}});
-          }
-        }
+        patterns[row].push_back(std::make_unique<la::SparsityPattern>(
+            multiphenicsx::fem::create_sparsity_pattern(
+              *form, {{index_maps[0][row], index_maps[1][col]}}, {{index_maps_bs[0][row], index_maps_bs[1][col]}},
+              {{dofmaps[0][row], dofmaps[1][col]}})));
+        if (!mesh)
+          mesh = form->mesh();
       }
       else
         patterns[row].push_back(nullptr);
     }
   }
+
+  if (!mesh)
+    throw std::runtime_error("Could not find a Mesh.");
 
   // Compute offsets for the fields
   std::array<std::vector<std::pair<
@@ -188,8 +115,8 @@ Mat create_matrix_block(
   {
     for (std::size_t f = 0; f < index_maps[d].size(); ++f)
     {
-      maps_and_bs[d].push_back(
-          {index_maps[d][f], index_maps_bs[d][f]});
+      maps_and_bs[d].emplace_back(
+        index_maps[d][f], index_maps_bs[d][f]);
     }
   }
 
@@ -198,14 +125,15 @@ Mat create_matrix_block(
   for (std::size_t row = 0; row < rows; ++row)
     for (std::size_t col = 0; col < cols; ++col)
       p[row].push_back(patterns[row][col].get());
-  dolfinx::la::SparsityPattern pattern(mesh.comm(), p, maps_and_bs, index_maps_bs);
+
+  dolfinx::la::SparsityPattern pattern(mesh->comm(), p, maps_and_bs, index_maps_bs);
   pattern.assemble();
 
   // FIXME: Add option to pass customised local-to-global map to PETSc
   // Mat constructor
 
   // Initialise matrix
-  Mat A = dolfinx::la::petsc::create_matrix(mesh.comm(), pattern, matrix_type);
+  Mat A = dolfinx::la::petsc::create_matrix(mesh->comm(), pattern, matrix_type);
 
   // Create row and column local-to-global maps (field0, field1, field2,
   // etc), i.e. ghosts of field0 appear before owned indices of field1
@@ -228,7 +156,7 @@ Mat create_matrix_block(
       const dolfinx::common::IndexMap& map = index_maps[d][f].get();
       const int bs = index_maps_bs[d][f];
       const std::int32_t size_local = bs * map.size_local();
-      const std::vector<std::int64_t> global = map.global_indices();
+      const std::vector global = map.global_indices();
       for (std::int32_t i = 0; i < size_local; ++i)
         _maps[d].push_back(i + rank_offset + local_offset[f]);
       for (std::size_t i = size_local; i < bs * global.size(); ++i)
@@ -262,38 +190,22 @@ Mat create_matrix_block(
   return A;
 }
 
-/// Create nested (MatNest) matrix. Matrix is not zeroed.
-/// @param[in] mesh The mesh
-/// @param[in] index_maps A pair of vectors of index maps. Index maps for block (i, j) will be
-///                       constructed from (index_maps[0][i], index_maps[1][j]).
-/// @param[in] index_maps_bs A pair of vectors of int, representing the block size of the
-///                          corresponding entry in index_maps.
-/// @param[in] integral_types A matrix of required integral types. Required integral types
-///                           for block (i, j) are deduced from integral_types[i, j].
-/// @param[in] dofmaps A pair of vectors of AdjacencyList containing the list dofmaps for each block.
-///                    The dofmap pair for block (i, j) will be constructed from
-///                    (dofmaps[0][i], dofmaps[1][j]).
-/// @param[in] matrix_types A matrix of PETSc Mat types.
-/// @return A sparse matrix with a layout and sparsity that matches the one required by the provided index maps
-/// integral types and dofmaps. The caller is responsible for destroying the Mat object.
+/// @brief Create nested (MatNest) matrix.
+///
+/// @note The caller is responsible for destroying the Mat object.
 template <std::floating_point T>
 Mat create_matrix_nest(
-    const dolfinx::mesh::Mesh<T>& mesh,
-    std::array<std::vector<std::reference_wrapper<const dolfinx::common::IndexMap>>, 2> index_maps,
-    const std::array<std::vector<int>, 2> index_maps_bs,
-    const std::vector<std::vector<std::set<dolfinx::fem::IntegralType>>>& integral_types,
-    const std::array<std::vector<const dolfinx::graph::AdjacencyList<std::int32_t>*>, 2>& dofmaps,
-    const std::vector<std::vector<std::string>>& matrix_types)
+  const std::vector<std::vector<const dolfinx::fem::Form<PetscScalar, T>*>>& a,
+  std::array<std::vector<std::reference_wrapper<const dolfinx::common::IndexMap>>, 2> index_maps,
+  const std::array<std::vector<int>, 2> index_maps_bs,
+  const std::array<std::vector<const dolfinx::graph::AdjacencyList<std::int32_t>*>, 2>& dofmaps,
+  const std::vector<std::vector<std::string>>& matrix_types)
 {
   std::size_t rows = index_maps[0].size();
   assert(index_maps_bs[0].size() == rows);
-  assert(integral_types.size() == rows);
   assert(dofmaps[0].size() == rows);
   std::size_t cols = index_maps[1].size();
   assert(index_maps_bs[1].size() == cols);
-  assert(std::all_of(integral_types.begin(), integral_types.end(),
-    [&cols](const std::vector<std::set<fem::IntegralType>>& integral_types_){
-    return integral_types_.size() == cols;}));
   assert(dofmaps[1].size() == cols);
   std::vector<std::vector<std::string>> _matrix_types(
       rows, std::vector<std::string>(cols));
@@ -302,25 +214,27 @@ Mat create_matrix_nest(
 
   // Loop over each form and create matrix
   std::vector<Mat> mats(rows * cols, nullptr);
+  std::shared_ptr<const mesh::Mesh<T>> mesh;
   for (std::size_t i = 0; i < rows; ++i)
   {
     for (std::size_t j = 0; j < cols; ++j)
     {
-      if (integral_types[i][j].size() > 0)
+      if (const dolfinx::fem::Form<PetscScalar, T>* form = a[i][j]; form)
       {
         mats[i * cols + j] = multiphenicsx::fem::petsc::create_matrix(
-          mesh, {{index_maps[0][i], index_maps[1][j]}},
-          {{index_maps_bs[0][i], index_maps_bs[1][j]}},
-          integral_types[i][j],
-          {{dofmaps[0][i], dofmaps[1][j]}},
-          _matrix_types[i][j]);
+          *form, {{index_maps[0][i], index_maps[1][j]}}, {{index_maps_bs[0][i], index_maps_bs[1][j]}},
+          {{dofmaps[0][i], dofmaps[1][j]}}, _matrix_types[i][j]);
+        mesh = form->mesh();
       }
     }
   }
 
+  if (!mesh)
+    throw std::runtime_error("Could not find a Mesh.");
+
   // Initialise block (MatNest) matrix
   Mat A;
-  MatCreate(mesh.comm(), &A);
+  MatCreate(mesh->comm(), &A);
   MatSetType(A, MATNEST);
   MatNestSetSubMats(A, rows, nullptr, cols, nullptr, mats.data());
   MatSetUp(A);
