@@ -27,20 +27,18 @@ jobs:
         )
       )
     runs-on: ubuntu-latest
-    container: dolfinx/dolfinx:nightly
     strategy:
       matrix:
         petsc_arch: [real, complex]
       fail-fast: false
+    container:
+      image: numericalpdes/base_images:fenicsx-${{ matrix.petsc_arch }}
     steps:
       - uses: actions/checkout@v3
       - name: Setup container
         run: |
-          . /usr/local/bin/dolfinx-${{ matrix.petsc_arch }}-mode
-          echo "PETSC_ARCH=$PETSC_ARCH" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
-          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
+          echo "OMPI_ALLOW_RUN_AS_ROOT=1" >> $GITHUB_ENV
+          echo "OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1" >> $GITHUB_ENV
       - name: Install multiphenicsx
         run: |
           python3 -m pip install .[docs,lint,tests,tutorials]
