@@ -21,7 +21,6 @@ namespace
   template <class T>
   std::array<T, 2> convert_vector_to_array(const std::vector<T>& input)
   {
-    // TODO remove this when pybind11#2123 is fixed.
     assert(input.size() == 2);
     std::array<T, 2> output {{input[0], input[1]}};
     return output;
@@ -53,7 +52,6 @@ void la_petsc_module(py::module& m)
             // rather than
             //   std::array<IS, 2>
             // as in the C++ backend. Convert here the std::vector to a std::array.
-            // TODO remove this when pybind11#2123 is fixed.
             auto index_sets = convert_vector_to_array(index_sets_);
             return std::make_unique<multiphenicsx::la::petsc::MatSubMatrixWrapper>(A, index_sets);
           }))
@@ -68,7 +66,6 @@ void la_petsc_module(py::module& m)
             // rather than
             //   std::array<IS, 2>
             // as in the C++ backend. Convert here the std::vector to a std::array.
-            // TODO remove this when pybind11#2123 is fixed.
             auto unrestricted_index_sets = convert_vector_to_array(unrestricted_index_sets_);
             auto restricted_index_sets = convert_vector_to_array(restricted_index_sets_);
             return std::make_unique<multiphenicsx::la::petsc::MatSubMatrixWrapper>(A, unrestricted_index_sets,
