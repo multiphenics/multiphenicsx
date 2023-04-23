@@ -7,7 +7,6 @@
 #pragma once
 
 #include <dolfinx/fem/Form.h>
-#include <dolfinx/graph/AdjacencyList.h>
 #include <dolfinx/la/SparsityPattern.h>
 #include <multiphenicsx/fem/sparsitybuild.h>
 
@@ -24,15 +23,17 @@ namespace fem
 /// @param[in] index_maps A pair of index maps. Row index map is given by index_maps[0], column index map is given
 /// by index_maps[1].
 /// @param[in] index_maps_bs A pair of int, representing the block size of index_maps.
-/// @param[in] dofmaps A pair of AdjacencyList containing the dofmaps. Row dofmap is given by dofmaps[0], while
+/// @param[in] dofmaps_list An array of spans containing the dofmaps list. Row dofmap is given by dofmaps[0], while
 /// column dofmap is given by dofmaps[1].
+/// @param[in] dofmaps_bounds An array of spans containing the dofmaps cell bounds.
 /// @return The corresponding sparsity pattern
 template <typename T, std::floating_point U>
 dolfinx::la::SparsityPattern create_sparsity_pattern(
   const dolfinx::fem::Form<T, U>& a,
   std::array<std::reference_wrapper<const dolfinx::common::IndexMap>, 2> index_maps,
   const std::array<int, 2> index_maps_bs,
-  std::array<const dolfinx::graph::AdjacencyList<std::int32_t>*, 2> dofmaps)
+  std::array<std::span<const std::int32_t>, 2> dofmaps_list,
+  std::array<std::span<const std::size_t>, 2> dofmaps_bounds)
 {
   if (a.rank() != 2)
   {
@@ -69,7 +70,7 @@ dolfinx::la::SparsityPattern create_sparsity_pattern(
     case dolfinx::fem::IntegralType::cell:
       for (int id : ids)
       {
-        multiphenicsx::fem::sparsitybuild::cells(pattern, a.domain(integral_type, id), dofmaps);
+        multiphenicsx::fem::sparsitybuild::cells(pattern, a.domain(integral_type, id), dofmaps_list, dofmaps_bounds);
       }
       break;
     case dolfinx::fem::IntegralType::interior_facet:
@@ -80,7 +81,7 @@ dolfinx::la::SparsityPattern create_sparsity_pattern(
         f.reserve(facets.size() / 2);
         for (std::size_t i = 0; i < facets.size(); i += 4)
           f.insert(f.end(), {facets[i], facets[i + 2]});
-        multiphenicsx::fem::sparsitybuild::interior_facets(pattern, f, dofmaps);
+        multiphenicsx::fem::sparsitybuild::interior_facets(pattern, f, dofmaps_list, dofmaps_bounds);
       }
       break;
     case dolfinx::fem::IntegralType::exterior_facet:
@@ -91,7 +92,7 @@ dolfinx::la::SparsityPattern create_sparsity_pattern(
         cells.reserve(facets.size() / 2);
         for (std::size_t i = 0; i < facets.size(); i += 2)
           cells.push_back(facets[i]);
-        multiphenicsx::fem::sparsitybuild::cells(pattern, cells, dofmaps);
+        multiphenicsx::fem::sparsitybuild::cells(pattern, cells, dofmaps_list, dofmaps_bounds);
       }
       break;
     default:

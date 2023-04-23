@@ -44,10 +44,11 @@ public:
   /// Local-to-global mapping of dofs on a cell
   /// @param[in] cell_index The cell index.
   /// @return  Local-global map for cell (used process-local global
-  ///           index)
-  auto cell_dofs(int cell_index) const
+  /// index)
+  std::span<const std::int32_t> cell_dofs(std::int32_t cell_index) const
   {
-    return _list->links(cell_index);
+    return std::span<const std::int32_t>(
+        _dof_array.data() + _cell_bounds[cell_index], _cell_bounds[cell_index + 1] - _cell_bounds[cell_index]);
   }
 
   /// Accessor to DofMap provided to constructor
@@ -70,9 +71,9 @@ public:
 
   /// Get dofmap data after restriction has been carried out
   /// @return The adjacency list with dof indices for each cell
-  const dolfinx::graph::AdjacencyList<std::int32_t>& list() const
+  std::pair<std::span<const std::int32_t>, std::span<const std::size_t>> map() const
   {
-    return *_list;
+    return std::make_pair(std::span<const std::int32_t>(_dof_array), std::span<const std::size_t>(_cell_bounds));
   }
 
   /// Object containing information about dof distribution across
@@ -94,7 +95,7 @@ private:
   void _map_ghost_dofs(std::shared_ptr<const dolfinx::fem::DofMap> dofmap,
                        const std::vector<std::int32_t>& restriction);
 
-  /// Helper function for constructor: compute cell dofs arrays in _list
+  /// Helper function for constructor: compute cell dofs arrays
   void _compute_cell_dofs(std::shared_ptr<const dolfinx::fem::DofMap> dofmap);
 
   /// DofMap provided to constructor
@@ -107,7 +108,8 @@ private:
   std::map<std::int32_t, std::int32_t> _restricted_to_unrestricted;
 
   // Cell-local-to-dof map after restriction has been carried out
-  std::shared_ptr<dolfinx::graph::AdjacencyList<std::int32_t>> _list;
+  std::vector<std::int32_t> _dof_array;
+  std::vector<std::size_t> _cell_bounds;
 };
 } // namespace fem
 } // namespace multiphenicsx

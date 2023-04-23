@@ -209,12 +209,13 @@ void DofMapRestriction::_compute_cell_dofs(std::shared_ptr<const DofMap> dofmap)
 {
   // Fill in cell dofs first into a temporary std::map
   std::map<int, std::vector<std::int32_t>> restricted_cell_dofs;
-  std::int32_t restricted_cell_dofs_total_size = 0;
-  const auto & unrestricted_cell_dofs = dofmap->list();
-  const int num_cells = unrestricted_cell_dofs.num_nodes();
+  std::size_t restricted_cell_dofs_total_size = 0;
+  auto unrestricted_cell_dofs = dofmap->map();
+  const int num_cells = unrestricted_cell_dofs.extent(0);
   for (int c = 0; c < num_cells; ++c)
   {
-    const auto unrestricted_cell_dofs_c = unrestricted_cell_dofs.links(c);
+    const auto unrestricted_cell_dofs_c = std::experimental::submdspan(
+      unrestricted_cell_dofs, c, std::experimental::full_extent);
     std::vector<std::int32_t> restricted_cell_dofs_c;
     restricted_cell_dofs_c.reserve(unrestricted_cell_dofs_c.size()); // conservative allocation
     for (std::uint32_t d = 0; d < unrestricted_cell_dofs_c.size(); ++d)
@@ -235,26 +236,20 @@ void DofMapRestriction::_compute_cell_dofs(std::shared_ptr<const DofMap> dofmap)
 
   // Flatten std::map into the std::vector dof_array, and store start/end indices associated
   // to each cell in cell_bounds
-  std::vector<std::int32_t> dof_array;
-  dof_array.reserve(restricted_cell_dofs_total_size);
-  std::vector<std::int32_t> cell_bounds;
-  cell_bounds.reserve(num_cells + 1);
-  std::int32_t current_cell_bound = 0;
-  cell_bounds.push_back(current_cell_bound);
+  _dof_array.reserve(restricted_cell_dofs_total_size);
+  _cell_bounds.reserve(num_cells + 1);
+  std::size_t current_cell_bound = 0;
+  _cell_bounds.push_back(current_cell_bound);
   for (int c = 0; c < num_cells; ++c)
   {
     if (restricted_cell_dofs.count(c) > 0)
     {
       const auto restricted_cell_dofs_c = restricted_cell_dofs.at(c);
-      assert(current_cell_bound + static_cast<std::int32_t>(restricted_cell_dofs_c.size())
-             <= restricted_cell_dofs_total_size);
-      dof_array.insert(dof_array.end(), restricted_cell_dofs_c.begin(), restricted_cell_dofs_c.end());
+      assert(current_cell_bound + restricted_cell_dofs_c.size() <= restricted_cell_dofs_total_size);
+      _dof_array.insert(_dof_array.end(), restricted_cell_dofs_c.begin(), restricted_cell_dofs_c.end());
       current_cell_bound += restricted_cell_dofs_c.size();
     }
-    cell_bounds.push_back(current_cell_bound);
+    _cell_bounds.push_back(current_cell_bound);
   }
-
-  // Convert STL data structures to an AdjacencyList
-  _list.reset(new graph::AdjacencyList<std::int32_t>(dof_array, cell_bounds));
 }
 //-----------------------------------------------------------------------------

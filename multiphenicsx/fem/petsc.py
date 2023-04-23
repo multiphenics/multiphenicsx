@@ -218,16 +218,19 @@ def create_matrix(  # type: ignore[no-any-unimported]
     if restriction is None:
         index_maps = [function_space.dofmap.index_map for function_space in function_spaces]
         index_maps_bs = [function_space.dofmap.index_map_bs for function_space in function_spaces]
-        dofmaps_lists = [function_space.dofmap.list() for function_space in function_spaces]
+        dofmaps_list = [function_space.dofmap.map() for function_space in function_spaces]  # type: ignore[union-attr]
+        dofmaps_bounds = [
+            np.arange(dofmap_list.shape[0] + 1, dtype=np.uint64) * dofmap_list.shape[1] for dofmap_list in dofmaps_list]
     else:
         assert len(restriction) == 2
         index_maps = [restriction_.index_map for restriction_ in restriction]
         index_maps_bs = [restriction_.index_map_bs for restriction_ in restriction]
-        dofmaps_lists = [restriction_.list() for restriction_ in restriction]
+        dofmaps_list = [restriction_.map()[0] for restriction_ in restriction]
+        dofmaps_bounds = [restriction_.map()[1] for restriction_ in restriction]
     if mat_type is not None:
-        return mcpp.fem.petsc.create_matrix(a, index_maps, index_maps_bs, dofmaps_lists, mat_type)
+        return mcpp.fem.petsc.create_matrix(a, index_maps, index_maps_bs, dofmaps_list, dofmaps_bounds, mat_type)
     else:
-        return mcpp.fem.petsc.create_matrix(a, index_maps, index_maps_bs, dofmaps_lists)
+        return mcpp.fem.petsc.create_matrix(a, index_maps, index_maps_bs, dofmaps_list, dofmaps_bounds)
 
 
 def _create_matrix_block_or_nest(  # type: ignore[no-any-unimported]
@@ -256,9 +259,14 @@ def _create_matrix_block_or_nest(  # type: ignore[no-any-unimported]
         index_maps_bs = (
             [function_spaces[0][i].dofmap.index_map_bs for i in range(rows)],
             [function_spaces[1][j].dofmap.index_map_bs for j in range(cols)])
-        dofmaps_lists = (
-            [function_spaces[0][i].dofmap.list() for i in range(rows)],
-            [function_spaces[1][j].dofmap.list() for j in range(cols)])
+        dofmaps_list = (
+            [function_spaces[0][i].dofmap.map() for i in range(rows)],
+            [function_spaces[1][j].dofmap.map() for j in range(cols)])
+        dofmaps_bounds = (
+            [np.arange(dofmaps_list[0][i].shape[0] + 1, dtype=np.uint64) * dofmaps_list[0][i].shape[1]
+             for i in range(rows)],
+            [np.arange(dofmaps_list[1][j].shape[0] + 1, dtype=np.uint64) * dofmaps_list[1][j].shape[1]
+             for j in range(cols)])
     else:
         assert len(restriction) == 2
         assert len(restriction[0]) == rows
@@ -269,13 +277,16 @@ def _create_matrix_block_or_nest(  # type: ignore[no-any-unimported]
         index_maps_bs = (
             [restriction[0][i].index_map_bs for i in range(rows)],
             [restriction[1][j].index_map_bs for j in range(cols)])
-        dofmaps_lists = (
-            [restriction[0][i].list() for i in range(rows)],
-            [restriction[1][j].list() for j in range(cols)])
+        dofmaps_list = (
+            [restriction[0][i].map()[0] for i in range(rows)],
+            [restriction[1][j].map()[0] for j in range(cols)])
+        dofmaps_bounds = (
+            [restriction[0][i].map()[1] for i in range(rows)],
+            [restriction[1][j].map()[1] for j in range(cols)])
     if mat_type is not None:
-        return cpp_create_function(a, index_maps, index_maps_bs, dofmaps_lists, mat_type)
+        return cpp_create_function(a, index_maps, index_maps_bs, dofmaps_list, dofmaps_bounds, mat_type)
     else:
-        return cpp_create_function(a, index_maps, index_maps_bs, dofmaps_lists)
+        return cpp_create_function(a, index_maps, index_maps_bs, dofmaps_list, dofmaps_bounds)
 
 
 def create_matrix_block(  # type: ignore[no-any-unimported]

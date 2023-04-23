@@ -12,7 +12,6 @@
 #include <vector>
 #include <dolfinx/common/IndexMap.h>
 #include <dolfinx/fem/Form.h>
-#include <dolfinx/graph/AdjacencyList.h>
 #include <dolfinx/la/petsc.h>
 #include <dolfinx/la/SparsityPattern.h>
 #include <multiphenicsx/fem/utils.h>
@@ -32,8 +31,9 @@ namespace petsc
 /// @param[in] index_maps A pair of index maps. Row index map is given by index_maps[0], column index map is given
 /// by index_maps[1].
 /// @param[in] index_maps_bs A pair of int, representing the block size of index_maps.
-/// @param[in] dofmaps A pair of AdjacencyList containing the dofmaps. Row dofmap is given by dofmaps[0], while
+/// @param[in] dofmaps_list An array of spans containing the dofmaps list. Row dofmap is given by dofmaps[0], while
 /// column dofmap is given by dofmaps[1].
+/// @param[in] dofmaps_bounds An array of spans containing the dofmaps cell bounds.
 /// @param[in] matrix_type The PETSc matrix type to create
 /// @return A sparse matrix with a layout and sparsity that matches the
 /// bilinear form. The caller is responsible for destroying the Mat
@@ -43,11 +43,12 @@ Mat create_matrix(
   const dolfinx::fem::Form<PetscScalar, T>& a,
   std::array<std::reference_wrapper<const dolfinx::common::IndexMap>, 2> index_maps,
   const std::array<int, 2> index_maps_bs,
-  std::array<const dolfinx::graph::AdjacencyList<std::int32_t>*, 2> dofmaps,
+  std::array<std::span<const std::int32_t>, 2> dofmaps_list,
+  std::array<std::span<const std::size_t>, 2> dofmaps_bounds,
   const std::string& matrix_type = std::string())
 {
   dolfinx::la::SparsityPattern pattern = multiphenicsx::fem::create_sparsity_pattern(
-    a, index_maps, index_maps_bs, dofmaps);
+    a, index_maps, index_maps_bs, dofmaps_list, dofmaps_bounds);
   pattern.assemble();
   return dolfinx::la::petsc::create_matrix(a.mesh()->comm(), pattern, matrix_type);
 }
@@ -59,8 +60,9 @@ Mat create_matrix(
 /// constructed from (index_maps[0][i], index_maps[1][j]).
 /// @param[in] index_maps_bs A pair of vectors of int, representing the block size of the
 /// corresponding entry in index_maps.
-/// @param[in] dofmaps A pair of vectors of AdjacencyList containing the list dofmaps for each block.
+/// @param[in] dofmaps_list An array of list of spans containing the dofmaps list for each block.
 /// The dofmap pair for block (i, j) will be constructed from (dofmaps[0][i], dofmaps[1][j]).
+/// @param[in] dofmaps_bounds An array of list of spans containing the dofmaps bounds for each block.
 /// @param[in] matrix_type The type of PETSc Mat. If empty the PETSc default is
 /// used.
 /// @return A sparse matrix  with a layout and sparsity that matches the
@@ -71,15 +73,18 @@ Mat create_matrix_block(
   const std::vector<std::vector<const dolfinx::fem::Form<PetscScalar, T>*>>& a,
   std::array<std::vector<std::reference_wrapper<const dolfinx::common::IndexMap>>, 2> index_maps,
   const std::array<std::vector<int>, 2> index_maps_bs,
-  const std::array<std::vector<const dolfinx::graph::AdjacencyList<std::int32_t>*>, 2>& dofmaps,
+  std::array<std::vector<std::span<const std::int32_t>>, 2> dofmaps_list,
+  std::array<std::vector<std::span<const std::size_t>>, 2> dofmaps_bounds,
   const std::string& matrix_type = std::string())
 {
   std::size_t rows = index_maps[0].size();
   assert(index_maps_bs[0].size() == rows);
-  assert(dofmaps[0].size() == rows);
+  assert(dofmaps_list[0].size() == rows);
+  assert(dofmaps_bounds[0].size() == rows);
   std::size_t cols = index_maps[1].size();
   assert(index_maps_bs[1].size() == cols);
-  assert(dofmaps[1].size() == cols);
+  assert(dofmaps_list[1].size() == cols);
+  assert(dofmaps_bounds[1].size() == cols);
 
   // Build sparsity pattern for each block
   std::shared_ptr<const dolfinx::mesh::Mesh<T>> mesh;
@@ -94,7 +99,7 @@ Mat create_matrix_block(
         patterns[row].push_back(std::make_unique<la::SparsityPattern>(
             multiphenicsx::fem::create_sparsity_pattern(
               *form, {{index_maps[0][row], index_maps[1][col]}}, {{index_maps_bs[0][row], index_maps_bs[1][col]}},
-              {{dofmaps[0][row], dofmaps[1][col]}})));
+              {{dofmaps_list[0][row], dofmaps_list[1][col]}}, {{dofmaps_bounds[0][row], dofmaps_bounds[1][col]}})));
         if (!mesh)
           mesh = form->mesh();
       }
@@ -169,7 +174,7 @@ Mat create_matrix_block(
   ISLocalToGlobalMappingCreate(MPI_COMM_SELF, 1, _maps[0].size(),
                                _maps[0].data(), PETSC_COPY_VALUES,
                                &petsc_local_to_global0);
-  if (dofmaps[0] == dofmaps[1])
+  if (&dofmaps_list[0] == &dofmaps_list[1] && &dofmaps_bounds[0] == &dofmaps_bounds[1])
   {
     MatSetLocalToGlobalMapping(A, petsc_local_to_global0,
                                petsc_local_to_global0);
@@ -198,15 +203,18 @@ Mat create_matrix_nest(
   const std::vector<std::vector<const dolfinx::fem::Form<PetscScalar, T>*>>& a,
   std::array<std::vector<std::reference_wrapper<const dolfinx::common::IndexMap>>, 2> index_maps,
   const std::array<std::vector<int>, 2> index_maps_bs,
-  const std::array<std::vector<const dolfinx::graph::AdjacencyList<std::int32_t>*>, 2>& dofmaps,
+  std::array<std::vector<std::span<const std::int32_t>>, 2> dofmaps_list,
+  std::array<std::vector<std::span<const std::size_t>>, 2> dofmaps_bounds,
   const std::vector<std::vector<std::string>>& matrix_types)
 {
   std::size_t rows = index_maps[0].size();
   assert(index_maps_bs[0].size() == rows);
-  assert(dofmaps[0].size() == rows);
+  assert(dofmaps_list[0].size() == rows);
+  assert(dofmaps_bounds[0].size() == rows);
   std::size_t cols = index_maps[1].size();
   assert(index_maps_bs[1].size() == cols);
-  assert(dofmaps[1].size() == cols);
+  assert(dofmaps_list[1].size() == cols);
+  assert(dofmaps_bounds[1].size() == cols);
   std::vector<std::vector<std::string>> _matrix_types(
       rows, std::vector<std::string>(cols));
   if (!matrix_types.empty())
@@ -223,7 +231,8 @@ Mat create_matrix_nest(
       {
         mats[i * cols + j] = multiphenicsx::fem::petsc::create_matrix(
           *form, {{index_maps[0][i], index_maps[1][j]}}, {{index_maps_bs[0][i], index_maps_bs[1][j]}},
-          {{dofmaps[0][i], dofmaps[1][j]}}, _matrix_types[i][j]);
+          {{dofmaps_list[0][i], dofmaps_list[1][j]}}, {{dofmaps_bounds[0][i], dofmaps_bounds[1][j]}},
+          _matrix_types[i][j]);
         mesh = form->mesh();
       }
     }

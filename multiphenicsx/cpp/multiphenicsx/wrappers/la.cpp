@@ -21,6 +21,7 @@ namespace
   template <class T>
   std::array<T, 2> convert_vector_to_array(const std::vector<T>& input)
   {
+    // Workaround for pybind11#2123.
     assert(input.size() == 2);
     std::array<T, 2> output {{input[0], input[1]}};
     return output;
@@ -47,11 +48,6 @@ void la_petsc_module(py::module& m)
       .def(py::init(
           [](Mat A,
              std::vector<IS> index_sets_) {
-            // Due to pybind11#2123, the argument index_sets is of type
-            //   std::vector<IS>
-            // rather than
-            //   std::array<IS, 2>
-            // as in the C++ backend. Convert here the std::vector to a std::array.
             auto index_sets = convert_vector_to_array(index_sets_);
             return std::make_unique<multiphenicsx::la::petsc::MatSubMatrixWrapper>(A, index_sets);
           }))
@@ -61,11 +57,6 @@ void la_petsc_module(py::module& m)
              std::vector<IS> restricted_index_sets_,
              std::array<std::map<std::int32_t, std::int32_t>, 2> unrestricted_to_restricted,
              std::array<int, 2> unrestricted_to_restricted_bs) {
-            // Due to pybind11#2123, the arguments {restricted, unrestricted}_index_sets are of type
-            //   std::vector<IS>
-            // rather than
-            //   std::array<IS, 2>
-            // as in the C++ backend. Convert here the std::vector to a std::array.
             auto unrestricted_index_sets = convert_vector_to_array(unrestricted_index_sets_);
             auto restricted_index_sets = convert_vector_to_array(restricted_index_sets_);
             return std::make_unique<multiphenicsx::la::petsc::MatSubMatrixWrapper>(A, unrestricted_index_sets,

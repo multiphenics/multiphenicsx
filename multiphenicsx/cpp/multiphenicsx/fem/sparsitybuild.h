@@ -7,7 +7,6 @@
 #pragma once
 
 #include <array>
-#include <dolfinx/graph/AdjacencyList.h>
 #include <dolfinx/la/SparsityPattern.h>
 #include <dolfinx/mesh/Topology.h>
 
@@ -25,12 +24,14 @@ namespace sparsitybuild
 /// Iterate over cells and insert entries into sparsity pattern
 void cells(dolfinx::la::SparsityPattern& pattern,
            std::span<const std::int32_t> cells,
-           std::array<const dolfinx::graph::AdjacencyList<std::int32_t>*, 2> dofmaps);
+           std::array<std::span<const std::int32_t>, 2> dofmaps_list,
+           std::array<std::span<const std::size_t>, 2> dofmaps_bounds);
 
 /// Iterate over interior facets and insert entries into sparsity pattern
 void interior_facets(dolfinx::la::SparsityPattern& pattern,
                      std::span<const std::int32_t> facets,
-                     std::array<const dolfinx::graph::AdjacencyList<std::int32_t>*, 2> dofmaps);
+                     std::array<std::span<const std::int32_t>, 2> dofmaps_list,
+                     std::array<std::span<const std::size_t>, 2> dofmaps_bounds);
 
 } // namespace sparsitybuild
 } // namespace fem
