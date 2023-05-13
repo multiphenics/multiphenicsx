@@ -49,7 +49,7 @@ Mat create_matrix(
 {
   dolfinx::la::SparsityPattern pattern = multiphenicsx::fem::create_sparsity_pattern(
     a, index_maps, index_maps_bs, dofmaps_list, dofmaps_bounds);
-  pattern.assemble();
+  pattern.finalize();
   return dolfinx::la::petsc::create_matrix(a.mesh()->comm(), pattern, matrix_type);
 }
 
@@ -132,7 +132,7 @@ Mat create_matrix_block(
       p[row].push_back(patterns[row][col].get());
 
   dolfinx::la::SparsityPattern pattern(mesh->comm(), p, maps_and_bs, index_maps_bs);
-  pattern.assemble();
+  pattern.finalize();
 
   // FIXME: Add option to pass customised local-to-global map to PETSc
   // Mat constructor
