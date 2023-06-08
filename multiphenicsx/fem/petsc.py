@@ -934,16 +934,20 @@ class _MatSubMatrixWrapper(object):
                 restricted_index_sets,
                 unrestricted_to_restricted,
                 unrestricted_to_restricted_bs)
+        self._cpp_object_mat: typing.Optional[petsc4py.PETSc.Mat] = None  # type: ignore[no-any-unimported]
 
     def __enter__(self) -> petsc4py.PETSc.Mat:  # type: ignore[no-any-unimported]
         """Return submatrix content."""
-        return self._cpp_object.mat()
+        self._cpp_object_mat = self._cpp_object.mat()
+        return self._cpp_object_mat
 
     def __exit__(
         self, exception_type: typing.Type[BaseException], exception_value: BaseException,
         traceback: types.TracebackType
     ) -> None:
         """Restore submatrix content."""
+        assert self._cpp_object_mat is not None
+        self._cpp_object_mat.destroy()
         self._cpp_object.restore()
 
 
