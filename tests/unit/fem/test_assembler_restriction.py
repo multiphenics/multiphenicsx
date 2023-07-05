@@ -12,6 +12,7 @@ import basix.ufl
 import dolfinx.cpp
 import dolfinx.fem
 import dolfinx.fem.petsc
+import dolfinx.la
 import dolfinx.mesh
 import mpi4py.MPI
 import numpy as np
@@ -484,9 +485,9 @@ def test_vector_assembly_with_restriction(
     unrestricted_vector_linear.destroy()
     restricted_vector_linear.destroy()
     # BC application for nonlinear problems
-    unrestricted_solution = dolfinx.cpp.la.petsc.create_vector(
+    unrestricted_solution = dolfinx.la.create_petsc_vector(
         V.dofmap.index_map, V.dofmap.index_map_bs)
-    restricted_solution = dolfinx.cpp.la.petsc.create_vector(
+    restricted_solution = dolfinx.la.create_petsc_vector(
         dofmap_restriction.index_map, dofmap_restriction.index_map_bs)
     bc_vector = get_function(V).vector
     with unrestricted_solution.localForm() as unrestricted_solution_local, \
