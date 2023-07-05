@@ -6,5 +6,4 @@
 """Tools for assembling finite element forms with restrictions."""
 
 
-import multiphenicsx.fem.petsc  # import module rather than its content to be consistent with dolfinx.fem.petsc
 from multiphenicsx.fem.dofmap_restriction import DofMapRestriction

@@ -11,6 +11,7 @@ import typing
 import basix.ufl
 import dolfinx.cpp
 import dolfinx.fem
+import dolfinx.fem.petsc
 import dolfinx.mesh
 import mpi4py.MPI
 import numpy as np
@@ -22,6 +23,7 @@ import ufl
 
 import common  # noqa
 import multiphenicsx.fem
+import multiphenicsx.fem.petsc
 
 PreprocessXType = typing.Callable[[np.typing.NDArray[np.float64]], np.typing.NDArray[np.float64]]
 DirichletBCsGeneratorType = typing.Callable[[dolfinx.fem.FunctionSpace], typing.List[dolfinx.fem.DirichletBC]]
