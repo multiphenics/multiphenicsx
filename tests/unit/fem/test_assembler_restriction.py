@@ -94,12 +94,12 @@ def get_function(
     if len(shape) == 0:
         def f(x: np.typing.NDArray[np.float64]) -> np.typing.NDArray[  # type: ignore[no-any-unimported]
                 petsc4py.PETSc.ScalarType]:
-            x = preprocess_x(x)  # type: ignore[misc]
+            x = preprocess_x(x)
             return 2 * x[0] + 4 * x[1] * x[1]  # type: ignore[no-any-return]
     elif len(shape) == 1 and shape[0] == 2:
         def f(x: np.typing.NDArray[np.float64]) -> np.typing.NDArray[  # type: ignore[no-any-unimported]
                 petsc4py.PETSc.ScalarType]:
-            x = preprocess_x(x)  # type: ignore[misc]
+            x = preprocess_x(x)
             return np.stack([
                 2 * x[0] + 4 * x[1] * x[1],
                 3 * x[0] + 5 * x[1] * x[1]
@@ -107,7 +107,7 @@ def get_function(
     elif len(shape) == 1 and shape[0] == 3:
         def f(x: np.typing.NDArray[np.float64]) -> np.typing.NDArray[  # type: ignore[no-any-unimported]
                 petsc4py.PETSc.ScalarType]:
-            x = preprocess_x(x)  # type: ignore[misc]
+            x = preprocess_x(x)
             return np.stack([
                 2 * x[0] + 4 * x[1] * x[1],
                 3 * x[0] + 5 * x[1] * x[1],

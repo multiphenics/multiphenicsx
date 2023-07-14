@@ -62,12 +62,10 @@ def FacetsSubDomain(
             or (X is None and Y is None and on_boundary is True))
     if X is not None:
         def facets_subdomain(x: np.typing.NDArray[np.float64]) -> np.typing.NDArray[np.bool_]:
-            return np.logical_and(  # type: ignore[no-any-return]
-                x[0] >= X - eps, x[0] <= X + eps)  # type: ignore[call-overload, operator]
+            return np.logical_and(x[0] >= X - eps, x[0] <= X + eps)  # type: ignore[no-any-return]
     elif Y is not None:
         def facets_subdomain(x: np.typing.NDArray[np.float64]) -> np.typing.NDArray[np.bool_]:
-            return np.logical_and(  # type: ignore[no-any-return]
-                x[1] >= Y - eps, x[1] <= Y + eps)  # type: ignore[call-overload, operator]
+            return np.logical_and(x[1] >= Y - eps, x[1] <= Y + eps)  # type: ignore[no-any-return]
     elif on_boundary is True:
         def facets_subdomain(x: np.typing.NDArray[np.float64]) -> np.typing.NDArray[np.bool_]:
             return np.logical_or(  # type: ignore[no-any-return]
