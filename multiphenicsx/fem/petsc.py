@@ -36,14 +36,14 @@ def _get_block_function_spaces(block_form: typing.List[typing.Any]) -> typing.Li
 
 def _get_block_function_spaces_rank_1(
     block_form: typing.List[dolfinx.fem.Form]
-) -> typing.List[dolfinx.fem.FunctionSpace]:
+) -> typing.List[dolfinx.fem.FunctionSpaceBase]:
     assert all(isinstance(block_form_, dolfinx.fem.Form) for block_form_ in block_form)
     return [form.function_spaces[0] for form in block_form]
 
 
 def _get_block_function_spaces_rank_2(
     block_form: typing.List[typing.List[dolfinx.fem.Form]]
-) -> typing.List[typing.List[dolfinx.fem.FunctionSpace]]:
+) -> typing.List[typing.List[dolfinx.fem.FunctionSpaceBase]]:
     assert all(isinstance(block_form_, list) for block_form_ in block_form)
     assert all(
         isinstance(form, dolfinx.fem.Form) or form is None for block_form_ in block_form for form in block_form_)

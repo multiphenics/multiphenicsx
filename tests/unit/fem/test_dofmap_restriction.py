@@ -42,12 +42,12 @@ def get_subdomains() -> typing.Tuple[common.SubdomainType, ...]:
 def get_function_spaces() -> typing.Tuple[common.FunctionSpaceGeneratorType, ...]:
     """Generate function space parametrization."""
     return (
-        lambda mesh: dolfinx.fem.FunctionSpace(mesh, ("Lagrange", 1)),
-        lambda mesh: dolfinx.fem.FunctionSpace(mesh, ("Lagrange", 2)),
-        lambda mesh: dolfinx.fem.VectorFunctionSpace(mesh, ("Lagrange", 1)),
-        lambda mesh: dolfinx.fem.VectorFunctionSpace(mesh, ("Lagrange", 2)),
-        lambda mesh: dolfinx.fem.TensorFunctionSpace(mesh, ("Lagrange", 1)),
-        lambda mesh: dolfinx.fem.TensorFunctionSpace(mesh, ("Lagrange", 2)),
+        lambda mesh: dolfinx.fem.functionspace(mesh, ("Lagrange", 1)),
+        lambda mesh: dolfinx.fem.functionspace(mesh, ("Lagrange", 2)),
+        lambda mesh: dolfinx.fem.functionspace(mesh, ("Lagrange", 1, (mesh.geometry.dim, ))),
+        lambda mesh: dolfinx.fem.functionspace(mesh, ("Lagrange", 2, (mesh.geometry.dim, ))),
+        lambda mesh: dolfinx.fem.functionspace(mesh, ("Lagrange", 1, (mesh.geometry.dim, mesh.geometry.dim))),
+        lambda mesh: dolfinx.fem.functionspace(mesh, ("Lagrange", 2, (mesh.geometry.dim, mesh.geometry.dim))),
         lambda mesh: common.TaylorHoodFunctionSpace(mesh, ("Lagrange", 1)),
         # lambda mesh: common.TaylorHoodFunctionSpace(mesh, ("Lagrange", 2))
     )

@@ -27,9 +27,9 @@ import multiphenicsx.fem
 import multiphenicsx.fem.petsc
 
 PreprocessXType = typing.Callable[[np.typing.NDArray[np.float64]], np.typing.NDArray[np.float64]]
-DirichletBCsGeneratorType = typing.Callable[[dolfinx.fem.FunctionSpace], typing.List[dolfinx.fem.DirichletBC]]
+DirichletBCsGeneratorType = typing.Callable[[dolfinx.fem.FunctionSpaceBase], typing.List[dolfinx.fem.DirichletBC]]
 DirichletBCsPairGeneratorType = typing.Callable[
-    [dolfinx.fem.FunctionSpace, dolfinx.fem.FunctionSpace], typing.List[typing.List[dolfinx.fem.DirichletBC]]]
+    [dolfinx.fem.FunctionSpaceBase, dolfinx.fem.FunctionSpaceBase], typing.List[typing.List[dolfinx.fem.DirichletBC]]]
 DofMapRestrictionsType = typing.Union[
     multiphenicsx.fem.DofMapRestriction, typing.List[multiphenicsx.fem.DofMapRestriction]]
 
@@ -68,8 +68,8 @@ def get_subdomains_pairs() -> typing.Tuple[
 def get_function_spaces() -> typing.Tuple[common.FunctionSpaceGeneratorType, ...]:
     """Generate function space parametrization for tests on vectors and matrices."""
     return (
-        lambda mesh: dolfinx.fem.FunctionSpace(mesh, ("Lagrange", 1)),
-        lambda mesh: dolfinx.fem.VectorFunctionSpace(mesh, ("Lagrange", 1)),
+        lambda mesh: dolfinx.fem.functionspace(mesh, ("Lagrange", 1)),
+        lambda mesh: dolfinx.fem.functionspace(mesh, ("Lagrange", 1, (mesh.geometry.dim, ))),
         lambda mesh: common.TaylorHoodFunctionSpace(mesh, ("Lagrange", 1))
     )
 
@@ -83,7 +83,7 @@ def get_function_spaces_pairs() -> typing.Iterator[
 
 
 def get_function(
-    V: dolfinx.fem.FunctionSpace, preprocess_x: typing.Optional[PreprocessXType] = None
+    V: dolfinx.fem.FunctionSpaceBase, preprocess_x: typing.Optional[PreprocessXType] = None
 ) -> dolfinx.fem.Function:
     """Generate function employed in form definition."""
     if preprocess_x is None:
@@ -129,7 +129,7 @@ def get_function(
 
 
 def get_function_pair(
-    V1: dolfinx.fem.FunctionSpace, V2: dolfinx.fem.FunctionSpace
+    V1: dolfinx.fem.FunctionSpaceBase, V2: dolfinx.fem.FunctionSpaceBase
 ) -> typing.List[dolfinx.fem.Function]:
     """Generate functions employed in block form definition."""
     u1 = get_function(V1)
@@ -137,14 +137,14 @@ def get_function_pair(
     return [u1, u2]
 
 
-def get_linear_form(V: dolfinx.fem.FunctionSpace) -> dolfinx.fem.Form:
+def get_linear_form(V: dolfinx.fem.FunctionSpaceBase) -> dolfinx.fem.Form:
     """Generate linear forms employed in the vector test case."""
     v = ufl.TestFunction(V)
     f = get_function(V)
     return dolfinx.fem.form(ufl.inner(f, v) * ufl.dx)  # type: ignore[no-any-return]
 
 
-def get_block_linear_form(V1: dolfinx.fem.FunctionSpace, V2: dolfinx.fem.FunctionSpace) -> dolfinx.fem.Form:
+def get_block_linear_form(V1: dolfinx.fem.FunctionSpaceBase, V2: dolfinx.fem.FunctionSpaceBase) -> dolfinx.fem.Form:
     """Generate two-by-one block linear forms employed in the block/nest vector test cases."""
     v1, v2 = ufl.TestFunction(V1), ufl.TestFunction(V2)
     assert V1.mesh == V2.mesh
@@ -152,7 +152,7 @@ def get_block_linear_form(V1: dolfinx.fem.FunctionSpace, V2: dolfinx.fem.Functio
     return dolfinx.fem.form([ufl.inner(f1, v1) * ufl.dx, ufl.inner(f2, v2) * ufl.dx])  # type: ignore[no-any-return]
 
 
-def get_bilinear_form(V: dolfinx.fem.FunctionSpace) -> dolfinx.fem.Form:
+def get_bilinear_form(V: dolfinx.fem.FunctionSpaceBase) -> dolfinx.fem.Form:
     """Generate bilinear forms employed in the matrix test case."""
     u = ufl.TrialFunction(V)
     v = ufl.TestFunction(V)
@@ -165,7 +165,7 @@ def get_bilinear_form(V: dolfinx.fem.FunctionSpace) -> dolfinx.fem.Form:
     return dolfinx.fem.form(form)  # type: ignore[no-any-return]
 
 
-def get_block_bilinear_form(V1: dolfinx.fem.FunctionSpace, V2: dolfinx.fem.FunctionSpace) -> dolfinx.fem.Form:
+def get_block_bilinear_form(V1: dolfinx.fem.FunctionSpaceBase, V2: dolfinx.fem.FunctionSpaceBase) -> dolfinx.fem.Form:
     """Generate two-by-two block bilinear forms employed in the block/nest matrix test cases."""
     u1, u2 = ufl.TrialFunction(V1), ufl.TrialFunction(V2)
     v1, v2 = ufl.TestFunction(V1), ufl.TestFunction(V2)
@@ -234,7 +234,7 @@ def get_mat_types() -> typing.Tuple[typing.Optional[str], ...]:
 
 
 def locate_boundary_dofs(
-    V: dolfinx.fem.FunctionSpace, collapsed_V: typing.Optional[dolfinx.fem.FunctionSpace] = None
+    V: dolfinx.fem.FunctionSpaceBase, collapsed_V: typing.Optional[dolfinx.fem.FunctionSpaceBase] = None
 ) -> np.typing.NDArray[np.int32]:
     """Locate DOFs on the boundary."""
     entities_dim = V.mesh.topology.dim - 1
@@ -247,7 +247,7 @@ def locate_boundary_dofs(
 
 def get_boundary_conditions(offset: int = 0) -> typing.Tuple[DirichletBCsGeneratorType, ...]:
     """Generate boundary conditions employed in the non-block/nest test cases."""
-    def _get_boundary_conditions(V: dolfinx.fem.FunctionSpace) -> typing.List[dolfinx.fem.DirichletBC]:
+    def _get_boundary_conditions(V: dolfinx.fem.FunctionSpaceBase) -> typing.List[dolfinx.fem.DirichletBC]:
         num_sub_elements = V.ufl_element().num_sub_elements()
         if num_sub_elements == 0:
             bc1_fun = dolfinx.fem.Function(V)
