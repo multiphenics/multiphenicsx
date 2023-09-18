@@ -215,7 +215,7 @@ void DofMapRestriction::_compute_cell_dofs(std::shared_ptr<const DofMap> dofmap)
   for (int c = 0; c < num_cells; ++c)
   {
     const auto unrestricted_cell_dofs_c = std::experimental::submdspan(
-      unrestricted_cell_dofs, c, std::experimental::full_extent);
+      unrestricted_cell_dofs, c, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
     std::vector<std::int32_t> restricted_cell_dofs_c;
     restricted_cell_dofs_c.reserve(unrestricted_cell_dofs_c.size()); // conservative allocation
     for (std::uint32_t d = 0; d < unrestricted_cell_dofs_c.size(); ++d)
