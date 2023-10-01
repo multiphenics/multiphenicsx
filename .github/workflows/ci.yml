@@ -41,6 +41,7 @@ jobs:
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
           echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
+          rm /usr/local/lib/python3.10/dist-packages/petsc4py/py.typed
       - name: Install multiphenicsx
         run: |
           python3 -m pip install .[docs,lint,tests,tutorials]
