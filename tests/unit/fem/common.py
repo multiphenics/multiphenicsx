@@ -83,7 +83,7 @@ def TaylorHoodFunctionSpace(
 ) -> dolfinx.fem.FunctionSpaceBase:
     """Define a mixed function space."""
     (family, degree) = family_degree
-    V_element = basix.ufl.element(family, mesh.ufl_cell().cellname(), degree + 1, shape=(mesh.geometry.dim, ))
-    Q_element = basix.ufl.element(family, mesh.ufl_cell().cellname(), degree)
+    V_element = basix.ufl.element(family, mesh.basix_cell(), degree + 1, shape=(mesh.geometry.dim, ))
+    Q_element = basix.ufl.element(family, mesh.basix_cell(), degree)
     taylor_hood_element = basix.ufl.mixed_element([V_element, Q_element])
     return dolfinx.fem.functionspace(mesh, taylor_hood_element)
