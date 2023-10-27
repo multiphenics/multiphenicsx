@@ -1,3 +1,185 @@
 [build-system]
-requires = ["setuptools>=58", "wheel"]
+requires = ["setuptools>=62", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "multiphenicsx"
+version = "0.2.dev1"
+authors = [
+    {name = "Francesco Ballarin (and contributors)", email = "francesco.ballarin@unicatt.it"},
+]
+maintainers = [
+    {name = "Francesco Ballarin", email = "francesco.ballarin@unicatt.it"},
+]
+description = "Easy prototyping of multiphysics problems on conforming meshes in FEniCSx"
+license = {file = "COPYING"}
+requires-python = ">=3.7"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+    "Operating System :: POSIX",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+dependencies = [
+    "cppimport",
+    "fenics-dolfinx",
+    "mpi4py",
+    "numpy >= 1.21.0",
+    "petsc4py"
+]
+
+[project.urls]
+homepage = "https://multiphenics.github.io"
+repository = "https://github.com/multiphenics/multiphenicsx"
+issues = "https://github.com/multiphenics/multiphenicsx/issues"
+funding = "https://github.com/sponsors/francesco-ballarin"
+
+[project.optional-dependencies]
+docs = [
+    "sphinx"
+]
+lint = [
+    "flake8",
+    "flake8-annotations",
+    "flake8-docstrings",
+    "flake8-import-restrictions",
+    "flake8-isort",
+    "Flake8-pyproject",
+    "flake8-quotes",
+    "mypy"
+]
+tests = [
+    "coverage[toml]",
+    "nbqa",
+    "nbvalx[unit_tests] @ git+https://github.com/multiphenics/nbvalx.git",
+    "pytest",
+    "scipy"
+]
+tutorials = [
+    "gmsh",
+    "nbvalx[notebooks] @ git+https://github.com/multiphenics/nbvalx.git",
+    "slepc4py",
+    "sympy",
+    "viskex @ git+https://github.com/viskex/viskex.git"
+]
+
+[tool.flake8]
+max-line-length = 120
+show-source = true
+docstring-convention = "numpy"
+inline-quotes = "double"
+imr241_exclude = ["multiphenicsx", "multiphenicsx.*"]
+imr245_include = "*"
+imr245_exclude = ["multiphenicsx", "multiphenicsx.*"]
+ignore = ["ANN101", "W503"]
+exclude = [".eggs", "build", "dist"]
+per-file-ignores = [
+    "multiphenicsx/**/__init__.py: F401",
+    "tests/notebooks/data/*.py: D100, I004",
+    "tutorials/**/tutorial_*.py: D100, I004",
+    "tutorials/**/generate_mesh*.py: D100, I004"
+]
+
+[tool.isort]
+line_length = 120
+multi_line_output = 4
+order_by_type = false
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_any_unimported = true
+disallow_untyped_defs = true
+exclude = "(^\\.eggs|^build|^dist|conftest\\.py$)"
+implicit_reexport = true
+no_implicit_optional = true
+pretty = true
+show_error_codes = true
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = "cppimport"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "dolfinx.cpp"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "gmsh"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "ipyparallel"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "matplotlib"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "matplotlib.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "mpl_toolkits.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "petsc4py"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "petsc4py.PETSc"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "plotly"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "plotly.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "scipy"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "scipy.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "slepc4py"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "slepc4py.SLEPc"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "ufl"
+ignore_missing_imports = true
+
+[tool.setuptools.package-data]
+multiphenicsx = [
+    "cpp/multiphenicsx/**/*.cpp",
+    "cpp/multiphenicsx/**/*.h",
+    "py.typed"
+]
+
+[tool.setuptools.packages.find]
+namespaces = false
