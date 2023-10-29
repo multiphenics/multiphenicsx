@@ -53,6 +53,9 @@ jobs:
       - name: Run documentation generation
         run: |
           cd docs && make html
+      - name: Remove source directory to ensure that package from installation directory is used
+        run: |
+          rm -rf multiphenicsx
       - name: Run unit tests (serial)
         run: |
           COVERAGE_FILE=.coverage_unit_serial python3 -m coverage run --source=multiphenicsx -m pytest tests/unit
