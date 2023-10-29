@@ -89,3 +89,6 @@ target_include_directories(multiphenicsx_cpp PRIVATE ${MPI4PY_INCLUDE_DIR})
 
 # Add DOLFINx libraries
 target_link_libraries(multiphenicsx_cpp PRIVATE dolfinx)
+
+# Install the compiled library to the cpp subdirectory
+install(TARGETS multiphenicsx_cpp LIBRARY DESTINATION multiphenicsx/cpp)

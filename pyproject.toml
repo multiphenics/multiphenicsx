@@ -1,6 +1,12 @@
 [build-system]
-requires = ["setuptools>=62", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = [
+    "fenics-dolfinx",
+    "mpi4py",
+    "petsc4py",
+    "pybind11 >= 2.9.1",
+    "scikit-build-core[pyproject]"
+]
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "multiphenicsx"
@@ -169,12 +175,7 @@ ignore_missing_imports = true
 module = "ufl"
 ignore_missing_imports = true
 
-[tool.setuptools.package-data]
-multiphenicsx = [
-    "cpp/multiphenicsx/**/*.cpp",
-    "cpp/multiphenicsx/**/*.h",
-    "py.typed"
-]
-
-[tool.setuptools.packages.find]
-namespaces = false
+[tool.scikit-build]
+cmake.source-dir = "multiphenicsx/cpp"
+wheel.packages = ["multiphenicsx"]
+sdist.exclude = ["*.cpp", "*.h", "CMakeLists.txt"]
