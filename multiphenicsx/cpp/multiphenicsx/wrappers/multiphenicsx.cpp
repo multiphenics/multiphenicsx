@@ -14,7 +14,7 @@ namespace multiphenicsx_wrappers
   void la(py::module& m);
 }
 
-PYBIND11_MODULE(SIGNATURE, m)
+PYBIND11_MODULE(multiphenicsx_cpp, m)
 {
   // Create module for C++ wrappers
   m.doc() = "multiphenicsx Python interface";
