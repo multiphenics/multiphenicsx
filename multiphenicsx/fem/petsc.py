@@ -885,11 +885,11 @@ def _(  # type: ignore[no-any-unimported]
         {} if form is None else dcpp.fem.pack_coefficients(form._cpp_object)
         for form in L] if coeffs_L is None else coeffs_L
     constants_a = [[
-        None if form is None else dcpp.fem.pack_constants(form._cpp_object) for form in forms]
-        for forms in a] if constants_a is None else constants_a
+        np.array([], dtype=petsc4py.PETSc.ScalarType) if form is None else dcpp.fem.pack_constants(form._cpp_object)
+        for form in forms] for forms in a] if constants_a is None else constants_a
     coeffs_a = [[
-        {} if form is None else dcpp.fem.pack_coefficients(form._cpp_object) for form in forms]
-        for forms in a] if coeffs_a is None else coeffs_a
+        {} if form is None else dcpp.fem.pack_coefficients(form._cpp_object)
+        for form in forms] for forms in a] if coeffs_a is None else coeffs_a
 
     function_spaces = _get_block_function_spaces(a)
     dofmaps = [function_space.dofmap for function_space in function_spaces[0]]
@@ -914,7 +914,10 @@ def _(  # type: ignore[no-any-unimported]
     with BlockVecSubVectorWrapper(b, dofmaps, restriction) as block_b, \
             BlockVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0) as block_x0:
         for b_sub, bcs0_sub, x0_sub in zip(block_b, bcs0, block_x0):
-            dcpp.fem.set_bc(b_sub, bcs0_sub, x0_sub, scale)
+            if x0_sub is None:
+                dcpp.fem.set_bc(b_sub, bcs0_sub, scale)
+            else:
+                dcpp.fem.set_bc(b_sub, bcs0_sub, x0_sub, scale)
     return b
 
 
@@ -1355,11 +1358,11 @@ def _(  # type: ignore[no-any-unimported]
 
     # Assemble form
     constants = [[
-        None if form is None else dcpp.fem.pack_constants(form._cpp_object) for form in forms]
-        for forms in a] if constants is None else constants
+        np.array([], dtype=petsc4py.PETSc.ScalarType) if form is None else dcpp.fem.pack_constants(form._cpp_object)
+        for form in forms] for forms in a] if constants is None else constants
     coeffs = [[
-        {} if form is None else dcpp.fem.pack_coefficients(form._cpp_object) for form in forms]
-        for forms in a] if coeffs is None else coeffs
+        {} if form is None else dcpp.fem.pack_coefficients(form._cpp_object)
+        for form in forms] for forms in a] if coeffs is None else coeffs
     bcs_cpp = [bc._cpp_object for bc in bcs]
     with NestMatSubMatrixWrapper(A, dofmaps, restriction) as nest_A:
         for i, j, A_sub in nest_A:
@@ -1465,11 +1468,11 @@ def _(  # type: ignore[no-any-unimported]
         The assembled block PETSc matrix.
     """
     constants = [[
-        None if form is None else dcpp.fem.pack_constants(form._cpp_object) for form in forms]
-        for forms in a] if constants is None else constants
+        np.array([], dtype=petsc4py.PETSc.ScalarType) if form is None else dcpp.fem.pack_constants(form._cpp_object)
+        for form in forms] for forms in a] if constants is None else constants
     coeffs = [[
-        {} if form is None else dcpp.fem.pack_coefficients(form._cpp_object) for form in forms]
-        for forms in a] if coeffs is None else coeffs
+        {} if form is None else dcpp.fem.pack_coefficients(form._cpp_object)
+        for form in forms] for forms in a] if coeffs is None else coeffs
     function_spaces = _get_block_function_spaces(a)
     dofmaps = (
         [function_space.dofmap for function_space in function_spaces[0]],
@@ -1547,11 +1550,11 @@ def apply_lifting_nest(  # type: ignore[no-any-unimported]
 ) -> petsc4py.PETSc.Vec:
     """Apply the function :func:`dolfinx.fem.apply_lifting` to each sub-vector in a nested PETSc Vector."""
     constants = [[
-        None if form is None else dcpp.fem.pack_constants(form._cpp_object) for form in forms]
-        for forms in a] if constants is None else constants
+        np.array([], dtype=petsc4py.PETSc.ScalarType) if form is None else dcpp.fem.pack_constants(form._cpp_object)
+        for form in forms] for forms in a] if constants is None else constants
     coeffs = [[
-        {} if form is None else dcpp.fem.pack_coefficients(form._cpp_object) for form in forms]
-        for forms in a] if coeffs is None else coeffs
+        {} if form is None else dcpp.fem.pack_coefficients(form._cpp_object)
+        for form in forms] for forms in a] if coeffs is None else coeffs
     function_spaces = _get_block_function_spaces(a)
     dofmaps = [function_space.dofmap for function_space in function_spaces[0]]
     dofmaps_x0 = [function_space.dofmap for function_space in function_spaces[1]]

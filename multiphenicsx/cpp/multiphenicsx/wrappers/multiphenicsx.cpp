@@ -4,26 +4,30 @@
 //
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 namespace multiphenicsx_wrappers
 {
-  void fem(py::module& m);
-  void la(py::module& m);
+  void fem(nb::module_& m);
+  void la(nb::module_& m);
 }
 
-PYBIND11_MODULE(multiphenicsx_cpp, m)
+NB_MODULE(multiphenicsx_cpp, m)
 {
   // Create module for C++ wrappers
   m.doc() = "multiphenicsx Python interface";
 
+#ifdef NDEBUG
+  nanobind::set_leak_warnings(false);
+#endif
+
   // Create fem submodule
-  py::module fem = m.def_submodule("fem", "FEM module");
+  nb::module_ fem = m.def_submodule("fem", "FEM module");
   multiphenicsx_wrappers::fem(fem);
 
   // Create la submodule
-  py::module la = m.def_submodule("la", "Linear algebra module");
+  nb::module_ la = m.def_submodule("la", "Linear algebra module");
   multiphenicsx_wrappers::la(la);
 }

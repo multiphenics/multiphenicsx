@@ -2,4 +2,5 @@ CMakeCache.txt
 CMakeFiles
 Makefile
 cmake_install.cmake
+libnanobind-static.a
 multiphenicsx_cpp.*.so

@@ -7,154 +7,179 @@
 #include <array>
 #include <caster_petsc.h>
 #include <dolfinx/common/IndexMap.h>
+#include <dolfinx/fem/DofMap.h>
 #include <dolfinx/fem/Form.h>
-#include <dolfinx/mesh/Mesh.h>
 #include <memory>
 #include <multiphenicsx/fem/DofMapRestriction.h>
 #include <multiphenicsx/fem/petsc.h>
 #include <multiphenicsx/fem/utils.h>
 #include <petsc4py/petsc4py.h>
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <set>
+#include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
+#include <nanobind/stl/array.h>
+#include <nanobind/stl/complex.h>
+#include <nanobind/stl/map.h>
+#include <nanobind/stl/pair.h>
+#include <nanobind/stl/shared_ptr.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
+#include <span>
 #include <string>
 #include <vector>
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 namespace
 {
   template <class T>
-  std::array<T, 2> convert_vector_to_array(const std::vector<T>& input)
+  std::array<std::reference_wrapper<const T>, 2> convert_shared_ptr_to_reference_wrapper(
+    const std::array<std::shared_ptr<const T>, 2>& input)
   {
-    // Workaround for pybind11#2123.
-    assert(input.size() == 2);
-    std::array<T, 2> output {{input[0], input[1]}};
-    return output;
+    return {{*input[0], *input[1]}};
   }
 
   template <class T>
-  std::span<const T> convert_pyarray_to_span(const py::array_t<T, py::array::c_style>& input)
+  std::array<std::vector<std::reference_wrapper<const T>>, 2> convert_shared_ptr_to_reference_wrapper(
+    const std::array<std::vector<std::shared_ptr<const T>>, 2>& input)
+  {
+    std::array<std::vector<std::reference_wrapper<const T>>, 2> output;
+    for (int i(0); i < 2; ++i)
+    {
+      output[i].reserve(input[i].size());
+      for (auto& input_i: input[i])
+      {
+        output[i].push_back(*input_i);
+      }
+    }
+    return output;
+  }
+
+  template <class T, class... Args>
+  std::span<const T> convert_ndarray_to_span(const nb::ndarray<const T, Args...>& input)
   {
     return std::span(input.data(), input.size());
   }
 
-  template <class T>
-  std::vector<std::span<const T>> convert_pyarray_to_span(const std::vector<py::array_t<T, py::array::c_style>>& input)
+  template <class T, class... Args>
+  std::vector<std::span<const T>> convert_ndarray_to_span(
+    const std::vector<nb::ndarray<const T, Args...>>& input)
   {
     std::vector<std::span<const T>> output;
     output.reserve(input.size());
     for (auto& input_: input)
-      output.push_back(convert_pyarray_to_span(input_));
+      output.push_back(convert_ndarray_to_span(input_));
     return output;
   }
 
-  template <class T>
-  std::array<std::span<const T>, 2> convert_pyarray_to_span(
-    const std::array<py::array_t<T, py::array::c_style>, 2>& input)
+  template <class T, class... Args>
+  std::array<std::span<const T>, 2> convert_ndarray_to_span(
+    const std::array<nb::ndarray<const T, Args...>, 2>& input)
   {
-    return {{convert_pyarray_to_span(input[0]), convert_pyarray_to_span(input[1])}};
+    return {{convert_ndarray_to_span(input[0]), convert_ndarray_to_span(input[1])}};
   }
 
-  template <class T>
-  std::array<std::vector<std::span<const T>>, 2> convert_pyarray_to_span(
-    const std::array<std::vector<py::array_t<T, py::array::c_style>>, 2>& input)
+  template <class T, class... Args>
+  std::array<std::vector<std::span<const T>>, 2> convert_ndarray_to_span(
+    const std::array<std::vector<nb::ndarray<const T, Args...>>, 2>& input)
   {
-    return {{convert_pyarray_to_span(input[0]), convert_pyarray_to_span(input[1])}};
+    return {{convert_ndarray_to_span(input[0]), convert_ndarray_to_span(input[1])}};
   }
 }
 
 namespace multiphenicsx_wrappers
 {
-void fem_petsc_module(py::module& m)
+void fem_petsc_module(nb::module_& m)
 {
+  import_petsc4py();
+
   // Create PETSc matrices
   m.def("create_matrix",
         [](const dolfinx::fem::Form<PetscScalar, PetscReal>& a,
-           std::vector<std::reference_wrapper<const dolfinx::common::IndexMap>> index_maps_,
+           std::array<std::shared_ptr<const dolfinx::common::IndexMap>, 2> index_maps_,
            const std::array<int, 2> index_maps_bs,
-           std::array<py::array_t<std::int32_t, py::array::c_style>, 2> dofmaps_list_,
-           std::array<py::array_t<std::size_t, py::array::c_style>, 2> dofmaps_bounds_,
+           std::array<nb::ndarray<const std::int32_t, nb::c_contig>, 2> dofmaps_list_,
+           std::array<nb::ndarray<const std::size_t, nb::ndim<1>, nb::c_contig>, 2> dofmaps_bounds_,
            const std::string& matrix_type) {
-          auto index_maps = convert_vector_to_array(index_maps_);
-          auto dofmaps_list = convert_pyarray_to_span(dofmaps_list_);
-          auto dofmaps_bounds = convert_pyarray_to_span(dofmaps_bounds_);
+          auto index_maps = convert_shared_ptr_to_reference_wrapper(index_maps_);
+          auto dofmaps_list = convert_ndarray_to_span(dofmaps_list_);
+          auto dofmaps_bounds = convert_ndarray_to_span(dofmaps_bounds_);
           return multiphenicsx::fem::petsc::create_matrix(
             a, index_maps, index_maps_bs, dofmaps_list, dofmaps_bounds, matrix_type);
         },
-        py::return_value_policy::take_ownership,
-        py::arg("a"), py::arg("index_maps"), py::arg("index_maps_bs"), py::arg("dofmaps_list"),
-        py::arg("dofmaps_bounds"), py::arg("matrix_type") = std::string(),
+        nb::rv_policy::take_ownership,
+        nb::arg("a"), nb::arg("index_maps"), nb::arg("index_maps_bs"), nb::arg("dofmaps_list"),
+        nb::arg("dofmaps_bounds"), nb::arg("matrix_type") = std::string(),
         "Create a PETSc Mat for bilinear form.");
   m.def("create_matrix_block",
         [](const std::vector<std::vector<const dolfinx::fem::Form<PetscScalar, PetscReal>*>>& a,
-           std::array<std::vector<std::reference_wrapper<const dolfinx::common::IndexMap>>, 2> index_maps,
+           std::array<std::vector<std::shared_ptr<const dolfinx::common::IndexMap>>, 2> index_maps_,
            const std::array<std::vector<int>, 2> index_maps_bs,
-           std::array<std::vector<py::array_t<std::int32_t, py::array::c_style>>, 2> dofmaps_list_,
-           std::array<std::vector<py::array_t<std::size_t, py::array::c_style>>, 2> dofmaps_bounds_,
+           std::array<std::vector<nb::ndarray<const std::int32_t, nb::c_contig>>, 2> dofmaps_list_,
+           std::array<std::vector<nb::ndarray<const std::size_t, nb::ndim<1>, nb::c_contig>>, 2> dofmaps_bounds_,
            const std::string& matrix_type) {
-          auto dofmaps_list = convert_pyarray_to_span(dofmaps_list_);
-          auto dofmaps_bounds = convert_pyarray_to_span(dofmaps_bounds_);
+          auto index_maps = convert_shared_ptr_to_reference_wrapper(index_maps_);
+          auto dofmaps_list = convert_ndarray_to_span(dofmaps_list_);
+          auto dofmaps_bounds = convert_ndarray_to_span(dofmaps_bounds_);
           return multiphenicsx::fem::petsc::create_matrix_block(
             a, index_maps, index_maps_bs, dofmaps_list, dofmaps_bounds, matrix_type);
         },
-        py::return_value_policy::take_ownership,
-        py::arg("a"), py::arg("index_maps"), py::arg("index_maps_bs"), py::arg("dofmaps_list"),
-        py::arg("dofmaps_bounds"), py::arg("matrix_type") = std::string(),
+        nb::rv_policy::take_ownership,
+        nb::arg("a"), nb::arg("index_maps"), nb::arg("index_maps_bs"), nb::arg("dofmaps_list"),
+        nb::arg("dofmaps_bounds"), nb::arg("matrix_type") = std::string(),
         "Create monolithic sparse matrix for stacked bilinear forms.");
   m.def("create_matrix_nest",
         [](const std::vector<std::vector<const dolfinx::fem::Form<PetscScalar, PetscReal>*>>& a,
-           std::array<std::vector<std::reference_wrapper<const dolfinx::common::IndexMap>>, 2> index_maps,
+           std::array<std::vector<std::shared_ptr<const dolfinx::common::IndexMap>>, 2> index_maps_,
            const std::array<std::vector<int>, 2> index_maps_bs,
-           std::array<std::vector<py::array_t<std::int32_t, py::array::c_style>>, 2> dofmaps_list_,
-           std::array<std::vector<py::array_t<std::size_t, py::array::c_style>>, 2> dofmaps_bounds_,
+           std::array<std::vector<nb::ndarray<const std::int32_t, nb::c_contig>>, 2> dofmaps_list_,
+           std::array<std::vector<nb::ndarray<const std::size_t, nb::ndim<1>, nb::c_contig>>, 2> dofmaps_bounds_,
            const std::vector<std::vector<std::string>>& matrix_types) {
-          auto dofmaps_list = convert_pyarray_to_span(dofmaps_list_);
-          auto dofmaps_bounds = convert_pyarray_to_span(dofmaps_bounds_);
+          auto index_maps = convert_shared_ptr_to_reference_wrapper(index_maps_);
+          auto dofmaps_list = convert_ndarray_to_span(dofmaps_list_);
+          auto dofmaps_bounds = convert_ndarray_to_span(dofmaps_bounds_);
           return multiphenicsx::fem::petsc::create_matrix_nest(
             a, index_maps, index_maps_bs, dofmaps_list, dofmaps_bounds, matrix_types);
         },
-        py::return_value_policy::take_ownership,
-        py::arg("a"), py::arg("index_maps"), py::arg("index_maps_bs"), py::arg("dofmaps_list"),
-        py::arg("dofmaps_bounds"), py::arg("matrix_types") = std::vector<std::vector<std::string>>(),
+        nb::rv_policy::take_ownership,
+        nb::arg("a"), nb::arg("index_maps"), nb::arg("index_maps_bs"), nb::arg("dofmaps_list"),
+        nb::arg("dofmaps_bounds"), nb::arg("matrix_types") = std::vector<std::vector<std::string>>(),
         "Create nested sparse matrix for bilinear forms.");
 }
 
-void fem(py::module& m)
+void fem(nb::module_& m)
 {
-  py::module petsc_mod
+  nb::module_ petsc_mod
       = m.def_submodule("petsc", "PETSc-specific finite element module");
   fem_petsc_module(petsc_mod);
 
   // multiphenicsx::fem::DofMapRestriction
-  py::class_<multiphenicsx::fem::DofMapRestriction, std::shared_ptr<multiphenicsx::fem::DofMapRestriction>>(
-      m, "DofMapRestriction", "DofMapRestriction object")
-      .def(py::init<std::shared_ptr<const dolfinx::fem::DofMap>,
+  nb::class_<multiphenicsx::fem::DofMapRestriction>(m, "DofMapRestriction", "DofMapRestriction object")
+      .def(nb::init<std::shared_ptr<const dolfinx::fem::DofMap>,
                     const std::vector<std::int32_t>&>(),
-           py::arg("dofmap"), py::arg("restriction"))
+           nb::arg("dofmap"), nb::arg("restriction"))
       .def("cell_dofs",
-           [](const multiphenicsx::fem::DofMapRestriction& self, int cell) {
+           [](const multiphenicsx::fem::DofMapRestriction& self, int cell)
+           {
              auto dofs = self.cell_dofs(cell);
-             return py::array_t<std::int32_t>(dofs.size(), dofs.data(),
-                                              py::cast(self));
-           })
-      .def_property_readonly("dofmap", &multiphenicsx::fem::DofMapRestriction::dofmap)
-      .def_property_readonly("unrestricted_to_restricted",
-                             &multiphenicsx::fem::DofMapRestriction::unrestricted_to_restricted)
-      .def_property_readonly("restricted_to_unrestricted",
-                             &multiphenicsx::fem::DofMapRestriction::restricted_to_unrestricted)
+             return nb::ndarray<const std::int32_t, nb::numpy>(dofs.data(),
+                                                              {dofs.size()});
+           },
+           nb::rv_policy::reference_internal, nb::arg("cell"))
+      .def_prop_ro("dofmap", &multiphenicsx::fem::DofMapRestriction::dofmap)
+      .def_prop_ro("unrestricted_to_restricted",
+                   &multiphenicsx::fem::DofMapRestriction::unrestricted_to_restricted)
+      .def_prop_ro("restricted_to_unrestricted",
+                   &multiphenicsx::fem::DofMapRestriction::restricted_to_unrestricted)
       .def("map",
            [](const multiphenicsx::fem::DofMapRestriction& self) {
              auto map = self.map();
              return std::make_pair(
-                py::array_t<std::int32_t>(map.first.size(), map.first.data(), py::cast(self)),
-                py::array_t<std::size_t>(map.second.size(), map.second.data(), py::cast(self)));
+                nb::ndarray<const std::int32_t, nb::numpy>(map.first.data(), {map.first.size()}),
+                nb::ndarray<const std::size_t, nb::numpy>(map.second.data(), {map.second.size()}));
            },
-           py::return_value_policy::reference_internal)
-      .def_readonly("index_map", &multiphenicsx::fem::DofMapRestriction::index_map)
-      .def_property_readonly("index_map_bs",
-                             &multiphenicsx::fem::DofMapRestriction::index_map_bs);
-
+           nb::rv_policy::reference_internal)
+      .def_ro("index_map", &multiphenicsx::fem::DofMapRestriction::index_map)
+      .def_prop_ro("index_map_bs",
+                   &multiphenicsx::fem::DofMapRestriction::index_map_bs);
 }
 } // namespace multiphenics_wrappers
