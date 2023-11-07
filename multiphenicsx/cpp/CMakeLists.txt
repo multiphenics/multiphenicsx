@@ -87,8 +87,6 @@ nanobind_add_module(
     MODULE
     multiphenicsx/fem/DofMapRestriction.cpp
     multiphenicsx/fem/sparsitybuild.cpp
-    multiphenicsx/fem/petsc.cpp
-    multiphenicsx/fem/utils.cpp
     multiphenicsx/la/petsc.cpp
     multiphenicsx/wrappers/fem.cpp
     multiphenicsx/wrappers/la.cpp
