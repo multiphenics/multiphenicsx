@@ -60,7 +60,7 @@ jobs:
           COVERAGE_FILE=.coverage_unit_serial python3 -m coverage run --source=multiphenicsx -m pytest tests/unit
       - name: Run unit tests (parallel)
         run: |
-          COVERAGE_FILE=.coverage_unit_parallel mpirun -n 2 python3 -m coverage run --source=multiphenicsx --parallel-mode -m pytest tests/unit
+          COVERAGE_FILE=.coverage_unit_parallel mpirun -n 3 python3 -m coverage run --source=multiphenicsx --parallel-mode -m pytest tests/unit
       - name: Combine coverage reports
         run: |
           python3 -m coverage combine .coverage*
@@ -82,7 +82,7 @@ jobs:
           python3 -m pytest tutorials
       - name: Run tutorials (parallel)
         run: |
-          python3 -m pytest --np 2 tutorials
+          python3 -m pytest --np 3 tutorials
       - name: Upload tutorials logs as an artifact in case of failure
         if: failure() || cancelled()
         uses: actions/upload-artifact@v3
