@@ -49,13 +49,45 @@ graph::AdjacencyList<T> all_to_all(MPI_Comm comm,
 }
 //-----------------------------------------------------------------------------
 DofMapRestriction::DofMapRestriction(std::shared_ptr<const DofMap> dofmap,
-                                     const std::vector<std::int32_t>& restriction)
+                                     const std::vector<std::int32_t>& restriction,
+                                     bool legacy)
     : _dofmap(dofmap)
 {
-  // Associate each owned and ghost dof that is in the restriction, i.e. a subset of dofs contained by dofmap,
-  // to a numbering with respect to the list of active degrees of freedom (restriction)
-  _map_owned_dofs(dofmap, restriction);
-  _map_ghost_dofs(dofmap, restriction);
+  if (legacy)
+  {
+    // Associate each owned and ghost dof that is in the restriction, i.e. a subset of dofs contained by dofmap,
+    // to a numbering with respect to the list of active degrees of freedom (restriction)
+    _map_owned_dofs(dofmap, restriction);
+    _map_ghost_dofs(dofmap, restriction);
+  }
+  else
+  {
+    // Discard ghost dofs from the list of provided dofs
+    auto dofmap_owned_size = dofmap->index_map->size_local();
+    auto restriction_end_owned = std::ranges::find_if(
+      restriction, [dofmap_owned_size](std::int32_t d) { return d >= dofmap_owned_size; });
+    std::span<const std::int32_t> restriction_owned(restriction.begin(), restriction_end_owned);
+    // Compute index map
+    auto [index_submap, ghost_submap] = dofmap->index_map->create_submap(restriction_owned);
+    assert(index_submap.size_local() == restriction_end_owned - restriction.begin());
+    assert(ghost_submap.size() == restriction.end() - restriction_end_owned);
+    for (std::size_t d = 0; d < index_submap.size_local(); ++d)
+    {
+      assert(_unrestricted_to_restricted.count(restriction[d]) == 0);
+      _unrestricted_to_restricted[restriction[d]] = d;
+      assert(_restricted_to_unrestricted.count(d) == 0);
+      _restricted_to_unrestricted[d] = restriction[d];
+    }
+    for (std::size_t d = 0; d < ghost_submap.size(); ++d)
+    {
+      assert(_unrestricted_to_restricted.count(dofmap_owned_size + ghost_submap[d]) == 0);
+      _unrestricted_to_restricted[dofmap_owned_size + ghost_submap[d]] = index_submap.size_local() + d;
+      assert(_restricted_to_unrestricted.count(index_submap.size_local() + d) == 0);
+      _restricted_to_unrestricted[index_submap.size_local() + d] = dofmap_owned_size + ghost_submap[d];
+    }
+    // Assign index map to public member
+    index_map = std::make_shared<dolfinx::common::IndexMap>(std::move(index_submap));
+  }
 
   // Compute cell dofs arrays
   _compute_cell_dofs(dofmap);
@@ -72,7 +104,9 @@ void DofMapRestriction::_map_owned_dofs(std::shared_ptr<const DofMap> dofmap,
     auto unrestricted_dof = restriction[d];
     if (unrestricted_dof < unrestricted_owned_size)
     {
+      assert(_unrestricted_to_restricted.count(unrestricted_dof) == 0);
       _unrestricted_to_restricted[unrestricted_dof] = restricted_owned_size;
+      assert(_restricted_to_unrestricted.count(restricted_owned_size) == 0);
       _restricted_to_unrestricted[restricted_owned_size] = unrestricted_dof;
       restricted_owned_size++;
     }
@@ -97,7 +131,9 @@ void DofMapRestriction::_map_ghost_dofs(std::shared_ptr<const DofMap> dofmap,
     auto unrestricted_local_dof = restriction[d];
     if (unrestricted_local_dof >= unrestricted_owned_size)
     {
+      assert(_unrestricted_to_restricted.count(unrestricted_local_dof) == 0);
       _unrestricted_to_restricted[unrestricted_local_dof] = index_map->size_local() + restricted_ghost_size;
+      assert(_restricted_to_unrestricted.count(index_map->size_local() + restricted_ghost_size) == 0);
       _restricted_to_unrestricted[index_map->size_local() + restricted_ghost_size] = unrestricted_local_dof;
       restricted_ghost_size++;
     }

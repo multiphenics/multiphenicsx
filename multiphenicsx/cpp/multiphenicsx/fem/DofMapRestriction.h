@@ -22,9 +22,10 @@ namespace fem
 class DofMapRestriction
 {
 public:
-  /// Create a DofMapRestriction from a DofMap and a list of active degrees of freedom
+  /// Create a DofMapRestriction from a DofMap and a sorted list of active degrees of freedom
   DofMapRestriction(std::shared_ptr<const dolfinx::fem::DofMap> dofmap,
-                    const std::vector<std::int32_t>& restriction);
+                    const std::vector<std::int32_t>& restriction,
+                    bool legacy = false);
 
   // Copy constructor
   DofMapRestriction(const DofMapRestriction& dofmap_restriction) = delete;

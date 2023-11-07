@@ -155,8 +155,9 @@ void fem(nb::module_& m)
   // multiphenicsx::fem::DofMapRestriction
   nb::class_<multiphenicsx::fem::DofMapRestriction>(m, "DofMapRestriction", "DofMapRestriction object")
       .def(nb::init<std::shared_ptr<const dolfinx::fem::DofMap>,
-                    const std::vector<std::int32_t>&>(),
-           nb::arg("dofmap"), nb::arg("restriction"))
+                    const std::vector<std::int32_t>&,
+                    bool>(),
+           nb::arg("dofmap"), nb::arg("restriction"), nb::arg("legacy") = false)
       .def("cell_dofs",
            [](const multiphenicsx::fem::DofMapRestriction& self, int cell)
            {
