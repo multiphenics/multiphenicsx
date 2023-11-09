@@ -1,0 +1,33 @@
+name: multiphenicsx CI (against releases)
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  test_dolfinx_v0.4.1:
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@dolfinx-v0.4.1
+
+  test_dolfinx_v0.5.2:
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@dolfinx-v0.5.2
+
+  test_dolfinx_v0.6.0:
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@dolfinx-v0.6.0
+
+  test_dolfinx_v0.7.0:
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@dolfinx-v0.7.0
+
+  test_dolfinx_v0.7.1:
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@dolfinx-v0.7.1
+
+  warn:
+    runs-on: ubuntu-latest
+    if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main' && github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Warn if scheduled workflow is about to be disabled
+        uses: fem-on-colab/warn-workflow-about-to-be-disabled-action@main
+        with:
+          workflow-filename: ci_against_releases.yml
+          days-elapsed: 55
