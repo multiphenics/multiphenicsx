@@ -35,6 +35,9 @@ endif()
 
 # Check for DOLFINx C++ backend
 find_package(DOLFINX REQUIRED CONFIG)
+if (DOLFINX_FOUND)
+    message(STATUS "Found DOLFINx C++ backend at ${DOLFINX_DIR}")
+endif()
 
 # Check for DOLFINx python wrappers
 execute_process(
