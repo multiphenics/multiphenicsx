@@ -28,7 +28,7 @@ jobs:
         )
       )
     runs-on: ubuntu-latest
-    container: dolfinx/dolfinx:nightly
+    container: ghcr.io/fenics/dolfinx/dolfinx:nightly
     strategy:
       matrix:
         petsc_arch: [real, complex]
@@ -42,6 +42,7 @@ jobs:
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
           echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
+          echo "CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
           rm /usr/local/lib/python3.10/dist-packages/petsc4py/py.typed
       - name: Install multiphenicsx
         run: |
