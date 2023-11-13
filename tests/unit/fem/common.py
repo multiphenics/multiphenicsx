@@ -24,6 +24,7 @@ def ActiveDofs(
     if subdomain is not None:
         entities_dim = V.mesh.topology.dim - subdomain.codimension  # type: ignore[attr-defined]
         entities = dolfinx.mesh.locate_entities(V.mesh, entities_dim, subdomain)
+        V.mesh.topology.create_connectivity(entities_dim, V.mesh.topology.dim)
         return dolfinx.fem.locate_dofs_topological(V, entities_dim, entities)
     else:
         return np.arange(0, V.dofmap.index_map.size_local + V.dofmap.index_map.num_ghosts)

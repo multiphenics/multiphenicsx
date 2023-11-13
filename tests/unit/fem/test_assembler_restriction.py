@@ -239,6 +239,7 @@ def locate_boundary_dofs(
     """Locate DOFs on the boundary."""
     entities_dim = V.mesh.topology.dim - 1
     entities = dolfinx.mesh.locate_entities(V.mesh, entities_dim, common.FacetsSubDomain(on_boundary=True))
+    V.mesh.topology.create_connectivity(entities_dim, V.mesh.topology.dim)
     if collapsed_V is None:
         return dolfinx.fem.locate_dofs_topological(V, entities_dim, entities)
     else:
