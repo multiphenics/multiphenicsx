@@ -28,7 +28,7 @@ jobs:
         )
       )
     runs-on: ubuntu-latest
-    container: dolfinx/dolfinx:v0.7.2
+    container: ghcr.io/fenics/dolfinx/dolfinx:v0.7.2
     strategy:
       matrix:
         petsc_arch: [real, complex]
