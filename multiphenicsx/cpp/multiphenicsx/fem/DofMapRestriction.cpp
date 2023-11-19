@@ -25,8 +25,8 @@ DofMapRestriction::DofMapRestriction(std::shared_ptr<const DofMap> dofmap,
   // Compute index map
   auto [index_submap, ghost_submap] = dofmap->index_map->create_submap(restriction_owned);
   assert(index_submap.size_local() == restriction_end_owned - restriction.begin());
-  assert(ghost_submap.size() == restriction.end() - restriction_end_owned);
-  for (std::size_t d = 0; d < index_submap.size_local(); ++d)
+  assert(static_cast<int>(ghost_submap.size()) == restriction.end() - restriction_end_owned);
+  for (std::int32_t d = 0; d < index_submap.size_local(); ++d)
   {
     assert(_unrestricted_to_restricted.count(restriction[d]) == 0);
     _unrestricted_to_restricted[restriction[d]] = d;
