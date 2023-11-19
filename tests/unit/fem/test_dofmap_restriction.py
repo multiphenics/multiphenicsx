@@ -132,27 +132,6 @@ def test_dofmap_restriction_is_same_as_dofmap(
     active_dofs = common.ActiveDofs(V, subdomain=None)
     dofmap_restriction = multiphenicsx.fem.DofMapRestriction(V.dofmap, active_dofs)
     assert_dofmap_restriction_is_same_as_dofmap(mesh, V.dofmap, dofmap_restriction)
-    # Comparison between legacy and new implementation
-    dofmap_restriction_legacy = multiphenicsx.fem.DofMapRestriction(V.dofmap, active_dofs, False)
-    dofmap_restriction_new = multiphenicsx.fem.DofMapRestriction(V.dofmap, active_dofs, True)
-    assert dofmap_restriction_legacy.index_map.size_local == dofmap_restriction_new.index_map.size_local
-    assert np.array_equal(
-        [dofmap_restriction_legacy.restricted_to_unrestricted[d]
-         for d in range(dofmap_restriction_legacy.index_map.size_local)],
-        [dofmap_restriction_new.restricted_to_unrestricted[d]
-         for d in range(dofmap_restriction_new.index_map.size_local)])
-    assert np.array_equal(
-        [dofmap_restriction_legacy.unrestricted_to_restricted[d]
-         for d in range(V.dofmap.index_map.size_local)],
-        [dofmap_restriction_new.unrestricted_to_restricted[d]
-         for d in range(V.dofmap.index_map.size_local)])
-    masked_map_0_legacy = np.ma.masked_greater_equal(  # type: ignore[no-untyped-call]
-        dofmap_restriction_legacy.map()[0], dofmap_restriction_legacy.index_map.size_local)
-    masked_map_0_new = np.ma.masked_greater_equal(  # type: ignore[no-untyped-call]
-        dofmap_restriction_new.map()[0], dofmap_restriction_new.index_map.size_local)
-    assert np.array_equal(masked_map_0_legacy.mask, masked_map_0_new.mask)
-    assert np.ma.allequal(masked_map_0_legacy, masked_map_0_new)  # type: ignore[no-untyped-call]
-    assert np.array_equal(dofmap_restriction_legacy.map()[1], dofmap_restriction_new.map()[1])
 
 
 @pytest.mark.parametrize("subdomain", get_subdomains())
@@ -165,24 +144,3 @@ def test_dofmap_restriction_is_subset_of_dofmap(
     active_dofs = common.ActiveDofs(V, subdomain)
     dofmap_restriction = multiphenicsx.fem.DofMapRestriction(V.dofmap, active_dofs)
     assert_dofmap_restriction_is_subset_of_dofmap(mesh, V.dofmap, dofmap_restriction)
-    # Comparison between legacy and new implementation
-    dofmap_restriction_legacy = multiphenicsx.fem.DofMapRestriction(V.dofmap, active_dofs, False)
-    dofmap_restriction_new = multiphenicsx.fem.DofMapRestriction(V.dofmap, active_dofs, True)
-    assert dofmap_restriction_legacy.index_map.size_local == dofmap_restriction_new.index_map.size_local
-    assert np.array_equal(
-        [dofmap_restriction_legacy.restricted_to_unrestricted[d]
-         for d in range(dofmap_restriction_legacy.index_map.size_local)],
-        [dofmap_restriction_new.restricted_to_unrestricted[d]
-         for d in range(dofmap_restriction_new.index_map.size_local)])
-    assert np.array_equal(
-        [dofmap_restriction_legacy.unrestricted_to_restricted[d]
-         for d in active_dofs if d < dofmap_restriction_legacy.index_map.size_local],
-        [dofmap_restriction_new.unrestricted_to_restricted[d]
-         for d in active_dofs if d < dofmap_restriction_new.index_map.size_local])
-    masked_map_0_legacy = np.ma.masked_greater_equal(  # type: ignore[no-untyped-call]
-        dofmap_restriction_legacy.map()[0], dofmap_restriction_legacy.index_map.size_local)
-    masked_map_0_new = np.ma.masked_greater_equal(  # type: ignore[no-untyped-call]
-        dofmap_restriction_new.map()[0], dofmap_restriction_new.index_map.size_local)
-    assert np.array_equal(masked_map_0_legacy.mask, masked_map_0_new.mask)
-    assert np.ma.allequal(masked_map_0_legacy, masked_map_0_new)  # type: ignore[no-untyped-call]
-    assert np.array_equal(dofmap_restriction_legacy.map()[1], dofmap_restriction_new.map()[1])

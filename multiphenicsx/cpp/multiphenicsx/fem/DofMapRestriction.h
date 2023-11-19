@@ -24,8 +24,7 @@ class DofMapRestriction
 public:
   /// Create a DofMapRestriction from a DofMap and a sorted list of active degrees of freedom
   DofMapRestriction(std::shared_ptr<const dolfinx::fem::DofMap> dofmap,
-                    const std::vector<std::int32_t>& restriction,
-                    bool legacy = false);
+                    const std::vector<std::int32_t>& restriction);
 
   // Copy constructor
   DofMapRestriction(const DofMapRestriction& dofmap_restriction) = delete;
@@ -88,14 +87,6 @@ public:
   }
 
 private:
-  /// Helper function for constructor: map owned unrestricted dofs into restricted ones
-  void _map_owned_dofs(std::shared_ptr<const dolfinx::fem::DofMap> dofmap,
-                       const std::vector<std::int32_t>& restriction);
-
-  /// Helper function for constructor: map ghost unrestricted dofs into restricted ones
-  void _map_ghost_dofs(std::shared_ptr<const dolfinx::fem::DofMap> dofmap,
-                       const std::vector<std::int32_t>& restriction);
-
   /// Helper function for constructor: compute cell dofs arrays
   void _compute_cell_dofs(std::shared_ptr<const dolfinx::fem::DofMap> dofmap);
 

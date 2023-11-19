@@ -21,12 +21,11 @@ class DofMapRestriction(mcpp.fem.DofMapRestriction):  # type: ignore[misc, no-an
     def __init__(  # type: ignore[no-any-unimported]
         self,
         dofmap: typing.Union[dcpp.fem.DofMap, dolfinx.fem.DofMap],
-        restriction: np.typing.NDArray[np.int32],
-        legacy: bool = False
+        restriction: np.typing.NDArray[np.int32]
     ) -> None:
         # Extract cpp dofmap
         try:
             _dofmap = dofmap._cpp_object
         except AttributeError:  # pragma: no cover
             _dofmap = dofmap
-        super().__init__(_dofmap, restriction, legacy)
+        super().__init__(_dofmap, restriction)
