@@ -7,11 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Set default build type
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-endif()
+# Report build type
 message(STATUS "Build type is ${CMAKE_BUILD_TYPE}")
 
 # Find python
@@ -35,7 +31,7 @@ endif()
 
 # Check for DOLFINx C++ backend
 find_package(DOLFINX REQUIRED CONFIG)
-if (DOLFINX_FOUND)
+if(DOLFINX_FOUND)
     message(STATUS "Found DOLFINx C++ backend at ${DOLFINX_DIR}")
 endif()
 
@@ -88,7 +84,7 @@ endif()
 # Compile multiphenicsx C++ backend and nanobind wrappers
 nanobind_add_module(
     multiphenicsx_cpp
-    MODULE
+    NOMINSIZE
     multiphenicsx/fem/DofMapRestriction.cpp
     multiphenicsx/fem/sparsitybuild.cpp
     multiphenicsx/la/petsc.cpp
