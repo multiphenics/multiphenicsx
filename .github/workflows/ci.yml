@@ -34,7 +34,7 @@ jobs:
         petsc_arch: [real, complex]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup container
         run: |
           . /usr/local/bin/dolfinx-${{ matrix.petsc_arch }}-mode
@@ -97,7 +97,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main' && github.event_name == 'schedule'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Warn if scheduled workflow is about to be disabled
         uses: fem-on-colab/warn-workflow-about-to-be-disabled-action@main
         with:
