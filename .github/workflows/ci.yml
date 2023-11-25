@@ -56,6 +56,9 @@ jobs:
       - name: Run mypy on python files
         run: |
           python3 -m mypy .
+      - name: Run yamllint on workflows
+        run: |
+          python3 -m yamllint -d "{extends: default, rules: {document-start: {present: false}, line-length: disable, truthy: {check-keys: false}}}" .
       - name: Run documentation generation
         run: |
           cd docs && python3 -m sphinx -W -b html . build/html
