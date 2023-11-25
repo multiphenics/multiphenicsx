@@ -55,7 +55,9 @@ jobs:
           python3 -m isort --check --diff .
       - name: Run mypy on python files
         run: |
-          python3 -m mypy .
+          python3 -m mypy --exclude=conftest.py .
+          python3 -m mypy tests/unit/conftest.py
+          python3 -m mypy tutorials/conftest.py
       - name: Run yamllint on workflows
         run: |
           python3 -m yamllint -d "{extends: default, rules: {document-start: {present: false}, line-length: disable, truthy: {check-keys: false}}}" .
