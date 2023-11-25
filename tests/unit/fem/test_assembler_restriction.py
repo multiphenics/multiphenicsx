@@ -22,9 +22,10 @@ import pytest
 import scipy.sparse
 import ufl
 
-import common  # noqa
 import multiphenicsx.fem
 import multiphenicsx.fem.petsc
+
+import common  # isort: skip
 
 PreprocessXType = typing.Callable[[np.typing.NDArray[np.float64]], np.typing.NDArray[np.float64]]
 DirichletBCsGeneratorType = typing.Callable[[dolfinx.fem.FunctionSpace], typing.List[dolfinx.fem.DirichletBC]]

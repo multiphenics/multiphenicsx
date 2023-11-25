@@ -13,8 +13,9 @@ import mpi4py.MPI
 import numpy as np
 import pytest
 
-import common  # noqa
 import multiphenicsx.fem
+
+import common  # isort: skip
 
 
 @pytest.fixture
