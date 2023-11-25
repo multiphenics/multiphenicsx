@@ -53,7 +53,7 @@ jobs:
           python3 -m mypy .
       - name: Run documentation generation
         run: |
-          cd docs && make html
+          cd docs && python3 -m sphinx -W -b html . build/html
       - name: Remove source directory to ensure that package from installation directory is used
         run: |
           rm -rf multiphenicsx
