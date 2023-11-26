@@ -93,16 +93,17 @@ nanobind_add_module(
     multiphenicsx/wrappers/multiphenicsx.cpp
 )
 
-# Add current source directory to include directories
-target_include_directories(multiphenicsx_cpp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+# Add DOLFINx C++ libraries
+target_link_libraries(multiphenicsx_cpp PRIVATE dolfinx)
 
-# Add DOLFINx, petsc4py and mpi4py include directories
+# Add DOLFINx python, petsc4py and mpi4py include directories
+# (with DOLFINx C++ ones already being added by target_link_libraries)
 target_include_directories(multiphenicsx_cpp PRIVATE ${DOLFINX_PY_WRAPPERS_DIR})
 target_include_directories(multiphenicsx_cpp PRIVATE ${PETSC4PY_INCLUDE_DIR})
 target_include_directories(multiphenicsx_cpp PRIVATE ${MPI4PY_INCLUDE_DIR})
 
-# Add DOLFINx libraries
-target_link_libraries(multiphenicsx_cpp PRIVATE dolfinx)
+# Add current source directory to include directories
+target_include_directories(multiphenicsx_cpp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Install the compiled library to the cpp subdirectory
 set_target_properties(multiphenicsx_cpp PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
