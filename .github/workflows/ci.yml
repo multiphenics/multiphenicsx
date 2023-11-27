@@ -47,6 +47,10 @@ jobs:
       - name: Install multiphenicsx
         run: |
           python3 -m pip install --check-build-dependencies --no-build-isolation --config-settings=build-dir="build" --config-settings=cmake.build-type="Debug" --verbose .[docs,lint,tests,tutorials]
+      - name: Clean build files
+        run: |
+          git config --global --add safe.directory $PWD
+          git clean -xdf
       - name: Run ruff on python files
         run: |
           python3 -m ruff .
@@ -61,6 +65,14 @@ jobs:
       - name: Run yamllint on workflows
         run: |
           python3 -m yamllint -d "{extends: default, rules: {document-start: {present: false}, line-length: disable, truthy: {check-keys: false}}}" .
+      - name: Run clang-format on C++ files
+        run: |
+          wget https://raw.githubusercontent.com/FEniCS/dolfinx/main/.clang-format
+          find . -type f \( -name "*.cpp" -o -name "*.h" \) | xargs clang-format --dry-run --Werror
+      - name: Run cmake-format on cmake files
+        run: |
+          wget https://raw.githubusercontent.com/FEniCS/dolfinx/main/.cmake-format
+          find . -type f \( -name "*.cmake" -o -name "*.cmake.in" -o -name "CMakeLists.txt" \) | xargs cmake-format --check
       - name: Run documentation generation
         run: |
           cd docs && python3 -m sphinx -W -b html . build/html

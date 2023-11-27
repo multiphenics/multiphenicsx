@@ -8,6 +8,8 @@
 *.nbi
 *.py[cod]
 *.xdmf
+.clang-format
+.cmake-format
 .coverage*
 .eggs
 .pytest_cache
