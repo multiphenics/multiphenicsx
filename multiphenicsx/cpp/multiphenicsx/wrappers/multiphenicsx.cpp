@@ -10,9 +10,9 @@ namespace nb = nanobind;
 
 namespace multiphenicsx_wrappers
 {
-  void fem(nb::module_& m);
-  void la(nb::module_& m);
-}
+void fem(nb::module_& m);
+void la(nb::module_& m);
+} // namespace multiphenicsx_wrappers
 
 NB_MODULE(multiphenicsx_cpp, m)
 {

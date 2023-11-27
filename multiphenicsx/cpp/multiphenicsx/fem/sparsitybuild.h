@@ -28,10 +28,10 @@ void cells(dolfinx::la::SparsityPattern& pattern,
            std::array<std::span<const std::size_t>, 2> dofmaps_bounds);
 
 /// Iterate over interior facets and insert entries into sparsity pattern
-void interior_facets(dolfinx::la::SparsityPattern& pattern,
-                     std::span<const std::int32_t> facets,
-                     std::array<std::span<const std::int32_t>, 2> dofmaps_list,
-                     std::array<std::span<const std::size_t>, 2> dofmaps_bounds);
+void interior_facets(
+    dolfinx::la::SparsityPattern& pattern, std::span<const std::int32_t> facets,
+    std::array<std::span<const std::int32_t>, 2> dofmaps_list,
+    std::array<std::span<const std::size_t>, 2> dofmaps_bounds);
 
 } // namespace sparsitybuild
 } // namespace fem

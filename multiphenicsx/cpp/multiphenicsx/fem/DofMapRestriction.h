@@ -6,10 +6,10 @@
 
 #pragma once
 
-#include <memory>
-#include <map>
 #include <dolfinx/common/IndexMap.h>
 #include <dolfinx/fem/DofMap.h>
+#include <map>
+#include <memory>
 
 namespace multiphenicsx
 {
@@ -22,7 +22,8 @@ namespace fem
 class DofMapRestriction
 {
 public:
-  /// Create a DofMapRestriction from a DofMap and a sorted list of active degrees of freedom
+  /// Create a DofMapRestriction from a DofMap and a sorted list of active
+  /// degrees of freedom
   DofMapRestriction(std::shared_ptr<const dolfinx::fem::DofMap> dofmap,
                     const std::vector<std::int32_t>& restriction);
 
@@ -36,10 +37,12 @@ public:
   virtual ~DofMapRestriction() = default;
 
   /// Copy assignment
-  DofMapRestriction& operator=(const DofMapRestriction& dofmap_restriction) = delete;
+  DofMapRestriction& operator=(const DofMapRestriction& dofmap_restriction)
+      = delete;
 
   /// Move assignment
-  DofMapRestriction& operator=(DofMapRestriction&& dofmap_restriction) = default;
+  DofMapRestriction& operator=(DofMapRestriction&& dofmap_restriction)
+      = default;
 
   /// Local-to-global mapping of dofs on a cell
   /// @param[in] cell_index The cell index.
@@ -48,14 +51,12 @@ public:
   std::span<const std::int32_t> cell_dofs(std::int32_t cell_index) const
   {
     return std::span<const std::int32_t>(
-        _dof_array.data() + _cell_bounds[cell_index], _cell_bounds[cell_index + 1] - _cell_bounds[cell_index]);
+        _dof_array.data() + _cell_bounds[cell_index],
+        _cell_bounds[cell_index + 1] - _cell_bounds[cell_index]);
   }
 
   /// Accessor to DofMap provided to constructor
-  std::shared_ptr<const dolfinx::fem::DofMap> dofmap() const
-  {
-    return _dofmap;
-  }
+  std::shared_ptr<const dolfinx::fem::DofMap> dofmap() const { return _dofmap; }
 
   /// Return map from unrestricted dofs to restricted dofs
   const std::map<std::int32_t, std::int32_t>& unrestricted_to_restricted() const
@@ -71,9 +72,11 @@ public:
 
   /// Get dofmap data after restriction has been carried out
   /// @return The adjacency list with dof indices for each cell
-  std::pair<std::span<const std::int32_t>, std::span<const std::size_t>> map() const
+  std::pair<std::span<const std::int32_t>, std::span<const std::size_t>>
+  map() const
   {
-    return std::make_pair(std::span<const std::int32_t>(_dof_array), std::span<const std::size_t>(_cell_bounds));
+    return std::make_pair(std::span<const std::int32_t>(_dof_array),
+                          std::span<const std::size_t>(_cell_bounds));
   }
 
   /// Object containing information about dof distribution across
@@ -81,10 +84,7 @@ public:
   std::shared_ptr<const dolfinx::common::IndexMap> index_map;
 
   /// Block size associated to index_map.
-  int index_map_bs() const
-  {
-    return _dofmap->index_map_bs();
-  }
+  int index_map_bs() const { return _dofmap->index_map_bs(); }
 
 private:
   /// Helper function for constructor: compute cell dofs arrays

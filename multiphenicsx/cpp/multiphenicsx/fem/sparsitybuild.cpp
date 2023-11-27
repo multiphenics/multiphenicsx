@@ -20,10 +20,12 @@ void sparsitybuild::cells(
 {
   for (auto c : cells)
   {
-    auto cell_dofs_0 = std::span(
-      dofmaps_list[0].data() + dofmaps_bounds[0][c], dofmaps_bounds[0][c + 1] - dofmaps_bounds[0][c]);
-    auto cell_dofs_1 = std::span(
-      dofmaps_list[1].data() + dofmaps_bounds[1][c], dofmaps_bounds[1][c + 1] - dofmaps_bounds[1][c]);
+    auto cell_dofs_0
+        = std::span(dofmaps_list[0].data() + dofmaps_bounds[0][c],
+                    dofmaps_bounds[0][c + 1] - dofmaps_bounds[0][c]);
+    auto cell_dofs_1
+        = std::span(dofmaps_list[1].data() + dofmaps_bounds[1][c],
+                    dofmaps_bounds[1][c + 1] - dofmaps_bounds[1][c]);
     pattern.insert(cell_dofs_0, cell_dofs_1);
   }
 }
@@ -41,9 +43,11 @@ void sparsitybuild::interior_facets(
     for (std::size_t i = 0; i < 2; ++i)
     {
       auto cell_dofs_0 = std::span(
-        dofmaps_list[i].data() + dofmaps_bounds[i][cell_0], dofmaps_bounds[i][cell_0 + 1] - dofmaps_bounds[i][cell_0]);
+          dofmaps_list[i].data() + dofmaps_bounds[i][cell_0],
+          dofmaps_bounds[i][cell_0 + 1] - dofmaps_bounds[i][cell_0]);
       auto cell_dofs_1 = std::span(
-        dofmaps_list[i].data() + dofmaps_bounds[i][cell_1], dofmaps_bounds[i][cell_1 + 1] - dofmaps_bounds[i][cell_1]);
+          dofmaps_list[i].data() + dofmaps_bounds[i][cell_1],
+          dofmaps_bounds[i][cell_1 + 1] - dofmaps_bounds[i][cell_1]);
       macro_dofs[i].resize(cell_dofs_0.size() + cell_dofs_1.size());
       std::copy(cell_dofs_0.begin(), cell_dofs_0.end(), macro_dofs[i].begin());
       std::copy(cell_dofs_1.begin(), cell_dofs_1.end(),
