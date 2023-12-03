@@ -3,11 +3,7 @@
 *.cache
 *.egg
 *.egg-info
-*.h5
-*.nbc
-*.nbi
 *.py[cod]
-*.xdmf
 .clang-format
 .cmake-format
 .coverage*
