@@ -8,7 +8,7 @@
 # Project information
 project = "multiphenicsx"
 copyright = "2016-2023, the multiphenicsx authors"
-author = "Francesco Ballarin (and contributors)"
+author = "Francesco Ballarin"
 
 # General configuration
 extensions = [
