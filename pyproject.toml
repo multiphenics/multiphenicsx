@@ -97,63 +97,23 @@ warn_return_any = true
 warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
-module = "dolfinx.cpp"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "gmsh"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "ipyparallel"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "matplotlib"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "matplotlib.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "mpl_toolkits.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "petsc4py"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "petsc4py.PETSc"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "plotly"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "plotly.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "scipy"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "scipy.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "slepc4py"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "slepc4py.SLEPc"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "ufl"
+module = [
+    "dolfinx.cpp",
+    "gmsh",
+    "ipyparallel",
+    "matplotlib",
+    "matplotlib.*",
+    "mpl_toolkits.*",
+    "petsc4py",
+    "petsc4py.PETSc",
+    "plotly",
+    "plotly.*",
+    "scipy",
+    "scipy.*",
+    "slepc4py",
+    "slepc4py.SLEPc",
+    "ufl"
+]
 ignore_missing_imports = true
 
 [tool.ruff]
