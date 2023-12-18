@@ -18,38 +18,26 @@ DofMapRestriction::DofMapRestriction(
     const std::vector<std::int32_t>& restriction)
     : _dofmap(dofmap)
 {
-  // Discard ghost dofs from the list of provided dofs
+  // Determine owned size
   auto dofmap_owned_size = dofmap->index_map->size_local();
+#ifndef NDEBUG
   auto restriction_end_owned
       = std::ranges::find_if(restriction, [dofmap_owned_size](std::int32_t d)
                              { return d >= dofmap_owned_size; });
-  std::span<const std::int32_t> restriction_owned(restriction.begin(),
-                                                  restriction_end_owned);
+#endif
   // Compute index map
-  auto [index_submap, ghost_submap]
-      = dofmap->index_map->create_submap(restriction_owned);
+  auto [index_submap, submap_to_map] = dolfinx::common::create_sub_index_map(
+      *dofmap->index_map, restriction, false);
   assert(index_submap.size_local()
          == restriction_end_owned - restriction.begin());
-  assert(static_cast<int>(ghost_submap.size())
-         == restriction.end() - restriction_end_owned);
-  for (std::int32_t d = 0; d < index_submap.size_local(); ++d)
+  assert(static_cast<int>(submap_to_map.size())
+         == restriction.end() - restriction.begin());
+  for (std::size_t d = 0; d < submap_to_map.size(); ++d)
   {
-    assert(_unrestricted_to_restricted.count(restriction[d]) == 0);
-    _unrestricted_to_restricted[restriction[d]] = d;
+    assert(_unrestricted_to_restricted.count(submap_to_map[d]) == 0);
+    _unrestricted_to_restricted[submap_to_map[d]] = d;
     assert(_restricted_to_unrestricted.count(d) == 0);
-    _restricted_to_unrestricted[d] = restriction[d];
-  }
-  for (std::size_t d = 0; d < ghost_submap.size(); ++d)
-  {
-    assert(
-        _unrestricted_to_restricted.count(dofmap_owned_size + ghost_submap[d])
-        == 0);
-    _unrestricted_to_restricted[dofmap_owned_size + ghost_submap[d]]
-        = index_submap.size_local() + d;
-    assert(_restricted_to_unrestricted.count(index_submap.size_local() + d)
-           == 0);
-    _restricted_to_unrestricted[index_submap.size_local() + d]
-        = dofmap_owned_size + ghost_submap[d];
+    _restricted_to_unrestricted[d] = submap_to_map[d];
   }
   // Assign index map to public member
   index_map
