@@ -24,6 +24,9 @@ jobs:
   test_dolfinx_v0_7_2:
     uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@dolfinx-v0.7.2
 
+  test_dolfinx_v0_7_3:
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@dolfinx-v0.7.3
+
   warn:
     runs-on: ubuntu-latest
     if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main' && github.event_name == 'schedule'
