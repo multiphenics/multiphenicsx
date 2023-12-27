@@ -14,19 +14,6 @@ on:
 
 jobs:
   test:
-    if: >-
-      (
-        (
-          github.event_name == 'schedule'
-          && github.repository == 'multiphenics/multiphenicsx'
-        ) || (
-            github.event_name != 'schedule'
-            && !(
-              contains(github.event.head_commit.message, '[ci skip]')
-              || contains(github.event.head_commit.message, '[skip ci]')
-            )
-        )
-      )
     runs-on: ubuntu-latest
     container: ghcr.io/fenics/dolfinx/dolfinx:nightly
     strategy:
