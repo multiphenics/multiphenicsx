@@ -262,13 +262,14 @@ def get_boundary_conditions(offset: int = 0) -> typing.Tuple[DirichletBCsGenerat
         else:
             bc1 = list()
             for i in range(num_sub_elements):
-                bc1_fun = dolfinx.fem.Function(V.sub(i).collapse()[0])
+                Vi = V.sub(i)
+                bc1_fun = dolfinx.fem.Function(Vi.collapse()[0])
                 bc1_vector = bc1_fun.vector
                 with bc1_vector.localForm() as local_form:
                     local_form.set(i + 1. + offset)
                 bc1_vector.destroy()
-                bdofs = locate_boundary_dofs(V.sub(i), bc1_fun.function_space)
-                bc1.append(dolfinx.fem.dirichletbc(bc1_fun, bdofs, V.sub(i)))
+                bdofs = locate_boundary_dofs(Vi, bc1_fun.function_space)
+                bc1.append(dolfinx.fem.dirichletbc(bc1_fun, bdofs, Vi))
             return bc1
 
     return (lambda _: [],
