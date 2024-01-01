@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2023 by the multiphenicsx authors
+# Copyright (C) 2016-2024 by the multiphenicsx authors
 #
 # This file is part of multiphenicsx.
 #
