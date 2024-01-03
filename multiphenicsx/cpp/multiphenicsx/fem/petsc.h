@@ -48,7 +48,7 @@ Mat create_matrix(
     const std::array<int, 2> index_maps_bs,
     std::array<std::span<const std::int32_t>, 2> dofmaps_list,
     std::array<std::span<const std::size_t>, 2> dofmaps_bounds,
-    const std::string& matrix_type = std::string())
+    std::string matrix_type = std::string())
 {
   dolfinx::la::SparsityPattern pattern
       = multiphenicsx::fem::create_sparsity_pattern(
@@ -85,7 +85,7 @@ Mat create_matrix_block(
     const std::array<std::vector<int>, 2> index_maps_bs,
     std::array<std::vector<std::span<const std::int32_t>>, 2> dofmaps_list,
     std::array<std::vector<std::span<const std::size_t>>, 2> dofmaps_bounds,
-    const std::string& matrix_type = std::string())
+    std::string matrix_type = std::string())
 {
   std::size_t rows = index_maps[0].size();
   assert(index_maps_bs[0].size() == rows);
@@ -157,27 +157,32 @@ Mat create_matrix_block(
   std::array<std::vector<PetscInt>, 2> _maps;
   for (int d = 0; d < 2; ++d)
   {
-    // FIXME: Index map concatenation has already been computed inside
+    // TODO: Index map concatenation has already been computed inside
     // the SparsityPattern constructor, but we also need it here to
     // build the PETSc local-to-global map. Compute outside and pass
     // into SparsityPattern constructor.
 
-    // FIXME: avoid concatenating the same maps twice in case that V[0]
+    // TODO: avoid concatenating the same maps twice in case that V[0]
     // == V[1].
+    const std::vector<std::reference_wrapper<const dolfinx::common::IndexMap>>&
+        index_map
+        = index_maps[d];
+    const std::vector<int>& index_map_bs = index_maps_bs[d];
+    std::vector<PetscInt>& _map = _maps[d];
 
     // Concatenate the block index map in the row and column directions
     auto [rank_offset, local_offset, ghosts, _]
         = dolfinx::common::stack_index_maps(maps_and_bs[d]);
-    for (std::size_t f = 0; f < index_maps[d].size(); ++f)
+    for (std::size_t f = 0; f < index_map.size(); ++f)
     {
-      const dolfinx::common::IndexMap& map = index_maps[d][f].get();
-      const int bs = index_maps_bs[d][f];
+      const dolfinx::common::IndexMap& map = index_map[f].get();
+      const int bs = index_map_bs[f];
       const std::int32_t size_local = bs * map.size_local();
       const std::vector global = map.global_indices();
       for (std::int32_t i = 0; i < size_local; ++i)
-        _maps[d].push_back(i + rank_offset + local_offset[f]);
+        _map.push_back(i + rank_offset + local_offset[f]);
       for (std::size_t i = size_local; i < bs * global.size(); ++i)
-        _maps[d].push_back(ghosts[f][i - size_local]);
+        _map.push_back(ghosts[f][i - size_local]);
     }
   }
 
