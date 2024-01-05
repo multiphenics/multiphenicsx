@@ -116,6 +116,8 @@ module = [
 ]
 ignore_missing_imports = true
 
+[tool.pytest.ini_options]
+
 [tool.ruff]
 line-length = 120
 select = ["ANN", "D", "E", "F", "ICN", "N", "Q", "RUF", "W"]
