@@ -61,12 +61,12 @@ lint = [
     "cmakelang",
     "isort",
     "mypy",
+    "nbqa",
     "ruff",
     "yamllint"
 ]
 tests = [
     "coverage[toml]",
-    "nbqa",
     "nbvalx[unit_tests]",
     "pytest",
     "scipy"
