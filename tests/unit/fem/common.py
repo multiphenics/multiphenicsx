@@ -80,7 +80,7 @@ def FacetsSubDomain(
 
 
 def TaylorHoodFunctionSpace(
-    mesh: dolfinx.mesh.Mesh, family_degree: typing.Tuple[str, int]
+    mesh: dolfinx.mesh.Mesh, family_degree: tuple[str, int]
 ) -> dolfinx.fem.FunctionSpace:
     """Define a mixed function space."""
     (family, degree) = family_degree

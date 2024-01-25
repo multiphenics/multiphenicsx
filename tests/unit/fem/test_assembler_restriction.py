@@ -28,11 +28,11 @@ import multiphenicsx.fem.petsc
 import common  # isort: skip
 
 PreprocessXType = typing.Callable[[np.typing.NDArray[np.float64]], np.typing.NDArray[np.float64]]
-DirichletBCsGeneratorType = typing.Callable[[dolfinx.fem.FunctionSpace], typing.List[dolfinx.fem.DirichletBC]]
+DirichletBCsGeneratorType = typing.Callable[[dolfinx.fem.FunctionSpace], list[dolfinx.fem.DirichletBC]]
 DirichletBCsPairGeneratorType = typing.Callable[
-    [dolfinx.fem.FunctionSpace, dolfinx.fem.FunctionSpace], typing.List[typing.List[dolfinx.fem.DirichletBC]]]
+    [dolfinx.fem.FunctionSpace, dolfinx.fem.FunctionSpace], list[list[dolfinx.fem.DirichletBC]]]
 DofMapRestrictionsType = typing.Union[
-    multiphenicsx.fem.DofMapRestriction, typing.List[multiphenicsx.fem.DofMapRestriction]]
+    multiphenicsx.fem.DofMapRestriction, list[multiphenicsx.fem.DofMapRestriction]]
 
 
 @pytest.fixture
@@ -41,7 +41,7 @@ def mesh() -> dolfinx.mesh.Mesh:
     return dolfinx.mesh.create_unit_square(mpi4py.MPI.COMM_WORLD, 4, 4)
 
 
-def get_subdomains() -> typing.Tuple[typing.Optional[common.SubdomainType], ...]:
+def get_subdomains() -> tuple[typing.Optional[common.SubdomainType], ...]:
     """Generate subdomain parametrization for tests on vectors and matrices."""
     return (
         # Unrestricted
@@ -51,8 +51,8 @@ def get_subdomains() -> typing.Tuple[typing.Optional[common.SubdomainType], ...]
     )
 
 
-def get_subdomains_pairs() -> typing.Tuple[
-        typing.Tuple[typing.Optional[common.SubdomainType], typing.Optional[common.SubdomainType]], ...]:
+def get_subdomains_pairs() -> tuple[
+        tuple[typing.Optional[common.SubdomainType], typing.Optional[common.SubdomainType]], ...]:
     """Generate subdomain parametrization for tests on block/nest vectors and matrices."""
     return (
         # (unrestricted, unrestricted)
@@ -66,7 +66,7 @@ def get_subdomains_pairs() -> typing.Tuple[
     )
 
 
-def get_function_spaces() -> typing.Tuple[common.FunctionSpaceGeneratorType, ...]:
+def get_function_spaces() -> tuple[common.FunctionSpaceGeneratorType, ...]:
     """Generate function space parametrization for tests on vectors and matrices."""
     return (
         lambda mesh: dolfinx.fem.functionspace(mesh, ("Lagrange", 1)),
@@ -76,7 +76,7 @@ def get_function_spaces() -> typing.Tuple[common.FunctionSpaceGeneratorType, ...
 
 
 def get_function_spaces_pairs() -> typing.Iterator[
-        typing.Tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType]]:
+        tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType]]:
     """Generate function space parametrization for tests on block/nest vectors and matrices."""
     for i in get_function_spaces():
         for j in get_function_spaces():
@@ -131,7 +131,7 @@ def get_function(
 
 def get_function_pair(
     V1: dolfinx.fem.FunctionSpace, V2: dolfinx.fem.FunctionSpace
-) -> typing.List[dolfinx.fem.Function]:
+) -> list[dolfinx.fem.Function]:
     """Generate functions employed in block form definition."""
     u1 = get_function(V1)
     u2 = get_function(V2, lambda x: np.flip(x, axis=1))
@@ -226,7 +226,7 @@ def get_block_bilinear_form(V1: dolfinx.fem.FunctionSpace, V2: dolfinx.fem.Funct
     return dolfinx.fem.form(block_form)  # type: ignore[no-any-return]
 
 
-def get_mat_types() -> typing.Tuple[typing.Optional[str], ...]:
+def get_mat_types() -> tuple[typing.Optional[str], ...]:
     """Generate matrix types to be used in test."""
     return (
         None,
@@ -247,9 +247,9 @@ def locate_boundary_dofs(
         return dolfinx.fem.locate_dofs_topological((V, collapsed_V), entities_dim, entities)
 
 
-def get_boundary_conditions(offset: int = 0) -> typing.Tuple[DirichletBCsGeneratorType, ...]:
+def get_boundary_conditions(offset: int = 0) -> tuple[DirichletBCsGeneratorType, ...]:
     """Generate boundary conditions employed in the non-block/nest test cases."""
-    def _get_boundary_conditions(V: dolfinx.fem.FunctionSpace) -> typing.List[dolfinx.fem.DirichletBC]:
+    def _get_boundary_conditions(V: dolfinx.fem.FunctionSpace) -> list[dolfinx.fem.DirichletBC]:
         num_sub_elements = V.ufl_element().num_sub_elements
         if num_sub_elements == 0:
             bc1_fun = dolfinx.fem.Function(V)
@@ -276,7 +276,7 @@ def get_boundary_conditions(offset: int = 0) -> typing.Tuple[DirichletBCsGenerat
             _get_boundary_conditions)
 
 
-def get_boundary_conditions_pairs() -> typing.Tuple[DirichletBCsPairGeneratorType, ...]:
+def get_boundary_conditions_pairs() -> tuple[DirichletBCsPairGeneratorType, ...]:
     """Generate boundary conditions employed in the block/nest test cases."""
     return (lambda _, __: [[], []],
             lambda V1, _: [get_boundary_conditions(offset=0)[1](V1), []],
@@ -287,7 +287,7 @@ def get_boundary_conditions_pairs() -> typing.Tuple[DirichletBCsPairGeneratorTyp
 
 def get_global_restricted_to_unrestricted(
     dofmap_restriction: DofMapRestrictionsType, comm: mpi4py.MPI.Intracomm
-) -> typing.Dict[np.int32, np.int32]:
+) -> dict[np.int32, np.int32]:
     """Allgather global map from restricted dofs to unrestricted dofs."""
     assert isinstance(dofmap_restriction, (multiphenicsx.fem.DofMapRestriction, list))
     if isinstance(dofmap_restriction, multiphenicsx.fem.DofMapRestriction):  # case of standard matrix/vector
@@ -412,7 +412,7 @@ def assert_vector_equal(  # type: ignore[no-any-unimported]
 
 def assert_matrix_equal(  # type: ignore[no-any-unimported]
     unrestricted_matrix: petsc4py.PETSc.Mat, restricted_matrix: petsc4py.PETSc.Mat,
-    dofmap_restriction: typing.Tuple[DofMapRestrictionsType, DofMapRestrictionsType]
+    dofmap_restriction: tuple[DofMapRestrictionsType, DofMapRestrictionsType]
 ) -> None:
     """
     Verify assembly results for matrix cases.
@@ -533,8 +533,8 @@ def test_vector_assembly_with_restriction(
 @pytest.mark.parametrize("restricted_fem_module", (multiphenicsx.fem, ))
 def test_block_vector_assembly_with_restriction(
     mesh: dolfinx.mesh.Mesh,
-    subdomains: typing.Tuple[typing.Optional[common.SubdomainType], typing.Optional[common.SubdomainType]],
-    FunctionSpaces: typing.Tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType],
+    subdomains: tuple[typing.Optional[common.SubdomainType], typing.Optional[common.SubdomainType]],
+    FunctionSpaces: tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType],
     dirichlet_bcs: DirichletBCsPairGeneratorType, unrestricted_fem_module: types.ModuleType,
     restricted_fem_module: types.ModuleType
 ) -> None:
@@ -597,8 +597,8 @@ def test_block_vector_assembly_with_restriction(
 @pytest.mark.parametrize("restricted_fem_module", (multiphenicsx.fem, ))
 def test_nest_vector_assembly_with_restriction(
     mesh: dolfinx.mesh.Mesh,
-    subdomains: typing.Tuple[typing.Optional[common.SubdomainType], typing.Optional[common.SubdomainType]],
-    FunctionSpaces: typing.Tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType],
+    subdomains: tuple[typing.Optional[common.SubdomainType], typing.Optional[common.SubdomainType]],
+    FunctionSpaces: tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType],
     dirichlet_bcs: DirichletBCsPairGeneratorType, unrestricted_fem_module: types.ModuleType,
     restricted_fem_module: types.ModuleType
 ) -> None:
@@ -746,8 +746,8 @@ def test_matrix_assembly_with_restriction(
 @pytest.mark.parametrize("mat_type", get_mat_types())
 def test_block_matrix_assembly_with_restriction(
     mesh: dolfinx.mesh.Mesh,
-    subdomains: typing.Tuple[typing.Optional[common.SubdomainType], typing.Optional[common.SubdomainType]],
-    FunctionSpaces: typing.Tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType],
+    subdomains: tuple[typing.Optional[common.SubdomainType], typing.Optional[common.SubdomainType]],
+    FunctionSpaces: tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType],
     dirichlet_bcs: DirichletBCsPairGeneratorType, unrestricted_fem_module: types.ModuleType,
     restricted_fem_module: types.ModuleType, mat_type: str
 ) -> None:
@@ -781,8 +781,8 @@ def test_block_matrix_assembly_with_restriction(
 @pytest.mark.parametrize("mat_type", get_mat_types())
 def test_nest_matrix_assembly_with_restriction(
     mesh: dolfinx.mesh.Mesh,
-    subdomains: typing.Tuple[typing.Optional[common.SubdomainType], typing.Optional[common.SubdomainType]],
-    FunctionSpaces: typing.Tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType],
+    subdomains: tuple[typing.Optional[common.SubdomainType], typing.Optional[common.SubdomainType]],
+    FunctionSpaces: tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType],
     dirichlet_bcs: DirichletBCsPairGeneratorType, unrestricted_fem_module: types.ModuleType,
     restricted_fem_module: types.ModuleType, mat_type: str
 ) -> None:

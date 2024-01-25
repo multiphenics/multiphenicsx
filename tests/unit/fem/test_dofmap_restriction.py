@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 """Tests for multiphenicsx.fem.dofmap_restriction module."""
 
-import typing
 
 import dolfinx.fem
 import dolfinx.mesh
@@ -24,7 +23,7 @@ def mesh() -> dolfinx.mesh.Mesh:
     return dolfinx.mesh.create_unit_square(mpi4py.MPI.COMM_WORLD, 4, 4)
 
 
-def get_subdomains() -> typing.Tuple[common.SubdomainType, ...]:
+def get_subdomains() -> tuple[common.SubdomainType, ...]:
     """Generate subdomain parametrization."""
     return (
         # Cells restrictions
@@ -40,7 +39,7 @@ def get_subdomains() -> typing.Tuple[common.SubdomainType, ...]:
     )
 
 
-def get_function_spaces() -> typing.Tuple[common.FunctionSpaceGeneratorType, ...]:
+def get_function_spaces() -> tuple[common.FunctionSpaceGeneratorType, ...]:
     """Generate function space parametrization."""
     return (
         lambda mesh: dolfinx.fem.functionspace(mesh, ("Lagrange", 1)),
