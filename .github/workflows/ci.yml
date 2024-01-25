@@ -103,7 +103,7 @@ jobs:
           python3 -m pytest --np 3 tutorials
       - name: Upload tutorials logs as an artifact in case of failure
         if: failure() || cancelled()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: "tutorials-logs-${{ matrix.petsc_arch }}"
           path: |
