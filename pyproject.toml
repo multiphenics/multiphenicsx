@@ -65,7 +65,7 @@ lint = [
 ]
 tests = [
     "coverage[toml]",
-    "nbvalx[unit_tests]",
+    "nbvalx[unit-tests]",
     "pytest",
     "scipy"
 ]
