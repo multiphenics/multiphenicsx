@@ -34,7 +34,7 @@ jobs:
         petsc_arch: [real, complex]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: dolfinx-v0.7.1
       - name: Setup container
