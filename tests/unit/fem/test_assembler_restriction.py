@@ -91,7 +91,7 @@ def get_function(
         def preprocess_x(x: np.typing.NDArray[np.float64]) -> np.typing.NDArray[np.float64]:
             return x
 
-    shape = V.ufl_element().value_shape
+    shape = V.ufl_element().reference_value_shape
     if len(shape) == 0:
         def f(x: np.typing.NDArray[np.float64]) -> np.typing.NDArray[  # type: ignore[no-any-unimported]
                 petsc4py.PETSc.ScalarType]:
@@ -121,7 +121,7 @@ def get_function(
         assert len(shape) == 1
 
         assert isinstance(V.ufl_element(), basix.ufl._MixedElement)
-        rows = [np.prod(sub_element.value_shape, dtype=int) for sub_element in V.ufl_element().sub_elements]
+        rows = [np.prod(sub_element.reference_value_shape, dtype=int) for sub_element in V.ufl_element().sub_elements]
         rows = np.hstack(([0], np.cumsum(rows))).tolist()
 
         for i in range(len(rows) - 1):
@@ -158,7 +158,7 @@ def get_bilinear_form(V: dolfinx.fem.FunctionSpace) -> dolfinx.fem.Form:
     u = ufl.TrialFunction(V)
     v = ufl.TestFunction(V)
     f = get_function(V)
-    shape = V.ufl_element().value_shape
+    shape = V.ufl_element().reference_value_shape
     if len(shape) == 0:
         form = f * ufl.inner(u, v) * ufl.dx
     elif len(shape) == 1:
@@ -185,7 +185,7 @@ def get_block_bilinear_form(V1: dolfinx.fem.FunctionSpace, V2: dolfinx.fem.Funct
     block_form = [[None, None], [None, None]]
 
     # (1, 1) block
-    shape_1 = V1.ufl_element().value_shape
+    shape_1 = V1.ufl_element().reference_value_shape
     if len(shape_1) == 0:
         block_form[0][0] = f1 * ufl.inner(u1, v1) * ufl.dx
     elif len(shape_1) == 1:
@@ -193,7 +193,7 @@ def get_block_bilinear_form(V1: dolfinx.fem.FunctionSpace, V2: dolfinx.fem.Funct
             f1[i] * ufl.inner(u1[i], v1[i]) for i in range(shape_1[0])) * ufl.dx
 
     # (2, 2) block
-    shape_2 = V2.ufl_element().value_shape
+    shape_2 = V2.ufl_element().reference_value_shape
     if len(shape_2) == 0:
         block_form[1][1] = f2 * ufl.inner(u2, v2) * ufl.dx
     elif len(shape_2) == 1:
