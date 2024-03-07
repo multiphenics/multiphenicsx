@@ -4,7 +4,6 @@
 //
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#include <dolfinx/common/IndexMap.h>
 #include <dolfinx/la/SparsityPattern.h>
 #include <dolfinx/mesh/Topology.h>
 #include <multiphenicsx/fem/sparsitybuild.h>
