@@ -93,20 +93,18 @@ def assert_dofmap_restriction_is_same_as_dofmap(
     unrestricted_global_dimension = dofmap.index_map.size_global
     restricted_global_dimension = dofmap_restriction.index_map.size_global
     assert unrestricted_global_dimension == restricted_global_dimension
-    # Assert that ghosts are the same, apart from ordering
+    # Assert that ghosts are the same
     unrestricted_ghosts = dofmap.index_map.ghosts
     restricted_ghosts = dofmap_restriction.index_map.ghosts
-    assert np.array_equal(np.sort(unrestricted_ghosts), np.sort(restricted_ghosts))
-    # Assert that the map from restricted to unrestricted is the identity for owned ghosts
-    # (but may not be the identity for ghosts, due to different ordering)
+    assert np.array_equal(unrestricted_ghosts, restricted_ghosts)
+    # Assert that the map from restricted to unrestricted is the identity
     restricted_to_unrestricted = dofmap_restriction.restricted_to_unrestricted
-    assert np.array_equal([d for d in range(restricted_local_dimension)],
-                          [restricted_to_unrestricted[d] for d in range(restricted_local_dimension)])
-    # Assert that the map from unrestricted to restricted is the identity for owned ghosts
-    # (but may not be the identity for ghosts, due to different ordering)
+    restricted_local_dofs = np.arange(restricted_local_dimension + restricted_ghosts.shape[0])
+    assert np.array_equal(restricted_local_dofs, [restricted_to_unrestricted[d] for d in restricted_local_dofs])
+    # Assert that the map from unrestricted to restricted is the identity
     unrestricted_to_restricted = dofmap_restriction.unrestricted_to_restricted
-    assert np.array_equal([d for d in range(unrestricted_local_dimension)],
-                          [unrestricted_to_restricted[d] for d in range(unrestricted_local_dimension)])
+    unrestricted_local_dofs = np.arange(unrestricted_local_dimension + unrestricted_ghosts.shape[0])
+    assert np.array_equal(unrestricted_local_dofs, [unrestricted_to_restricted[d] for d in unrestricted_local_dofs])
     # Run checks on each cell
     cells_map = mesh.topology.index_map(mesh.topology.dim)
     num_cells = cells_map.size_local + cells_map.num_ghosts
@@ -114,10 +112,8 @@ def assert_dofmap_restriction_is_same_as_dofmap(
         unrestricted_cell_dofs = dofmap.cell_dofs(c)
         restricted_cell_dofs = dofmap_restriction.cell_dofs(c)
         # cell_dofs returned by dofmap should be the same as cell_dofs
-        # returned by dofmap_restriction, apart from ghosts who may have
-        # different numbering
-        assert np.array_equal([d for d in unrestricted_cell_dofs],
-                              [restricted_to_unrestricted[d] for d in restricted_cell_dofs])
+        # returned by dofmap_restriction
+        assert np.array_equal(unrestricted_cell_dofs, restricted_cell_dofs)
         # Global numbering should also be the same in dofmap and dofmap_restriction
         assert np.array_equal(dofmap.index_map.local_to_global(unrestricted_cell_dofs),
                               dofmap_restriction.index_map.local_to_global(restricted_cell_dofs))
