@@ -25,11 +25,9 @@ std::vector<IS> multiphenicsx::la::petsc::create_index_sets(
   std::vector<std::int32_t> size_local(maps.size());
   std::vector<std::int32_t> size_ghost(maps.size());
   std::vector<int> bs(maps.size());
-  std::generate(size_local.begin(), size_local.end(),
-                [i = 0, maps]() mutable
+  std::generate(size_local.begin(), size_local.end(), [i = 0, maps]() mutable
                 { return maps[i++].first.get().size_local(); });
-  std::generate(size_ghost.begin(), size_ghost.end(),
-                [i = 0, maps]() mutable
+  std::generate(size_ghost.begin(), size_ghost.end(), [i = 0, maps]() mutable
                 { return maps[i++].first.get().num_ghosts(); });
   std::generate(bs.begin(), bs.end(),
                 [i = 0, maps, is_bs]() mutable
