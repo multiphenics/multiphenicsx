@@ -253,7 +253,7 @@ def get_boundary_conditions(offset: int = 0) -> tuple[DirichletBCsGeneratorType,
         num_sub_elements = V.ufl_element().num_sub_elements
         if num_sub_elements == 0:
             bc1_fun = dolfinx.fem.Function(V)
-            bc1_vector = bc1_fun.vector
+            bc1_vector = bc1_fun.x.petsc_vec
             with bc1_vector.localForm() as local_form:
                 local_form.set(1. + offset)
             bc1_vector.destroy()
@@ -264,7 +264,7 @@ def get_boundary_conditions(offset: int = 0) -> tuple[DirichletBCsGeneratorType,
             for i in range(num_sub_elements):
                 Vi = V.sub(i)
                 bc1_fun = dolfinx.fem.Function(Vi.collapse()[0])
-                bc1_vector = bc1_fun.vector
+                bc1_vector = bc1_fun.x.petsc_vec
                 with bc1_vector.localForm() as local_form:
                     local_form.set(i + 1. + offset)
                 bc1_vector.destroy()
@@ -492,7 +492,7 @@ def test_vector_assembly_with_restriction(
         V.dofmap.index_map, V.dofmap.index_map_bs)
     restricted_solution = dolfinx.la.create_petsc_vector(
         dofmap_restriction.index_map, dofmap_restriction.index_map_bs)
-    bc_vector = get_function(V).vector
+    bc_vector = get_function(V).x.petsc_vec
     with unrestricted_solution.localForm() as unrestricted_solution_local, \
             bc_vector.localForm() as function_local:
         active_dofs_bs = [
@@ -567,7 +567,7 @@ def test_block_vector_assembly_with_restriction(
             active_dofs_sub_bs = [
                 dofmap_sub.index_map_bs * d + s
                 for d in active_dofs_sub.astype(np.int32) for s in range(dofmap_sub.index_map_bs)]
-            function_sub_vector = function_sub.vector
+            function_sub_vector = function_sub.x.petsc_vec
             with function_sub_vector.localForm() as function_sub_local:
                 unrestricted_solution_sub_local[active_dofs_sub_bs] = function_sub_local[active_dofs_sub_bs]
             function_sub_vector.destroy()
@@ -665,7 +665,7 @@ def test_nest_vector_assembly_with_restriction(
             active_dofs_sub_bs = [
                 dofmap_sub.index_map_bs * d + s
                 for d in active_dofs_sub.astype(np.int32) for s in range(dofmap_sub.index_map_bs)]
-            function_sub_vector = function_sub.vector
+            function_sub_vector = function_sub.x.petsc_vec
             with function_sub_vector.localForm() as function_sub_local:
                 unrestricted_solution_sub_local[active_dofs_sub_bs] = function_sub_local[active_dofs_sub_bs]
             function_sub_vector.destroy()
