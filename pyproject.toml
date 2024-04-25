@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "fenics-dolfinx >=0.8.0.dev0, <0.9.0",
+    "fenics-dolfinx >=0.8.0, <0.9.0",
     "mpi4py",
     "nanobind >= 1.8.0",
     "petsc4py",
@@ -74,7 +74,8 @@ tutorials = [
     "nbvalx[notebooks]",
     "slepc4py",
     "sympy",
-    "viskex @ git+https://github.com/viskex/viskex.git"
+    "pyvista < 0.43.5",
+    "viskex @ git+https://github.com/viskex/viskex.git@e77f91c"
 ]
 
 [tool.isort]

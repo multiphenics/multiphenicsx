@@ -15,13 +15,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container: ghcr.io/fenics/dolfinx/dolfinx:nightly
+    container: ghcr.io/fenics/dolfinx/dolfinx:v0.8.0
     strategy:
       matrix:
         petsc_arch: [real, complex]
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: dolfinx-v0.8.0
       - name: Setup container
         run: |
           . /usr/local/bin/dolfinx-${{ matrix.petsc_arch }}-mode
@@ -108,13 +110,3 @@ jobs:
           name: "tutorials-logs-${{ matrix.petsc_arch }}"
           path: |
             tutorials/**/.ipynb_pytest/**/*.log*
-
-  warn:
-    runs-on: ubuntu-latest
-    if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main' && github.event_name == 'schedule'
-    steps:
-      - name: Warn if scheduled workflow is about to be disabled
-        uses: fem-on-colab/warn-workflow-about-to-be-disabled-action@main
-        with:
-          workflow-filename: ci.yml
-          days-elapsed: 55
