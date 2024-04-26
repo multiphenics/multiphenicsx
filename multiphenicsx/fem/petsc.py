@@ -511,7 +511,7 @@ def BlockVecSubVectorWrapperBase(_VecSubVectorWrapperClass: type) -> type:
                     self._unrestricted_to_restricted = unrestricted_to_restricted
                     self._unrestricted_to_restricted_bs = unrestricted_to_restricted_bs
 
-        def __iter__(self) -> typing.Optional[  # type: ignore[no-any-unimported]
+        def __iter__(self) -> typing.Optional[  # type: ignore[no-any-unimported, return]
                 typing.Iterator[np.typing.NDArray[petsc4py.PETSc.ScalarType]]]:
             """Iterate over blocks."""
             with contextlib.ExitStack() as wrapper_stack:
@@ -585,7 +585,7 @@ def NestVecSubVectorWrapperBase(VecSubVectorWrapperClass: type) -> type:
             self._restriction = restriction
             self._ghosted = ghosted
 
-        def __iter__(self) -> typing.Optional[  # type: ignore[no-any-unimported]
+        def __iter__(self) -> typing.Optional[  # type: ignore[no-any-unimported, return]
                 typing.Iterator[np.typing.NDArray[petsc4py.PETSc.ScalarType]]]:
             """Iterate over blocks."""
             with contextlib.ExitStack() as wrapper_stack:
