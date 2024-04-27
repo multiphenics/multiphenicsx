@@ -113,6 +113,9 @@ target_include_directories(
   multiphenicsx_cpp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+# Define HAS_PETSC4PY for compatibility with DOLFINx python wrappers
+target_compile_definitions(multiphenicsx_cpp PRIVATE HAS_PETSC4PY)
+
 # Install the compiled library to the cpp subdirectory
 set_target_properties(
   multiphenicsx_cpp PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE
