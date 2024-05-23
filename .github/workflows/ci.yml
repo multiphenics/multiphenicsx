@@ -30,7 +30,7 @@ jobs:
           echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
           echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
           echo "CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
-          rm /usr/local/lib/python3.10/dist-packages/petsc4py/py.typed
+          rm /usr/local/lib/python3.12/dist-packages/petsc4py/py.typed
       - name: Install multiphenicsx
         run: |
           python3 -m pip install --check-build-dependencies --no-build-isolation --config-settings=build-dir="build" --config-settings=cmake.build-type="Debug" --verbose .[docs,lint,tests,tutorials]
