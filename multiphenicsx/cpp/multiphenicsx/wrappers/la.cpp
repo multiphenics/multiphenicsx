@@ -68,8 +68,8 @@ void la_petsc_module(nb::module_& m)
           [](multiphenicsx::la::petsc::VecSubVectorReadWrapper& self)
           {
             std::vector<PetscScalar>& array = self.mutable_content();
-            return nb::ndarray<PetscScalar, nb::numpy>(array.data(),
-                                                       {array.size()});
+            return nb::ndarray<PetscScalar, nb::numpy>(
+                array.data(), {array.size()}, nb::handle());
           },
           nb::rv_policy::reference_internal);
 

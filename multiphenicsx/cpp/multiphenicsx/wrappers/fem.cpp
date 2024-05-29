@@ -198,8 +198,8 @@ void fem(nb::module_& m)
           [](const multiphenicsx::fem::DofMapRestriction& self, int cell)
           {
             auto dofs = self.cell_dofs(cell);
-            return nb::ndarray<const std::int32_t, nb::numpy>(dofs.data(),
-                                                              {dofs.size()});
+            return nb::ndarray<const std::int32_t, nb::numpy>(
+                dofs.data(), {dofs.size()}, nb::handle());
           },
           nb::rv_policy::reference_internal, nb::arg("cell"))
       .def_prop_ro("dofmap", &multiphenicsx::fem::DofMapRestriction::dofmap)
@@ -214,10 +214,11 @@ void fem(nb::module_& m)
           [](const multiphenicsx::fem::DofMapRestriction& self)
           {
             auto map = self.map();
-            return std::make_pair(nb::ndarray<const std::int32_t, nb::numpy>(
-                                      map.first.data(), {map.first.size()}),
-                                  nb::ndarray<const std::size_t, nb::numpy>(
-                                      map.second.data(), {map.second.size()}));
+            return std::make_pair(
+                nb::ndarray<const std::int32_t, nb::numpy>(
+                    map.first.data(), {map.first.size()}, nb::handle()),
+                nb::ndarray<const std::size_t, nb::numpy>(
+                    map.second.data(), {map.second.size()}, nb::handle()));
           },
           nb::rv_policy::reference_internal)
       .def_ro("index_map", &multiphenicsx::fem::DofMapRestriction::index_map)
