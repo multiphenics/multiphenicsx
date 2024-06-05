@@ -27,14 +27,15 @@ enum class GhostBlockLayout
            // vectors
 };
 
-/// @todo This function could take just the local sizes
+/// @brief Compute PETSc IndexSets (IS) for a stack of index maps.
 ///
-/// Compute PETSc IndexSets (IS) for a stack of index maps. E.g., if
-/// `map[0] = {0, 1, 2, 3, 4, 5, 6}` and `map[1] = {0, 1, 2, 4}` (in
-/// local indices) then `IS[0] = {0, 1, 2, 3, 4, 5, 6}` and `IS[1] = {7, 8,
-/// 9, 10}`.
+/// If `map[0] = {0, 1, 2, 3, 4, 5, 6}` and `map[1] = {0, 1, 2, 4}` (in
+/// local indices) then `IS[0] = {0, 1, 2, 3, 4, 5, 6}` and
+/// `IS[1] = {7, 8, 9, 10}`.
 ///
-/// The caller is responsible for destruction of each IS.
+/// @todo This function could take just the local sizes.
+///
+/// @note The caller is responsible for destruction of each IS.
 ///
 /// @param[in] maps Vector of IndexMaps and corresponding block sizes
 /// @param[in] is_bs Requested block sizes for the output vector of PETSc Index
@@ -46,7 +47,7 @@ enum class GhostBlockLayout
 ///                               should provide GhostBlockLayout::intertwined.
 ///                               IS used for block vectors should provide
 ///                               GhostBlockLayout::trailing.
-/// @returns Vector of PETSc Index Sets, created on` PETSC_COMM_SELF`
+/// @return Vector of PETSc Index Sets, created on` PETSC_COMM_SELF`
 std::vector<IS> create_index_sets(
     const std::vector<std::pair<
         std::reference_wrapper<const dolfinx::common::IndexMap>, int>>& maps,
