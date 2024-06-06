@@ -72,6 +72,7 @@ tests = [
 tutorials = [
     "gmsh",
     "nbvalx[notebooks]",
+    "scipy",
     "slepc4py",
     "sympy",
     "viskex @ git+https://github.com/viskex/viskex.git"
