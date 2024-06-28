@@ -43,7 +43,7 @@ jobs:
           git clean -xdf
       - name: Run ruff on python files
         run: |
-          python3 -m ruff .
+          python3 -m ruff check .
       - name: Run isort on python files
         run: |
           python3 -m isort --check --diff .
