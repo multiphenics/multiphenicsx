@@ -111,6 +111,7 @@ module = [
     "scipy.*",
     "slepc4py",
     "slepc4py.SLEPc",
+    "sympy",
     "ufl"
 ]
 ignore_missing_imports = true
