@@ -20,8 +20,8 @@ import petsc4py.PETSc
 
 from multiphenicsx.cpp import cpp_library as mcpp
 
-DolfinxConstantsType = np.typing.NDArray[petsc4py.PETSc.ScalarType]
-DolfinxCoefficientsType = dict[
+DolfinxConstantsType = np.typing.NDArray[petsc4py.PETSc.ScalarType]  # type: ignore[no-any-unimported]
+DolfinxCoefficientsType = dict[  # type: ignore[no-any-unimported]
     tuple[dcpp.fem.IntegralType, int],
     np.typing.NDArray[petsc4py.PETSc.ScalarType]
 ]
