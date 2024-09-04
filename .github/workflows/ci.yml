@@ -108,6 +108,7 @@ jobs:
           name: "tutorials-logs-${{ matrix.petsc_arch }}"
           path: |
             tutorials/**/.ipynb_pytest/**/*.log*
+          include-hidden-files: true
 
   warn:
     runs-on: ubuntu-latest
