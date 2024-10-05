@@ -26,7 +26,7 @@ namespace fem
 namespace petsc
 {
 
-/// Create a matrix
+/// @brief Create a matrix
 /// @param[in] a A bilinear form
 /// @param[in] index_maps A pair of index maps. Row index map is given by
 /// index_maps[0], column index map is given by index_maps[1].
@@ -58,7 +58,8 @@ Mat create_matrix(
                                            matrix_type);
 }
 
-/// Initialise a monolithic matrix for an array of bilinear forms
+/// @brief Initialise a monolithic matrix for an array of bilinear
+/// forms.
 /// @param[in] a Rectangular array of bilinear forms. The `a(i, j)` form
 /// will correspond to the `(i, j)` block in the returned matrix
 /// @param[in] index_maps A pair of vectors of index maps. Index maps for block

@@ -787,7 +787,7 @@ def assemble_vector_block(  # type: ignore[no-any-unimported]
     L: list[dolfinx.fem.Form], a: list[list[dolfinx.fem.Form]],
     bcs: list[dolfinx.fem.DirichletBC] = [],
     x0: typing.Optional[petsc4py.PETSc.Vec] = None,
-    scale: float = 1.0,
+    alpha: float = 1.0,
     constants_L: typing.Optional[typing.Sequence[typing.Optional[DolfinxConstantsType]]] = None,
     coeffs_L: typing.Optional[typing.Sequence[typing.Optional[DolfinxCoefficientsType]]] = None,
     constants_a: typing.Optional[typing.Sequence[typing.Sequence[typing.Optional[DolfinxConstantsType]]]] = None,
@@ -806,7 +806,7 @@ def assemble_vector_block(  # type: ignore[no-any-unimported]
         Optional list of boundary conditions.
     x0
         Optional vector storing the solution.
-    scale
+    alpha
         Optional scaling factor for boundary conditions application.
     constants_L, constants_a
         Constants that appear in the form. If not provided, any required constants will be computed.
@@ -828,7 +828,7 @@ def assemble_vector_block(  # type: ignore[no-any-unimported]
     with b.localForm() as b_local:
         b_local.set(0.0)
     return assemble_vector_block(  # type: ignore[call-arg]
-        b, L, a, bcs, x0, scale, constants_L, coeffs_L, constants_a, coeffs_a,  # type: ignore[arg-type]
+        b, L, a, bcs, x0, alpha, constants_L, coeffs_L, constants_a, coeffs_a,  # type: ignore[arg-type]
         restriction, restriction_x0)
 
 
@@ -838,7 +838,7 @@ def _(  # type: ignore[no-any-unimported]
     a: list[list[dolfinx.fem.Form]],
     bcs: list[dolfinx.fem.DirichletBC] = [],
     x0: typing.Optional[petsc4py.PETSc.Vec] = None,
-    scale: float = 1.0,
+    alpha: float = 1.0,
     constants_L: typing.Optional[typing.Sequence[typing.Optional[DolfinxConstantsType]]] = None,
     coeffs_L: typing.Optional[typing.Sequence[typing.Optional[DolfinxCoefficientsType]]] = None,
     constants_a: typing.Optional[typing.Sequence[typing.Sequence[typing.Optional[DolfinxConstantsType]]]] = None,
@@ -859,7 +859,7 @@ def _(  # type: ignore[no-any-unimported]
         Optional list of boundary conditions.
     x0
         Optional vector storing the solution.
-    scale
+    alpha
         Optional scaling factor for boundary conditions application.
     constants_L, constants_a
         Constants that appear in the form. If not provided, any required constants will be computed.
@@ -907,17 +907,15 @@ def _(  # type: ignore[no-any-unimported]
                 block_b, L, a, constants_L, coeffs_L, constants_a, coeffs_a):
             dcpp.fem.assemble_vector(b_sub, L_sub._cpp_object, constant_L, coeff_L)
             a_sub_cpp = [None if form is None else form._cpp_object for form in a_sub]
-            dcpp.fem.apply_lifting(b_sub, a_sub_cpp, constant_a, coeff_a, bcs1, block_x0_as_list, scale)
+            dcpp.fem.apply_lifting(b_sub, a_sub_cpp, constant_a, coeff_a, bcs1, block_x0_as_list, alpha)
     b.ghostUpdate(addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
 
     bcs0 = dolfinx.fem.bcs_by_block(function_spaces[0], bcs_cpp)
     with BlockVecSubVectorWrapper(b, dofmaps, restriction) as block_b, \
             BlockVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0) as block_x0:
         for b_sub, bcs0_sub, x0_sub in zip(block_b, bcs0, block_x0):
-            if x0_sub is None:
-                dcpp.fem.set_bc(b_sub, bcs0_sub, scale)
-            else:
-                dcpp.fem.set_bc(b_sub, bcs0_sub, x0_sub, scale)
+            for bc0_sub in bcs0_sub:
+                bc0_sub.set(b_sub, x0_sub, alpha)
     return b
 
 
@@ -1514,7 +1512,7 @@ def apply_lifting(  # type: ignore[no-any-unimported]
     b: petsc4py.PETSc.Vec, a: list[dolfinx.fem.Form],
     bcs: list[list[dolfinx.fem.DirichletBC]] = [],
     x0: typing.Optional[list[petsc4py.PETSc.Vec]] = None,
-    scale: float = 1.0,
+    alpha: float = 1.0,
     constants: typing.Optional[typing.Sequence[typing.Optional[DolfinxConstantsType]]] = None,
     coeffs: typing.Optional[typing.Sequence[typing.Optional[DolfinxCoefficientsType]]] = None,
     restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None,
@@ -1531,18 +1529,18 @@ def apply_lifting(  # type: ignore[no-any-unimported]
         if restriction is None:
             with b.localForm() as b_local:
                 dolfinx.fem.assemble.apply_lifting(
-                    b_local.array_w, a, bcs, x0_as_list, scale, constants, coeffs)
+                    b_local.array_w, a, bcs, x0_as_list, alpha, constants, coeffs)
         else:
             with VecSubVectorWrapper(b, restriction.dofmap, restriction) as b_sub:
                 dolfinx.fem.assemble.apply_lifting(
-                    b_sub, a, bcs, x0_as_list, scale, constants, coeffs)
+                    b_sub, a, bcs, x0_as_list, alpha, constants, coeffs)
 
 
 def apply_lifting_nest(  # type: ignore[no-any-unimported]
     b: petsc4py.PETSc.Vec, a: list[list[dolfinx.fem.Form]],
     bcs: list[dolfinx.fem.DirichletBC] = [],
     x0: typing.Optional[petsc4py.PETSc.Vec] = None,
-    scale: float = 1.0,
+    alpha: float = 1.0,
     constants: typing.Optional[typing.Sequence[typing.Sequence[typing.Optional[DolfinxConstantsType]]]] = None,
     coeffs: typing.Optional[typing.Sequence[typing.Sequence[typing.Optional[DolfinxCoefficientsType]]]] = None,
     restriction: typing.Optional[list[mcpp.fem.DofMapRestriction]] = None,
@@ -1567,31 +1565,33 @@ def apply_lifting_nest(  # type: ignore[no-any-unimported]
             x0_as_list = []
         for b_sub, a_sub, constants_a, coeffs_a in zip(nest_b, a, constants, coeffs):
             dolfinx.fem.assemble.apply_lifting(
-                b_sub, a_sub, bcs1, x0_as_list, scale, constants_a, coeffs_a)
+                b_sub, a_sub, bcs1, x0_as_list, alpha, constants_a, coeffs_a)
     return b
 
 
 def set_bc(  # type: ignore[no-any-unimported]
     b: petsc4py.PETSc.Vec, bcs: list[dolfinx.fem.DirichletBC] = [],
     x0: typing.Optional[petsc4py.PETSc.Vec] = None,
-    scale: float = 1.0,
+    alpha: float = 1.0,
     restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None
 ) -> None:
     """Apply the function :func:`dolfinx.fem.set_bc` to a PETSc Vector."""
     if restriction is None:
         if x0 is not None:
             x0 = x0.array_r
-        dolfinx.fem.assemble.set_bc(b.array_w, bcs, x0, scale)
+        for bc in bcs:
+            bc.set(b.array_w, x0, alpha)
     else:
         with VecSubVectorWrapper(b, restriction.dofmap, restriction, ghosted=False) as b_sub, \
                 VecSubVectorReadWrapper(x0, restriction.dofmap, restriction, ghosted=False) as x0_sub:
-            dolfinx.fem.assemble.set_bc(b_sub, bcs, x0_sub, scale)
+            for bc in bcs:
+                bc.set(b_sub, x0_sub, alpha)
 
 
 def set_bc_nest(  # type: ignore[no-any-unimported]
     b: petsc4py.PETSc.Vec, bcs: list[list[dolfinx.fem.DirichletBC]] = [],
     x0: typing.Optional[petsc4py.PETSc.Vec] = None,
-    scale: float = 1.0,
+    alpha: float = 1.0,
     restriction: typing.Optional[list[mcpp.fem.DofMapRestriction]] = None
 ) -> None:
     """Apply the function :func:`dolfinx.fem.set_bc` to each sub-vector of a nested PETSc Vector."""
@@ -1604,4 +1604,5 @@ def set_bc_nest(  # type: ignore[no-any-unimported]
     with NestVecSubVectorWrapper(b, dofmaps, restriction, ghosted=False) as nest_b, \
             NestVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0, ghosted=False) as nest_x0:
         for b_sub, bcs_sub, x0_sub in zip(nest_b, bcs, nest_x0):
-            dolfinx.fem.assemble.set_bc(b_sub, bcs_sub, x0_sub, scale)
+            for bc in bcs_sub:
+                bc.set(b_sub, x0_sub, alpha)
