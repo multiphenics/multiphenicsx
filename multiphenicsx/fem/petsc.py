@@ -1573,17 +1573,51 @@ def set_bc(  # type: ignore[no-any-unimported]
     b: petsc4py.PETSc.Vec, bcs: list[dolfinx.fem.DirichletBC] = [],
     x0: typing.Optional[petsc4py.PETSc.Vec] = None,
     alpha: float = 1.0,
-    restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None
+    restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None,
+    restriction_x0: typing.Optional[mcpp.fem.DofMapRestriction] = None
 ) -> None:
-    """Apply the function :func:`dolfinx.fem.set_bc` to a PETSc Vector."""
+    r"""
+    Apply boundary conditions to a PETSc vector.
+
+    For each Dirichet condition :math:`bc` in `bcs`, it modifies `b` such that:
+
+    .. math::
+
+        b \\leftarrow  \\alpha (u_{bc} - x_0)
+
+    where :math:`u_{bc}` contains the Dirichlet values.
+
+    Parameters
+    ----------
+    b
+        PETSc vector, typically obtained by assembling a linear form with `assemble_vector`.
+    bcs
+        List of Dirichlet boundary conditions. This corresponds to :math:`u_{bc}` in the description above.
+    x0
+        PETSc vector storing the solution to be subtracted to the Dirichlet values.
+    alpha
+        Scaling factor.
+    restriction, restriction_x0
+        Dofmap restrictions for `b` and `x0`. If not provided, the input vectors will be used as they are.
+    """
+    if len(bcs) == 0:
+        return
+
     if restriction is None:
         if x0 is not None:
             x0 = x0.array_r
         for bc in bcs:
             bc.set(b.array_w, x0, alpha)
     else:
+        if restriction_x0 is None:
+            dofmap_x0 = bcs[0].function_space.dofmap
+            # cannot uncomment the following assert because DirichletBC.function_space returns
+            # at every call a new C++ wrapped object, and hence a new dofmap.
+            # assert all(_same_dofmap(bc.function_space.dofmap, dofmap_x0) for bc in bcs[1:])
+        else:
+            dofmap_x0 = restriction_x0.dofmap
         with VecSubVectorWrapper(b, restriction.dofmap, restriction, ghosted=False) as b_sub, \
-                VecSubVectorReadWrapper(x0, restriction.dofmap, restriction, ghosted=False) as x0_sub:
+                VecSubVectorReadWrapper(x0, dofmap_x0, restriction_x0, ghosted=False) as x0_sub:
             for bc in bcs:
                 bc.set(b_sub, x0_sub, alpha)
 
@@ -1592,15 +1626,35 @@ def set_bc_nest(  # type: ignore[no-any-unimported]
     b: petsc4py.PETSc.Vec, bcs: list[list[dolfinx.fem.DirichletBC]] = [],
     x0: typing.Optional[petsc4py.PETSc.Vec] = None,
     alpha: float = 1.0,
-    restriction: typing.Optional[list[mcpp.fem.DofMapRestriction]] = None
+    restriction: typing.Optional[list[mcpp.fem.DofMapRestriction]] = None,
+    restriction_x0: typing.Optional[list[mcpp.fem.DofMapRestriction]] = None,
 ) -> None:
-    """Apply the function :func:`dolfinx.fem.set_bc` to each sub-vector of a nested PETSc Vector."""
+    """
+    Apply boundary conditions to each sub-vector of a nested PETSc vector.
+
+    Parameters
+    ----------
+    b
+        Nested PETSc vector, typically obtained by assembling a linear form with `assemble_vector_nest`.
+    bcs
+        List of Dirichlet boundary conditions.
+    x0
+        Nested PETSc vector storing the solution to be subtracted to the Dirichlet values.
+    alpha
+        Scaling factor.
+    restriction, restriction_x0
+        Dofmap restrictions for `b` and `x0`. If not provided, the input vectors will be used as they are.
+    """
     if restriction is None:
         dofmaps = [None] * len(b.getNestSubVecs())
     else:
         dofmaps = [restriction_.dofmap for restriction_ in restriction]
-    dofmaps_x0 = dofmaps
-    restriction_x0 = restriction
+    if restriction_x0 is None:
+        dofmaps_x0 = [None] * len(dofmaps)
+        if x0 is not None:
+            assert len(dofmaps_x0) == len(x0.getNestSubVecs())
+    else:
+        dofmaps_x0 = [restriction_.dofmap for restriction_ in restriction_x0]
     with NestVecSubVectorWrapper(b, dofmaps, restriction, ghosted=False) as nest_b, \
             NestVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0, ghosted=False) as nest_x0:
         for b_sub, bcs_sub, x0_sub in zip(nest_b, bcs, nest_x0):
