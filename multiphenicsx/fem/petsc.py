@@ -1518,7 +1518,49 @@ def apply_lifting(  # type: ignore[no-any-unimported]
     restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None,
     restriction_x0: typing.Optional[list[mcpp.fem.DofMapRestriction]] = None
 ) -> None:
-    """Apply the function :func:`dolfinx.fem.apply_lifting` to a PETSc Vector."""
+    r"""
+    Apply the function :func:`dolfinx.fem.apply_lifting` to a PETSc vector.
+
+    For each Dirichet condition :math:`bc` in `bcs`, it modifies `b` such that:
+
+    .. math::
+
+        b|_{\partial \Omega_{bc}} \leftarrow  b - \alpha \; A_j ( u_{bc} - x_{0,j} )
+
+    where :math:`u_{bc}` contains the Dirichlet values and :math:`j` is an index over the input
+    arguments `a` and `x0`. If `x0` is not supplied, then it is treated as zero.
+
+    Parameters
+    ----------
+    b
+        PETSc vector, typically obtained by assembling a linear form with `assemble_vector`.
+    a
+        A list of bilinear forms.
+    bcs
+        List of Dirichlet boundary conditions. This corresponds to :math:`u_{bc}` in the description above.
+    x0
+        PETSc vector storing the solution to be subtracted to the Dirichlet values.
+        Typically the current nonlinear solution in an incremental problem is provided as `x0`.
+
+        - If `b` was obtained by calling `assemble_vector` without `restriction`, then
+          `x0` represents the PETSc vector associated to the (unrestricted) solution.
+          The `restriction_x0` must not be provided in this case.
+        - If `b` was obtained by calling `assemble_vector` with `restriction`, then:
+
+          - if `x0` is the PETSc vector associated to an unrestricted solution, then the argument
+            `restriction_x0` must not be provided (and thus get the default argument `None`).
+          - if `x0` is the PETSc vector associated to a restricted solution, then the argument
+            `restriction_x0` must be provided, and it must contain the `DofMapRestriction` that
+            was used to create the restricted solution `x0` out of its unrestricted counterpart.
+    alpha
+        Scaling factor.
+    constants
+        Constants that appear in the forms. If not provided, any required constants will be computed.
+    coeffs
+        Coefficients that appear in the forms. If not provided, any required coefficients will be computed.
+    restriction, restriction_x0
+        Dofmap restrictions for `b` and `x0`. If not provided, the input vectors will be used as they are.
+    """
     function_spaces = [form.function_spaces[1] for form in a]
     dofmaps_x0 = [function_space.dofmap for function_space in function_spaces]
     with NestVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0) as nest_x0:
@@ -1546,7 +1588,31 @@ def apply_lifting_nest(  # type: ignore[no-any-unimported]
     restriction: typing.Optional[list[mcpp.fem.DofMapRestriction]] = None,
     restriction_x0: typing.Optional[list[mcpp.fem.DofMapRestriction]] = None
 ) -> petsc4py.PETSc.Vec:
-    """Apply the function :func:`dolfinx.fem.apply_lifting` to each sub-vector in a nested PETSc Vector."""
+    """
+    Apply the function :func:`dolfinx.fem.apply_lifting` to each sub-vector in a nested PETSc Vector.
+
+    Parameters
+    ----------
+    b
+        Nested PETSc vector, typically obtained by assembling a linear form with `assemble_vector_nest`.
+    a
+        A rectangular array of bilinear forms.
+    bcs
+        List of Dirichlet boundary conditions.
+    x0
+        Nested PETSc vector storing the solution to be subtracted to the Dirichlet values.
+        Typically the current nonlinear solution in an incremental problem is provided as `x0`.
+        See the documentation of :func:`multiphenicsx.fem.petsc.apply_lifting` for more details about
+        how `restriction_x0` is used in combination with `x0`.
+    alpha
+        Scaling factor.
+    constants
+        Constants that appear in the forms. If not provided, any required constants will be computed.
+    coeffs
+        Coefficients that appear in the forms. If not provided, any required coefficients will be computed.
+    restriction, restriction_x0
+        Dofmap restrictions for `b` and `x0`. If not provided, the input vectors will be used as they are.
+    """
     constants = [[
         np.array([], dtype=petsc4py.PETSc.ScalarType) if form is None else dcpp.fem.pack_constants(form._cpp_object)
         for form in forms] for forms in a] if constants is None else constants
@@ -1583,7 +1649,7 @@ def set_bc(  # type: ignore[no-any-unimported]
 
     .. math::
 
-        b \\leftarrow  \\alpha (u_{bc} - x_0)
+        b|_{\partial \Omega_{bc}} \leftarrow  \alpha (u_{bc} - x_0)
 
     where :math:`u_{bc}` contains the Dirichlet values.
 
@@ -1595,6 +1661,9 @@ def set_bc(  # type: ignore[no-any-unimported]
         List of Dirichlet boundary conditions. This corresponds to :math:`u_{bc}` in the description above.
     x0
         PETSc vector storing the solution to be subtracted to the Dirichlet values.
+        Typically the current nonlinear solution in an incremental problem is provided as `x0`.
+        See the documentation of :func:`multiphenicsx.fem.petsc.apply_lifting` for more details about
+        how `restriction_x0` is used in combination with `x0`.
     alpha
         Scaling factor.
     restriction, restriction_x0
@@ -1640,6 +1709,9 @@ def set_bc_nest(  # type: ignore[no-any-unimported]
         List of Dirichlet boundary conditions.
     x0
         Nested PETSc vector storing the solution to be subtracted to the Dirichlet values.
+        Typically the current nonlinear solution in an incremental problem is provided as `x0`.
+        See the documentation of :func:`multiphenicsx.fem.petsc.apply_lifting` for more details about
+        how `restriction_x0` is used in combination with `x0`.
     alpha
         Scaling factor.
     restriction, restriction_x0
