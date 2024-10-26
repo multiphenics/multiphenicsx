@@ -31,6 +31,9 @@ PreprocessXType = typing.Callable[[np.typing.NDArray[np.float64]], np.typing.NDA
 DirichletBCsGeneratorType = typing.Callable[[dolfinx.fem.FunctionSpace], list[dolfinx.fem.DirichletBC]]
 DirichletBCsPairGeneratorType = typing.Callable[
     [dolfinx.fem.FunctionSpace, dolfinx.fem.FunctionSpace], list[list[dolfinx.fem.DirichletBC]]]
+ApplySetDirichletBCsNonlinearArgumentsType = typing.Callable[  # type: ignore[no-any-unimported]
+    [petsc4py.PETSc.Vec, petsc4py.PETSc.Vec, list[multiphenicsx.fem.DofMapRestriction]],
+    tuple[petsc4py.PETSc.Vec, typing.Union[list[multiphenicsx.fem.DofMapRestriction], None]]]
 DofMapRestrictionsType = typing.Union[
     multiphenicsx.fem.DofMapRestriction, list[multiphenicsx.fem.DofMapRestriction]]
 
@@ -285,6 +288,17 @@ def get_boundary_conditions_pairs() -> tuple[DirichletBCsPairGeneratorType, ...]
                             get_boundary_conditions(offset=10)[1](V2)])
 
 
+def get_apply_set_boundary_conditions_nonlinear_arguments() -> tuple[ApplySetDirichletBCsNonlinearArgumentsType, ...]:
+    """Generate arguments x0 and restriction_x0 to be passed while applying or setting BCs for nonlinear problems."""
+    return (
+        lambda unrestricted_solution, restricted_solution, dofmap_restriction: (
+            restricted_solution, dofmap_restriction
+        ),
+        lambda unrestricted_solution, restricted_solution, dofmap_restriction: (
+            unrestricted_solution, None
+        )
+    )
+
 def get_global_restricted_to_unrestricted(
     dofmap_restriction: DofMapRestrictionsType, comm: mpi4py.MPI.Intracomm
 ) -> dict[np.int32, np.int32]:
@@ -445,11 +459,14 @@ def assert_matrix_equal(  # type: ignore[no-any-unimported]
 @pytest.mark.parametrize("subdomain", get_subdomains())
 @pytest.mark.parametrize("FunctionSpace", get_function_spaces())
 @pytest.mark.parametrize("dirichlet_bcs", get_boundary_conditions())
+@pytest.mark.parametrize(
+    "apply_set_dirichlet_bcs_nonlinear_arguments", get_apply_set_boundary_conditions_nonlinear_arguments())
 @pytest.mark.parametrize("unrestricted_fem_module", (dolfinx.fem, multiphenicsx.fem))
 @pytest.mark.parametrize("restricted_fem_module", (multiphenicsx.fem, ))
 def test_vector_assembly_with_restriction(
     mesh: dolfinx.mesh.Mesh, subdomain: typing.Optional[common.SubdomainType],
     FunctionSpace: common.FunctionSpaceGeneratorType, dirichlet_bcs: DirichletBCsGeneratorType,
+    apply_set_dirichlet_bcs_nonlinear_arguments: ApplySetDirichletBCsNonlinearArgumentsType,
     unrestricted_fem_module: types.ModuleType, restricted_fem_module: types.ModuleType
 ) -> None:
     """Test assembly of a linear form with restrictions."""
@@ -509,15 +526,23 @@ def test_vector_assembly_with_restriction(
         addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
     restricted_vector_nonlinear = restricted_fem_module.petsc.assemble_vector(
         linear_form, restriction=dofmap_restriction)
+    x0_arg, restriction_x0_arg = apply_set_dirichlet_bcs_nonlinear_arguments(
+        unrestricted_solution, restricted_solution, dofmap_restriction)
+    x0_arg_list = [x0_arg]
+    if restriction_x0_arg is not None:
+        restriction_x0_arg_list = [restriction_x0_arg]
+    else:
+        restriction_x0_arg_list = None
     restricted_fem_module.petsc.apply_lifting(
-        restricted_vector_nonlinear, [bilinear_form], [bcs], [restricted_solution],
-        restriction=dofmap_restriction, restriction_x0=[dofmap_restriction])
+        restricted_vector_nonlinear, [bilinear_form], [bcs], x0=x0_arg_list, restriction=dofmap_restriction,
+        restriction_x0=restriction_x0_arg_list)
     restricted_vector_nonlinear.ghostUpdate(
         addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
     assert_vector_equal(unrestricted_vector_nonlinear, restricted_vector_nonlinear, dofmap_restriction)
     unrestricted_fem_module.petsc.set_bc(unrestricted_vector_nonlinear, bcs, unrestricted_solution)
     restricted_fem_module.petsc.set_bc(
-        restricted_vector_nonlinear, bcs, restricted_solution, restriction=dofmap_restriction)
+        restricted_vector_nonlinear, bcs, x0=x0_arg, restriction=dofmap_restriction,
+        restriction_x0=restriction_x0_arg)
     assert_vector_equal(unrestricted_vector_nonlinear, restricted_vector_nonlinear, dofmap_restriction)
     unrestricted_vector_nonlinear.destroy()
     restricted_vector_nonlinear.destroy()
@@ -529,14 +554,17 @@ def test_vector_assembly_with_restriction(
 @pytest.mark.parametrize("subdomains", get_subdomains_pairs())
 @pytest.mark.parametrize("FunctionSpaces", get_function_spaces_pairs())
 @pytest.mark.parametrize("dirichlet_bcs", get_boundary_conditions_pairs())
+@pytest.mark.parametrize(
+    "apply_set_dirichlet_bcs_nonlinear_arguments", get_apply_set_boundary_conditions_nonlinear_arguments())
 @pytest.mark.parametrize("unrestricted_fem_module", (dolfinx.fem, multiphenicsx.fem))
 @pytest.mark.parametrize("restricted_fem_module", (multiphenicsx.fem, ))
 def test_block_vector_assembly_with_restriction(
     mesh: dolfinx.mesh.Mesh,
     subdomains: tuple[typing.Optional[common.SubdomainType], typing.Optional[common.SubdomainType]],
     FunctionSpaces: tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType],
-    dirichlet_bcs: DirichletBCsPairGeneratorType, unrestricted_fem_module: types.ModuleType,
-    restricted_fem_module: types.ModuleType
+    dirichlet_bcs: DirichletBCsPairGeneratorType,
+    apply_set_dirichlet_bcs_nonlinear_arguments: ApplySetDirichletBCsNonlinearArgumentsType,
+    unrestricted_fem_module: types.ModuleType, restricted_fem_module: types.ModuleType
 ) -> None:
     """Test block assembly of a two-by-one block linear form with restrictions."""
     V = [FunctionSpace(mesh) for FunctionSpace in FunctionSpaces]
@@ -580,9 +608,11 @@ def test_block_vector_assembly_with_restriction(
             restricted_solution_sub[:] = unrestricted_solution_sub
     unrestricted_vector_nonlinear = unrestricted_fem_module.petsc.assemble_vector_block(
         block_linear_form, block_bilinear_form, bcs=bcs, x0=unrestricted_solution)
+    x0_arg, restriction_x0_arg = apply_set_dirichlet_bcs_nonlinear_arguments(
+        unrestricted_solution, restricted_solution, dofmap_restriction)
     restricted_vector_nonlinear = restricted_fem_module.petsc.assemble_vector_block(
-        block_linear_form, block_bilinear_form, bcs=bcs, x0=restricted_solution, restriction=dofmap_restriction,
-        restriction_x0=dofmap_restriction)
+        block_linear_form, block_bilinear_form, bcs=bcs, x0=x0_arg, restriction=dofmap_restriction,
+        restriction_x0=restriction_x0_arg)
     assert_vector_equal(unrestricted_vector_nonlinear, restricted_vector_nonlinear, dofmap_restriction)
     unrestricted_vector_nonlinear.destroy()
     restricted_vector_nonlinear.destroy()
@@ -593,14 +623,17 @@ def test_block_vector_assembly_with_restriction(
 @pytest.mark.parametrize("subdomains", get_subdomains_pairs())
 @pytest.mark.parametrize("FunctionSpaces", get_function_spaces_pairs())
 @pytest.mark.parametrize("dirichlet_bcs", get_boundary_conditions_pairs())
+@pytest.mark.parametrize(
+    "apply_set_dirichlet_bcs_nonlinear_arguments", get_apply_set_boundary_conditions_nonlinear_arguments())
 @pytest.mark.parametrize("unrestricted_fem_module", (dolfinx.fem, multiphenicsx.fem))
 @pytest.mark.parametrize("restricted_fem_module", (multiphenicsx.fem, ))
 def test_nest_vector_assembly_with_restriction(
     mesh: dolfinx.mesh.Mesh,
     subdomains: tuple[typing.Optional[common.SubdomainType], typing.Optional[common.SubdomainType]],
     FunctionSpaces: tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType],
-    dirichlet_bcs: DirichletBCsPairGeneratorType, unrestricted_fem_module: types.ModuleType,
-    restricted_fem_module: types.ModuleType
+    dirichlet_bcs: DirichletBCsPairGeneratorType,
+    apply_set_dirichlet_bcs_nonlinear_arguments: ApplySetDirichletBCsNonlinearArgumentsType,
+    unrestricted_fem_module: types.ModuleType, restricted_fem_module: types.ModuleType
 ) -> None:
     """Test nest assembly of a two-by-one block linear form with restrictions."""
     V = [FunctionSpace(mesh) for FunctionSpace in FunctionSpaces]
@@ -686,9 +719,11 @@ def test_nest_vector_assembly_with_restriction(
         unrestricted_vector_sub.destroy()
     restricted_vector_nonlinear = restricted_fem_module.petsc.assemble_vector_nest(
         block_linear_form, restriction=dofmap_restriction)
+    x0_arg, restriction_x0_arg = apply_set_dirichlet_bcs_nonlinear_arguments(
+        unrestricted_solution, restricted_solution, dofmap_restriction)
     restricted_fem_module.petsc.apply_lifting_nest(
-        restricted_vector_nonlinear, block_bilinear_form, bcs_flattened, restricted_solution,
-        restriction=dofmap_restriction, restriction_x0=dofmap_restriction)
+        restricted_vector_nonlinear, block_bilinear_form, bcs_flattened, x0=x0_arg, restriction=dofmap_restriction,
+        restriction_x0=restriction_x0_arg)
     for restricted_vector_sub in restricted_vector_nonlinear.getNestSubVecs():
         restricted_vector_sub.ghostUpdate(
             addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
@@ -697,7 +732,8 @@ def test_nest_vector_assembly_with_restriction(
     unrestricted_fem_module.petsc.set_bc_nest(
         unrestricted_vector_nonlinear, bcs_pair, unrestricted_solution)
     restricted_fem_module.petsc.set_bc_nest(
-        restricted_vector_nonlinear, bcs_pair, restricted_solution, restriction=dofmap_restriction)
+        restricted_vector_nonlinear, bcs_pair, x0=x0_arg, restriction=dofmap_restriction,
+        restriction_x0=restriction_x0_arg)
     assert_vector_equal(unrestricted_vector_nonlinear, restricted_vector_nonlinear, dofmap_restriction)
     unrestricted_vector_nonlinear.destroy()
     restricted_vector_nonlinear.destroy()
