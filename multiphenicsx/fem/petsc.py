@@ -805,7 +805,10 @@ def assemble_vector_block(  # type: ignore[no-any-unimported]
     bcs
         Optional list of boundary conditions.
     x0
-        Optional vector storing the solution.
+        Optional PETSc vector storing the solution.
+        Typically the current nonlinear solution in an incremental problem is provided as `x0`.
+        See the documentation of :func:`multiphenicsx.fem.petsc.apply_lifting` for more details about
+        how `restriction_x0` is used in combination with `x0`.
     alpha
         Optional scaling factor for boundary conditions application.
     constants_L, constants_a
@@ -858,7 +861,10 @@ def _(  # type: ignore[no-any-unimported]
     bcs
         Optional list of boundary conditions.
     x0
-        Optional vector storing the solution.
+        Optional PETSc vector storing the solution.
+        Typically the current nonlinear solution in an incremental problem is provided as `x0`.
+        See the documentation of :func:`multiphenicsx.fem.petsc.apply_lifting` for more details about
+        how `restriction_x0` is used in combination with `x0`.
     alpha
         Optional scaling factor for boundary conditions application.
     constants_L, constants_a
