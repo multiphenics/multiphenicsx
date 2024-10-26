@@ -1,4 +1,4 @@
-name: Test against releases packaged by conda
+name: Test against conda DOLFINx releases
 
 on:
   schedule:
@@ -6,6 +6,174 @@ on:
   workflow_dispatch:
 
 jobs:
+  generate-matrix:
+    runs-on: ubuntu-latest
+    env:
+      MATRIX_JSON_FILE: "matrix.json"
+      MATRIX_SCRIPT_FILE: "matrix.sh"
+      PETSC_SCALAR_TYPES: "real complex"
+    outputs:
+      matrix: ${{ steps.store-matrix.outputs.matrix }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Prepare script to generate json file
+        run: |
+          cat << EOF > ${MATRIX_SCRIPT_FILE}
+          PETSC_SCALAR_TYPES_ARRAY=(${PETSC_SCALAR_TYPES})
+          DOLFINX_VERSION="\${1}"
+          CPP_WRAPPER_LIBRARY="\${2}"
+          SUPPORTED_PYTHON_VERSIONS=(\${@:3})
+          for PYTHON_VERSION in "\${SUPPORTED_PYTHON_VERSIONS[@]}"; do
+            for PETSC_SCALAR_TYPE in "\${PETSC_SCALAR_TYPES_ARRAY[@]}"; do
+              echo -e "\t\t{" >> ${MATRIX_JSON_FILE}
+              echo -e "\t\t\t\"dolfinx_version\": \"\${DOLFINX_VERSION}\"," >> ${MATRIX_JSON_FILE}
+              echo -e "\t\t\t\"python_version\": \"\${PYTHON_VERSION}\"," >> ${MATRIX_JSON_FILE}
+              echo -e "\t\t\t\"petsc_scalar_type\": \"\${PETSC_SCALAR_TYPE}\"," >> ${MATRIX_JSON_FILE}
+              echo -e "\t\t\t\"cpp_wrapper_library\": \"\${CPP_WRAPPER_LIBRARY}\"" >> ${MATRIX_JSON_FILE}
+              echo -e "\t\t}," >> ${MATRIX_JSON_FILE}
+            done
+          done
+          EOF
+      - name: Initialize matrix json file
+        run: |
+          touch ${MATRIX_JSON_FILE}
+          echo -e "{" >> ${MATRIX_JSON_FILE}
+          echo -e "\t\"include\": [" >> ${MATRIX_JSON_FILE}
+      - name: Add dolfinx 0.4.1 to matrix json file
+        run: |
+          DOLFINX_VERSION="0.4.1"
+          CPP_WRAPPER_LIBRARY="pybind11"
+          SUPPORTED_PYTHON_VERSIONS=("3.9")  # 3.10 is also supported, but is incompatible with nbvalx
+          bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${SUPPORTED_PYTHON_VERSIONS[@]}
+      - name: Add dolfinx 0.5.2 to matrix json file
+        run: |
+          DOLFINX_VERSION="0.5.2"
+          CPP_WRAPPER_LIBRARY="pybind11"
+          SUPPORTED_PYTHON_VERSIONS=("3.10")  # 3.9 is also supported, but is incompatible with nbvalx
+          bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${SUPPORTED_PYTHON_VERSIONS[@]}
+      - name: Add dolfinx 0.6.0 to matrix json file
+        run: |
+          # dolfinx v0.6.0 is currently untested, because both python 3.9 and 3.10 have random segfaults
+      - name: Add dolfinx 0.7.0 to matrix json file
+        run: |
+          DOLFINX_VERSION="0.7.0"
+          CPP_WRAPPER_LIBRARY="pybind11"
+          SUPPORTED_PYTHON_VERSIONS=("3.10" "3.11")  # 3.9 is also supported, but is incompatible with nbvalx
+          bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${SUPPORTED_PYTHON_VERSIONS[@]}
+      - name: Add dolfinx 0.7.1 to matrix json file
+        run: |
+          DOLFINX_VERSION="0.7.1"
+          CPP_WRAPPER_LIBRARY="pybind11"
+          SUPPORTED_PYTHON_VERSIONS=("3.10" "3.11")  # 3.9 is also supported, but is incompatible with nbvalx
+          bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${SUPPORTED_PYTHON_VERSIONS[@]}
+      - name: Add dolfinx 0.7.2 to matrix json file
+        run: |
+          DOLFINX_VERSION="0.7.2"
+          CPP_WRAPPER_LIBRARY="pybind11"
+          SUPPORTED_PYTHON_VERSIONS=("3.10" "3.11" "3.12")  # 3.9 is also supported, but is incompatible with nbvalx
+          bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${SUPPORTED_PYTHON_VERSIONS[@]}
+      - name: Add dolfinx 0.7.3 to matrix json file
+        run: |
+          DOLFINX_VERSION="0.7.3"
+          CPP_WRAPPER_LIBRARY="pybind11"
+          SUPPORTED_PYTHON_VERSIONS=("3.10" "3.11" "3.12")  # 3.9 is also supported, but is incompatible with nbvalx
+          bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${SUPPORTED_PYTHON_VERSIONS[@]}
+      - name: Add dolfinx 0.8.0 to matrix json file
+        run: |
+          DOLFINX_VERSION="0.8.0"
+          CPP_WRAPPER_LIBRARY="nanobind"
+          SUPPORTED_PYTHON_VERSIONS=("3.10" "3.11" "3.12")  # 3.9 is also supported, but is incompatible with nbvalx
+          bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${SUPPORTED_PYTHON_VERSIONS[@]}
+      - name: Add dolfinx 0.9.0 to matrix json file
+        run: |
+          DOLFINX_VERSION="0.9.0"
+          CPP_WRAPPER_LIBRARY="nanobind"
+          SUPPORTED_PYTHON_VERSIONS=("3.10" "3.11" "3.12")  # 3.9 is also supported, but is incompatible with nbvalx. 3.13 is also supported, but some downstream packages are still missing.
+          bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${SUPPORTED_PYTHON_VERSIONS[@]}
+      - name: Finalize matrix json file
+        run: |
+          sed -i '$s/,//' ${MATRIX_JSON_FILE}
+          echo -e "\t]" >> ${MATRIX_JSON_FILE}
+          echo -e "}" >> ${MATRIX_JSON_FILE}
+      - name: Display matrix json file
+        run: |
+          cat ${MATRIX_JSON_FILE}
+      - name: Store matrix json file content in the output variable
+        id: store-matrix
+        run: |
+          echo "matrix=$(cat ${MATRIX_JSON_FILE} | tr -d ' \t\n\r')" >> ${GITHUB_OUTPUT}
+
+  test:
+    runs-on: ubuntu-latest
+    needs: generate-matrix
+    strategy:
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+      fail-fast: false
+    # This is necessary to ensure conda environment is activated in every step.
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dolfinx-v${{ matrix.dolfinx_version }}
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: true
+          activate-environment: testenv
+          python-version: ${{ matrix.python_version }}
+      - name: Ensure python version correctness
+        run: |
+          EXPECTED_PYTHON_VERSION=${{ matrix.python_version }}
+          ACTUAL_PYTHON_VERSION=$(python3 -c 'import sys; print("{}.{}".format(sys.version_info.major, sys.version_info.minor))')
+          if [[ "${EXPECTED_PYTHON_VERSION}" != "${ACTUAL_PYTHON_VERSION}" ]]; then
+            echo "Invalid python version: expected ${EXPECTED_PYTHON_VERSION}, got ${ACTUAL_PYTHON_VERSION}"
+            exit 1
+          fi
+      - name: Install DOLFINx
+        run: |
+          conda install -c conda-forge fenics-dolfinx=${{ matrix.dolfinx_version }} mpich petsc=*=${{ matrix.petsc_scalar_type }}*
+      - name: Install multiphenicsx core dependencies
+        run: |
+          CPP_WRAPPER_LIBRARY=${{ matrix.cpp_wrapper_library }}
+          if [[ "${CPP_WRAPPER_LIBRARY}" == "pybind11" ]]; then
+            conda install -c conda-forge cppimport gxx pybind11
+          else
+            conda install -c conda-forge cmake gxx nanobind ninja scikit-build-core wheel
+          fi
+      - name: Install multiphenicsx test dependencies
+        run: |
+          sudo apt update
+          sudo apt install xorg  # for gmsh, which will be pip install-ed by multiphenicsx
+          conda install -c conda-forge jupyterlab scipy sympy
+      - name: Install multiphenicsx
+        run: |
+          CPP_WRAPPER_LIBRARY=${{ matrix.cpp_wrapper_library }}
+          if [[ "${CPP_WRAPPER_LIBRARY}" == "pybind11" ]]; then
+            python3 -m pip install .[tests,tutorials]
+          else
+            python3 -m pip install --check-build-dependencies --no-build-isolation .[tests,tutorials]
+          fi
+      - name: Remove source directory to ensure that package from installation directory is used
+        run: |
+          rm -rf multiphenicsx
+      - name: Run unit tests (serial)
+        run: |
+          python3 -m pytest tests/unit
+      - name: Run tutorials (serial)
+        run: |
+          python3 -m pytest tutorials
+      - name: Upload tutorials logs as an artifact in case of failure
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: "tutorials-logs-${{ matrix.dolfinx_version }}-${{ matrix.petsc_scalar_type }}-${{ matrix.python_version }}"
+          path: |
+            tutorials/**/.ipynb_pytest/**/*.log*
+          include-hidden-files: true
+
   warn:
     runs-on: ubuntu-latest
     if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main' && github.event_name == 'schedule'
