@@ -1,0 +1,22 @@
+name: Test against apt DOLFINx releases
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+  warn:
+    runs-on: ubuntu-latest
+    if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main' && github.event_name == 'schedule'
+    steps:
+      - name: Warn if scheduled workflow is about to be disabled
+        uses: fem-on-colab/warn-workflow-about-to-be-disabled-action@main
+        with:
+          workflow-filename: apt_against_releases.yml
+          days-elapsed: 55
