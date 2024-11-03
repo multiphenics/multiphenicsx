@@ -32,7 +32,7 @@ def compile_code(
         if dolfinx.pkgconfig.exists(dolfinx_pc_package) and scalar_type_check:  # type: ignore[no-untyped-call]
             dolfinx_pc.update(dolfinx.pkgconfig.parse(dolfinx_pc_package))  # type: ignore[no-untyped-call]
             break
-    if len(dolfinx_pc) == 0:
+    if len(dolfinx_pc) == 0:  # pragma: no cover
         dolfinx_pc["include_dirs"] = []
         dolfinx_pc["define_macros"] = []
         dolfinx_pc["libraries"] = []
