@@ -32,7 +32,6 @@ def compile_code(
         if dolfinx.pkgconfig.exists(dolfinx_pc_package) and scalar_type_check:  # type: ignore[no-untyped-call]
             dolfinx_pc.update(dolfinx.pkgconfig.parse(dolfinx_pc_package))  # type: ignore[no-untyped-call]
             break
-    assert len(dolfinx_pc) > 0
 
     # Set other sources
     sources = kwargs.get("sources", [])
