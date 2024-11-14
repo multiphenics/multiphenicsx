@@ -6,10 +6,248 @@ on:
   workflow_dispatch:
 
 jobs:
+  generate-matrix:
+    runs-on: ubuntu-latest
+    env:
+      MATRIX_JSON_FILE: "matrix.json"
+      MATRIX_SCRIPT_FILE: "matrix.sh"
+      PETSC_SCALAR_TYPES: "real complex"
+    outputs:
+      matrix: ${{ steps.store-matrix.outputs.matrix }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Prepare script to generate json file
+        run: |
+          cat << EOF > ${MATRIX_SCRIPT_FILE}
+          PETSC_SCALAR_TYPES_ARRAY=("" ${PETSC_SCALAR_TYPES})
+          CONTAINER="\${1}"
+          MOVED_TO_OLD_RELEASES="\${2}"
+          PYTHON_VERSION="\${3}"
+          PIP_AND_SETUPTOOLS_TOO_OLD="\${4}"
+          DOLFINX_VERSION="\${5}"
+          CPP_WRAPPER_LIBRARY="\${6}"
+          for PETSC_SCALAR_TYPE in "\${PETSC_SCALAR_TYPES_ARRAY[@]}"; do
+            echo -e "\t\t{" >> ${MATRIX_JSON_FILE}
+            echo -e "\t\t\t\"container\": \"\${CONTAINER}\"," >> ${MATRIX_JSON_FILE}
+            echo -e "\t\t\t\"moved_to_old_releases\": \${MOVED_TO_OLD_RELEASES}," >> ${MATRIX_JSON_FILE}
+            echo -e "\t\t\t\"python_version\": \"\${PYTHON_VERSION}\"," >> ${MATRIX_JSON_FILE}
+            echo -e "\t\t\t\"pip_and_setuptools_too_old\": \${PIP_AND_SETUPTOOLS_TOO_OLD}," >> ${MATRIX_JSON_FILE}
+            echo -e "\t\t\t\"dolfinx_version\": \"\${DOLFINX_VERSION}\"," >> ${MATRIX_JSON_FILE}
+            echo -e "\t\t\t\"cpp_wrapper_library\": \"\${CPP_WRAPPER_LIBRARY}\"," >> ${MATRIX_JSON_FILE}
+            echo -e "\t\t\t\"petsc_scalar_type\": \"\${PETSC_SCALAR_TYPE}\"" >> ${MATRIX_JSON_FILE}
+            echo -e "\t\t}," >> ${MATRIX_JSON_FILE}
+          done
+          EOF
+      - name: Initialize matrix json file
+        run: |
+          touch ${MATRIX_JSON_FILE}
+          echo -e "{" >> ${MATRIX_JSON_FILE}
+          echo -e "\t\"include\": [" >> ${MATRIX_JSON_FILE}
+      - name: Add ubuntu 22.04 to matrix json file
+        run: |
+          CONTAINER="ubuntu:22.04"
+          MOVED_TO_OLD_RELEASES="false"
+          PYTHON_VERSION="3.10"
+          PIP_AND_SETUPTOOLS_TOO_OLD="true"
+          DOLFINX_VERSION="0.9.0"
+          CPP_WRAPPER_LIBRARY="nanobind"
+          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY}
+      - name: Add ubuntu 22.10 to matrix json file
+        run: |
+          CONTAINER="ubuntu:22.10"
+          MOVED_TO_OLD_RELEASES="true"
+          PYTHON_VERSION="3.10"
+          PIP_AND_SETUPTOOLS_TOO_OLD="false"
+          DOLFINX_VERSION="0.6.0"
+          CPP_WRAPPER_LIBRARY="pybind11"
+          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY}
+      - name: Add ubuntu 23.04 to matrix json file
+        run: |
+          CONTAINER="ubuntu:23.04"
+          MOVED_TO_OLD_RELEASES="false"
+          PYTHON_VERSION="3.11"
+          PIP_AND_SETUPTOOLS_TOO_OLD="false"
+          DOLFINX_VERSION="0.7.3"
+          CPP_WRAPPER_LIBRARY="pybind11"
+          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY}
+      - name: Add ubuntu 23.10 to matrix json file
+        run: |
+          CONTAINER="ubuntu:23.10"
+          MOVED_TO_OLD_RELEASES="false"
+          PYTHON_VERSION="3.11"
+          PIP_AND_SETUPTOOLS_TOO_OLD="false"
+          DOLFINX_VERSION="0.8.0"
+          CPP_WRAPPER_LIBRARY="nanobind"
+          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY}
+      - name: Add ubuntu 24.04 to matrix json file
+        run: |
+          CONTAINER="ubuntu:24.04"
+          MOVED_TO_OLD_RELEASES="false"
+          PYTHON_VERSION="3.12"
+          PIP_AND_SETUPTOOLS_TOO_OLD="false"
+          DOLFINX_VERSION="0.9.0"
+          CPP_WRAPPER_LIBRARY="nanobind"
+          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY}
+      - name: Add ubuntu 24.10 to matrix json file
+        run: |
+          CONTAINER="ubuntu:24.10"
+          MOVED_TO_OLD_RELEASES="false"
+          PYTHON_VERSION="3.12"
+          PIP_AND_SETUPTOOLS_TOO_OLD="false"
+          DOLFINX_VERSION="0.9.0"
+          CPP_WRAPPER_LIBRARY="nanobind"
+          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY}
+      - name: Add debian 12 to matrix json file
+        run: |
+          CONTAINER="debian:12"
+          MOVED_TO_OLD_RELEASES="false"
+          PYTHON_VERSION="3.11"
+          PIP_AND_SETUPTOOLS_TOO_OLD="false"
+          DOLFINX_VERSION="0.5.2"
+          CPP_WRAPPER_LIBRARY="pybind11"
+          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY}
+      - name: Add debian unstable to matrix json file
+        run: |
+          CONTAINER="debian:unstable"
+          MOVED_TO_OLD_RELEASES="false"
+          PYTHON_VERSION="3.12"
+          PIP_AND_SETUPTOOLS_TOO_OLD="false"
+          DOLFINX_VERSION="0.9.0"
+          CPP_WRAPPER_LIBRARY="nanobind"
+          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY}
+      - name: Finalize matrix json file
+        run: |
+          sed -i '$s/,//' ${MATRIX_JSON_FILE}
+          echo -e "\t]" >> ${MATRIX_JSON_FILE}
+          echo -e "}" >> ${MATRIX_JSON_FILE}
+      - name: Display matrix json file
+        run: |
+          cat ${MATRIX_JSON_FILE}
+      - name: Store matrix json file content in the output variable
+        id: store-matrix
+        run: |
+          echo "matrix=$(cat ${MATRIX_JSON_FILE} | tr -d ' \t\n\r')" >> ${GITHUB_OUTPUT}
+
   test:
     runs-on: ubuntu-latest
+    needs: generate-matrix
+    strategy:
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+      fail-fast: false
+    container: ${{ matrix.container }}
+    name: test (${{ matrix.container }}, v${{ matrix.dolfinx_version }}, py${{ matrix.python_version }}, ${{ matrix.petsc_scalar_type }})
     steps:
+      - name: Update apt sources file
+        if: startsWith(matrix.container, 'ubuntu') == true && matrix.moved_to_old_releases == true
+        run: |
+          sed -i -re 's/([a-z]{2}\.)?archive.ubuntu.com|security.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
+      - name: Install git
+        run: |
+          export DEBIAN_FRONTEND="noninteractive"
+          apt update
+          apt install -y git
       - uses: actions/checkout@v4
+        with:
+          ref: dolfinx-v${{ matrix.dolfinx_version }}
+      - name: Add FEniCS PPA
+        if: startsWith(matrix.container, 'ubuntu') == true
+        run: |
+          export DEBIAN_FRONTEND="noninteractive"
+          apt install -y software-properties-common
+          add-apt-repository ppa:fenics-packages/fenics
+          apt update
+      - name: Install DOLFINx
+        run: |
+          export DEBIAN_FRONTEND="noninteractive"
+          apt install -y fenicsx
+          PETSC_SCALAR_TYPE=${{ matrix.petsc_scalar_type }}
+          if [[ -n "${PETSC_SCALAR_TYPE}" ]]; then
+            apt install -y python3-dolfinx-${PETSC_SCALAR_TYPE}
+          fi
+        shell: bash
+      - name: Ensure python version correctness
+        run: |
+          EXPECTED_PYTHON_VERSION=${{ matrix.python_version }}
+          ACTUAL_PYTHON_VERSION=$(python3 -c 'import sys; print("{}.{}".format(sys.version_info.major, sys.version_info.minor))')
+          if [[ "${EXPECTED_PYTHON_VERSION}" != "${ACTUAL_PYTHON_VERSION}" ]]; then
+            echo "Invalid python version: expected ${EXPECTED_PYTHON_VERSION}, got ${ACTUAL_PYTHON_VERSION}"
+            exit 1
+          fi
+        shell: bash
+      - name: Ensure dolfinx version correctness
+        run: |
+          EXPECTED_DOLFINX_VERSION=${{ matrix.dolfinx_version }}
+          ACTUAL_DOLFINX_VERSION=$(python3 -c 'import dolfinx; print(dolfinx.__version__)')
+          if [[ "${EXPECTED_DOLFINX_VERSION}" != "${ACTUAL_DOLFINX_VERSION}" ]]; then
+            echo "Invalid dolfinx version: expected ${EXPECTED_DOLFINX_VERSION}, got ${ACTUAL_DOLFINX_VERSION}"
+            exit 1
+          fi
+        shell: bash
+      - name: Install pip
+        run: |
+          export DEBIAN_FRONTEND="noninteractive"
+          apt update
+          apt install -y python3-pip
+      - name: Upgrade pip and setuptools
+        if: matrix.pip_and_setuptools_too_old == true
+        run: |
+          python3 -m pip install --upgrade pip setuptools
+      - name: Install multiphenicsx core dependencies
+        run: |
+          CPP_WRAPPER_LIBRARY=${{ matrix.cpp_wrapper_library }}
+          if [[ "${CPP_WRAPPER_LIBRARY}" == "pybind11" ]]; then
+            apt install -y python3-pybind11
+          else
+            apt install -y python3-exceptiongroup python3-nanobind python3-pathspec python3-pyproject-metadata python3-scikit-build-core
+          fi
+        shell: bash
+      - name: Install multiphenicsx test dependencies
+        run: |
+          apt install -y python3-gmsh python3-scipy python3-sympy
+      - name: Remove externally managed marker
+        run: |
+          rm -f /usr/lib/python3.*/EXTERNALLY-MANAGED
+      - name: Install multiphenicsx
+        run: |
+          CPP_WRAPPER_LIBRARY=${{ matrix.cpp_wrapper_library }}
+          if [[ "${CPP_WRAPPER_LIBRARY}" == "pybind11" ]]; then
+            python3 -m pip install .[tests,tutorials]
+          else
+            python3 -m pip install --check-build-dependencies --no-build-isolation .[tests,tutorials]
+          fi
+        shell: bash
+      - name: Remove source directory to ensure that package from installation directory is used
+        run: |
+          rm -rf multiphenicsx
+      - name: Set PETSC_DIR
+        run: |
+          PETSC_SCALAR_TYPE=${{ matrix.petsc_scalar_type }}
+          if [[ -n "${PETSC_SCALAR_TYPE}" ]]; then
+            echo "PETSC_DIR=/usr/lib/petscdir/petsc-${PETSC_SCALAR_TYPE}" >> $GITHUB_ENV
+          fi
+        shell: bash
+      - name: Run unit tests (serial)
+        run: |
+          python3 -m pytest tests/unit
+      - name: Run unit tests (parallel)
+        run: |
+          mpirun -n 3 python3 -m pytest tests/unit
+      - name: Run tutorials (serial)
+        run: |
+          python3 -m pytest tutorials
+      - name: Run tutorials (parallel)
+        run: |
+          python3 -m pytest --np 3 tutorials
+      - name: Upload tutorials logs as an artifact in case of failure
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: "tutorials-logs-${{ matrix.dolfinx_version }}-${{ matrix.petsc_scalar_type }}-${{ matrix.python_version }}"
+          path: |
+            tutorials/**/.ipynb_pytest/**/*.log*
+          include-hidden-files: true
 
   warn:
     runs-on: ubuntu-latest
