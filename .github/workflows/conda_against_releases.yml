@@ -111,6 +111,7 @@ jobs:
     strategy:
       matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
       fail-fast: false
+    name: test (v${{ matrix.dolfinx_version }}, py${{ matrix.python_version }}, ${{ matrix.petsc_scalar_type }})
     # This is necessary to ensure conda environment is activated in every step.
     defaults:
       run:
