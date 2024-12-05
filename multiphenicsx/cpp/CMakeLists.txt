@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 
 project(multiphenicsx)
+include(GNUInstallDirs)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
@@ -109,8 +110,13 @@ target_include_directories(multiphenicsx_cpp PRIVATE ${PETSC4PY_INCLUDE_DIR})
 target_include_directories(multiphenicsx_cpp PRIVATE ${MPI4PY_INCLUDE_DIR})
 
 # Add current source directory to include directories
+set(MULTIPHENICSX_INSTALL_INCLUDEDIR
+    "${CMAKE_INSTALL_INCLUDEDIR}/multiphenicsx/"
+)
 target_include_directories(
-  multiphenicsx_cpp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+  multiphenicsx_cpp
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+  PUBLIC "$<INSTALL_INTERFACE:${MULTIPHENICSX_INSTALL_INCLUDEDIR}>"
 )
 
 # Define HAS_PETSC4PY for compatibility with DOLFINx python wrappers
@@ -120,4 +126,41 @@ target_compile_definitions(multiphenicsx_cpp PRIVATE HAS_PETSC4PY)
 set_target_properties(
   multiphenicsx_cpp PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE
 )
-install(TARGETS multiphenicsx_cpp LIBRARY DESTINATION multiphenicsx/cpp)
+install(
+  TARGETS multiphenicsx_cpp
+  EXPORT multiphenicsxTargets
+  LIBRARY DESTINATION multiphenicsx/cpp
+  INCLUDES
+  DESTINATION ${MULTIPHENICSX_INSTALL_INCLUDEDIR}
+)
+
+# Install headers
+set(HEADERS_MULTIPHENICSX multiphenicsx/fem/DofMapRestriction.h)
+install(FILES ${HEADERS_MULTIPHENICSX}
+        DESTINATION ${MULTIPHENICSX_INSTALL_INCLUDEDIR}
+)
+
+# Export target
+install(
+  EXPORT multiphenicsxTargets
+  FILE multiphenicsxTargets.cmake
+  NAMESPACE multiphenicsx::
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/multiphenicsx
+)
+
+# Make cmake package
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+  MULTIPHENICSXConfigVersion.cmake
+  VERSION ${PACKAGE_VERSION}
+  COMPATIBILITY AnyNewerVersion
+)
+configure_package_config_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/MULTIPHENICSXConfig.cmake"
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/multiphenicsx
+)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/MULTIPHENICSXConfig.cmake"
+              "${CMAKE_CURRENT_BINARY_DIR}/MULTIPHENICSXConfigVersion.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/multiphenicsx
+)
