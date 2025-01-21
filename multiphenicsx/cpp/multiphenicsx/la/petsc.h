@@ -7,9 +7,9 @@
 #pragma once
 
 #include <dolfinx/common/IndexMap.h>
-#include <map>
 #include <petscmat.h>
 #include <petscvec.h>
+#include <unordered_map>
 #include <vector>
 
 namespace multiphenicsx::la
@@ -63,11 +63,12 @@ public:
   MatSubMatrixWrapper(Mat A, std::array<IS, 2> index_sets),
 
       /// Constructor (for cases with restriction)
-      MatSubMatrixWrapper(Mat A, std::array<IS, 2> unrestricted_index_sets,
-                          std::array<IS, 2> restricted_index_sets,
-                          std::array<std::map<std::int32_t, std::int32_t>, 2>
-                              unrestricted_to_restricted,
-                          std::array<int, 2> unrestricted_to_restricted_bs);
+      MatSubMatrixWrapper(
+          Mat A, std::array<IS, 2> unrestricted_index_sets,
+          std::array<IS, 2> restricted_index_sets,
+          std::array<std::unordered_map<std::int32_t, std::int32_t>, 2>
+              unrestricted_to_restricted,
+          std::array<int, 2> unrestricted_to_restricted_bs);
 
   /// Destructor
   ~MatSubMatrixWrapper();
@@ -105,12 +106,11 @@ public:
   VecSubVectorReadWrapper(Vec x, IS index_set, bool ghosted = true),
 
       /// Constructor (for cases with restriction)
-      VecSubVectorReadWrapper(Vec x, IS unrestricted_index_set,
-                              IS restricted_index_set,
-                              const std::map<std::int32_t, std::int32_t>&
-                                  unrestricted_to_restricted,
-                              int unrestricted_to_restricted_bs,
-                              bool ghosted = true);
+      VecSubVectorReadWrapper(
+          Vec x, IS unrestricted_index_set, IS restricted_index_set,
+          const std::unordered_map<std::int32_t, std::int32_t>&
+              unrestricted_to_restricted,
+          int unrestricted_to_restricted_bs, bool ghosted = true);
 
   /// Destructor
   ~VecSubVectorReadWrapper();
@@ -146,7 +146,7 @@ public:
       /// Constructor (for cases with restriction)
       VecSubVectorWrapper(Vec x, IS unrestricted_index_set,
                           IS restricted_index_set,
-                          const std::map<std::int32_t, std::int32_t>&
+                          const std::unordered_map<std::int32_t, std::int32_t>&
                               unrestricted_to_restricted,
                           int unrestricted_to_restricted_bs,
                           bool ghosted = true);
@@ -172,7 +172,7 @@ public:
 private:
   Vec _global_vector;
   IS _is;
-  std::map<std::int32_t, std::int32_t> _restricted_to_unrestricted;
+  std::unordered_map<std::int32_t, std::int32_t> _restricted_to_unrestricted;
 };
 
 } // namespace petsc

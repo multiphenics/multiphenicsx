@@ -138,7 +138,7 @@ MatSubMatrixWrapper::MatSubMatrixWrapper(Mat A, std::array<IS, 2> index_sets)
 MatSubMatrixWrapper::MatSubMatrixWrapper(
     Mat A, std::array<IS, 2> unrestricted_index_sets,
     std::array<IS, 2> restricted_index_sets,
-    std::array<std::map<std::int32_t, std::int32_t>, 2>
+    std::array<std::unordered_map<std::int32_t, std::int32_t>, 2>
         unrestricted_to_restricted,
     std::array<int, 2> unrestricted_to_restricted_bs)
     : MatSubMatrixWrapper(A, restricted_index_sets)
@@ -348,7 +348,8 @@ VecSubVectorReadWrapper::VecSubVectorReadWrapper(Vec x, IS index_set,
 //-----------------------------------------------------------------------------
 VecSubVectorReadWrapper::VecSubVectorReadWrapper(
     Vec x, IS unrestricted_index_set, IS restricted_index_set,
-    const std::map<std::int32_t, std::int32_t>& unrestricted_to_restricted,
+    const std::unordered_map<std::int32_t, std::int32_t>&
+        unrestricted_to_restricted,
     int unrestricted_to_restricted_bs, bool ghosted)
     : _ghosted(ghosted)
 {
@@ -446,7 +447,8 @@ VecSubVectorWrapper::VecSubVectorWrapper(Vec x, IS index_set, bool ghosted)
 //-----------------------------------------------------------------------------
 VecSubVectorWrapper::VecSubVectorWrapper(
     Vec x, IS unrestricted_index_set, IS restricted_index_set,
-    const std::map<std::int32_t, std::int32_t>& unrestricted_to_restricted,
+    const std::unordered_map<std::int32_t, std::int32_t>&
+        unrestricted_to_restricted,
     int unrestricted_to_restricted_bs, bool ghosted)
     : VecSubVectorReadWrapper(x, unrestricted_index_set, restricted_index_set,
                               unrestricted_to_restricted,

@@ -8,8 +8,8 @@
 
 #include <dolfinx/common/IndexMap.h>
 #include <dolfinx/fem/DofMap.h>
-#include <map>
 #include <memory>
+#include <unordered_map>
 
 namespace multiphenicsx
 {
@@ -59,13 +59,15 @@ public:
   std::shared_ptr<const dolfinx::fem::DofMap> dofmap() const { return _dofmap; }
 
   /// Return map from unrestricted dofs to restricted dofs
-  const std::map<std::int32_t, std::int32_t>& unrestricted_to_restricted() const
+  const std::unordered_map<std::int32_t, std::int32_t>&
+  unrestricted_to_restricted() const
   {
     return _unrestricted_to_restricted;
   }
 
   /// Map from restricted dofs to unrestricted dofs
-  const std::map<std::int32_t, std::int32_t>& restricted_to_unrestricted() const
+  const std::unordered_map<std::int32_t, std::int32_t>&
+  restricted_to_unrestricted() const
   {
     return _restricted_to_unrestricted;
   }
@@ -94,10 +96,10 @@ private:
   std::shared_ptr<const dolfinx::fem::DofMap> _dofmap;
 
   // Map from unrestricted dofs to restricted dofs
-  std::map<std::int32_t, std::int32_t> _unrestricted_to_restricted;
+  std::unordered_map<std::int32_t, std::int32_t> _unrestricted_to_restricted;
 
   // Map from restricted dofs to unrestricted dofs
-  std::map<std::int32_t, std::int32_t> _restricted_to_unrestricted;
+  std::unordered_map<std::int32_t, std::int32_t> _restricted_to_unrestricted;
 
   // Cell-local-to-dof map after restriction has been carried out
   std::vector<std::int32_t> _dof_array;

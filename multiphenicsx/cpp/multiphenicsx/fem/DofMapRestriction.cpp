@@ -50,8 +50,8 @@ DofMapRestriction::DofMapRestriction(
 //-----------------------------------------------------------------------------
 void DofMapRestriction::_compute_cell_dofs(std::shared_ptr<const DofMap> dofmap)
 {
-  // Fill in cell dofs first into a temporary std::map
-  std::map<int, std::vector<std::int32_t>> restricted_cell_dofs;
+  // Fill in cell dofs first into a temporary std::unordered_map
+  std::unordered_map<int, std::vector<std::int32_t>> restricted_cell_dofs;
   std::size_t restricted_cell_dofs_total_size = 0;
   auto unrestricted_cell_dofs = dofmap->map();
   const int num_cells = unrestricted_cell_dofs.extent(0);
@@ -82,8 +82,8 @@ void DofMapRestriction::_compute_cell_dofs(std::shared_ptr<const DofMap> dofmap)
     }
   }
 
-  // Flatten std::map into the std::vector dof_array, and store start/end
-  // indices associated to each cell in cell_bounds
+  // Flatten std::unordered_map into the std::vector dof_array, and store
+  // start/end indices associated to each cell in cell_bounds
   _dof_array.reserve(restricted_cell_dofs_total_size);
   _cell_bounds.reserve(num_cells + 1);
   std::size_t current_cell_bound = 0;
