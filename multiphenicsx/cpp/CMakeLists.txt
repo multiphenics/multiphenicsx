@@ -30,7 +30,10 @@ if(NOT NANOBIND_CMAKE_DIR_COMMAND_RESULT)
   find_package(nanobind CONFIG REQUIRED)
   message(STATUS "Found nanobind python wrappers at ${NANOBIND_CMAKE_DIR}")
 else()
-  message(FATAL_ERROR "nanobind could not be found.")
+  message(
+    FATAL_ERROR
+      "nanobind could not be found. Possibly caused by running without '--no-build-isolation'."
+  )
 endif()
 
 # Check for DOLFINx C++ backend
@@ -51,7 +54,10 @@ execute_process(
 if(NOT DOLFINX_PY_WRAPPERS_COMMAND_RESULT)
   message(STATUS "Found DOLFINx python wrappers at ${DOLFINX_PY_WRAPPERS_DIR}")
 else()
-  message(FATAL_ERROR "DOLFINx python wrappers could not be found.")
+  message(
+    FATAL_ERROR
+      "DOLFINx python wrappers could not be found. Possibly caused by running without '--no-build-isolation'."
+  )
 endif()
 
 # Check for petsc4py
@@ -67,7 +73,10 @@ execute_process(
 if(NOT PETSC4PY_INCLUDE_COMMAND_RESULT)
   message(STATUS "Found petsc4py include directory at ${PETSC4PY_INCLUDE_DIR}")
 else()
-  message(FATAL_ERROR "petsc4py could not be found.")
+  message(
+    FATAL_ERROR
+      "petsc4py could not be found. Possibly caused by running without '--no-build-isolation'."
+  )
 endif()
 
 # Check for mpi4py
@@ -82,7 +91,10 @@ execute_process(
 if(NOT MPI4PY_INCLUDE_COMMAND_RESULT)
   message(STATUS "Found mpi4py include directory at ${MPI4PY_INCLUDE_DIR}")
 else()
-  message(FATAL_ERROR "mpi4py could not be found.")
+  message(
+    FATAL_ERROR
+      "mpi4py could not be found. Possibly caused by running without '--no-build-isolation'."
+  )
 endif()
 
 # Compile multiphenicsx C++ backend and nanobind wrappers
