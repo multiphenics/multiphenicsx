@@ -41,9 +41,7 @@ endif()
 
 # Check for DOLFINx python wrappers
 execute_process(
-  COMMAND
-    ${Python_EXECUTABLE} -c
-    "import os, sys, dolfinx; print(os.path.join(os.path.dirname(dolfinx.__file__), 'wrappers'))"
+  COMMAND ${Python_EXECUTABLE} -c "import dolfinx; print(dolfinx.get_include())"
   OUTPUT_VARIABLE DOLFINX_PY_WRAPPERS_DIR
   RESULT_VARIABLE DOLFINX_PY_WRAPPERS_COMMAND_RESULT
   ERROR_VARIABLE DOLFINX_PY_WRAPPERS_COMMAND_ERROR
