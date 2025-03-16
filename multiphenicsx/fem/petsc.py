@@ -14,6 +14,7 @@ import dolfinx.cpp as dcpp
 import dolfinx.fem
 import dolfinx.fem.assemble
 import dolfinx.la
+import dolfinx.la.petsc
 import numpy as np
 import numpy.typing
 import petsc4py.PETSc
@@ -124,7 +125,7 @@ def create_vector(  # type: ignore[no-any-unimported]
         assert _same_dofmap(restriction.dofmap, dofmap)
         index_map = restriction.index_map
         index_map_bs = restriction.index_map_bs
-    return dolfinx.la.create_petsc_vector(index_map, index_map_bs)
+    return dolfinx.la.petsc.create_vector(index_map, index_map_bs)
 
 
 def create_vector_block(  # type: ignore[no-any-unimported]
