@@ -16,15 +16,15 @@ import dolfinx.fem.assemble
 import dolfinx.la
 import dolfinx.la.petsc
 import numpy as np
-import numpy.typing
+import numpy.typing as npt
 import petsc4py.PETSc
 
 from multiphenicsx.cpp import cpp_library as mcpp
 
-DolfinxConstantsType = np.typing.NDArray[petsc4py.PETSc.ScalarType]  # type: ignore[no-any-unimported]
+DolfinxConstantsType = npt.NDArray[petsc4py.PETSc.ScalarType]  # type: ignore[no-any-unimported]
 DolfinxCoefficientsType = dict[  # type: ignore[no-any-unimported]
     tuple[dcpp.fem.IntegralType, int],
-    np.typing.NDArray[petsc4py.PETSc.ScalarType]
+    npt.NDArray[petsc4py.PETSc.ScalarType]
 ]
 
 
@@ -366,7 +366,7 @@ def _VecSubVectorWrapperBase(CppWrapperClass: type) -> type:
                     b, unrestricted_index_set, restricted_index_set,
                     unrestricted_to_restricted, unrestricted_to_restricted_bs)
 
-        def __enter__(self) -> np.typing.NDArray[petsc4py.PETSc.ScalarType]:  # type: ignore[no-any-unimported]
+        def __enter__(self) -> npt.NDArray[petsc4py.PETSc.ScalarType]:  # type: ignore[no-any-unimported]
             """Return Vec content when entering the context."""
             return self._cpp_object.content  # type: ignore[no-any-return]
 
@@ -437,7 +437,7 @@ def VecSubVectorWrapperBase(_VecSubVectorWrapperClass: type) -> type:
                     self._unrestricted_to_restricted_bs = unrestricted_to_restricted_bs
 
         def __enter__(self) -> typing.Optional[  # type: ignore[no-any-unimported]
-                np.typing.NDArray[petsc4py.PETSc.ScalarType]]:
+                npt.NDArray[petsc4py.PETSc.ScalarType]]:
             """Return Vec content when entering the context."""
             if self._wrapper is not None:
                 return self._wrapper.__enter__()  # type: ignore[no-any-return]
@@ -513,7 +513,7 @@ def BlockVecSubVectorWrapperBase(_VecSubVectorWrapperClass: type) -> type:
                     self._unrestricted_to_restricted_bs = unrestricted_to_restricted_bs
 
         def __iter__(self) -> typing.Optional[  # type: ignore[no-any-unimported, return]
-                typing.Iterator[np.typing.NDArray[petsc4py.PETSc.ScalarType]]]:
+                typing.Iterator[npt.NDArray[petsc4py.PETSc.ScalarType]]]:
             """Iterate over blocks."""
             with contextlib.ExitStack() as wrapper_stack:
                 for index in range(self._len):
@@ -587,7 +587,7 @@ def NestVecSubVectorWrapperBase(VecSubVectorWrapperClass: type) -> type:
             self._ghosted = ghosted
 
         def __iter__(self) -> typing.Optional[  # type: ignore[no-any-unimported, return]
-                typing.Iterator[np.typing.NDArray[petsc4py.PETSc.ScalarType]]]:
+                typing.Iterator[npt.NDArray[petsc4py.PETSc.ScalarType]]]:
             """Iterate over blocks."""
             with contextlib.ExitStack() as wrapper_stack:
                 for index, b_index in enumerate(self._b):

@@ -10,7 +10,7 @@ import typing
 import dolfinx.cpp as dcpp
 import dolfinx.fem
 import numpy as np
-import numpy.typing
+import numpy.typing as npt
 
 from multiphenicsx.cpp import cpp_library as mcpp
 
@@ -21,7 +21,7 @@ class DofMapRestriction(mcpp.fem.DofMapRestriction):  # type: ignore[misc, no-an
     def __init__(  # type: ignore[no-any-unimported]
         self,
         dofmap: typing.Union[dcpp.fem.DofMap, dolfinx.fem.DofMap],
-        restriction: np.typing.NDArray[np.int32]
+        restriction: npt.NDArray[np.int32]
     ) -> None:
         # Extract cpp dofmap
         try:

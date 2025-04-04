@@ -11,15 +11,15 @@ import basix.ufl
 import dolfinx.fem
 import dolfinx.mesh
 import numpy as np
-import numpy.typing
+import numpy.typing as npt
 
-SubdomainType = typing.Callable[[np.typing.NDArray[np.float64]], np.typing.NDArray[np.bool_]]
+SubdomainType = typing.Callable[[npt.NDArray[np.float64]], npt.NDArray[np.bool_]]
 FunctionSpaceGeneratorType = typing.Callable[[dolfinx.mesh.Mesh], dolfinx.fem.FunctionSpace]
 
 
 def ActiveDofs(
     V: dolfinx.fem.FunctionSpace, subdomain: typing.Optional[SubdomainType]
-) -> np.typing.NDArray[np.int32]:
+) -> npt.NDArray[np.int32]:
     """Define a list of active dofs."""
     if subdomain is not None:
         entities_dim = V.mesh.topology.dim - subdomain.codimension  # type: ignore[attr-defined]
@@ -32,7 +32,7 @@ def ActiveDofs(
 
 def CellsAll() -> SubdomainType:
     """Define a subdomain of codimension 0 marking all cells in the mesh."""
-    def cells_all(x: np.typing.NDArray[np.float64]) -> np.typing.NDArray[np.bool_]:
+    def cells_all(x: npt.NDArray[np.float64]) -> npt.NDArray[np.bool_]:
         return np.full(x.shape[1], True)
     cells_all.codimension = 0  # type: ignore[attr-defined]
     return cells_all
@@ -40,7 +40,7 @@ def CellsAll() -> SubdomainType:
 
 def CellsSubDomain(X: float, Y: float) -> SubdomainType:
     """Define a subdomain of codimension 0 marking a subset of the cells in the mesh."""
-    def cells_subdomain(x: np.typing.NDArray[np.float64]) -> np.typing.NDArray[np.bool_]:
+    def cells_subdomain(x: npt.NDArray[np.float64]) -> npt.NDArray[np.bool_]:
         return np.logical_and(x[0] <= X, x[1] <= Y)  # type: ignore[no-any-return]
     cells_subdomain.codimension = 0  # type: ignore[attr-defined]
     return cells_subdomain
@@ -48,7 +48,7 @@ def CellsSubDomain(X: float, Y: float) -> SubdomainType:
 
 def FacetsAll() -> SubdomainType:
     """Define a subdomain of codimension 1 marking all facets in the mesh."""
-    def facets_all(x: np.typing.NDArray[np.float64]) -> np.typing.NDArray[np.bool_]:
+    def facets_all(x: npt.NDArray[np.float64]) -> npt.NDArray[np.bool_]:
         return np.full(x.shape[1], True)
     facets_all.codimension = 1  # type: ignore[attr-defined]
     return facets_all
@@ -64,13 +64,13 @@ def FacetsSubDomain(
             or (X is None and Y is not None and on_boundary is False)
             or (X is None and Y is None and on_boundary is True))
     if X is not None:
-        def facets_subdomain(x: np.typing.NDArray[np.float64]) -> np.typing.NDArray[np.bool_]:
+        def facets_subdomain(x: npt.NDArray[np.float64]) -> npt.NDArray[np.bool_]:
             return np.logical_and(x[0] >= X - eps, x[0] <= X + eps)  # type: ignore[no-any-return]
     elif Y is not None:
-        def facets_subdomain(x: np.typing.NDArray[np.float64]) -> np.typing.NDArray[np.bool_]:
+        def facets_subdomain(x: npt.NDArray[np.float64]) -> npt.NDArray[np.bool_]:
             return np.logical_and(x[1] >= Y - eps, x[1] <= Y + eps)  # type: ignore[no-any-return]
     elif on_boundary is True:
-        def facets_subdomain(x: np.typing.NDArray[np.float64]) -> np.typing.NDArray[np.bool_]:
+        def facets_subdomain(x: npt.NDArray[np.float64]) -> npt.NDArray[np.bool_]:
             return np.logical_or(  # type: ignore[no-any-return]
                 np.logical_or(x[0] <= eps, x[0] >= 1. - eps),
                 np.logical_or(x[1] <= eps, x[1] >= 1. - eps)
