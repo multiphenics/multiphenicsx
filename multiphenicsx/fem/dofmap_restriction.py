@@ -10,7 +10,6 @@ import typing
 import dolfinx.cpp as dcpp
 import dolfinx.fem
 import numpy as np
-import numpy.typing
 
 from multiphenicsx.cpp import cpp_library as mcpp
 

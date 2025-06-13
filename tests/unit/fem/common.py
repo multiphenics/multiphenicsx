@@ -11,7 +11,6 @@ import basix.ufl
 import dolfinx.fem
 import dolfinx.mesh
 import numpy as np
-import numpy.typing
 
 SubdomainType = typing.Callable[[np.typing.NDArray[np.float64]], np.typing.NDArray[np.bool_]]
 FunctionSpaceGeneratorType = typing.Callable[[dolfinx.mesh.Mesh], dolfinx.fem.FunctionSpace]

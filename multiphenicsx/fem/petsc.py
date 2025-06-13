@@ -16,7 +16,6 @@ import dolfinx.fem.assemble
 import dolfinx.la
 import dolfinx.la.petsc
 import numpy as np
-import numpy.typing
 import petsc4py.PETSc
 
 from multiphenicsx.cpp import cpp_library as mcpp
