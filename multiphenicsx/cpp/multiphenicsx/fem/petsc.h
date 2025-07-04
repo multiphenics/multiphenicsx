@@ -12,6 +12,7 @@
 #include <dolfinx/la/petsc.h>
 #include <memory>
 #include <multiphenicsx/fem/utils.h>
+#include <optional>
 #include <petscmat.h>
 #include <petscvec.h>
 #include <vector>
@@ -48,7 +49,7 @@ Mat create_matrix(
     const std::array<int, 2> index_maps_bs,
     std::array<std::span<const std::int32_t>, 2> dofmaps_list,
     std::array<std::span<const std::size_t>, 2> dofmaps_bounds,
-    std::string matrix_type = std::string())
+    std::optional<std::string> matrix_type = std::nullopt)
 {
   dolfinx::la::SparsityPattern pattern
       = multiphenicsx::fem::create_sparsity_pattern(
@@ -86,7 +87,7 @@ Mat create_matrix_block(
     const std::array<std::vector<int>, 2> index_maps_bs,
     std::array<std::vector<std::span<const std::int32_t>>, 2> dofmaps_list,
     std::array<std::vector<std::span<const std::size_t>>, 2> dofmaps_bounds,
-    std::string matrix_type = std::string())
+    std::optional<std::string> matrix_type = std::nullopt)
 {
   std::size_t rows = index_maps[0].size();
   assert(index_maps_bs[0].size() == rows);
@@ -227,7 +228,8 @@ Mat create_matrix_nest(
     const std::array<std::vector<int>, 2> index_maps_bs,
     std::array<std::vector<std::span<const std::int32_t>>, 2> dofmaps_list,
     std::array<std::vector<std::span<const std::size_t>>, 2> dofmaps_bounds,
-    const std::vector<std::vector<std::string>>& matrix_types)
+    std::optional<std::vector<std::vector<std::optional<std::string>>>>
+        matrix_types)
 {
   std::size_t rows = index_maps[0].size();
   assert(index_maps_bs[0].size() == rows);
@@ -237,10 +239,6 @@ Mat create_matrix_nest(
   assert(index_maps_bs[1].size() == cols);
   assert(dofmaps_list[1].size() == cols);
   assert(dofmaps_bounds[1].size() == cols);
-  std::vector<std::vector<std::string>> _matrix_types(
-      rows, std::vector<std::string>(cols));
-  if (!matrix_types.empty())
-    _matrix_types = matrix_types;
 
   // Loop over each form and create matrix
   std::vector<Mat> mats(rows * cols, nullptr);
@@ -251,12 +249,14 @@ Mat create_matrix_nest(
     {
       if (const dolfinx::fem::Form<PetscScalar, T>* form = a[i][j]; form)
       {
+        std::optional<std::string> matrix_type_ij = std::nullopt;
+        if (matrix_types)
+          matrix_type_ij = matrix_types->at(i).at(j);
         mats[i * cols + j] = multiphenicsx::fem::petsc::create_matrix(
             *form, {{index_maps[0][i], index_maps[1][j]}},
             {{index_maps_bs[0][i], index_maps_bs[1][j]}},
             {{dofmaps_list[0][i], dofmaps_list[1][j]}},
-            {{dofmaps_bounds[0][i], dofmaps_bounds[1][j]}},
-            _matrix_types[i][j]);
+            {{dofmaps_bounds[0][i], dofmaps_bounds[1][j]}}, matrix_type_ij);
         mesh = form->mesh();
       }
     }

@@ -17,6 +17,7 @@
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/array.h>
 #include <nanobind/stl/complex.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
@@ -109,7 +110,7 @@ void fem_petsc_module(nb::module_& m)
          std::array<nb::ndarray<const std::size_t, nb::ndim<1>, nb::c_contig>,
                     2>
              dofmaps_bounds_,
-         const std::string& matrix_type)
+         std::optional<std::string> matrix_type)
       {
         auto index_maps = convert_shared_ptr_to_reference_wrapper(index_maps_);
         auto dofmaps_list = convert_ndarray_to_span(dofmaps_list_);
@@ -120,7 +121,7 @@ void fem_petsc_module(nb::module_& m)
       },
       nb::rv_policy::take_ownership, nb::arg("a"), nb::arg("index_maps"),
       nb::arg("index_maps_bs"), nb::arg("dofmaps_list"),
-      nb::arg("dofmaps_bounds"), nb::arg("matrix_type") = std::string(),
+      nb::arg("dofmaps_bounds"), nb::arg("matrix_type") = nb::none(),
       "Create a PETSc Mat for bilinear form.");
   m.def(
       "create_matrix_block",
@@ -137,7 +138,7 @@ void fem_petsc_module(nb::module_& m)
                                             nb::c_contig>>,
                     2>
              dofmaps_bounds_,
-         const std::string& matrix_type)
+         std::optional<std::string> matrix_type)
       {
         auto index_maps = convert_shared_ptr_to_reference_wrapper(index_maps_);
         auto dofmaps_list = convert_ndarray_to_span(dofmaps_list_);
@@ -148,7 +149,7 @@ void fem_petsc_module(nb::module_& m)
       },
       nb::rv_policy::take_ownership, nb::arg("a"), nb::arg("index_maps"),
       nb::arg("index_maps_bs"), nb::arg("dofmaps_list"),
-      nb::arg("dofmaps_bounds"), nb::arg("matrix_type") = std::string(),
+      nb::arg("dofmaps_bounds"), nb::arg("matrix_type") = nb::none(),
       "Create monolithic sparse matrix for stacked bilinear forms.");
   m.def(
       "create_matrix_nest",
@@ -165,7 +166,8 @@ void fem_petsc_module(nb::module_& m)
                                             nb::c_contig>>,
                     2>
              dofmaps_bounds_,
-         const std::vector<std::vector<std::string>>& matrix_types)
+         std::optional<std::vector<std::vector<std::optional<std::string>>>>
+             matrix_types)
       {
         auto index_maps = convert_shared_ptr_to_reference_wrapper(index_maps_);
         auto dofmaps_list = convert_ndarray_to_span(dofmaps_list_);
@@ -176,8 +178,7 @@ void fem_petsc_module(nb::module_& m)
       },
       nb::rv_policy::take_ownership, nb::arg("a"), nb::arg("index_maps"),
       nb::arg("index_maps_bs"), nb::arg("dofmaps_list"),
-      nb::arg("dofmaps_bounds"),
-      nb::arg("matrix_types") = std::vector<std::vector<std::string>>(),
+      nb::arg("dofmaps_bounds"), nb::arg("matrix_types") = nb::none(),
       "Create nested sparse matrix for bilinear forms.");
 }
 
