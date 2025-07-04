@@ -230,12 +230,33 @@ def get_block_bilinear_form(V1: dolfinx.fem.FunctionSpace, V2: dolfinx.fem.Funct
     return dolfinx.fem.form(block_form)  # type: ignore[no-any-return]
 
 
-def get_mat_types() -> tuple[typing.Optional[str], ...]:
+def get_vec_types(plain: bool) -> tuple[typing.Optional[str], ...]:
+    """Generate vector types to be used in test."""
+    if plain:
+        return (
+            None,  # default, synonim of mpi
+            "mpi"
+        )
+    else:
+        return (
+            # None,  # not valid
+            "mpi",  # block vector
+            "nest"  # nest vector
+        )
+
+def get_mat_types(plain: bool) -> tuple[typing.Optional[typing.Union[str, list[list[str]]]], ...]:
     """Generate matrix types to be used in test."""
-    return (
+    mat_types = (
         None,
         "seqaij" if mpi4py.MPI.COMM_WORLD.size == 1 else "mpiaij"
     )
+    if not plain:
+        mat_types = (  # type: ignore[assignment]
+            *mat_types,
+            "nest",
+            [["seqaij" if mpi4py.MPI.COMM_WORLD.size == 1 else "mpiaij" for j in range(2)] for i in range(2)]
+        )
+    return mat_types
 
 
 def locate_boundary_dofs(
@@ -436,25 +457,82 @@ def assert_matrix_equal(  # type: ignore[no-any-unimported]
     restriction argument and the matrix resulting from the assembly of the same bilinear form with empty
     restriction argument accompanied by a postprocessing which manually removes discarded rows/cols
     """
-    # Gather global representation of provided matrices
-    unrestricted_matrix_global = to_numpy_matrix(unrestricted_matrix)
-    restricted_matrix_global = to_numpy_matrix(restricted_matrix)
-    # Gather global map from restricted dofs to unrestricted dofs
-    assert isinstance(dofmap_restriction, tuple)
-    assert len(dofmap_restriction) == 2
-    restricted_to_unrestricted_global = [
-        get_global_restricted_to_unrestricted(dofmap_restriction[0], restricted_matrix.comm.tompi4py()),
-        get_global_restricted_to_unrestricted(dofmap_restriction[1], restricted_matrix.comm.tompi4py())
-    ]
-    assert restricted_matrix_global.shape[0] == len(restricted_to_unrestricted_global[0])
-    assert restricted_matrix_global.shape[1] == len(restricted_to_unrestricted_global[1])
-    # Manually discard rows and cols from global representation of unrestricted matrix
-    restricted_matrix_global_expected = restricted_matrix_global * 0.
-    for (restricted_i, unrestricted_i) in restricted_to_unrestricted_global[0].items():
-        for (restricted_j, unrestricted_j) in restricted_to_unrestricted_global[1].items():
-            restricted_matrix_global_expected[restricted_i, restricted_j] = unrestricted_matrix_global[
-                unrestricted_i, unrestricted_j]
-    assert np.allclose(restricted_matrix_global, restricted_matrix_global_expected)
+    if unrestricted_matrix.getType() == petsc4py.PETSc.Mat.Type.NEST:
+        row_is, col_is = unrestricted_matrix.getNestISs()
+        for i in range(len(row_is)):
+            for j in range(len(col_is)):
+                unrestricted_matrix_ij = unrestricted_matrix.getNestSubMatrix(i, j)
+                restricted_matrix_ij = restricted_matrix.getNestSubMatrix(i, j)
+                assert_matrix_equal(unrestricted_matrix_ij, restricted_matrix_ij,
+                                    (dofmap_restriction[0][i], dofmap_restriction[1][j]))
+    else:
+        # Gather global representation of provided matrices
+        unrestricted_matrix_global = to_numpy_matrix(unrestricted_matrix)
+        restricted_matrix_global = to_numpy_matrix(restricted_matrix)
+        # Gather global map from restricted dofs to unrestricted dofs
+        assert isinstance(dofmap_restriction, tuple)
+        assert len(dofmap_restriction) == 2
+        restricted_to_unrestricted_global = [
+            get_global_restricted_to_unrestricted(dofmap_restriction[0], restricted_matrix.comm.tompi4py()),
+            get_global_restricted_to_unrestricted(dofmap_restriction[1], restricted_matrix.comm.tompi4py())
+        ]
+        assert restricted_matrix_global.shape[0] == len(restricted_to_unrestricted_global[0])
+        assert restricted_matrix_global.shape[1] == len(restricted_to_unrestricted_global[1])
+        # Manually discard rows and cols from global representation of unrestricted matrix
+        restricted_matrix_global_expected = restricted_matrix_global * 0.
+        for (restricted_i, unrestricted_i) in restricted_to_unrestricted_global[0].items():
+            for (restricted_j, unrestricted_j) in restricted_to_unrestricted_global[1].items():
+                restricted_matrix_global_expected[restricted_i, restricted_j] = unrestricted_matrix_global[
+                    unrestricted_i, unrestricted_j]
+        assert np.allclose(restricted_matrix_global, restricted_matrix_global_expected)
+
+
+def ghost_update(  # type: ignore[no-any-unimported]
+    x: petsc4py.PETSc.Vec, addv: petsc4py.PETSc.InsertMode, mode: petsc4py.PETSc.ScatterMode
+) -> None:
+    """Do a ghost update of a PETSc vector."""
+    if x.getType() == petsc4py.PETSc.Vec.Type.NEST:
+        for x_sub in x.getNestSubVecs():
+            x_sub.ghostUpdate(addv=addv, mode=mode)
+            x_sub.destroy()
+    else:
+        x.ghostUpdate(addv=addv, mode=mode)
+
+
+def create_vector_from_dofmap(  # type: ignore[no-any-unimported]
+    dofmap: typing.Union[dolfinx.fem.DofMap, dolfinx.cpp.fem.DofMap, multiphenicsx.fem.DofMapRestriction]
+) -> petsc4py.PETSc.Vec:
+    """Create a vector from a DofMap or DofMapRestriction, rather than a form."""
+    return dolfinx.la.petsc.create_vector(dofmap.index_map, dofmap.index_map_bs)
+
+
+def create_vector_from_dofmaps(  # type: ignore[no-any-unimported]
+    dofmaps: list[
+        typing.Union[dolfinx.fem.DofMap, dolfinx.cpp.fem.DofMap, multiphenicsx.fem.DofMapRestriction]],
+    vec_type: str
+) -> petsc4py.PETSc.Vec:
+    """Create a vector from two DofMap or DofMapRestriction, rather than a form."""
+    if vec_type == "mpi":
+        return dolfinx.cpp.fem.petsc.create_vector_block(
+            [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps])
+    elif vec_type == "nest":
+        return dolfinx.cpp.fem.petsc.create_vector_nest(
+            [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps])
+    else:
+        raise RuntimeError("Invalid vector type")
+
+def attach_attributes_to_solution_block_vector(  # type: ignore[no-any-unimported]
+    solution: petsc4py.PETSc.Vec, fem_module: types.ModuleType, block_linear_form: dolfinx.fem.Form
+) -> None:
+    """Attach the expected attributes to manually created block vectors."""
+    if fem_module == dolfinx.fem:
+        # dolfinx.fem.petsc assembly expects block vector to have an additional _blocks attribute
+        dolfinx.fem.petsc._assign_block_data(block_linear_form, solution)  # type: ignore[arg-type]
+    else:
+        # multiphenicsx.fem.petsc assembly expects block vector to have an additional _dofmaps attribute
+        function_spaces = multiphenicsx.fem.petsc._get_block_function_spaces(block_linear_form)  # type: ignore
+        dofmaps = [function_space.dofmap for function_space in function_spaces]
+        solution.setAttr("_dofmaps", dofmaps)
 
 
 @pytest.mark.parametrize("subdomain", get_subdomains())
@@ -464,13 +542,15 @@ def assert_matrix_equal(  # type: ignore[no-any-unimported]
     "apply_set_dirichlet_bcs_nonlinear_arguments", get_apply_set_boundary_conditions_nonlinear_arguments())
 @pytest.mark.parametrize("unrestricted_fem_module", (dolfinx.fem, multiphenicsx.fem))
 @pytest.mark.parametrize("restricted_fem_module", (multiphenicsx.fem, ))
-def test_vector_assembly_with_restriction(
+@pytest.mark.parametrize("vec_type", get_vec_types(True))
+def test_plain_vector_assembly_with_restriction(
     mesh: dolfinx.mesh.Mesh, subdomain: typing.Optional[common.SubdomainType],
     FunctionSpace: common.FunctionSpaceGeneratorType, dirichlet_bcs: DirichletBCsGeneratorType,
     apply_set_dirichlet_bcs_nonlinear_arguments: ApplySetDirichletBCsNonlinearArgumentsType,
-    unrestricted_fem_module: types.ModuleType, restricted_fem_module: types.ModuleType
+    unrestricted_fem_module: types.ModuleType, restricted_fem_module: types.ModuleType,
+    vec_type: str
 ) -> None:
-    """Test assembly of a linear form with restrictions."""
+    """Test assembly of a single linear form with restrictions."""
     V = FunctionSpace(mesh)
     active_dofs = common.ActiveDofs(V, subdomain)
     dofmap_restriction = restricted_fem_module.DofMapRestriction(V.dofmap, active_dofs)
@@ -478,27 +558,30 @@ def test_vector_assembly_with_restriction(
     bilinear_form = get_bilinear_form(V)
     bcs = dirichlet_bcs(V)
     # Assembly without BCs
-    unrestricted_vector = unrestricted_fem_module.petsc.assemble_vector(linear_form)
-    unrestricted_vector.ghostUpdate(
-        addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
-    restricted_vector = restricted_fem_module.petsc.assemble_vector(linear_form, restriction=dofmap_restriction)
-    restricted_vector.ghostUpdate(
-        addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
+    unrestricted_vector = unrestricted_fem_module.petsc.assemble_vector(
+        linear_form, kind=vec_type)
+    ghost_update(
+        unrestricted_vector, addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
+    restricted_vector = restricted_fem_module.petsc.assemble_vector(
+        linear_form, kind=vec_type, restriction=dofmap_restriction)
+    ghost_update(
+        restricted_vector, addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
     assert_vector_equal(unrestricted_vector, restricted_vector, dofmap_restriction)
     unrestricted_vector.destroy()
     restricted_vector.destroy()
     # BC application for linear problems
-    unrestricted_vector_linear = unrestricted_fem_module.petsc.assemble_vector(linear_form)
+    unrestricted_vector_linear = unrestricted_fem_module.petsc.assemble_vector(
+        linear_form, kind=vec_type)
     unrestricted_fem_module.petsc.apply_lifting(
         unrestricted_vector_linear, [bilinear_form], [bcs])
-    unrestricted_vector_linear.ghostUpdate(
-        addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
+    ghost_update(
+        unrestricted_vector_linear, addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
     restricted_vector_linear = restricted_fem_module.petsc.assemble_vector(
-        linear_form, restriction=dofmap_restriction)
+        linear_form, kind=vec_type, restriction=dofmap_restriction)
     restricted_fem_module.petsc.apply_lifting(
         restricted_vector_linear, [bilinear_form], [bcs], restriction=dofmap_restriction)
-    restricted_vector_linear.ghostUpdate(
-        addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
+    ghost_update(
+        restricted_vector_linear, addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
     assert_vector_equal(unrestricted_vector_linear, restricted_vector_linear, dofmap_restriction)
     unrestricted_fem_module.petsc.set_bc(unrestricted_vector_linear, bcs)
     restricted_fem_module.petsc.set_bc(restricted_vector_linear, bcs, restriction=dofmap_restriction)
@@ -506,10 +589,8 @@ def test_vector_assembly_with_restriction(
     unrestricted_vector_linear.destroy()
     restricted_vector_linear.destroy()
     # BC application for nonlinear problems
-    unrestricted_solution = dolfinx.la.petsc.create_vector(
-        V.dofmap.index_map, V.dofmap.index_map_bs)
-    restricted_solution = dolfinx.la.petsc.create_vector(
-        dofmap_restriction.index_map, dofmap_restriction.index_map_bs)
+    unrestricted_solution = create_vector_from_dofmap(V.dofmap)
+    restricted_solution = create_vector_from_dofmap(dofmap_restriction)
     bc_vector = get_function(V).x.petsc_vec
     with unrestricted_solution.localForm() as unrestricted_solution_local, \
             bc_vector.localForm() as function_local:
@@ -520,13 +601,14 @@ def test_vector_assembly_with_restriction(
         with restricted_fem_module.petsc.VecSubVectorWrapper(
                 restricted_solution, V.dofmap, dofmap_restriction) as restricted_solution_wrapper:
             restricted_solution_wrapper[:] = unrestricted_solution_local
-    unrestricted_vector_nonlinear = unrestricted_fem_module.petsc.assemble_vector(linear_form)
+    unrestricted_vector_nonlinear = unrestricted_fem_module.petsc.assemble_vector(
+        linear_form, kind=vec_type)
     unrestricted_fem_module.petsc.apply_lifting(
         unrestricted_vector_nonlinear, [bilinear_form], [bcs], [unrestricted_solution])
-    unrestricted_vector_nonlinear.ghostUpdate(
-        addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
+    ghost_update(
+        unrestricted_vector_nonlinear, addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
     restricted_vector_nonlinear = restricted_fem_module.petsc.assemble_vector(
-        linear_form, restriction=dofmap_restriction)
+        linear_form, kind=vec_type, restriction=dofmap_restriction)
     x0_arg, restriction_x0_arg = apply_set_dirichlet_bcs_nonlinear_arguments(
         unrestricted_solution, restricted_solution, dofmap_restriction)
     x0_arg_list = [x0_arg]
@@ -537,8 +619,8 @@ def test_vector_assembly_with_restriction(
     restricted_fem_module.petsc.apply_lifting(
         restricted_vector_nonlinear, [bilinear_form], [bcs], x0=x0_arg_list, restriction=dofmap_restriction,
         restriction_x0=restriction_x0_arg_list)
-    restricted_vector_nonlinear.ghostUpdate(
-        addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
+    ghost_update(
+        restricted_vector_nonlinear, addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
     assert_vector_equal(unrestricted_vector_nonlinear, restricted_vector_nonlinear, dofmap_restriction)
     unrestricted_fem_module.petsc.set_bc(unrestricted_vector_nonlinear, bcs, unrestricted_solution)
     restricted_fem_module.petsc.set_bc(
@@ -559,84 +641,17 @@ def test_vector_assembly_with_restriction(
     "apply_set_dirichlet_bcs_nonlinear_arguments", get_apply_set_boundary_conditions_nonlinear_arguments())
 @pytest.mark.parametrize("unrestricted_fem_module", (dolfinx.fem, multiphenicsx.fem))
 @pytest.mark.parametrize("restricted_fem_module", (multiphenicsx.fem, ))
-def test_block_vector_assembly_with_restriction(
+@pytest.mark.parametrize("vec_type", get_vec_types(False))
+def test_block_nest_vector_assembly_with_restriction(
     mesh: dolfinx.mesh.Mesh,
     subdomains: tuple[typing.Optional[common.SubdomainType], typing.Optional[common.SubdomainType]],
     FunctionSpaces: tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType],
     dirichlet_bcs: DirichletBCsPairGeneratorType,
     apply_set_dirichlet_bcs_nonlinear_arguments: ApplySetDirichletBCsNonlinearArgumentsType,
-    unrestricted_fem_module: types.ModuleType, restricted_fem_module: types.ModuleType
+    unrestricted_fem_module: types.ModuleType, restricted_fem_module: types.ModuleType,
+    vec_type: str
 ) -> None:
-    """Test block assembly of a two-by-one block linear form with restrictions."""
-    V = [FunctionSpace(mesh) for FunctionSpace in FunctionSpaces]
-    dofmaps = [V_.dofmap for V_ in V]
-    active_dofs = [common.ActiveDofs(V_, subdomain) for (V_, subdomain) in zip(V, subdomains)]
-    dofmap_restriction = [
-        restricted_fem_module.DofMapRestriction(V_.dofmap, active_dofs_) for (V_, active_dofs_) in zip(V, active_dofs)]
-    block_linear_form = get_block_linear_form(*V)
-    block_bilinear_form = get_block_bilinear_form(*V)
-    bcs = [bc for bcs in dirichlet_bcs(*V) for bc in bcs]
-    # Assembly for linear problems
-    unrestricted_vector_linear = unrestricted_fem_module.petsc.assemble_vector_block(
-        block_linear_form, block_bilinear_form, bcs=bcs)
-    restricted_vector_linear = restricted_fem_module.petsc.assemble_vector_block(
-        block_linear_form, block_bilinear_form, bcs=bcs, restriction=dofmap_restriction)
-    assert_vector_equal(unrestricted_vector_linear, restricted_vector_linear, dofmap_restriction)
-    unrestricted_vector_linear.destroy()
-    restricted_vector_linear.destroy()
-    # Assembly for nonlinear problems
-    unrestricted_solution = dolfinx.cpp.fem.petsc.create_vector_block(
-        [(V_.dofmap.index_map, V_.dofmap.index_map_bs) for V_ in V])
-    restricted_solution = dolfinx.cpp.fem.petsc.create_vector_block(
-        [(restriction.index_map, restriction.index_map_bs) for restriction in dofmap_restriction])
-    with restricted_fem_module.petsc.BlockVecSubVectorWrapper(
-            unrestricted_solution, dofmaps) as unrestricted_solution_wrapper:
-        for (active_dofs_sub, unrestricted_solution_sub_local, function_sub, dofmap_sub) in zip(
-                active_dofs, unrestricted_solution_wrapper, get_function_pair(*V), dofmaps):
-            active_dofs_sub_bs = [
-                dofmap_sub.index_map_bs * d + s
-                for d in active_dofs_sub.astype(np.int32) for s in range(dofmap_sub.index_map_bs)]
-            function_sub_vector = function_sub.x.petsc_vec
-            with function_sub_vector.localForm() as function_sub_local:
-                unrestricted_solution_sub_local[active_dofs_sub_bs] = function_sub_local[active_dofs_sub_bs]
-            function_sub_vector.destroy()
-    with restricted_fem_module.petsc.BlockVecSubVectorWrapper(
-            restricted_solution, dofmaps, dofmap_restriction) as restricted_solution_wrapper, \
-            restricted_fem_module.petsc.BlockVecSubVectorReadWrapper(
-                unrestricted_solution, dofmaps) as unrestricted_solution_wrapper:
-        for (restricted_solution_sub, unrestricted_solution_sub) in zip(
-                restricted_solution_wrapper, unrestricted_solution_wrapper):
-            restricted_solution_sub[:] = unrestricted_solution_sub
-    unrestricted_vector_nonlinear = unrestricted_fem_module.petsc.assemble_vector_block(
-        block_linear_form, block_bilinear_form, bcs=bcs, x0=unrestricted_solution)
-    x0_arg, restriction_x0_arg = apply_set_dirichlet_bcs_nonlinear_arguments(
-        unrestricted_solution, restricted_solution, dofmap_restriction)
-    restricted_vector_nonlinear = restricted_fem_module.petsc.assemble_vector_block(
-        block_linear_form, block_bilinear_form, bcs=bcs, x0=x0_arg, restriction=dofmap_restriction,
-        restriction_x0=restriction_x0_arg)
-    assert_vector_equal(unrestricted_vector_nonlinear, restricted_vector_nonlinear, dofmap_restriction)
-    unrestricted_vector_nonlinear.destroy()
-    restricted_vector_nonlinear.destroy()
-    unrestricted_solution.destroy()
-    restricted_solution.destroy()
-
-
-@pytest.mark.parametrize("subdomains", get_subdomains_pairs())
-@pytest.mark.parametrize("FunctionSpaces", get_function_spaces_pairs())
-@pytest.mark.parametrize("dirichlet_bcs", get_boundary_conditions_pairs())
-@pytest.mark.parametrize(
-    "apply_set_dirichlet_bcs_nonlinear_arguments", get_apply_set_boundary_conditions_nonlinear_arguments())
-@pytest.mark.parametrize("unrestricted_fem_module", (dolfinx.fem, multiphenicsx.fem))
-@pytest.mark.parametrize("restricted_fem_module", (multiphenicsx.fem, ))
-def test_nest_vector_assembly_with_restriction(
-    mesh: dolfinx.mesh.Mesh,
-    subdomains: tuple[typing.Optional[common.SubdomainType], typing.Optional[common.SubdomainType]],
-    FunctionSpaces: tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType],
-    dirichlet_bcs: DirichletBCsPairGeneratorType,
-    apply_set_dirichlet_bcs_nonlinear_arguments: ApplySetDirichletBCsNonlinearArgumentsType,
-    unrestricted_fem_module: types.ModuleType, restricted_fem_module: types.ModuleType
-) -> None:
-    """Test nest assembly of a two-by-one block linear form with restrictions."""
+    """Test block/nest assembly of a two-by-one block linear form with restrictions."""
     V = [FunctionSpace(mesh) for FunctionSpace in FunctionSpaces]
     dofmaps = [V_.dofmap for V_ in V]
     active_dofs = [common.ActiveDofs(V_, subdomain) for (V_, subdomain) in zip(V, subdomains)]
@@ -647,53 +662,50 @@ def test_nest_vector_assembly_with_restriction(
     bcs_pair = dirichlet_bcs(*V)
     bcs_flattened = [bc for bcs in bcs_pair for bc in bcs]
     # Assembly without BCs
-    unrestricted_vector = unrestricted_fem_module.petsc.assemble_vector_nest(
-        block_linear_form)
-    for unrestricted_vector_sub in unrestricted_vector.getNestSubVecs():
-        unrestricted_vector_sub.ghostUpdate(
-            addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
-        unrestricted_vector_sub.destroy()
-    restricted_vector = restricted_fem_module.petsc.assemble_vector_nest(
-        block_linear_form, restriction=dofmap_restriction)
-    for restricted_vector_sub in restricted_vector.getNestSubVecs():
-        restricted_vector_sub.ghostUpdate(
-            addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
-        restricted_vector_sub.destroy()
+    unrestricted_vector = unrestricted_fem_module.petsc.assemble_vector(
+        block_linear_form, kind=vec_type)
+    ghost_update(
+        unrestricted_vector, addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
+    restricted_vector = restricted_fem_module.petsc.assemble_vector(
+        block_linear_form, kind=vec_type, restriction=dofmap_restriction)
+    ghost_update(
+        restricted_vector, addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
     assert_vector_equal(unrestricted_vector, restricted_vector, dofmap_restriction)
     unrestricted_vector.destroy()
     restricted_vector.destroy()
     # BC application for linear problems
-    unrestricted_vector_linear = unrestricted_fem_module.petsc.assemble_vector_nest(
-        block_linear_form)
-    unrestricted_fem_module.petsc.apply_lifting_nest(
+    unrestricted_vector_linear = unrestricted_fem_module.petsc.assemble_vector(
+        block_linear_form, kind=vec_type)
+    unrestricted_fem_module.petsc.apply_lifting(
         unrestricted_vector_linear, block_bilinear_form, bcs_flattened)
-    for unrestricted_vector_sub in unrestricted_vector_linear.getNestSubVecs():
-        unrestricted_vector_sub.ghostUpdate(
-            addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
-        unrestricted_vector_sub.destroy()
-    restricted_vector_linear = restricted_fem_module.petsc.assemble_vector_nest(
-        block_linear_form, restriction=dofmap_restriction)
-    restricted_fem_module.petsc.apply_lifting_nest(
+    ghost_update(
+        unrestricted_vector_linear, addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
+    restricted_vector_linear = restricted_fem_module.petsc.assemble_vector(
+        block_linear_form, kind=vec_type, restriction=dofmap_restriction)
+    restricted_fem_module.petsc.apply_lifting(
         restricted_vector_linear, block_bilinear_form, bcs_flattened, restriction=dofmap_restriction)
-    for restricted_vector_sub in restricted_vector_linear.getNestSubVecs():
-        restricted_vector_sub.ghostUpdate(
-            addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
-        restricted_vector_sub.destroy()
+    ghost_update(
+        restricted_vector_linear, addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
     assert_vector_equal(unrestricted_vector_linear, restricted_vector_linear, dofmap_restriction)
-    unrestricted_fem_module.petsc.set_bc_nest(
+    unrestricted_fem_module.petsc.set_bc(
         unrestricted_vector_linear, bcs_pair)
-    restricted_fem_module.petsc.set_bc_nest(
+    restricted_fem_module.petsc.set_bc(
         restricted_vector_linear, bcs_pair, restriction=dofmap_restriction)
     assert_vector_equal(unrestricted_vector_linear, restricted_vector_linear, dofmap_restriction)
     unrestricted_vector_linear.destroy()
     restricted_vector_linear.destroy()
-    # BC application for nonlinear problems
-    unrestricted_solution = dolfinx.cpp.fem.petsc.create_vector_nest(
-        [(V_.dofmap.index_map, V_.dofmap.index_map_bs) for V_ in V])
-    restricted_solution = dolfinx.cpp.fem.petsc.create_vector_nest(
-        [(restriction.index_map, restriction.index_map_bs) for restriction in dofmap_restriction])
-    with restricted_fem_module.petsc.NestVecSubVectorWrapper(
-            unrestricted_solution, dofmaps) as unrestricted_solution_wrapper:
+    # Assembly for nonlinear problems
+    unrestricted_solution = create_vector_from_dofmaps([V_.dofmap for V_ in V], vec_type)
+    restricted_solution = create_vector_from_dofmaps(dofmap_restriction, vec_type)
+    if vec_type == "mpi":
+        attach_attributes_to_solution_block_vector(unrestricted_solution, unrestricted_fem_module, block_linear_form)
+        if unrestricted_fem_module == dolfinx.fem:
+            attach_attributes_to_solution_block_vector(unrestricted_solution, restricted_fem_module, block_linear_form)
+        attach_attributes_to_solution_block_vector(restricted_solution, restricted_fem_module, block_linear_form)
+        BlockNestVecSubVectorWrapper = restricted_fem_module.petsc.BlockVecSubVectorWrapper
+    else:
+        BlockNestVecSubVectorWrapper = restricted_fem_module.petsc.NestVecSubVectorWrapper
+    with BlockNestVecSubVectorWrapper(unrestricted_solution, dofmaps) as unrestricted_solution_wrapper:
         for (active_dofs_sub, unrestricted_solution_sub_local, function_sub, dofmap_sub) in zip(
                 active_dofs, unrestricted_solution_wrapper, get_function_pair(*V), dofmaps):
             active_dofs_sub_bs = [
@@ -703,36 +715,31 @@ def test_nest_vector_assembly_with_restriction(
             with function_sub_vector.localForm() as function_sub_local:
                 unrestricted_solution_sub_local[active_dofs_sub_bs] = function_sub_local[active_dofs_sub_bs]
             function_sub_vector.destroy()
-    with restricted_fem_module.petsc.NestVecSubVectorWrapper(
+    with BlockNestVecSubVectorWrapper(
             restricted_solution, dofmaps, dofmap_restriction) as restricted_solution_wrapper, \
-            restricted_fem_module.petsc.NestVecSubVectorReadWrapper(
-                unrestricted_solution, dofmaps) as unrestricted_solution_wrapper:
+            BlockNestVecSubVectorWrapper(unrestricted_solution, dofmaps) as unrestricted_solution_wrapper:
         for (restricted_solution_sub, unrestricted_solution_sub) in zip(
                 restricted_solution_wrapper, unrestricted_solution_wrapper):
             restricted_solution_sub[:] = unrestricted_solution_sub
-    unrestricted_vector_nonlinear = unrestricted_fem_module.petsc.assemble_vector_nest(
-        block_linear_form)
-    unrestricted_fem_module.petsc.apply_lifting_nest(
+    unrestricted_vector_nonlinear = unrestricted_fem_module.petsc.assemble_vector(
+        block_linear_form, kind=vec_type)
+    unrestricted_fem_module.petsc.apply_lifting(
         unrestricted_vector_nonlinear, block_bilinear_form, bcs_flattened, unrestricted_solution)
-    for unrestricted_vector_sub in unrestricted_vector_nonlinear.getNestSubVecs():
-        unrestricted_vector_sub.ghostUpdate(
-            addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
-        unrestricted_vector_sub.destroy()
-    restricted_vector_nonlinear = restricted_fem_module.petsc.assemble_vector_nest(
-        block_linear_form, restriction=dofmap_restriction)
+    ghost_update(
+        unrestricted_vector_nonlinear, addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
+    restricted_vector_nonlinear = restricted_fem_module.petsc.assemble_vector(
+        block_linear_form, kind=vec_type, restriction=dofmap_restriction)
     x0_arg, restriction_x0_arg = apply_set_dirichlet_bcs_nonlinear_arguments(
         unrestricted_solution, restricted_solution, dofmap_restriction)
-    restricted_fem_module.petsc.apply_lifting_nest(
+    restricted_fem_module.petsc.apply_lifting(
         restricted_vector_nonlinear, block_bilinear_form, bcs_flattened, x0=x0_arg, restriction=dofmap_restriction,
         restriction_x0=restriction_x0_arg)
-    for restricted_vector_sub in restricted_vector_nonlinear.getNestSubVecs():
-        restricted_vector_sub.ghostUpdate(
-            addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
-        restricted_vector_sub.destroy()
+    ghost_update(
+        restricted_vector_nonlinear, addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
     assert_vector_equal(unrestricted_vector_nonlinear, restricted_vector_nonlinear, dofmap_restriction)
-    unrestricted_fem_module.petsc.set_bc_nest(
+    unrestricted_fem_module.petsc.set_bc(
         unrestricted_vector_nonlinear, bcs_pair, unrestricted_solution)
-    restricted_fem_module.petsc.set_bc_nest(
+    restricted_fem_module.petsc.set_bc(
         restricted_vector_nonlinear, bcs_pair, x0=x0_arg, restriction=dofmap_restriction,
         restriction_x0=restriction_x0_arg)
     assert_vector_equal(unrestricted_vector_nonlinear, restricted_vector_nonlinear, dofmap_restriction)
@@ -747,28 +754,22 @@ def test_nest_vector_assembly_with_restriction(
 @pytest.mark.parametrize("dirichlet_bcs", get_boundary_conditions())
 @pytest.mark.parametrize("unrestricted_fem_module", (dolfinx.fem, multiphenicsx.fem))
 @pytest.mark.parametrize("restricted_fem_module", (multiphenicsx.fem, ))
-@pytest.mark.parametrize("mat_type", get_mat_types())
-def test_matrix_assembly_with_restriction(
+@pytest.mark.parametrize("mat_type", get_mat_types(True))
+def test_plain_matrix_assembly_with_restriction(
     mesh: dolfinx.mesh.Mesh, subdomain: typing.Optional[common.SubdomainType],
     FunctionSpace: common.FunctionSpaceGeneratorType, dirichlet_bcs: DirichletBCsGeneratorType,
-    unrestricted_fem_module: types.ModuleType, restricted_fem_module: types.ModuleType,
-    mat_type: str
+    unrestricted_fem_module: types.ModuleType, restricted_fem_module: types.ModuleType, mat_type: str
 ) -> None:
-    """Test assembly of a bilinear form with restrictions."""
+    """Test assembly of a single bilinear form with restrictions."""
     V = FunctionSpace(mesh)
     active_dofs = common.ActiveDofs(V, subdomain)
     dofmap_restriction = restricted_fem_module.DofMapRestriction(V.dofmap, active_dofs)
     form = get_bilinear_form(V)
     bcs = dirichlet_bcs(V)
-    if unrestricted_fem_module == multiphenicsx.fem:
-        unrestricted_matrix = unrestricted_fem_module.petsc.assemble_matrix(
-            form, bcs=bcs, mat_type=mat_type)
-    else:
-        unrestricted_matrix = unrestricted_fem_module.petsc.assemble_matrix(
-            form, bcs=bcs)  # dolfinx.fem.assemble_matrix does not support mat_type
+    unrestricted_matrix = unrestricted_fem_module.petsc.assemble_matrix(form, bcs=bcs, kind=mat_type)
     unrestricted_matrix.assemble()
     restricted_matrix = restricted_fem_module.petsc.assemble_matrix(
-        form, bcs=bcs, restriction=(dofmap_restriction, dofmap_restriction), mat_type=mat_type)
+        form, bcs=bcs, kind=mat_type, restriction=(dofmap_restriction, dofmap_restriction))
     restricted_matrix.assemble()
     assert_matrix_equal(unrestricted_matrix, restricted_matrix, (dofmap_restriction, dofmap_restriction))
     unrestricted_matrix.destroy()
@@ -780,75 +781,27 @@ def test_matrix_assembly_with_restriction(
 @pytest.mark.parametrize("dirichlet_bcs", get_boundary_conditions_pairs())
 @pytest.mark.parametrize("unrestricted_fem_module", (dolfinx.fem, multiphenicsx.fem))
 @pytest.mark.parametrize("restricted_fem_module", (multiphenicsx.fem, ))
-@pytest.mark.parametrize("mat_type", get_mat_types())
-def test_block_matrix_assembly_with_restriction(
+@pytest.mark.parametrize("mat_type", get_mat_types(False))
+def test_block_nest_matrix_assembly_with_restriction(
     mesh: dolfinx.mesh.Mesh,
     subdomains: tuple[typing.Optional[common.SubdomainType], typing.Optional[common.SubdomainType]],
     FunctionSpaces: tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType],
     dirichlet_bcs: DirichletBCsPairGeneratorType, unrestricted_fem_module: types.ModuleType,
     restricted_fem_module: types.ModuleType, mat_type: str
 ) -> None:
-    """Test block assembly of a two-by-two block bilinear form with restrictions."""
+    """Test block/nest assembly of a two-by-two block bilinear form with restrictions."""
     V = [FunctionSpace(mesh) for FunctionSpace in FunctionSpaces]
     active_dofs = [common.ActiveDofs(V_, subdomain) for (V_, subdomain) in zip(V, subdomains)]
     dofmap_restriction = [
         restricted_fem_module.DofMapRestriction(V_.dofmap, active_dofs_) for (V_, active_dofs_) in zip(V, active_dofs)]
     block_form = get_block_bilinear_form(*V)
     bcs = [bc for bcs in dirichlet_bcs(*V) for bc in bcs]
-    if unrestricted_fem_module == multiphenicsx.fem:
-        unrestricted_matrix = unrestricted_fem_module.petsc.assemble_matrix_block(
-            block_form, bcs=bcs, mat_type=mat_type)
-    else:
-        unrestricted_matrix = unrestricted_fem_module.petsc.assemble_matrix_block(
-            block_form, bcs=bcs)  # dolfinx.fem.assemble_matrix_block does not support mat_type
+    unrestricted_matrix = unrestricted_fem_module.petsc.assemble_matrix(
+        block_form, bcs=bcs, kind=mat_type)
     unrestricted_matrix.assemble()
-    restricted_matrix = restricted_fem_module.petsc.assemble_matrix_block(
-        block_form, bcs=bcs, restriction=(dofmap_restriction, dofmap_restriction), mat_type=mat_type)
+    restricted_matrix = restricted_fem_module.petsc.assemble_matrix(
+        block_form, bcs=bcs, kind=mat_type, restriction=(dofmap_restriction, dofmap_restriction))
     restricted_matrix.assemble()
     assert_matrix_equal(unrestricted_matrix, restricted_matrix, (dofmap_restriction, dofmap_restriction))
-    unrestricted_matrix.destroy()
-    restricted_matrix.destroy()
-
-
-@pytest.mark.parametrize("subdomains", get_subdomains_pairs())
-@pytest.mark.parametrize("FunctionSpaces", get_function_spaces_pairs())
-@pytest.mark.parametrize("dirichlet_bcs", get_boundary_conditions_pairs())
-@pytest.mark.parametrize("unrestricted_fem_module", (dolfinx.fem, multiphenicsx.fem))
-@pytest.mark.parametrize("restricted_fem_module", (multiphenicsx.fem, ))
-@pytest.mark.parametrize("mat_type", get_mat_types())
-def test_nest_matrix_assembly_with_restriction(
-    mesh: dolfinx.mesh.Mesh,
-    subdomains: tuple[typing.Optional[common.SubdomainType], typing.Optional[common.SubdomainType]],
-    FunctionSpaces: tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType],
-    dirichlet_bcs: DirichletBCsPairGeneratorType, unrestricted_fem_module: types.ModuleType,
-    restricted_fem_module: types.ModuleType, mat_type: str
-) -> None:
-    """Test nest assembly of a two-by-two block bilinear form with restrictions."""
-    V = [FunctionSpace(mesh) for FunctionSpace in FunctionSpaces]
-    active_dofs = [common.ActiveDofs(V_, subdomain) for (V_, subdomain) in zip(V, subdomains)]
-    if mat_type is not None:
-        mat_types = [[mat_type for _ in V] for _ in V]
-    else:
-        mat_types = None
-    dofmap_restriction = [
-        restricted_fem_module.DofMapRestriction(V_.dofmap, active_dofs_) for (V_, active_dofs_) in zip(V, active_dofs)]
-    block_form = get_block_bilinear_form(*V)
-    bcs = [bc for bcs in dirichlet_bcs(*V) for bc in bcs]
-    if unrestricted_fem_module == multiphenicsx.fem:
-        unrestricted_matrix = unrestricted_fem_module.petsc.assemble_matrix_nest(
-            block_form, bcs=bcs, mat_types=mat_types)
-    else:
-        unrestricted_matrix = unrestricted_fem_module.petsc.assemble_matrix_nest(
-            block_form, bcs=bcs)  # dolfinx.fem.assemble_matrix_nest does not support mat_types
-    unrestricted_matrix.assemble()
-    restricted_matrix = restricted_fem_module.petsc.assemble_matrix_nest(
-        block_form, bcs=bcs, restriction=(dofmap_restriction, dofmap_restriction), mat_types=mat_types)
-    restricted_matrix.assemble()
-    for i in range(2):
-        for j in range(2):
-            unrestricted_matrix_ij = unrestricted_matrix.getNestSubMatrix(i, j)
-            restricted_matrix_ij = restricted_matrix.getNestSubMatrix(i, j)
-            assert_matrix_equal(unrestricted_matrix_ij, restricted_matrix_ij,
-                                (dofmap_restriction[i], dofmap_restriction[j]))
     unrestricted_matrix.destroy()
     restricted_matrix.destroy()
