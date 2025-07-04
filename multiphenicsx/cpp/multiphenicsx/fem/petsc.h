@@ -107,7 +107,7 @@ Mat create_matrix_block(
     {
       if (const dolfinx::fem::Form<PetscScalar, T>* form = a[row][col]; form)
       {
-        patterns[row].push_back(std::make_unique<la::SparsityPattern>(
+        patterns[row].push_back(std::make_unique<dolfinx::la::SparsityPattern>(
             multiphenicsx::fem::create_sparsity_pattern(
                 *form, {{index_maps[0][row], index_maps[1][col]}},
                 {{index_maps_bs[0][row], index_maps_bs[1][col]}},
@@ -244,7 +244,7 @@ Mat create_matrix_nest(
 
   // Loop over each form and create matrix
   std::vector<Mat> mats(rows * cols, nullptr);
-  std::shared_ptr<const mesh::Mesh<T>> mesh;
+  std::shared_ptr<const dolfinx::mesh::Mesh<T>> mesh;
   for (std::size_t i = 0; i < rows; ++i)
   {
     for (std::size_t j = 0; j < cols; ++j)
