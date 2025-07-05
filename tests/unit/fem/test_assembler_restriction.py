@@ -3,7 +3,7 @@
 # This file is part of multiphenicsx.
 #
 # SPDX-License-Identifier: LGPL-3.0-or-later
-"""Tests for multiphenicsx.fem.assemble module."""
+"""Tests for multiphenicsx.fem.petsc module, assembler functions."""
 
 import types
 import typing

@@ -14,14 +14,22 @@ import typing
 import dolfinx.cpp as dcpp
 import dolfinx.fem
 import dolfinx.fem.assemble
+import dolfinx.fem.petsc
 import dolfinx.la
 import dolfinx.la.petsc
 import numpy as np
 import numpy.typing as npt
 import petsc4py.PETSc
+import ufl
 
 from multiphenicsx.cpp import cpp_library as mcpp
 
+UflRank1FormsType = typing.Union[  # type: ignore[no-any-unimported]
+    ufl.Form, typing.Sequence[ufl.Form]
+]
+UflRank2FormsType = typing.Union[  # type: ignore[no-any-unimported]
+    ufl.Form, typing.Sequence[typing.Sequence[ufl.Form]]
+]
 DolfinxRank1FormsType = typing.Union[
     dolfinx.fem.Form, typing.Sequence[dolfinx.fem.Form]
 ]
@@ -980,14 +988,20 @@ class NestMatSubMatrixWrapper:
             for index0, _ in enumerate(self._dofmaps[0]):
                 for index1, _ in enumerate(self._dofmaps[1]):
                     A_sub = self._A.getNestSubMatrix(index0, index1)
-                    if self._restriction is None:
+                    if A_sub.handle == 0:
+                        # The submatrix corresponds to a None block. Do not try to wrap it,
+                        # simply use A_sub as it is, since the submatrix will never be used
+                        # in practice
                         wrapper_content = A_sub
                     else:
-                        wrapper = MatSubMatrixWrapper(
-                            A_sub,
-                            (self._dofmaps[0][index0], self._dofmaps[1][index1]),
-                            (self._restriction[0][index0], self._restriction[1][index1]))
-                        wrapper_content = wrapper_stack.enter_context(wrapper)  # type: ignore[arg-type]
+                        if self._restriction is None:
+                            wrapper_content = A_sub
+                        else:
+                            wrapper = MatSubMatrixWrapper(
+                                A_sub,
+                                (self._dofmaps[0][index0], self._dofmaps[1][index1]),
+                                (self._restriction[0][index0], self._restriction[1][index1]))
+                            wrapper_content = wrapper_stack.enter_context(wrapper)  # type: ignore[arg-type]
                     yield (index0, index1, wrapper_content)
                     A_sub.destroy()
 
@@ -1441,3 +1455,366 @@ def set_bc(  # type: ignore[no-any-unimported]
             for b_sub, bcs_sub, x0_sub in zip(block_b, bcs, block_x0):
                 for bc_sub in bcs_sub:  # type: ignore[attr-defined]
                     bc_sub.set(b_sub, x0_sub, alpha)
+
+# -- assign free function ---------------------------------------
+
+
+@functools.singledispatch
+def assign(  # type: ignore[no-any-unimported]
+    u: typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]],
+    x: petsc4py.PETSc.Vec, restriction: MultiphenicsxRank1RestrictionsType = None
+) -> None:
+    """
+    Assign :class:`Function` degrees-of-freedom to a vector.
+
+    Assigns degree-of-freedom values in ``u``, which is possibly a sequence of ``Function``s, to ``x``.
+    When ``u`` is a sequence of ``Function``s, degrees-of-freedom for the ``Function``s in ``u`` are
+    'stacked' and assigned to ``x``.
+
+    Parameters
+    ----------
+    u
+        ``Function`` (s) to assign degree-of-freedom value from.
+    x
+        Vector to assign degree-of-freedom values in ``u`` to.
+    restriction
+        The dofmap restriction used when creating the vector ``x``.
+        If not provided, ``x`` is assumed to be unrestricted.
+    """
+    if isinstance(u, collections.abc.Sequence):  # block or nest vector
+        if x.getType() == petsc4py.PETSc.Vec.Type().NEST:  # nest vector
+            BlockNestVecSubVectorWrapper = NestVecSubVectorWrapper
+        else:  # block vector
+            BlockNestVecSubVectorWrapper = BlockVecSubVectorWrapper
+        with BlockNestVecSubVectorWrapper(x, [ui.function_space.dofmap for ui in u], restriction) as x_wrapper:
+            for x_wrapper_local, sub_solution in zip(x_wrapper, u):
+                with sub_solution.x.petsc_vec.localForm() as sub_solution_local:
+                    x_wrapper_local[:] = sub_solution_local
+    else:
+        assert isinstance(u, dolfinx.fem.Function)
+        with VecSubVectorWrapper(x, u.function_space.dofmap, restriction) as x_wrapper_local:
+            with u.x.petsc_vec.localForm() as sub_solution_local:
+                x_wrapper_local[:] = sub_solution_local
+
+
+@assign.register(petsc4py.PETSc.Vec)
+def _(  # type: ignore[no-any-unimported]
+    x: petsc4py.PETSc.Vec, u: typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]],
+    restriction: MultiphenicsxRank1RestrictionsType = None
+) -> None:
+    """
+    Assign vector entries to :class:`Function` degrees-of-freedom.
+
+    Assigns values in ``x`` to the degrees-of-freedom of ``u``, which is possibly a Sequence of ``Function``s.
+    When ``u`` is a Sequence of ``Function``s, values in ``x`` are assigned block-wise to the ``Function``s.
+
+    Parameters
+    ----------
+    x
+        Vector with values to assign values from.
+    u
+        ``Function`` (s) to assign degree-of-freedom values to.
+    restriction
+        The dofmap restriction used when creating the vector ``x``.
+        If not provided, ``x`` is assumed to be unrestricted.
+    """
+    if isinstance(u, collections.abc.Sequence):  # block or nest vector
+        if x.getType() == petsc4py.PETSc.Vec.Type().NEST:  # nest vector
+            BlockNestVecSubVectorWrapper = NestVecSubVectorWrapper
+        else:  # block vector
+            BlockNestVecSubVectorWrapper = BlockVecSubVectorWrapper
+        with BlockNestVecSubVectorWrapper(x, [ui.function_space.dofmap for ui in u], restriction) as x_wrapper:
+            for x_wrapper_local, sub_solution in zip(x_wrapper, u):
+                with sub_solution.x.petsc_vec.localForm() as sub_solution_local:
+                    sub_solution_local[:] = x_wrapper_local
+    else:
+        assert isinstance(u, dolfinx.fem.Function)
+        with VecSubVectorWrapper(x, u.function_space.dofmap, restriction) as x_wrapper_local:
+            with u.x.petsc_vec.localForm() as sub_solution_local:
+                sub_solution_local[:] = x_wrapper_local
+
+
+# -- High-level interface for KSP ---------------------------------------
+
+
+class LinearProblem:
+    r"""
+    Class for solving a linear variational problem.
+
+    Solves of the form :math:`a(u, v) = L(v) \\,  \\forall v \\in V` using PETSc as a linear algebra backend.
+    """
+
+    def __init__(
+        self, a: UflRank2FormsType, L: UflRank1FormsType,
+        bcs: typing.Optional[typing.Sequence[dolfinx.fem.DirichletBC]] = None,
+        u: typing.Optional[typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]]] = None,
+        P: typing.Optional[UflRank2FormsType] = None, kind: DolfinxMatrixKindType = None,
+        petsc_options: typing.Optional[dict[str, typing.Any]] = None,
+        form_compiler_options: typing.Optional[dict[str, typing.Any]] = None,
+        jit_options: typing.Optional[dict[str, typing.Any]] = None,
+        restriction: MultiphenicsxRank1RestrictionsType = None
+    ) -> None:
+        """
+        Initialize solver for a linear variational problem.
+
+        Parameters
+        ----------
+        a
+            Bilinear UFL form or a nested sequence of bilinear forms, the left-hand side of the variational problem.
+        L
+            Linear UFL form or a sequence of linear forms, the right-hand side of the variational problem.
+        bcs
+            Sequence of Dirichlet boundary conditions to apply to
+            the variational problem and the preconditioner matrix.
+        u
+            Solution function. It is created if not provided.
+        P
+            Bilinear UFL form or a sequence of sequence of bilinear forms, used as a preconditioner.
+        kind
+            The PETSc matrix and vector type. See :func:`create_matrix` for options.
+        petsc_options
+            Options set on the underlying PETSc KSP.
+            For available choices for the 'petsc_options' kwarg, see the `PETSc KSP documentation
+            <https://petsc4py.readthedocs.io/en/stable/manual/ksp/>`_.
+            Options on other objects (matrices, vectors) should be set explicitly by the user.
+        form_compiler_options
+            Options used in FFCx compilation of all forms. Run ``ffcx --help`` at the commandline to see
+            all available options.
+        jit_options
+            Options used in CFFI JIT compilation of C code generated by FFCx. See `python/dolfinx/jit.py` for
+            all available options. Takes priority over all other option values.
+        restriction
+            A dofmap restriction. If not provided, the unrestricted problem will be solved.
+        """
+        self._a = dolfinx.fem.form(
+            a, dtype=petsc4py.PETSc.ScalarType, form_compiler_options=form_compiler_options, jit_options=jit_options
+        )
+        self._L = dolfinx.fem.form(
+            L, dtype=petsc4py.PETSc.ScalarType, form_compiler_options=form_compiler_options, jit_options=jit_options
+        )
+        self._A = create_matrix(self._a, kind=kind, restriction=(restriction, restriction))
+        self._preconditioner = dolfinx.fem.form(
+            P, dtype=petsc4py.PETSc.ScalarType, form_compiler_options=form_compiler_options, jit_options=jit_options
+        )
+        self._P_mat = (
+            create_matrix(self._preconditioner, kind=kind, restriction=(restriction, restriction))
+            if self._preconditioner is not None else None
+        )
+
+        # For nest matrices kind can be a nested list.
+        kind = "nest" if self.A.getType() == petsc4py.PETSc.Mat.Type.NEST else kind
+        assert kind is None or isinstance(kind, str)
+        self._b = create_vector(self.L, kind=kind, restriction=restriction)
+        self._x = create_vector(self.L, kind=kind, restriction=restriction)
+
+        if u is None:
+            # Extract function space for unknown from the right hand side of the equation.
+            if isinstance(L, collections.abc.Sequence):
+                self._u = [dolfinx.fem.Function(Li.arguments()[0].ufl_function_space()) for Li in L]
+            else:
+                self._u = dolfinx.fem.Function(L.arguments()[0].ufl_function_space())
+        else:  # pragma: no cover
+            self._u = u  # type: ignore[assignment]
+
+        self.bcs = bcs
+
+        if isinstance(self.u, collections.abc.Sequence):
+            comm = self.u[0].function_space.mesh.comm
+        else:
+            comm = self.u.function_space.mesh.comm
+
+        self._solver = petsc4py.PETSc.KSP().create(comm)
+        self.solver.setOperators(self.A, self.P_mat)
+
+        # Give PETSc objects a unique prefix
+        problem_prefix = f"multiphenicsx_linearproblem_{id(self)}_"
+        self.solver.setOptionsPrefix(problem_prefix)
+        self.A.setOptionsPrefix(f"{problem_prefix}A_")
+        self.b.setOptionsPrefix(f"{problem_prefix}b_")
+        self.x.setOptionsPrefix(f"{problem_prefix}x_")
+        if self.P_mat is not None:  # pragma: no cover
+            self.P_mat.setOptionsPrefix(f"{problem_prefix}P_mat_")
+
+        # Set options on KSP only
+        if petsc_options is not None:
+            opts = petsc4py.PETSc.Options()
+            opts.prefixPush(problem_prefix)
+
+            for k, v in petsc_options.items():
+                opts[k] = v
+
+            self.solver.setFromOptions()
+
+            # Tidy up global options
+            for k in petsc_options.keys():
+                del opts[k]
+
+            opts.prefixPop()
+
+        if self.P_mat is not None and kind == "nest":  # pragma: no cover
+            # Transfer nest IS on self.P_mat to PC of main KSP. This allows
+            # fieldsplit preconditioning to be applied, if desired.
+            nest_IS = self.P_mat.getNestISs()
+            fieldsplit_IS = tuple(
+                [
+                    (f"{u.name + '_' if u.name != 'f' else ''}{i}", IS)
+                    for i, (u, IS) in enumerate(zip(self.u, nest_IS[0]))
+                ]
+            )
+            self.solver.getPC().setFieldSplitIS(*fieldsplit_IS)
+
+        self._restriction = restriction
+
+    def __del__(self) -> None:
+        """Clean up PETSc data structures."""
+        self._solver.destroy()
+        self._A.destroy()
+        self._b.destroy()
+        self._x.destroy()
+        if self._P_mat is not None:  # pragma: no cover
+            self._P_mat.destroy()
+
+    def solve(self) -> tuple[typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]], int, int]:
+        """
+        Solve the problem and update the solution in the problem instance.
+
+        Returns
+        -------
+        :
+            The solution, convergence reason and number of KSP iterations.
+
+        Notes
+        -----
+        The user is responsible for asserting convergence of the KSP solver e.g. `assert converged_reason > 0`.
+        Alternatively, pass `"ksp_error_if_not_converged" : True` in `petsc_options`.
+        """
+        # Assemble lhs
+        self.A.zeroEntries()
+        assemble_matrix(
+            self.A, self.a, bcs=self.bcs, restriction=(self.restriction, self.restriction))  # type: ignore
+        self.A.assemble()
+
+        # Assemble preconditioner
+        if self.P_mat is not None:  # pragma: no cover
+            self.P_mat.zeroEntries()
+            assemble_matrix(
+                self.P_mat, self.preconditioner, bcs=self.bcs,  # type: ignore
+                restriction=(self.restriction, self.restriction))
+            self.P_mat.assemble()
+
+        # Assemble rhs
+        dolfinx.fem.petsc._zero_vector(self.b)
+        assemble_vector(self.b, self.L, restriction=self.restriction)  # type: ignore
+
+        # Apply boundary conditions to the rhs
+        if self.bcs is not None:
+            if isinstance(self.u, collections.abc.Sequence):  # block or nest
+                assert isinstance(self.a, collections.abc.Sequence)
+                function_spaces = _get_block_function_spaces(self.a)
+                bcs1 = dolfinx.fem.bcs_by_block(function_spaces[1], self.bcs)
+                apply_lifting(self.b, self.a, bcs=bcs1, restriction=self.restriction)
+                dolfinx.la.petsc._ghost_update(
+                    self.b, petsc4py.PETSc.InsertMode.ADD, petsc4py.PETSc.ScatterMode.REVERSE
+                )
+                bcs0 = dolfinx.fem.bcs_by_block(function_spaces[0], self.bcs)
+                set_bc(self.b, bcs0, restriction=self.restriction)
+            else:  # single
+                apply_lifting(self.b, [self.a], bcs=[self.bcs], restriction=self.restriction)  # type: ignore[arg-type]
+                dolfinx.la.petsc._ghost_update(
+                    self.b, petsc4py.PETSc.InsertMode.ADD, petsc4py.PETSc.ScatterMode.REVERSE
+                )
+                set_bc(self.b, self.bcs, restriction=self.restriction)
+        else:  # pragma: no cover
+            dolfinx.la.petsc._ghost_update(self.b, petsc4py.PETSc.InsertMode.ADD, petsc4py.PETSc.ScatterMode.REVERSE)
+
+        # Solve linear system and update ghost values in the solution
+        self.solver.solve(self.b, self.x)
+        dolfinx.la.petsc._ghost_update(self.x, petsc4py.PETSc.InsertMode.INSERT, petsc4py.PETSc.ScatterMode.FORWARD)
+        assign(self.x, self.u, self.restriction)
+        return self.u, self.solver.getConvergedReason(), self.solver.getIterationNumber()
+
+    @property
+    def L(self) -> DolfinxRank1FormsType:
+        """The compiled linear form representing the left-hand side."""
+        return self._L  # type: ignore[no-any-return]
+
+    @property
+    def a(self) -> DolfinxRank2FormsType:
+        """The compiled bilinear form representing the right-hand side."""
+        return self._a  # type: ignore[no-any-return]
+
+    @property
+    def preconditioner(self) -> DolfinxRank2FormsType:  # pragma: no cover
+        """The compiled bilinear form representing the preconditioner."""
+        return self._preconditioner  # type: ignore[no-any-return]
+
+    @property
+    def A(self) -> petsc4py.PETSc.Mat:  # type: ignore[no-any-unimported]
+        """
+        Left-hand side matrix.
+
+        Notes
+        -----
+        The matrix has an options prefix set.
+        """
+        return self._A
+
+    @property
+    def P_mat(self) -> petsc4py.PETSc.Mat:  # type: ignore[no-any-unimported]
+        """Preconditioner matrix.
+
+        Notes
+        -----
+        The matrix has an options prefix set.
+        """
+        return self._P_mat
+
+    @property
+    def b(self) -> petsc4py.PETSc.Vec:  # type: ignore[no-any-unimported]
+        """
+        Right-hand side vector.
+
+        Notes
+        -----
+        The vector has an options prefix set.
+        """
+        return self._b
+
+    @property
+    def x(self) -> petsc4py.PETSc.Vec:  # type: ignore[no-any-unimported]
+        """
+        Solution vector.
+
+        Notes
+        -----
+        This vector does not share memory with the solution Function `u`.
+        Furthermore, the vector has an options prefix set.
+        """
+        return self._x
+
+    @property
+    def solver(self) -> petsc4py.PETSc.KSP:  # type: ignore[no-any-unimported]
+        """
+        The PETSc KSP solver.
+
+        Notes
+        -----
+        The KSP solver has an options prefix set.
+        """
+        return self._solver
+
+    @property
+    def u(self) -> typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]]:
+        """
+        Solution function.
+
+        Notes
+        -----
+        This vector does not share memory with the solution vector `x`.
+        """
+        return self._u
+
+    @property
+    def restriction(self) -> MultiphenicsxRank1RestrictionsType:
+        """The dofmap restriction."""
+        return self._restriction
