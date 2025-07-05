@@ -1255,24 +1255,12 @@ def apply_lifting(  # type: ignore[no-any-unimported]
         then ``a`` is  a 2D array of forms, with the ``a[i]`` forms
         used to modify the block/nest vector ``b[i]``.
     bcs
-        Boundary conditions used to modify ``b`` (see
-        :func:`dolfinx.fem.apply_lifting`). Two cases are supported:
-
-        1. The boundary conditions ``bcs`` are a
-           'sequence-of-sequences' such that ``bcs[j]`` are the
-           Dirichlet boundary conditions associated with the forms in
-           the ``j`` th colulmn of ``a``. Helper functions exist to
-           create a sequence-of-sequences of `DirichletBC` from the 2D
-           ``a`` and a flat Sequence of `DirichletBC` objects ``bcs``::
-
-               bcs1 = fem.bcs_by_block(
-                fem.extract_function_spaces(a, 1), bcs
-               )
-
-        2. ``bcs`` is a sequence of :class:`dolfinx.fem.DirichletBC`
-           objects. The function deduces which `DiricletBC` objects
-           apply to each column of ``a`` by matching the
-           :class:`dolfinx.fem.FunctionSpace`.
+        Boundary conditions to apply. If ``b`` is nested or
+        blocked, ``bcs`` is a 2D array and ``bcs[i]`` are the
+        boundary conditions to apply to block/nest ``i``. Otherwise
+        ``bcs`` should be a sequence of ``DirichletBC``\s. For
+        block/nest problems, :func:`dolfinx.fem.bcs_by_block` can be
+        used to prepare the 2D array of ``DirichletBC`` objects.
     x0
         PETSc vector storing the solution to be subtracted to the Dirichlet values.
         Typically the current nonlinear solution in an incremental problem is provided as `x0`.
@@ -1326,7 +1314,6 @@ def apply_lifting(  # type: ignore[no-any-unimported]
         dofmaps = [function_space.dofmap for function_space in function_spaces[0]]
         dofmaps_x0 = [function_space.dofmap for function_space in function_spaces[1]]
 
-        bcs1 = dolfinx.fem.bcs_by_block(function_spaces[1], bcs)  # type: ignore[arg-type]
         if b.getType() == petsc4py.PETSc.Vec.Type.NEST:  # nest vector
             with NestVecSubVectorWrapper(b, dofmaps, restriction) as nest_b, \
                     NestVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0) as nest_x0:
@@ -1336,7 +1323,7 @@ def apply_lifting(  # type: ignore[no-any-unimported]
                     nest_x0_as_list = []
                 for b_sub, a_sub, constants_a, coeffs_a in zip(nest_b, a, constants, coeffs):
                     dolfinx.fem.assemble.apply_lifting(
-                        b_sub, a_sub, bcs1, nest_x0_as_list, alpha, constants_a, coeffs_a)  # type: ignore[arg-type]
+                        b_sub, a_sub, bcs, nest_x0_as_list, alpha, constants_a, coeffs_a)  # type: ignore[arg-type]
         else:  # block vector
             assert all(
                 _same_dofmap(b_dofmap, dofmap) for (b_dofmap, dofmap) in zip(b.getAttr("_dofmaps"), dofmaps))
@@ -1348,7 +1335,7 @@ def apply_lifting(  # type: ignore[no-any-unimported]
                     block_x0_as_list = []
                 for b_sub, a_sub, constant_a, coeff_a in zip(block_b, a, constants, coeffs):
                     dolfinx.fem.assemble.apply_lifting(
-                        b_sub, a_sub, bcs1, block_x0_as_list, alpha, constant_a, coeff_a)  # type: ignore[arg-type]
+                        b_sub, a_sub, bcs, block_x0_as_list, alpha, constant_a, coeff_a)  # type: ignore[arg-type]
 
 
 

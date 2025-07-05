@@ -659,8 +659,7 @@ def test_block_nest_vector_assembly_with_restriction(
         restricted_fem_module.DofMapRestriction(V_.dofmap, active_dofs_) for (V_, active_dofs_) in zip(V, active_dofs)]
     block_linear_form = get_block_linear_form(*V)
     block_bilinear_form = get_block_bilinear_form(*V)
-    bcs_pair = dirichlet_bcs(*V)
-    bcs_flattened = [bc for bcs in bcs_pair for bc in bcs]
+    bcs = dirichlet_bcs(*V)
     # Assembly without BCs
     unrestricted_vector = unrestricted_fem_module.petsc.assemble_vector(
         block_linear_form, kind=vec_type)
@@ -677,20 +676,20 @@ def test_block_nest_vector_assembly_with_restriction(
     unrestricted_vector_linear = unrestricted_fem_module.petsc.assemble_vector(
         block_linear_form, kind=vec_type)
     unrestricted_fem_module.petsc.apply_lifting(
-        unrestricted_vector_linear, block_bilinear_form, bcs_flattened)
+        unrestricted_vector_linear, block_bilinear_form, bcs)
     ghost_update(
         unrestricted_vector_linear, addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
     restricted_vector_linear = restricted_fem_module.petsc.assemble_vector(
         block_linear_form, kind=vec_type, restriction=dofmap_restriction)
     restricted_fem_module.petsc.apply_lifting(
-        restricted_vector_linear, block_bilinear_form, bcs_flattened, restriction=dofmap_restriction)
+        restricted_vector_linear, block_bilinear_form, bcs, restriction=dofmap_restriction)
     ghost_update(
         restricted_vector_linear, addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
     assert_vector_equal(unrestricted_vector_linear, restricted_vector_linear, dofmap_restriction)
     unrestricted_fem_module.petsc.set_bc(
-        unrestricted_vector_linear, bcs_pair)
+        unrestricted_vector_linear, bcs)
     restricted_fem_module.petsc.set_bc(
-        restricted_vector_linear, bcs_pair, restriction=dofmap_restriction)
+        restricted_vector_linear, bcs, restriction=dofmap_restriction)
     assert_vector_equal(unrestricted_vector_linear, restricted_vector_linear, dofmap_restriction)
     unrestricted_vector_linear.destroy()
     restricted_vector_linear.destroy()
@@ -724,7 +723,7 @@ def test_block_nest_vector_assembly_with_restriction(
     unrestricted_vector_nonlinear = unrestricted_fem_module.petsc.assemble_vector(
         block_linear_form, kind=vec_type)
     unrestricted_fem_module.petsc.apply_lifting(
-        unrestricted_vector_nonlinear, block_bilinear_form, bcs_flattened, unrestricted_solution)
+        unrestricted_vector_nonlinear, block_bilinear_form, bcs, unrestricted_solution)
     ghost_update(
         unrestricted_vector_nonlinear, addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
     restricted_vector_nonlinear = restricted_fem_module.petsc.assemble_vector(
@@ -732,15 +731,15 @@ def test_block_nest_vector_assembly_with_restriction(
     x0_arg, restriction_x0_arg = apply_set_dirichlet_bcs_nonlinear_arguments(
         unrestricted_solution, restricted_solution, dofmap_restriction)
     restricted_fem_module.petsc.apply_lifting(
-        restricted_vector_nonlinear, block_bilinear_form, bcs_flattened, x0=x0_arg, restriction=dofmap_restriction,
+        restricted_vector_nonlinear, block_bilinear_form, bcs, x0=x0_arg, restriction=dofmap_restriction,
         restriction_x0=restriction_x0_arg)
     ghost_update(
         restricted_vector_nonlinear, addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
     assert_vector_equal(unrestricted_vector_nonlinear, restricted_vector_nonlinear, dofmap_restriction)
     unrestricted_fem_module.petsc.set_bc(
-        unrestricted_vector_nonlinear, bcs_pair, unrestricted_solution)
+        unrestricted_vector_nonlinear, bcs, unrestricted_solution)
     restricted_fem_module.petsc.set_bc(
-        restricted_vector_nonlinear, bcs_pair, x0=x0_arg, restriction=dofmap_restriction,
+        restricted_vector_nonlinear, bcs, x0=x0_arg, restriction=dofmap_restriction,
         restriction_x0=restriction_x0_arg)
     assert_vector_equal(unrestricted_vector_nonlinear, restricted_vector_nonlinear, dofmap_restriction)
     unrestricted_vector_nonlinear.destroy()
