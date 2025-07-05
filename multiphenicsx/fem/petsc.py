@@ -164,12 +164,7 @@ def create_vector(  # type: ignore[no-any-unimported]
         A PETSc vector with a layout that is compatible with ``L`` and restriction
         `restriction`. The vector is not initialised to zero.
     """
-    try:
-        dofmap = L.function_spaces[0].dofmap  # type: ignore[union-attr]
-        # L.function_spaces will give an AttributeError if L is not a form
-        # and instead is a list
-    except AttributeError:
-        assert isinstance(L, collections.abc.Sequence)
+    if isinstance(L, collections.abc.Sequence):
         function_spaces = _get_block_function_spaces(L)
         dofmaps = [function_space.dofmap for function_space in function_spaces]
         if restriction is None:
@@ -193,7 +188,7 @@ def create_vector(  # type: ignore[no-any-unimported]
                 "Did you mean 'nest' or 'mpi'?"
             )
     else:
-        # No AttributeError was raised: we are in the single form case.
+        dofmap = L.function_spaces[0].dofmap
         if restriction is None:
             index_map = dofmap.index_map
             index_map_bs = dofmap.index_map_bs
@@ -249,11 +244,7 @@ def create_matrix(  # type: ignore[no-any-unimported]
     :
         A PETSc matrix with a layout that is compatible with `a` and restriction `restriction`.
     """
-    try:
-        a._cpp_object  # type: ignore[union-attr]
-        # Will give an error if a is nested sequence, and will succeed if a is a single form
-    except AttributeError:  # ``a`` is a nested sequence
-        assert isinstance(a, collections.abc.Sequence)
+    if isinstance(a, collections.abc.Sequence):
         function_spaces = _get_block_function_spaces(a)
         rows, cols = len(function_spaces[0]), len(function_spaces[1])
         mesh = None
@@ -298,20 +289,17 @@ def create_matrix(  # type: ignore[no-any-unimported]
                 [restriction[0][i].map()[1] for i in range(rows)],
                 [restriction[1][j].map()[1] for j in range(cols)])
         a_cpp = [[None if form is None else form._cpp_object for form in forms] for forms in a]
-        if kind == petsc4py.PETSc.Mat.Type.NEST:  # Create nest matrix with default types
+        if kind == petsc4py.PETSc.Mat.Type.NEST:  # create nest matrix with default types
             return mcpp.fem.petsc.create_matrix_nest(
                 a_cpp, index_maps, index_maps_bs, dofmaps_list, dofmaps_bounds, None)
         else:
-            try:
-                # Single 'kind' type
+            if kind is None or isinstance(kind, str):  # create block matrix
                 return mcpp.fem.petsc.create_matrix_block(
                     a_cpp, index_maps, index_maps_bs, dofmaps_list, dofmaps_bounds, kind)
-            except TypeError:
-                # Array of 'kind' types
+            else:  # create nest matrix with provided types
                 return mcpp.fem.petsc.create_matrix_nest(
                     a_cpp, index_maps, index_maps_bs, dofmaps_list, dofmaps_bounds, kind)
     else:
-        assert not isinstance(a, collections.abc.Sequence)
         assert a.rank == 2
         function_spaces = a.function_spaces
         assert all(function_space.mesh == a.mesh for function_space in function_spaces)
@@ -681,14 +669,7 @@ def assemble_vector(  # type: ignore[no-any-unimported]
     The returned vector is not finalised, i.e. ghost values are not accumulated on the owning processes.
     """
     b = create_vector(L, kind, restriction)
-    if kind == petsc4py.PETSc.Vec.Type.NEST:
-        for b_sub in b.getNestSubVecs():
-            with b_sub.localForm() as b_local:
-                b_local.set(0.0)
-            b_sub.destroy()
-    else:
-        with b.localForm() as b_local:
-            b_local.set(0.0)
+    dolfinx.fem.petsc._zero_vector(b)
     return assemble_vector(b, L, constants, coeffs, restriction)  # type: ignore[arg-type]
 
 
@@ -1123,7 +1104,7 @@ def _(  # type: ignore[no-any-unimported]
     coeffs
         Coefficients that appear in the form. If not provided, any required coefficients will be computed.
     restriction
-        A dofmap restriction. If not provided, the unrestricted tensor will be assembled.
+        A dofmap restriction. If not provided, the unrestricted matrix will be assembled.
 
     Returns
     -------
