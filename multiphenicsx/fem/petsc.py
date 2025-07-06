@@ -14,6 +14,7 @@ import typing
 import dolfinx.cpp as dcpp
 import dolfinx.fem
 import dolfinx.fem.assemble
+import dolfinx.fem.forms
 import dolfinx.fem.petsc
 import dolfinx.la
 import dolfinx.la.petsc
@@ -1691,20 +1692,21 @@ class LinearProblem:
         # Assemble lhs
         self.A.zeroEntries()
         assemble_matrix(
-            self.A, self.a, bcs=self.bcs, restriction=(self.restriction, self.restriction))  # type: ignore
+            self.A, self.a, bcs=self.bcs,  # type: ignore[arg-type, misc]
+            restriction=(self.restriction, self.restriction))
         self.A.assemble()
 
         # Assemble preconditioner
         if self.P_mat is not None:  # pragma: no cover
             self.P_mat.zeroEntries()
             assemble_matrix(
-                self.P_mat, self.preconditioner, bcs=self.bcs,  # type: ignore
+                self.P_mat, self.preconditioner, bcs=self.bcs,  # type: ignore[arg-type, misc]
                 restriction=(self.restriction, self.restriction))
             self.P_mat.assemble()
 
         # Assemble rhs
         dolfinx.fem.petsc._zero_vector(self.b)
-        assemble_vector(self.b, self.L, restriction=self.restriction)  # type: ignore
+        assemble_vector(self.b, self.L, restriction=self.restriction)  # type: ignore[arg-type]
 
         # Apply boundary conditions to the rhs
         if self.bcs is not None:
@@ -1760,8 +1762,9 @@ class LinearProblem:
         return self._A
 
     @property
-    def P_mat(self) -> petsc4py.PETSc.Mat:  # type: ignore[no-any-unimported]
-        """Preconditioner matrix.
+    def P_mat(self) -> typing.Optional[petsc4py.PETSc.Mat]:  # type: ignore[no-any-unimported]
+        """
+        Preconditioner matrix.
 
         Notes
         -----
@@ -1810,7 +1813,350 @@ class LinearProblem:
 
         Notes
         -----
-        This vector does not share memory with the solution vector `x`.
+        This Function does not share memory with the solution vector `x`.
+        """
+        return self._u
+
+    @property
+    def restriction(self) -> MultiphenicsxRank1RestrictionsType:
+        """The dofmap restriction."""
+        return self._restriction
+
+
+# -- High-level interface for SNES ---------------------------------------
+
+
+def assemble_residual(  # type: ignore[no-any-unimported]
+    u: typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]],
+    residual: DolfinxRank1FormsType, jacobian: DolfinxRank2FormsType,
+    bcs: typing.Sequence[dolfinx.fem.DirichletBC],
+    restriction: MultiphenicsxRank1RestrictionsType,
+    restriction_x0: MultiphenicsxRank1RestrictionsType,
+    _snes: petsc4py.PETSc.SNES, x: petsc4py.PETSc.Vec, b: petsc4py.PETSc.Vec
+) -> None:
+    """Assemble the residual into the vector `b`."""
+    # Update input vector before assigning
+    dolfinx.la.petsc._ghost_update(x, petsc4py.PETSc.InsertMode.INSERT, petsc4py.PETSc.ScatterMode.FORWARD)
+
+    # Copy the input vector into the `dolfinx.fem.Function` used in the forms
+    assign(x, u, restriction)
+
+    # Attach _dofmaps attribute if b contains a block vector
+    if (
+        isinstance(residual, collections.abc.Sequence) and b.getType() != petsc4py.PETSc.Vec.Type.NEST
+        and (b.getAttr("_dofmaps") is None or x.getAttr("_dofmaps") is None)
+    ):
+        function_spaces = _get_block_function_spaces(residual)
+        dofmaps = [function_space.dofmap for function_space in function_spaces]
+        if b.getAttr("_dofmaps") is None:
+            b.setAttr("_dofmaps", dofmaps)
+        if x.getAttr("_dofmaps") is None:
+            x.setAttr("_dofmaps", dofmaps)
+
+    # Assemble the residual
+    dolfinx.fem.petsc._zero_vector(b)
+    assemble_vector(b, residual, restriction=restriction)  # type: ignore[arg-type]
+
+    # Apply lifting and set boundary conditions
+    if isinstance(jacobian, collections.abc.Sequence):  # nest or block forms
+        function_spaces = _get_block_function_spaces(jacobian)
+        bcs1 = dolfinx.fem.bcs_by_block(function_spaces[1], bcs)
+        apply_lifting(
+            b, jacobian, bcs=bcs1, x0=x, alpha=-1.0, restriction=restriction, restriction_x0=restriction_x0)
+        dolfinx.la.petsc._ghost_update(b, petsc4py.PETSc.InsertMode.ADD, petsc4py.PETSc.ScatterMode.REVERSE)
+        bcs0 = dolfinx.fem.bcs_by_block(function_spaces[0], bcs)
+        set_bc(b, bcs0, x0=x, alpha=-1.0, restriction=restriction, restriction_x0=restriction_x0)
+    else:  # single form
+        apply_lifting(
+            b, [jacobian], bcs=[bcs], x0=[x], alpha=-1.0, restriction=restriction, restriction_x0=[restriction_x0])
+        dolfinx.la.petsc._ghost_update(b, petsc4py.PETSc.InsertMode.ADD, petsc4py.PETSc.ScatterMode.REVERSE)
+        set_bc(b, bcs, x0=x, alpha=-1.0, restriction=restriction, restriction_x0=restriction_x0)
+    dolfinx.la.petsc._ghost_update(b, petsc4py.PETSc.InsertMode.INSERT, petsc4py.PETSc.ScatterMode.FORWARD)
+
+
+def assemble_jacobian(  # type: ignore[no-any-unimported]
+    u: typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]],
+    jacobian: DolfinxRank2FormsType, preconditioner: typing.Optional[DolfinxRank2FormsType],
+    bcs: typing.Sequence[dolfinx.fem.DirichletBC],
+    restriction: MultiphenicsxRank1RestrictionsType,
+    _snes: petsc4py.PETSc.SNES, x: petsc4py.PETSc.Vec, J: petsc4py.PETSc.Mat, P: petsc4py.PETSc.Mat
+) -> None:
+    """Assemble the Jacobian and preconditioner into matrices `J` and `P`."""
+    # Update input vector before assigning
+    dolfinx.la.petsc._ghost_update(x, petsc4py.PETSc.InsertMode.INSERT, petsc4py.PETSc.ScatterMode.FORWARD)
+
+    # Copy the input vector into the `dolfinx.fem.Function` used in the forms
+    assign(x, u, restriction)
+
+    # Assemble Jacobian
+    J.zeroEntries()
+    assemble_matrix(
+        J, jacobian, bcs, diag=1.0, restriction=(restriction, restriction))  # type: ignore[arg-type, misc]
+    J.assemble()
+    if preconditioner is not None:  # pragma: no cover
+        P.zeroEntries()
+        assemble_matrix(
+            P, preconditioner, bcs, diag=1.0, restriction=(restriction, restriction))  # type: ignore[arg-type, misc]
+        P.assemble()
+
+
+class NonlinearProblem:
+    r"""
+    Class for solving nonlinear problems with SNES.
+
+    Solves problems of the form
+    :math:`F_i(u, v) = 0, i=0,...N\\ \\forall v \\in V` where
+    :math:`u=(u_0,...,u_N), v=(v_0,...,v_N)` using PETSc SNES as the
+    non-linear solver.
+    """
+
+    def __init__(
+        self,
+        F: UflRank1FormsType,
+        u: typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]],
+        bcs: typing.Optional[typing.Sequence[dolfinx.fem.DirichletBC]] = None,
+        J: typing.Optional[UflRank2FormsType] = None, P: typing.Optional[UflRank2FormsType] = None,
+        kind: DolfinxMatrixKindType = None,
+        petsc_options: typing.Optional[dict[str, typing.Any]] = None,
+        form_compiler_options: typing.Optional[dict[str, typing.Any]] = None,
+        jit_options: typing.Optional[dict[str, typing.Any]] = None,
+        restriction: MultiphenicsxRank1RestrictionsType = None
+    ) -> None:
+        """
+        Initialize solver for a nonlinear variational problem.
+
+        Parameters
+        ----------
+        F
+            UFL form(s) representing the residual :math:`F_i`.
+        u
+            Function(s) used to define the residual and Jacobian.
+        bcs
+            Dirichlet boundary conditions.
+        J
+            UFL form(s) representing the Jacobian :math:`J_ij = dF_i/du_j`. If not passed, derived automatically.
+        P
+            UFL form(s) representing the preconditioner.
+        kind
+            The PETSc matrix type(s) for the Jacobian and preconditioner (``MatType``).
+            See :func:`create_matrix` for more information.
+        petsc_options
+            Options that are set on the underlying PETSc SNES object only.
+            For available choices for the 'petsc_options' kwarg, see the `PETSc SNES documentation
+            <https://petsc4py.readthedocs.io/en/stable/manual/snes>`_.
+            Options on other objects (matrices, vectors) should be set explicitly by the user.
+        form_compiler_options
+            Options used in FFCx compilation of all forms. Run ``ffcx --help`` at the commandline to see
+            all available options.
+        jit_options
+            Options used in CFFI JIT compilation of C code generated by FFCx. See `python/dolfinx/jit.py` for
+            all available options. Takes priority over all other option values.
+        restriction
+            A dofmap restriction. If not provided, the unrestricted problem will be solved.
+        """
+        # Compile residual and Jacobian forms
+        self._F = dolfinx.fem.form(
+            F, dtype=petsc4py.PETSc.ScalarType,
+            form_compiler_options=form_compiler_options, jit_options=jit_options
+        )
+
+        if J is None:
+            J = dolfinx.fem.forms.derivative_block(F, u)
+
+        self._J = dolfinx.fem.form(
+            J, dtype=petsc4py.PETSc.ScalarType,
+            form_compiler_options=form_compiler_options, jit_options=jit_options
+        )
+
+        if P is not None:  # pragma: no cover
+            self._preconditioner = dolfinx.fem.form(
+                P, dtype=petsc4py.PETSc.ScalarType,
+                form_compiler_options=form_compiler_options, jit_options=jit_options
+            )
+        else:
+            self._preconditioner = None
+
+        self._u = u
+        bcs = [] if bcs is None else bcs
+
+        self._A = create_matrix(self.J, kind=kind, restriction=(restriction, restriction))
+        if self._preconditioner is not None:  # pragma: no cover
+            self._P_mat = create_matrix(self._preconditioner, kind=kind, restriction=(restriction, restriction))
+        else:
+            self._P_mat = None
+
+        # Determine the vector kind based on the matrix type
+        kind = "nest" if self._A.getType() == petsc4py.PETSc.Mat.Type.NEST else kind
+        assert kind is None or isinstance(kind, str)
+        self._b = create_vector(self.F, kind=kind, restriction=restriction)
+        self._x = create_vector(self.F, kind=kind, restriction=restriction)
+
+        # Create the SNES solver and attach the corresponding Jacobian and esidual computation functions
+        self._snes = petsc4py.PETSc.SNES().create(comm=self.A.comm)
+        self.solver.setJacobian(
+            functools.partial(assemble_jacobian, u, self.J, self.preconditioner, bcs, restriction),
+            self.A, self.P_mat
+        )
+        self.solver.setFunction(
+            functools.partial(assemble_residual, u, self.F, self.J, bcs, restriction, restriction),
+            self.b
+        )
+
+        # Set PETSc options prefixes
+        problem_prefix = f"dolfinx_nonlinearproblem_{id(self)}_"
+        self.solver.setOptionsPrefix(problem_prefix)
+        self.A.setOptionsPrefix(f"{problem_prefix}A_")
+        if self.P_mat is not None:  # pragma: no cover
+            self.P_mat.setOptionsPrefix(f"{problem_prefix}P_mat_")
+        self.b.setOptionsPrefix(f"{problem_prefix}b_")
+        self.x.setOptionsPrefix(f"{problem_prefix}x_")
+
+        # Set options for SNES only
+        if petsc_options is not None:
+            opts = petsc4py.PETSc.Options()
+            opts.prefixPush(problem_prefix)
+
+            for k, v in petsc_options.items():
+                opts[k] = v
+
+            self.solver.setFromOptions()
+
+            # Tidy up global options
+            for k in petsc_options.keys():
+                del opts[k]
+
+            opts.prefixPop()
+
+        if self.P_mat is not None and kind == "nest":  # pragma: no cover
+            # Transfer nest IS on self.P_mat to PC of main KSP. This allows
+            # fieldsplit preconditioning to be applied, if desired.
+            nest_IS = self.P_mat.getNestISs()
+            fieldsplit_IS = tuple(
+                [
+                    (f"{u.name + '_' if u.name != 'f' else ''}{i}", IS)
+                    for i, (u, IS) in enumerate(zip(self.u, nest_IS[0]))
+                ]
+            )
+            self.solver.getKSP().getPC().setFieldSplitIS(*fieldsplit_IS)
+
+        self._restriction = restriction
+
+    def __del__(self) -> None:
+        """Clean up PETSc data structures."""
+        self._snes.destroy()
+        self._x.destroy()
+        self._A.destroy()
+        self._b.destroy()
+        if self._P_mat is not None:  # pragma: no cover
+            self._P_mat.destroy()
+
+    def solve(self) -> tuple[typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]], int, int]:
+        """
+        Solve the problem and update the solution in the problem instance.
+
+        Returns
+        -------
+        :
+            The solution, convergence reason and number of SNES (outer) iterations.
+
+        Notes
+        -----
+        The user is responsible for asserting convergence of the SNES solver e.g. `assert converged_reason > 0`.
+        Alternatively, pass `"snes_error_if_not_converged": True` and `"ksp_error_if_not_converged" : True`
+        in `petsc_options`.
+        """
+        # Move current iterate into the work array.
+        assign(self.u, self.x, restriction=self.restriction)
+
+        # Solve problem
+        self.solver.solve(None, self.x)
+        dolfinx.la.petsc._ghost_update(self.x, petsc4py.PETSc.InsertMode.INSERT, petsc4py.PETSc.ScatterMode.FORWARD)
+
+        # Move solution back to function
+        assign(self.x, self.u, restriction=self.restriction)
+
+        converged_reason = self.solver.getConvergedReason()
+        return self.u, converged_reason, self.solver.getIterationNumber()
+
+    @property
+    def F(self) -> DolfinxRank1FormsType:
+        """The compiled residual."""
+        return self._F  # type: ignore[no-any-return]
+
+    @property
+    def J(self) -> DolfinxRank2FormsType:
+        """The compiled Jacobian."""
+        return self._J  # type: ignore[no-any-return]
+
+    @property
+    def preconditioner(self) -> typing.Optional[DolfinxRank2FormsType]:
+        """The compiled preconditioner."""
+        return self._preconditioner  # type: ignore[no-any-return]
+
+    @property
+    def A(self) -> petsc4py.PETSc.Mat:  # type: ignore[no-any-unimported]
+        """
+        Jacobian matrix.
+
+        Notes
+        -----
+        The matrix has an options prefix set.
+        """
+        return self._A
+
+    @property
+    def P_mat(self) -> typing.Optional[petsc4py.PETSc.Mat]:  # type: ignore[no-any-unimported]
+        """
+        Preconditioner matrix.
+
+        Notes
+        -----
+        The matrix has an options prefix set.
+        """
+        return self._P_mat
+
+    @property
+    def b(self) -> petsc4py.PETSc.Vec:  # type: ignore[no-any-unimported]
+        """
+        Residual vector.
+
+        Notes
+        -----
+        The vector has an options prefix set.
+        """
+        return self._b
+
+    @property
+    def x(self) -> petsc4py.PETSc.Vec:  # type: ignore[no-any-unimported]
+        """
+        Solution vector.
+
+        Notes
+        -----
+        This vector does not share memory with the solution Function `u`.
+        Furthermore, the vector has an options prefix set.
+        """
+        return self._x
+
+    @property
+    def solver(self) -> petsc4py.PETSc.SNES:  # type: ignore[no-any-unimported]
+        """
+        The SNES solver.
+
+        Notes
+        -----
+        The SNES solver has an options prefix set.
+        """
+        return self._snes
+
+    @property
+    def u(self) -> typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]]:
+        """
+        Solution function.
+
+        Notes
+        -----
+        This Function does not share memory with the solution vector `x`.
         """
         return self._u
 

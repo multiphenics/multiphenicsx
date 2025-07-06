@@ -21,11 +21,19 @@ import multiphenicsx.fem.petsc
 
 import common  # isort: skip
 
-petsc_options = {
+petsc_options_linear = {
     "ksp_type": "preonly",
     "pc_type": "lu",
     "pc_factor_mat_solver_type": "mumps",
-    "ksp_error_if_not_converged": True,
+    "ksp_error_if_not_converged": True
+}
+
+petsc_options_nonlinear = {
+    **petsc_options_linear,
+    "snes_rtol": 10 * np.finfo(petsc4py.PETSc.ScalarType).eps,
+    "snes_max_it": 10,
+    "snes_monitor": None,
+    "snes_error_if_not_converged": True
 }
 
 @pytest.fixture
@@ -91,7 +99,7 @@ def test_plain_linear_solver(
     bcs = [dolfinx.fem.dirichletbc(f_bc, dofs_bc)]
     # Solve
     problem = multiphenicsx.fem.petsc.LinearProblem(
-        a, L, bcs=bcs, petsc_options=petsc_options, kind=kind, restriction=restriction)
+        a, L, bcs=bcs, petsc_options=petsc_options_linear, kind=kind, restriction=restriction)
     solution, convergence_reason, _ = problem.solve()
     assert convergence_reason > 0
     # Compute error
@@ -134,12 +142,104 @@ def test_block_nest_linear_solver(
     bcs = [dolfinx.fem.dirichletbc(f_bc_i, dofs_bc_i) for (f_bc_i, dofs_bc_i) in zip(f_bc, dofs_bc)]
     # Solve
     problem = multiphenicsx.fem.petsc.LinearProblem(
-        a, L, bcs=bcs, petsc_options=petsc_options, kind=kind, restriction=restriction)
+        a, L, bcs=bcs, petsc_options=petsc_options_linear, kind=kind, restriction=restriction)
     solutions, convergence_reason, _ = problem.solve()
     assert convergence_reason > 0
     # Compute error
     for (fi, si) in zip(f, solutions):
         error_i_ufl = dolfinx.fem.form(ufl.inner(si - fi, si - fi) * active_dx)
+        error_i = np.sqrt(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(error_i_ufl), op=mpi4py.MPI.SUM))
+        tol = 500 * np.finfo(petsc4py.PETSc.ScalarType).eps
+        assert error_i < tol
+
+
+@pytest.mark.parametrize("subdomain", get_subdomains())
+@pytest.mark.parametrize("kind", [None, "mpi"])
+def test_plain_nonlinear_solver(
+    mesh: dolfinx.mesh.Mesh, subdomain: typing.Optional[common.SubdomainType],
+    kind: typing.Optional[str]
+) -> None:
+    """Test solution of a nonlinear problem with single form with restrictions."""
+    # Define function space and trial/test functions
+    V = dolfinx.fem.functionspace(mesh, ("Lagrange", 1))
+    u = dolfinx.fem.Function(V)
+    v = ufl.TestFunction(V)
+    # Define restriction
+    active_dofs = common.ActiveDofs(V, subdomain)
+    restriction = multiphenicsx.fem.DofMapRestriction(V.dofmap, active_dofs)
+    active_dx = active_measure(mesh, subdomain)
+    # Define forms
+    x = ufl.SpatialCoordinate(mesh)
+    f = x[0] + 3 * x[1]
+    F = (
+        ufl.inner(u, v) * active_dx + 0.001 * ufl.inner(u**2 - f * u, v) * active_dx
+        - ufl.inner(f, v) * active_dx
+    )
+    # Define boundary conditions
+    f_expr = dolfinx.fem.Expression(f, V.element.interpolation_points)
+    f_bc = dolfinx.fem.Function(V)
+    f_bc.interpolate(f_expr)
+    mesh.topology.create_connectivity(mesh.topology.dim - 1, mesh.topology.dim)
+    boundary_facets = dolfinx.mesh.locate_entities_boundary(
+        mesh, mesh.topology.dim - 1, lambda x: np.isclose(x[1], 1.0))
+    dofs_bc = dolfinx.fem.locate_dofs_topological(V, mesh.topology.dim - 1, boundary_facets)
+    bcs = [dolfinx.fem.dirichletbc(f_bc, dofs_bc)]
+    # Solve
+    problem = multiphenicsx.fem.petsc.NonlinearProblem(
+        F, u, bcs=bcs, petsc_options=petsc_options_nonlinear, kind=kind, restriction=restriction)
+    _, convergence_reason, _ = problem.solve()
+    assert convergence_reason > 0
+    # Compute error
+    error_ufl = dolfinx.fem.form(ufl.inner(u - f, u - f) * active_dx)
+    error = np.sqrt(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(error_ufl), op=mpi4py.MPI.SUM))
+    tol = 500 * np.finfo(petsc4py.PETSc.ScalarType).eps
+    assert error < tol
+
+
+@pytest.mark.parametrize("subdomain", get_subdomains())
+@pytest.mark.parametrize("kind", ["mpi", "nest", [["aij", None], [None, "baij"]]])
+def test_block_nest_nonlinear_solver(
+    mesh: dolfinx.mesh.Mesh, subdomain: typing.Optional[common.SubdomainType],
+    kind: typing.Optional[typing.Union[str, list[list[str]]]]
+) -> None:
+    """Test solution of a nonlinear problem with single form with restrictions."""
+    # Define function spaces
+    V = [dolfinx.fem.functionspace(mesh, ("Lagrange", degree)) for degree in (1, 2)]
+    u = [dolfinx.fem.Function(Vi) for Vi in V]
+    v = [ufl.TestFunction(Vi) for Vi in V]
+    # Define restriction
+    active_dofs = [common.ActiveDofs(Vi, subdomain) for Vi in V]
+    restriction = [
+        multiphenicsx.fem.DofMapRestriction(Vi.dofmap, active_dofs_i) for (Vi, active_dofs_i) in zip(V, active_dofs)]
+    active_dx = active_measure(mesh, subdomain)
+    # Define forms
+    x = ufl.SpatialCoordinate(mesh)
+    f = [x[0] + 3 * x[1], -(x[1] ** 2) + x[0]]
+    F = [
+        (
+            ufl.inner(u[i], v[i]) * active_dx
+            + 0.001 * ufl.inner(u[i]**2 - f[i] * u[i], v[i]) * active_dx
+            - ufl.inner(f[i], v[i]) * active_dx
+        ) for i in range(2)
+    ]
+    # Define boundary conditions
+    f_expr = [dolfinx.fem.Expression(fi, Vi.element.interpolation_points) for (fi, Vi) in zip(f, V)]
+    f_bc = [dolfinx.fem.Function(Vi) for Vi in V]
+    for i in range(2):
+        f_bc[i].interpolate(f_expr[i])
+    mesh.topology.create_connectivity(mesh.topology.dim - 1, mesh.topology.dim)
+    boundary_facets = dolfinx.mesh.locate_entities_boundary(
+        mesh, mesh.topology.dim - 1, lambda x: np.isclose(x[1], 1.0))
+    dofs_bc = [dolfinx.fem.locate_dofs_topological(Vi, mesh.topology.dim - 1, boundary_facets) for Vi in V]
+    bcs = [dolfinx.fem.dirichletbc(f_bc_i, dofs_bc_i) for (f_bc_i, dofs_bc_i) in zip(f_bc, dofs_bc)]
+    # Solve
+    problem = multiphenicsx.fem.petsc.NonlinearProblem(
+        F, u, bcs=bcs, petsc_options=petsc_options_nonlinear, kind=kind, restriction=restriction)
+    solutions, convergence_reason, _ = problem.solve()
+    assert convergence_reason > 0
+    # Compute error
+    for (fi, ui) in zip(f, u):
+        error_i_ufl = dolfinx.fem.form(ufl.inner(ui - fi, ui - fi) * active_dx)
         error_i = np.sqrt(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(error_i_ufl), op=mpi4py.MPI.SUM))
         tol = 500 * np.finfo(petsc4py.PETSc.ScalarType).eps
         assert error_i < tol
