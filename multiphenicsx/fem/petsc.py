@@ -197,6 +197,7 @@ def create_vector(  # type: ignore[no-any-unimported]
                 "Did you mean 'nest' or 'mpi'?"
             )
     else:
+        assert kind is None or kind == petsc4py.PETSc.Vec.Type.MPI
         dofmap = L.function_spaces[0].dofmap
         if restriction is None:
             index_map = dofmap.index_map
