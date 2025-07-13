@@ -679,7 +679,7 @@ def assemble_vector(  # type: ignore[no-any-unimported]
     The returned vector is not finalised, i.e. ghost values are not accumulated on the owning processes.
     """
     b = create_vector(L, kind, restriction)
-    dolfinx.fem.petsc._zero_vector(b)
+    dolfinx.la.petsc._zero_vector(b)
     return assemble_vector(b, L, constants, coeffs, restriction)  # type: ignore[arg-type]
 
 
@@ -1543,11 +1543,12 @@ class LinearProblem:
     r"""
     Class for solving a linear variational problem.
 
-    Solves of the form :math:`a(u, v) = L(v) \\,  \\forall v \\in V` using PETSc as a linear algebra backend.
+    Solves problems of the form :math:`a_{ij}(u, v) = f_i(v), i,j=0,\\ldots,N\\ \\forall v \\in V` where
+    :math:`u=(u_0,\\ldots,u_N), v=(v_0,\\ldots,v_N)` using PETSc KSP as the linear solver.
     """
 
     def __init__(
-        self, a: UflRank2FormsType, L: UflRank1FormsType,
+        self, a: UflRank2FormsType, L: UflRank1FormsType, *, petsc_options_prefix: str,
         bcs: typing.Optional[typing.Sequence[dolfinx.fem.DirichletBC]] = None,
         u: typing.Optional[typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]]] = None,
         P: typing.Optional[UflRank2FormsType] = None, kind: DolfinxMatrixKindType = None,
@@ -1558,6 +1559,37 @@ class LinearProblem:
     ) -> None:
         """
         Initialize solver for a linear variational problem.
+
+        By default, the underlying KSP solver uses PETSc's default options, usually GMRES + ILU preconditioning.
+        To use the robust combination of LU via MUMPS:
+
+            problem = LinearProblem(
+                a, L, bcs=[bc0, bc1],
+                petsc_options_prefix="basic_linear_problem_",
+                petsc_options= {
+                  "ksp_type": "preonly",
+                  "pc_type": "lu",
+                  "pc_factor_mat_solver_type": "mumps"
+                },
+                restriction=restriction
+            )
+
+        This class supports nested problems.
+
+            problem = LinearProblem(
+                [[a00, a01], [None, a11]], [L0, L1],
+                bcs=[bc0, bc1], u=[uh0, uh1],
+                kind="nest",
+                petsc_options_prefix="nest_linear_problem_",
+                restriction=restriction
+            )
+
+        Every PETSc object created will have a unique options prefix set.
+        We recommend discovering these prefixes dynamically via the petsc4py API rather than hard-coding
+        each prefix value into the programme.
+
+            ksp_options_prefix = problem.solver.getOptionsPrefix()
+            A_options_prefix = problem.A.getOptionsPrefix()
 
         Parameters
         ----------
@@ -1574,9 +1606,14 @@ class LinearProblem:
             Bilinear UFL form or a sequence of sequence of bilinear forms, used as a preconditioner.
         kind
             The PETSc matrix and vector type. See :func:`create_matrix` for options.
+        petsc_options_prefix
+            Mandatory named argument. Options prefix used as root prefix on all internally created
+            PETSc objects. Typically ends with `_`. Must be the same on all ranks, and is usually unique
+            within the programme.
         petsc_options
-            Options set on the underlying PETSc KSP.
-            For available choices for the 'petsc_options' kwarg, see the `PETSc KSP documentation
+            Options set on the underlying PETSc KSP only.
+            The options must be the same on all ranks. For available choices for the `petsc_options` kwarg,
+            see the `PETSc KSP documentation
             <https://petsc4py.readthedocs.io/en/stable/manual/ksp/>`_.
             Options on other objects (matrices, vectors) should be set explicitly by the user.
         form_compiler_options
@@ -1620,27 +1657,23 @@ class LinearProblem:
 
         self.bcs = bcs
 
-        if isinstance(self.u, collections.abc.Sequence):
-            comm = self.u[0].function_space.mesh.comm
-        else:
-            comm = self.u.function_space.mesh.comm
-
-        self._solver = petsc4py.PETSc.KSP().create(comm)
+        self._solver = petsc4py.PETSc.KSP().create(self.A.comm)
         self.solver.setOperators(self.A, self.P_mat)
 
-        # Give PETSc objects a unique prefix
-        problem_prefix = f"multiphenicsx_linearproblem_{id(self)}_"
-        self.solver.setOptionsPrefix(problem_prefix)
-        self.A.setOptionsPrefix(f"{problem_prefix}A_")
-        self.b.setOptionsPrefix(f"{problem_prefix}b_")
-        self.x.setOptionsPrefix(f"{problem_prefix}x_")
+        # Set options prefix for PETSc objects
+        if petsc_options_prefix == "":  # pragma: no cover
+            raise ValueError("PETSc options prefix cannot be empty.")
+        self.solver.setOptionsPrefix(petsc_options_prefix)
+        self.A.setOptionsPrefix(f"{petsc_options_prefix}A_")
+        self.b.setOptionsPrefix(f"{petsc_options_prefix}b_")
+        self.x.setOptionsPrefix(f"{petsc_options_prefix}x_")
         if self.P_mat is not None:  # pragma: no cover
-            self.P_mat.setOptionsPrefix(f"{problem_prefix}P_mat_")
+            self.P_mat.setOptionsPrefix(f"{petsc_options_prefix}P_mat_")
 
         # Set options on KSP only
         if petsc_options is not None:
             opts = petsc4py.PETSc.Options()
-            opts.prefixPush(problem_prefix)
+            opts.prefixPush(self.solver.getOptionsPrefix())
 
             for k, v in petsc_options.items():
                 opts[k] = v
@@ -1676,14 +1709,17 @@ class LinearProblem:
         if self._P_mat is not None:  # pragma: no cover
             self._P_mat.destroy()
 
-    def solve(self) -> tuple[typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]], int, int]:
+    def solve(self) -> tuple[  # type: ignore[no-any-unimported]
+        typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]], petsc4py.PETSc.Vec,
+        int, int
+    ]:
         """
         Solve the problem and update the solution in the problem instance.
 
         Returns
         -------
         :
-            The solution, convergence reason and number of KSP iterations.
+            The solution function(s), the solution vector, convergence reason and number of KSP iterations.
 
         Notes
         -----
@@ -1706,7 +1742,7 @@ class LinearProblem:
             self.P_mat.assemble()
 
         # Assemble rhs
-        dolfinx.fem.petsc._zero_vector(self.b)
+        dolfinx.la.petsc._zero_vector(self.b)
         assemble_vector(self.b, self.L, restriction=self.restriction)  # type: ignore[arg-type]
 
         # Apply boundary conditions to the rhs
@@ -1734,7 +1770,7 @@ class LinearProblem:
         self.solver.solve(self.b, self.x)
         dolfinx.la.petsc._ghost_update(self.x, petsc4py.PETSc.InsertMode.INSERT, petsc4py.PETSc.ScatterMode.FORWARD)
         assign(self.x, self.u, self.restriction)
-        return self.u, self.solver.getConvergedReason(), self.solver.getIterationNumber()
+        return self.u, self.x, self.solver.getConvergedReason(), self.solver.getIterationNumber()
 
     @property
     def L(self) -> DolfinxRank1FormsType:
@@ -1753,35 +1789,17 @@ class LinearProblem:
 
     @property
     def A(self) -> petsc4py.PETSc.Mat:  # type: ignore[no-any-unimported]
-        """
-        Left-hand side matrix.
-
-        Notes
-        -----
-        The matrix has an options prefix set.
-        """
+        """Left-hand side matrix."""
         return self._A
 
     @property
     def P_mat(self) -> typing.Optional[petsc4py.PETSc.Mat]:  # type: ignore[no-any-unimported]
-        """
-        Preconditioner matrix.
-
-        Notes
-        -----
-        The matrix has an options prefix set.
-        """
+        """Preconditioner matrix."""
         return self._P_mat
 
     @property
     def b(self) -> petsc4py.PETSc.Vec:  # type: ignore[no-any-unimported]
-        """
-        Right-hand side vector.
-
-        Notes
-        -----
-        The vector has an options prefix set.
-        """
+        """Right-hand side vector."""
         return self._b
 
     @property
@@ -1792,29 +1810,22 @@ class LinearProblem:
         Notes
         -----
         This vector does not share memory with the solution Function `u`.
-        Furthermore, the vector has an options prefix set.
         """
         return self._x
 
     @property
     def solver(self) -> petsc4py.PETSc.KSP:  # type: ignore[no-any-unimported]
-        """
-        The PETSc KSP solver.
-
-        Notes
-        -----
-        The KSP solver has an options prefix set.
-        """
+        """The PETSc KSP solver."""
         return self._solver
 
     @property
     def u(self) -> typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]]:
         """
-        Solution function.
+        Solution function(s).
 
         Notes
         -----
-        This Function does not share memory with the solution vector `x`.
+        The Function(s) does not share memory with the solution vector `x`.
         """
         return self._u
 
@@ -1855,7 +1866,7 @@ def assemble_residual(  # type: ignore[no-any-unimported]
             x.setAttr("_dofmaps", dofmaps)
 
     # Assemble the residual
-    dolfinx.fem.petsc._zero_vector(b)
+    dolfinx.la.petsc._zero_vector(b)
     assemble_vector(b, residual, restriction=restriction)  # type: ignore[arg-type]
 
     # Apply lifting and set boundary conditions
@@ -1905,16 +1916,15 @@ class NonlinearProblem:
     r"""
     Class for solving nonlinear problems with SNES.
 
-    Solves problems of the form
-    :math:`F_i(u, v) = 0, i=0,...N\\ \\forall v \\in V` where
-    :math:`u=(u_0,...,u_N), v=(v_0,...,v_N)` using PETSc SNES as the
-    non-linear solver.
+    Solves problems of the form :math:`F_i(u, v) = 0, i=0,\\ldots,N\\ \\forall v \\in V` where
+    :math:`u=(u_0,\\ldots,u_N), v=(v_0,\\ldots,v_N)` using PETSc SNES as the non-linear solver.
     """
 
     def __init__(
         self,
         F: UflRank1FormsType,
-        u: typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]],
+        u: typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]], *,
+        petsc_options_prefix: str,
         bcs: typing.Optional[typing.Sequence[dolfinx.fem.DirichletBC]] = None,
         J: typing.Optional[UflRank2FormsType] = None, P: typing.Optional[UflRank2FormsType] = None,
         kind: DolfinxMatrixKindType = None,
@@ -1925,6 +1935,22 @@ class NonlinearProblem:
     ) -> None:
         """
         Initialize solver for a nonlinear variational problem.
+
+        By default, the underlying SNES solver uses PETSc's default options.
+        To use the robust combination of LU via MUMPS with a backtracking linesearch, pass:
+
+            petsc_options = {"ksp_type": "preonly",
+                             "pc_type": "lu",
+                             "pc_factor_mat_solver_type": "mumps",
+                             "snes_linesearch_type": "bt",
+            }
+
+        Every PETSc object will have a unique options prefix set.
+        We recommend discovering these prefixes dynamically via the petsc4py API rather than hard-coding
+        each prefix value into the programme.
+
+            snes_options_prefix = problem.solver.getOptionsPrefix()
+            jacobian_options_prefix = problem.A.getOptionsPrefix()
 
         Parameters
         ----------
@@ -1941,10 +1967,15 @@ class NonlinearProblem:
         kind
             The PETSc matrix type(s) for the Jacobian and preconditioner (``MatType``).
             See :func:`create_matrix` for more information.
+        petsc_options_prefix
+            Mandatory named argument. Options prefix used as root prefix on all internally created
+            PETSc objects. Typically ends with `_`. Must be the same on all ranks, and is usually unique
+            within the programme.
         petsc_options
-            Options that are set on the underlying PETSc SNES object only.
-            For available choices for the 'petsc_options' kwarg, see the `PETSc SNES documentation
-            <https://petsc4py.readthedocs.io/en/stable/manual/snes>`_.
+            Options set on the underlying PETSc SNES only.
+            The options must be the same on all ranks. For available choices for the `petsc_options` kwarg,
+            see the `PETSc SNES documentation
+            <https://petsc4py.readthedocs.io/en/stable/manual/snes/>`_.
             Options on other objects (matrices, vectors) should be set explicitly by the user.
         form_compiler_options
             Options used in FFCx compilation of all forms. Run ``ffcx --help`` at the commandline to see
@@ -1993,7 +2024,7 @@ class NonlinearProblem:
         self._x = create_vector(self.F, kind=kind, restriction=restriction)
 
         # Create the SNES solver and attach the corresponding Jacobian and esidual computation functions
-        self._snes = petsc4py.PETSc.SNES().create(comm=self.A.comm)
+        self._snes = petsc4py.PETSc.SNES().create(self.A.comm)
         self.solver.setJacobian(
             functools.partial(assemble_jacobian, u, self.J, self.preconditioner, bcs, restriction),
             self.A, self.P_mat
@@ -2003,19 +2034,20 @@ class NonlinearProblem:
             self.b
         )
 
-        # Set PETSc options prefixes
-        problem_prefix = f"dolfinx_nonlinearproblem_{id(self)}_"
-        self.solver.setOptionsPrefix(problem_prefix)
-        self.A.setOptionsPrefix(f"{problem_prefix}A_")
+        # Set options prefix for PETSc objects
+        if petsc_options_prefix == "":  # pragma: no cover
+            raise ValueError("PETSc options prefix cannot be empty.")
+        self.solver.setOptionsPrefix(petsc_options_prefix)
+        self.A.setOptionsPrefix(f"{petsc_options_prefix}A_")
         if self.P_mat is not None:  # pragma: no cover
-            self.P_mat.setOptionsPrefix(f"{problem_prefix}P_mat_")
-        self.b.setOptionsPrefix(f"{problem_prefix}b_")
-        self.x.setOptionsPrefix(f"{problem_prefix}x_")
+            self.P_mat.setOptionsPrefix(f"{petsc_options_prefix}P_mat_")
+        self.b.setOptionsPrefix(f"{petsc_options_prefix}b_")
+        self.x.setOptionsPrefix(f"{petsc_options_prefix}x_")
 
         # Set options for SNES only
         if petsc_options is not None:
             opts = petsc4py.PETSc.Options()
-            opts.prefixPush(problem_prefix)
+            opts.prefixPush(self.solver.getOptionsPrefix())
 
             for k, v in petsc_options.items():
                 opts[k] = v
@@ -2051,14 +2083,17 @@ class NonlinearProblem:
         if self._P_mat is not None:  # pragma: no cover
             self._P_mat.destroy()
 
-    def solve(self) -> tuple[typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]], int, int]:
+    def solve(self) -> tuple[  # type: ignore[no-any-unimported]
+        typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]], petsc4py.PETSc.Vec,
+        int, int
+    ]:
         """
         Solve the problem and update the solution in the problem instance.
 
         Returns
         -------
         :
-            The solution, convergence reason and number of SNES (outer) iterations.
+            The solution function(s), the solution vector, convergence reason and number of SNES (outer) iterations.
 
         Notes
         -----
@@ -2066,18 +2101,18 @@ class NonlinearProblem:
         Alternatively, pass `"snes_error_if_not_converged": True` and `"ksp_error_if_not_converged" : True`
         in `petsc_options`.
         """
-        # Move current iterate into the work array.
+        # Copy current iterate into the work array.
         assign(self.u, self.x, restriction=self.restriction)
 
         # Solve problem
         self.solver.solve(None, self.x)
         dolfinx.la.petsc._ghost_update(self.x, petsc4py.PETSc.InsertMode.INSERT, petsc4py.PETSc.ScatterMode.FORWARD)
 
-        # Move solution back to function
+        # Copy solution back to function
         assign(self.x, self.u, restriction=self.restriction)
 
         converged_reason = self.solver.getConvergedReason()
-        return self.u, converged_reason, self.solver.getIterationNumber()
+        return self.u, self.x, converged_reason, self.solver.getIterationNumber()
 
     @property
     def F(self) -> DolfinxRank1FormsType:
@@ -2096,35 +2131,17 @@ class NonlinearProblem:
 
     @property
     def A(self) -> petsc4py.PETSc.Mat:  # type: ignore[no-any-unimported]
-        """
-        Jacobian matrix.
-
-        Notes
-        -----
-        The matrix has an options prefix set.
-        """
+        """Jacobian matrix."""
         return self._A
 
     @property
     def P_mat(self) -> typing.Optional[petsc4py.PETSc.Mat]:  # type: ignore[no-any-unimported]
-        """
-        Preconditioner matrix.
-
-        Notes
-        -----
-        The matrix has an options prefix set.
-        """
+        """Preconditioner matrix."""
         return self._P_mat
 
     @property
     def b(self) -> petsc4py.PETSc.Vec:  # type: ignore[no-any-unimported]
-        """
-        Residual vector.
-
-        Notes
-        -----
-        The vector has an options prefix set.
-        """
+        """Residual vector."""
         return self._b
 
     @property
@@ -2135,29 +2152,22 @@ class NonlinearProblem:
         Notes
         -----
         This vector does not share memory with the solution Function `u`.
-        Furthermore, the vector has an options prefix set.
         """
         return self._x
 
     @property
     def solver(self) -> petsc4py.PETSc.SNES:  # type: ignore[no-any-unimported]
-        """
-        The SNES solver.
-
-        Notes
-        -----
-        The SNES solver has an options prefix set.
-        """
+        """The SNES solver."""
         return self._snes
 
     @property
     def u(self) -> typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]]:
         """
-        Solution function.
+        Solution function(s).
 
         Notes
         -----
-        This Function does not share memory with the solution vector `x`.
+        The Function(s) does not share memory with the solution vector `x`.
         """
         return self._u
 

@@ -99,8 +99,9 @@ def test_plain_linear_solver(
     bcs = [dolfinx.fem.dirichletbc(f_bc, dofs_bc)]
     # Solve
     problem = multiphenicsx.fem.petsc.LinearProblem(
-        a, L, bcs=bcs, petsc_options=petsc_options_linear, kind=kind, restriction=restriction)
-    solution, convergence_reason, _ = problem.solve()
+        a, L, bcs=bcs, petsc_options_prefix="test_plain_linear_solver_", petsc_options=petsc_options_linear,
+        kind=kind, restriction=restriction)
+    solution, _, convergence_reason, _ = problem.solve()
     assert convergence_reason > 0
     # Compute error
     error_ufl = dolfinx.fem.form(ufl.inner(solution - f, solution - f) * active_dx)
@@ -142,8 +143,9 @@ def test_block_nest_linear_solver(
     bcs = [dolfinx.fem.dirichletbc(f_bc_i, dofs_bc_i) for (f_bc_i, dofs_bc_i) in zip(f_bc, dofs_bc)]
     # Solve
     problem = multiphenicsx.fem.petsc.LinearProblem(
-        a, L, bcs=bcs, petsc_options=petsc_options_linear, kind=kind, restriction=restriction)
-    solutions, convergence_reason, _ = problem.solve()
+        a, L, bcs=bcs, petsc_options_prefix="test_block_nest_linear_solver_", petsc_options=petsc_options_linear,
+        kind=kind, restriction=restriction)
+    solutions, _, convergence_reason, _ = problem.solve()
     assert convergence_reason > 0
     # Compute error
     for (fi, si) in zip(f, solutions):
@@ -186,8 +188,9 @@ def test_plain_nonlinear_solver(
     bcs = [dolfinx.fem.dirichletbc(f_bc, dofs_bc)]
     # Solve
     problem = multiphenicsx.fem.petsc.NonlinearProblem(
-        F, u, bcs=bcs, petsc_options=petsc_options_nonlinear, kind=kind, restriction=restriction)
-    _, convergence_reason, _ = problem.solve()
+        F, u, bcs=bcs, petsc_options_prefix="test_plain_nonlinear_solver_", petsc_options=petsc_options_nonlinear,
+        kind=kind, restriction=restriction)
+    _, _, convergence_reason, _ = problem.solve()
     assert convergence_reason > 0
     # Compute error
     error_ufl = dolfinx.fem.form(ufl.inner(u - f, u - f) * active_dx)
@@ -234,8 +237,9 @@ def test_block_nest_nonlinear_solver(
     bcs = [dolfinx.fem.dirichletbc(f_bc_i, dofs_bc_i) for (f_bc_i, dofs_bc_i) in zip(f_bc, dofs_bc)]
     # Solve
     problem = multiphenicsx.fem.petsc.NonlinearProblem(
-        F, u, bcs=bcs, petsc_options=petsc_options_nonlinear, kind=kind, restriction=restriction)
-    solutions, convergence_reason, _ = problem.solve()
+        F, u, bcs=bcs, petsc_options_prefix="test_block_snes_nonlinear_solver_", petsc_options=petsc_options_nonlinear,
+        kind=kind, restriction=restriction)
+    solutions, _, convergence_reason, _ = problem.solve()
     assert convergence_reason > 0
     # Compute error
     for (fi, ui) in zip(f, u):
