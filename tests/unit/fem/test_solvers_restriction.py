@@ -101,8 +101,8 @@ def test_plain_linear_solver(
     problem = multiphenicsx.fem.petsc.LinearProblem(
         a, L, bcs=bcs, petsc_options_prefix="test_plain_linear_solver_", petsc_options=petsc_options_linear,
         kind=kind, restriction=restriction)
-    solution, _, convergence_reason, _ = problem.solve()
-    assert convergence_reason > 0
+    solution = problem.solve()
+    assert problem.solver.getConvergedReason() > 0
     # Compute error
     error_ufl = dolfinx.fem.form(ufl.inner(solution - f, solution - f) * active_dx)
     error = np.sqrt(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(error_ufl), op=mpi4py.MPI.SUM))
@@ -145,8 +145,8 @@ def test_block_nest_linear_solver(
     problem = multiphenicsx.fem.petsc.LinearProblem(
         a, L, bcs=bcs, petsc_options_prefix="test_block_nest_linear_solver_", petsc_options=petsc_options_linear,
         kind=kind, restriction=restriction)
-    solutions, _, convergence_reason, _ = problem.solve()
-    assert convergence_reason > 0
+    solutions = problem.solve()
+    assert problem.solver.getConvergedReason() > 0
     # Compute error
     for (fi, si) in zip(f, solutions):
         error_i_ufl = dolfinx.fem.form(ufl.inner(si - fi, si - fi) * active_dx)
@@ -190,8 +190,8 @@ def test_plain_nonlinear_solver(
     problem = multiphenicsx.fem.petsc.NonlinearProblem(
         F, u, bcs=bcs, petsc_options_prefix="test_plain_nonlinear_solver_", petsc_options=petsc_options_nonlinear,
         kind=kind, restriction=restriction)
-    _, _, convergence_reason, _ = problem.solve()
-    assert convergence_reason > 0
+    problem.solve()
+    assert problem.solver.getConvergedReason() > 0
     # Compute error
     error_ufl = dolfinx.fem.form(ufl.inner(u - f, u - f) * active_dx)
     error = np.sqrt(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(error_ufl), op=mpi4py.MPI.SUM))
@@ -239,8 +239,8 @@ def test_block_nest_nonlinear_solver(
     problem = multiphenicsx.fem.petsc.NonlinearProblem(
         F, u, bcs=bcs, petsc_options_prefix="test_block_snes_nonlinear_solver_", petsc_options=petsc_options_nonlinear,
         kind=kind, restriction=restriction)
-    solutions, _, convergence_reason, _ = problem.solve()
-    assert convergence_reason > 0
+    problem.solve()
+    assert problem.solver.getConvergedReason() > 0
     # Compute error
     for (fi, ui) in zip(f, u):
         error_i_ufl = dolfinx.fem.form(ufl.inner(ui - fi, ui - fi) * active_dx)
