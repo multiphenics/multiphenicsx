@@ -30,7 +30,7 @@ petsc_options_linear = {
 
 petsc_options_nonlinear = {
     **petsc_options_linear,
-    "snes_rtol": 10 * np.finfo(petsc4py.PETSc.ScalarType).eps,
+    "snes_rtol": 10 * np.finfo(petsc4py.PETSc.ScalarType).eps,  # type: ignore[attr-defined]
     "snes_max_it": 10,
     "snes_monitor": None,
     "snes_error_if_not_converged": True
@@ -106,7 +106,7 @@ def test_plain_linear_solver(
     # Compute error
     error_ufl = dolfinx.fem.form(ufl.inner(solution - f, solution - f) * active_dx)
     error = np.sqrt(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(error_ufl), op=mpi4py.MPI.SUM))
-    tol = 500 * np.finfo(petsc4py.PETSc.ScalarType).eps
+    tol = 500 * np.finfo(petsc4py.PETSc.ScalarType).eps  # type: ignore[attr-defined]
     assert error < tol
 
 
@@ -151,7 +151,7 @@ def test_block_nest_linear_solver(
     for (fi, si) in zip(f, solutions):
         error_i_ufl = dolfinx.fem.form(ufl.inner(si - fi, si - fi) * active_dx)
         error_i = np.sqrt(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(error_i_ufl), op=mpi4py.MPI.SUM))
-        tol = 500 * np.finfo(petsc4py.PETSc.ScalarType).eps
+        tol = 500 * np.finfo(petsc4py.PETSc.ScalarType).eps  # type: ignore[attr-defined]
         assert error_i < tol
 
 
@@ -195,7 +195,7 @@ def test_plain_nonlinear_solver(
     # Compute error
     error_ufl = dolfinx.fem.form(ufl.inner(u - f, u - f) * active_dx)
     error = np.sqrt(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(error_ufl), op=mpi4py.MPI.SUM))
-    tol = 500 * np.finfo(petsc4py.PETSc.ScalarType).eps
+    tol = 500 * np.finfo(petsc4py.PETSc.ScalarType).eps  # type: ignore[attr-defined]
     assert error < tol
 
 
@@ -245,5 +245,5 @@ def test_block_nest_nonlinear_solver(
     for (fi, ui) in zip(f, u):
         error_i_ufl = dolfinx.fem.form(ufl.inner(ui - fi, ui - fi) * active_dx)
         error_i = np.sqrt(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(error_i_ufl), op=mpi4py.MPI.SUM))
-        tol = 500 * np.finfo(petsc4py.PETSc.ScalarType).eps
+        tol = 500 * np.finfo(petsc4py.PETSc.ScalarType).eps  # type: ignore[attr-defined]
         assert error_i < tol

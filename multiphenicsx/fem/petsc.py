@@ -39,13 +39,13 @@ DolfinxRank2FormsType = typing.Union[
 ]
 DolfinxVectorKindType = typing.Optional[str]
 DolfinxMatrixKindType = typing.Optional[typing.Union[str, typing.Sequence[typing.Sequence[str]]]]
-DolfinxConstantsType_Base = npt.NDArray[petsc4py.PETSc.ScalarType]  # type: ignore[no-any-unimported]
+DolfinxConstantsType_Base = npt.NDArray[petsc4py.PETSc.ScalarType]  # type: ignore[name-defined]
 DolfinxConstantsType = typing.Optional[
     typing.Union[DolfinxConstantsType_Base, typing.Sequence[typing.Optional[DolfinxConstantsType_Base]]]
 ]
 DolfinxCoefficientsType_Base = dict[  # type: ignore[no-any-unimported]
     tuple[dolfinx.fem.IntegralType, int],
-    npt.NDArray[petsc4py.PETSc.ScalarType]
+    npt.NDArray[petsc4py.PETSc.ScalarType]  # type: ignore[name-defined]
 ]
 DolfinxCoefficientsType = typing.Optional[
     typing.Union[DolfinxCoefficientsType_Base, typing.Sequence[typing.Optional[DolfinxCoefficientsType_Base]]]
@@ -134,10 +134,10 @@ def _same_dofmap(  # type: ignore[no-any-unimported]
 
 # -- Vector instantiation ----------------------------------------------------
 
-def create_vector(  # type: ignore[no-any-unimported]
+def create_vector(
     L: DolfinxRank1FormsType, kind: DolfinxVectorKindType = None,
     restriction: MultiphenicsxRank1RestrictionsType = None
-) -> petsc4py.PETSc.Vec:
+) -> petsc4py.PETSc.Vec:  # type: ignore[name-defined]
     """
     Create a PETSc vector that is compatible with a linear form(s) and a restriction.
 
@@ -184,9 +184,9 @@ def create_vector(  # type: ignore[no-any-unimported]
             assert all(
                 _same_dofmap(restriction_.dofmap, dofmap) for (restriction_, dofmap) in zip(restriction, dofmaps))
             index_maps = [(restriction_.index_map, restriction_.index_map_bs) for restriction_ in restriction]
-        if kind == petsc4py.PETSc.Vec.Type.NEST:
+        if kind == petsc4py.PETSc.Vec.Type.NEST:  # type: ignore[attr-defined]
             return dcpp.fem.petsc.create_vector_nest(index_maps)
-        elif kind == petsc4py.PETSc.Vec.Type.MPI:
+        elif kind == petsc4py.PETSc.Vec.Type.MPI:  # type: ignore[attr-defined]
             b = dcpp.fem.petsc.create_vector_block(index_maps)
             b.setAttr("_dofmaps", dofmaps)
             return b
@@ -197,7 +197,7 @@ def create_vector(  # type: ignore[no-any-unimported]
                 "Did you mean 'nest' or 'mpi'?"
             )
     else:
-        assert kind is None or kind == petsc4py.PETSc.Vec.Type.MPI
+        assert kind is None or kind == petsc4py.PETSc.Vec.Type.MPI  # type: ignore[attr-defined]
         dofmap = L.function_spaces[0].dofmap
         if restriction is None:
             index_map = dofmap.index_map
@@ -212,10 +212,10 @@ def create_vector(  # type: ignore[no-any-unimported]
 
 # -- Matrix instantiation ----------------------------------------------------
 
-def create_matrix(  # type: ignore[no-any-unimported]
+def create_matrix(
     a: DolfinxRank2FormsType, kind: DolfinxMatrixKindType = None,
     restriction: MultiphenicsxRank2RestrictionsType = None
-) -> petsc4py.PETSc.Mat:
+) -> petsc4py.PETSc.Mat:  # type: ignore[name-defined]
     """
     Create a PETSc matrix that is compatible with the (sequence) of bilinear form(s) and a restriction.
 
@@ -299,14 +299,17 @@ def create_matrix(  # type: ignore[no-any-unimported]
                 [restriction[0][i].map()[1] for i in range(rows)],
                 [restriction[1][j].map()[1] for j in range(cols)])
         a_cpp = [[None if form is None else form._cpp_object for form in forms] for forms in a]
-        if kind == petsc4py.PETSc.Mat.Type.NEST:  # create nest matrix with default types
+        if kind == petsc4py.PETSc.Mat.Type.NEST:  # type: ignore[attr-defined]
+            # Create nest matrix with default types
             return mcpp.fem.petsc.create_matrix_nest(
                 a_cpp, index_maps, index_maps_bs, dofmaps_list, dofmaps_bounds, None)
         else:
-            if kind is None or isinstance(kind, str):  # create block matrix
+            if kind is None or isinstance(kind, str):
+                # Create block matrix
                 return mcpp.fem.petsc.create_matrix_block(
                     a_cpp, index_maps, index_maps_bs, dofmaps_list, dofmaps_bounds, kind)
-            else:  # create nest matrix with provided types
+            else:
+                # Create nest matrix with provided types
                 return mcpp.fem.petsc.create_matrix_nest(
                     a_cpp, index_maps, index_maps_bs, dofmaps_list, dofmaps_bounds, kind)
     else:
@@ -344,9 +347,9 @@ def _VecSubVectorWrapperBase(CppWrapperClass: type) -> type:
     class _VecSubVectorWrapperBase_Class:
         """Wrap a PETSc Vec object."""
 
-        def __init__(  # type: ignore[no-any-unimported]
-            self, b: petsc4py.PETSc.Vec, unrestricted_index_set: petsc4py.PETSc.IS,
-            restricted_index_set: typing.Optional[petsc4py.PETSc.IS] = None,
+        def __init__(
+            self, b: petsc4py.PETSc.Vec, unrestricted_index_set: petsc4py.PETSc.IS,  # type: ignore[name-defined]
+            restricted_index_set: typing.Optional[petsc4py.PETSc.IS] = None,  # type: ignore[name-defined]
             unrestricted_to_restricted: typing.Optional[dict[int, int]] = None,
             unrestricted_to_restricted_bs: typing.Optional[int] = None
         ) -> None:
@@ -359,7 +362,7 @@ def _VecSubVectorWrapperBase(CppWrapperClass: type) -> type:
                     b, unrestricted_index_set, restricted_index_set,
                     unrestricted_to_restricted, unrestricted_to_restricted_bs)
 
-        def __enter__(self) -> npt.NDArray[petsc4py.PETSc.ScalarType]:  # type: ignore[no-any-unimported]
+        def __enter__(self) -> npt.NDArray[petsc4py.PETSc.ScalarType]:  # type: ignore[name-defined]
             """Return Vec content when entering the context."""
             return self._cpp_object.content  # type: ignore[no-any-return]
 
@@ -392,7 +395,7 @@ def VecSubVectorWrapperBase(_VecSubVectorWrapperClass: type) -> type:
         """Wrap a PETSc Vec object."""
 
         def __init__(  # type: ignore[no-any-unimported]
-            self, b: typing.Union[petsc4py.PETSc.Vec, None], dofmap: dcpp.fem.DofMap,
+            self, b: typing.Union[petsc4py.PETSc.Vec, None], dofmap: dcpp.fem.DofMap,  # type: ignore[name-defined]
             restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None,
             ghosted: bool = True
         ) -> None:
@@ -429,7 +432,7 @@ def VecSubVectorWrapperBase(_VecSubVectorWrapperClass: type) -> type:
                     self._unrestricted_to_restricted = unrestricted_to_restricted
                     self._unrestricted_to_restricted_bs = unrestricted_to_restricted_bs
 
-        def __enter__(self) -> typing.Optional[  # type: ignore[no-any-unimported]
+        def __enter__(self) -> typing.Optional[  # type: ignore[name-defined]
                 npt.NDArray[petsc4py.PETSc.ScalarType]]:
             """Return Vec content when entering the context."""
             if self._wrapper is not None:
@@ -464,7 +467,7 @@ def BlockVecSubVectorWrapperBase(_VecSubVectorWrapperClass: type) -> type:
         """Wrap a PETSc Vec object with multiple blocks."""
 
         def __init__(  # type: ignore[no-any-unimported]
-            self, b: typing.Union[petsc4py.PETSc.Vec, None],
+            self, b: typing.Union[petsc4py.PETSc.Vec, None],  # type: ignore[name-defined]
             dofmaps: typing.Sequence[dcpp.fem.DofMap],
             restriction: typing.Optional[typing.Sequence[mcpp.fem.DofMapRestriction]] = None,
             ghosted: bool = True
@@ -505,7 +508,7 @@ def BlockVecSubVectorWrapperBase(_VecSubVectorWrapperClass: type) -> type:
                     self._unrestricted_to_restricted = unrestricted_to_restricted
                     self._unrestricted_to_restricted_bs = unrestricted_to_restricted_bs
 
-        def __iter__(self) -> typing.Optional[  # type: ignore[no-any-unimported, return]
+        def __iter__(self) -> typing.Optional[  # type: ignore[name-defined, return]
                 typing.Iterator[npt.NDArray[petsc4py.PETSc.ScalarType]]]:
             """Iterate over blocks."""
             with contextlib.ExitStack() as wrapper_stack:
@@ -559,7 +562,10 @@ def NestVecSubVectorWrapperBase(VecSubVectorWrapperClass: type) -> type:
         """Wrap a PETSc Vec object with nested blocks."""
 
         def __init__(  # type: ignore[no-any-unimported]
-            self, b: typing.Union[petsc4py.PETSc.Vec, typing.Sequence[petsc4py.PETSc.Vec], None],
+            self,
+            b: typing.Union[  # type: ignore[name-defined]
+                petsc4py.PETSc.Vec, typing.Sequence[petsc4py.PETSc.Vec], None
+            ],
             dofmaps: typing.Sequence[dcpp.fem.DofMap],
             restriction: typing.Optional[typing.Sequence[mcpp.fem.DofMapRestriction]] = None,
             ghosted: bool = True
@@ -579,7 +585,7 @@ def NestVecSubVectorWrapperBase(VecSubVectorWrapperClass: type) -> type:
             self._restriction = restriction
             self._ghosted = ghosted
 
-        def __iter__(self) -> typing.Optional[  # type: ignore[no-any-unimported, return]
+        def __iter__(self) -> typing.Optional[  # type: ignore[name-defined, return]
                 typing.Iterator[npt.NDArray[petsc4py.PETSc.ScalarType]]]:
             """Iterate over blocks."""
             with contextlib.ExitStack() as wrapper_stack:
@@ -620,10 +626,10 @@ NestVecSubVectorWrapper = NestVecSubVectorWrapperBase(VecSubVectorWrapper)
 
 
 @functools.singledispatch
-def assemble_vector(  # type: ignore[no-any-unimported]
+def assemble_vector(
     L: DolfinxRank1FormsType, constants: DolfinxConstantsType = None, coeffs: DolfinxCoefficientsType = None,
     kind: DolfinxVectorKindType = None, restriction: MultiphenicsxRank1RestrictionsType = None
-) -> petsc4py.PETSc.Vec:
+) -> petsc4py.PETSc.Vec:  # type: ignore[name-defined]
     """
     Assemble linear form(s) into a new PETSc vector.
 
@@ -685,11 +691,11 @@ def assemble_vector(  # type: ignore[no-any-unimported]
 
 
 @assemble_vector.register
-def _(  # type: ignore[no-any-unimported]
-    b: petsc4py.PETSc.Vec, L: DolfinxRank1FormsType,
+def _(
+    b: petsc4py.PETSc.Vec, L: DolfinxRank1FormsType,  # type: ignore[name-defined]
     constants: DolfinxConstantsType = None, coeffs: DolfinxCoefficientsType = None,
     restriction: MultiphenicsxRank1RestrictionsType = None
-) -> petsc4py.PETSc.Vec:
+) -> petsc4py.PETSc.Vec:  # type: ignore[name-defined]
     """
     Assemble linear form(s) into a PETSc vector.
 
@@ -731,7 +737,7 @@ def _(  # type: ignore[no-any-unimported]
     The vector is not zeroed before assembly and it is not finalised, i.e. ghost values are not accumulated
     on the owning processes.
     """
-    if b.getType() == petsc4py.PETSc.Vec.Type.NEST:  # nest vector
+    if b.getType() == petsc4py.PETSc.Vec.Type.NEST:  # type: ignore[attr-defined]
         assert isinstance(L, collections.abc.Sequence)
         constants = [None] * len(L) if constants is None else constants
         coeffs = [None] * len(L) if coeffs is None else coeffs
@@ -772,9 +778,12 @@ def _(  # type: ignore[no-any-unimported]
 class _MatSubMatrixWrapper:
     """Wrap a PETSc Mat object."""
 
-    def __init__(  # type: ignore[no-any-unimported]
-        self, A: petsc4py.PETSc.Mat, unrestricted_index_sets: tuple[petsc4py.PETSc.IS, petsc4py.PETSc.IS],
-        restricted_index_sets: typing.Optional[tuple[petsc4py.PETSc.IS, petsc4py.PETSc.IS]] = None,
+    def __init__(
+        self, A: petsc4py.PETSc.Mat,   # type: ignore[name-defined]
+        unrestricted_index_sets: tuple[petsc4py.PETSc.IS, petsc4py.PETSc.IS],  # type: ignore[name-defined]
+        restricted_index_sets: typing.Optional[  # type: ignore[name-defined]
+            tuple[petsc4py.PETSc.IS, petsc4py.PETSc.IS]
+        ] = None,
         unrestricted_to_restricted: typing.Optional[tuple[dict[int, int], dict[int, int]]] = None,
         unrestricted_to_restricted_bs: typing.Optional[tuple[int, int]] = None
     ) -> None:
@@ -788,9 +797,9 @@ class _MatSubMatrixWrapper:
                 restricted_index_sets,
                 unrestricted_to_restricted,
                 unrestricted_to_restricted_bs)
-        self._cpp_object_mat: typing.Optional[petsc4py.PETSc.Mat] = None  # type: ignore[no-any-unimported]
+        self._cpp_object_mat: typing.Optional[petsc4py.PETSc.Mat] = None  # type: ignore[name-defined]
 
-    def __enter__(self) -> petsc4py.PETSc.Mat:  # type: ignore[no-any-unimported]
+    def __enter__(self) -> petsc4py.PETSc.Mat:  # type: ignore[name-defined]
         """Return submatrix content."""
         self._cpp_object_mat = self._cpp_object.mat()
         return self._cpp_object_mat
@@ -809,7 +818,7 @@ class MatSubMatrixWrapper:
     """Wrap a PETSc Mat object."""
 
     def __init__(  # type: ignore[no-any-unimported]
-        self, A: petsc4py.PETSc.Mat, dofmaps: tuple[dcpp.fem.DofMap, dcpp.fem.DofMap],
+        self, A: petsc4py.PETSc.Mat, dofmaps: tuple[dcpp.fem.DofMap, dcpp.fem.DofMap],  # type: ignore[name-defined]
         restriction: typing.Optional[tuple[mcpp.fem.DofMapRestriction, mcpp.fem.DofMapRestriction]] = None
     ) -> None:
         assert len(dofmaps) == 2
@@ -858,7 +867,7 @@ class MatSubMatrixWrapper:
             self._unrestricted_to_restricted = unrestricted_to_restricted
             self._unrestricted_to_restricted_bs = unrestricted_to_restricted_bs
 
-    def __enter__(self) -> petsc4py.PETSc.Mat:  # type: ignore[no-any-unimported]
+    def __enter__(self) -> petsc4py.PETSc.Mat:  # type: ignore[name-defined]
         """Return submatrix content."""
         return self._wrapper.__enter__()
 
@@ -879,7 +888,7 @@ class BlockMatSubMatrixWrapper:
     """Wrap a PETSc Mat object with several blocks."""
 
     def __init__(  # type: ignore[no-any-unimported]
-        self, A: petsc4py.PETSc.Mat,
+        self, A: petsc4py.PETSc.Mat,  # type: ignore[name-defined]
         dofmaps: tuple[typing.Sequence[dcpp.fem.DofMap], typing.Sequence[dcpp.fem.DofMap]],
         restriction: typing.Optional[
             tuple[typing.Sequence[mcpp.fem.DofMapRestriction], typing.Sequence[mcpp.fem.DofMapRestriction]]] = None
@@ -931,7 +940,7 @@ class BlockMatSubMatrixWrapper:
             self._unrestricted_to_restricted = unrestricted_to_restricted
             self._unrestricted_to_restricted_bs = unrestricted_to_restricted_bs
 
-    def __iter__(self) -> typing.Iterator[  # type: ignore[no-any-unimported]
+    def __iter__(self) -> typing.Iterator[  # type: ignore[name-defined]
             tuple[int, int, petsc4py.PETSc.Mat]]:
         """Iterate wrapper over blocks."""
         with contextlib.ExitStack() as wrapper_stack:
@@ -975,7 +984,8 @@ class NestMatSubMatrixWrapper:
     """Wrap a PETSc Mat object with nested blocks."""
 
     def __init__(  # type: ignore[no-any-unimported]
-        self, A: petsc4py.PETSc.Mat, dofmaps: tuple[typing.Sequence[dcpp.fem.DofMap], typing.Sequence[dcpp.fem.DofMap]],
+        self, A: petsc4py.PETSc.Mat,   # type: ignore[name-defined]
+        dofmaps: tuple[typing.Sequence[dcpp.fem.DofMap], typing.Sequence[dcpp.fem.DofMap]],
         restriction: typing.Optional[
             tuple[typing.Sequence[mcpp.fem.DofMapRestriction], typing.Sequence[mcpp.fem.DofMapRestriction]]] = None
     ) -> None:
@@ -983,7 +993,7 @@ class NestMatSubMatrixWrapper:
         self._dofmaps = dofmaps
         self._restriction = restriction
 
-    def __iter__(self) -> typing.Iterator[  # type: ignore[no-any-unimported]
+    def __iter__(self) -> typing.Iterator[  # type: ignore[name-defined]
             tuple[int, int, petsc4py.PETSc.Mat]]:
         """Iterate wrapper over blocks."""
         with contextlib.ExitStack() as wrapper_stack:
@@ -1020,12 +1030,12 @@ class NestMatSubMatrixWrapper:
 
 
 @functools.singledispatch
-def assemble_matrix(  # type: ignore[no-any-unimported]
+def assemble_matrix(
     a: DolfinxRank2FormsType,
     bcs: typing.Optional[typing.Sequence[dolfinx.fem.DirichletBC]] = None, diag: float = 1.0,
     constants: DolfinxConstantsType = None, coeffs: DolfinxCoefficientsType = None,
     kind: DolfinxMatrixKindType = None, restriction: MultiphenicsxRank2RestrictionsType = None
-) -> petsc4py.PETSc.Mat:
+) -> petsc4py.PETSc.Mat:  # type: ignore[name-defined]
     r"""
     Assemble a bilinear form into a matrix.
 
@@ -1092,12 +1102,12 @@ def assemble_matrix(  # type: ignore[no-any-unimported]
     return assemble_matrix(A, a, bcs, diag, constants, coeffs, restriction)  # type: ignore[arg-type]
 
 @assemble_matrix.register
-def _(  # type: ignore[no-any-unimported]
-    A: petsc4py.PETSc.Mat, a: DolfinxRank2FormsType,
+def _(
+    A: petsc4py.PETSc.Mat, a: DolfinxRank2FormsType,  # type: ignore[name-defined]
     bcs: typing.Optional[typing.Sequence[dolfinx.fem.DirichletBC]] = None, diag: float = 1.0,
     constants: DolfinxConstantsType = None, coeffs: DolfinxCoefficientsType = None,
     restriction: MultiphenicsxRank2RestrictionsType = None
-) -> petsc4py.PETSc.Mat:
+) -> petsc4py.PETSc.Mat:  # type: ignore[name-defined]
     """
     Assemble bilinear form into a matrix.
 
@@ -1133,7 +1143,7 @@ def _(  # type: ignore[no-any-unimported]
     """
     bcs_cpp = [bc._cpp_object for bc in bcs] if bcs is not None else []
 
-    if A.getType() == petsc4py.PETSc.Mat.Type.NEST:  # nest matrix
+    if A.getType() == petsc4py.PETSc.Mat.Type.NEST:  # type: ignore[attr-defined]
         assert isinstance(a, collections.abc.Sequence)
         function_spaces = _get_block_function_spaces(a)
         dofmaps = (
@@ -1163,7 +1173,7 @@ def _(  # type: ignore[no-any-unimported]
                                 " Consider assembling a zero block.")
 
         # Flush to enable switch from add to set in the matrix
-        A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)
+        A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)  # type: ignore[attr-defined]
 
         # Set diagonal value
         with NestMatSubMatrixWrapper(A, dofmaps, restriction) as nest_A:
@@ -1200,7 +1210,7 @@ def _(  # type: ignore[no-any-unimported]
                                 " Consider assembling a zero block.")
 
         # Flush to enable switch from add to set in the matrix
-        A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)
+        A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)  # type: ignore[attr-defined]
 
         # Set diagonal
         with BlockMatSubMatrixWrapper(A, dofmaps, restriction) as block_A:
@@ -1220,7 +1230,7 @@ def _(  # type: ignore[no-any-unimported]
 
             if function_spaces[0] is function_spaces[1]:
                 # Flush to enable switch from add to set in the matrix
-                A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)
+                A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)  # type: ignore[attr-defined]
 
                 # Set diagonal value
                 dcpp.fem.petsc.insert_diagonal(A, function_spaces[0], bcs_cpp, diag)
@@ -1233,7 +1243,7 @@ def _(  # type: ignore[no-any-unimported]
 
             if function_spaces[0] is function_spaces[1]:
                 # Flush to enable switch from add to set in the matrix
-                A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)
+                A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)  # type: ignore[attr-defined]
 
                 # Set diagonal value
                 with MatSubMatrixWrapper(A, dofmaps, restriction) as A_sub:
@@ -1244,18 +1254,17 @@ def _(  # type: ignore[no-any-unimported]
 
 # -- Modifiers for Dirichlet conditions ---------------------------------------
 
-def apply_lifting(  # type: ignore[no-any-unimported]
-    b: petsc4py.PETSc.Vec,
+def apply_lifting(
+    b: petsc4py.PETSc.Vec,  # type: ignore[name-defined]
     a: typing.Union[typing.Sequence[dolfinx.fem.Form], typing.Sequence[typing.Sequence[dolfinx.fem.Form]]],
     bcs: typing.Optional[
         typing.Union[typing.Sequence[dolfinx.fem.DirichletBC],
         typing.Sequence[typing.Sequence[dolfinx.fem.DirichletBC]]]] = None,
-    x0: typing.Optional[typing.Sequence[petsc4py.PETSc.Vec]] = None,
+    x0: typing.Optional[typing.Sequence[petsc4py.PETSc.Vec]] = None,  # type: ignore[name-defined]
     alpha: float = 1.0,
     constants: DolfinxConstantsType = None, coeffs: DolfinxCoefficientsType = None,
     restriction: MultiphenicsxRank1RestrictionsType = None,
     restriction_x0: MultiphenicsxRank1RestrictionsType = None
-
 ) -> None:
     r"""
     Apply the function :func:`dolfinx.fem.apply_lifting` to a PETSc vector.
@@ -1319,7 +1328,7 @@ def apply_lifting(  # type: ignore[no-any-unimported]
                         b_sub, a, bcs, x0_as_list, alpha, constants, coeffs)  # type: ignore[arg-type]
     else:  # block or nest vector
         constants = [[  # type: ignore[misc]
-            np.array([], dtype=petsc4py.PETSc.ScalarType) if form is None
+            np.array([], dtype=petsc4py.PETSc.ScalarType) if form is None  # type: ignore[attr-defined]
             else dcpp.fem.pack_constants(form._cpp_object)
             for form in forms] for forms in a] if constants is None else constants  # type: ignore[union-attr]
         coeffs = [[  # type: ignore[misc]
@@ -1330,7 +1339,7 @@ def apply_lifting(  # type: ignore[no-any-unimported]
         dofmaps = [function_space.dofmap for function_space in function_spaces[0]]
         dofmaps_x0 = [function_space.dofmap for function_space in function_spaces[1]]
 
-        if b.getType() == petsc4py.PETSc.Vec.Type.NEST:  # nest vector
+        if b.getType() == petsc4py.PETSc.Vec.Type.NEST:  # type: ignore[attr-defined]
             with NestVecSubVectorWrapper(b, dofmaps, restriction) as nest_b, \
                     NestVecSubVectorReadWrapper(x0, dofmaps_x0, restriction_x0) as nest_x0:
                 if x0 is not None:
@@ -1355,12 +1364,12 @@ def apply_lifting(  # type: ignore[no-any-unimported]
 
 
 
-def set_bc(  # type: ignore[no-any-unimported]
-    b: petsc4py.PETSc.Vec,
+def set_bc(
+    b: petsc4py.PETSc.Vec,  # type: ignore[name-defined]
     bcs: typing.Union[
         typing.Sequence[dolfinx.fem.DirichletBC],
         typing.Sequence[typing.Sequence[dolfinx.fem.DirichletBC]]],
-    x0: typing.Optional[petsc4py.PETSc.Vec] = None,
+    x0: typing.Optional[petsc4py.PETSc.Vec] = None,  # type: ignore[name-defined]
     alpha: float = 1.0,
     restriction: MultiphenicsxRank1RestrictionsType = None,
     restriction_x0: MultiphenicsxRank1RestrictionsType = None
@@ -1411,7 +1420,7 @@ def set_bc(  # type: ignore[no-any-unimported]
                     VecSubVectorReadWrapper(x0, dofmap_x0, restriction_x0, ghosted=False) as x0_sub:
                 for bc in bcs:
                     bc.set(b_sub, x0_sub, alpha)  # type: ignore[union-attr]
-    elif b.getType() == petsc4py.PETSc.Vec.Type.NEST:  # nest vector
+    elif b.getType() == petsc4py.PETSc.Vec.Type.NEST:  # type: ignore[attr-defined]
         if restriction is None:
             dofmaps = [None] * len(b.getNestSubVecs())
         else:
@@ -1462,9 +1471,9 @@ def set_bc(  # type: ignore[no-any-unimported]
 
 
 @functools.singledispatch
-def assign(  # type: ignore[no-any-unimported]
+def assign(
     u: typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]],
-    x: petsc4py.PETSc.Vec, restriction: MultiphenicsxRank1RestrictionsType = None
+    x: petsc4py.PETSc.Vec, restriction: MultiphenicsxRank1RestrictionsType = None  # type: ignore[name-defined]
 ) -> None:
     """
     Assign :class:`Function` degrees-of-freedom to a vector.
@@ -1484,7 +1493,7 @@ def assign(  # type: ignore[no-any-unimported]
         If not provided, ``x`` is assumed to be unrestricted.
     """
     if isinstance(u, collections.abc.Sequence):  # block or nest vector
-        if x.getType() == petsc4py.PETSc.Vec.Type().NEST:  # nest vector
+        if x.getType() == petsc4py.PETSc.Vec.Type().NEST:  # type: ignore[attr-defined]
             BlockNestVecSubVectorWrapper = NestVecSubVectorWrapper
         else:  # block vector
             BlockNestVecSubVectorWrapper = BlockVecSubVectorWrapper
@@ -1499,9 +1508,10 @@ def assign(  # type: ignore[no-any-unimported]
                 x_wrapper_local[:] = sub_solution_local
 
 
-@assign.register(petsc4py.PETSc.Vec)
-def _(  # type: ignore[no-any-unimported]
-    x: petsc4py.PETSc.Vec, u: typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]],
+@assign.register
+def _(
+    x: petsc4py.PETSc.Vec,  # type: ignore[name-defined]
+    u: typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]],
     restriction: MultiphenicsxRank1RestrictionsType = None
 ) -> None:
     """
@@ -1521,7 +1531,7 @@ def _(  # type: ignore[no-any-unimported]
         If not provided, ``x`` is assumed to be unrestricted.
     """
     if isinstance(u, collections.abc.Sequence):  # block or nest vector
-        if x.getType() == petsc4py.PETSc.Vec.Type().NEST:  # nest vector
+        if x.getType() == petsc4py.PETSc.Vec.Type().NEST:  # type: ignore[attr-defined]
             BlockNestVecSubVectorWrapper = NestVecSubVectorWrapper
         else:  # block vector
             BlockNestVecSubVectorWrapper = BlockVecSubVectorWrapper
@@ -1634,14 +1644,17 @@ class LinearProblem:
             A dofmap restriction. If not provided, the unrestricted problem will be solved.
         """
         self._a = dolfinx.fem.form(
-            a, dtype=petsc4py.PETSc.ScalarType, form_compiler_options=form_compiler_options, jit_options=jit_options
+            a, dtype=petsc4py.PETSc.ScalarType,  # type: ignore[attr-defined]
+            form_compiler_options=form_compiler_options, jit_options=jit_options
         )
         self._L = dolfinx.fem.form(
-            L, dtype=petsc4py.PETSc.ScalarType, form_compiler_options=form_compiler_options, jit_options=jit_options
+            L, dtype=petsc4py.PETSc.ScalarType,  # type: ignore[attr-defined]
+            form_compiler_options=form_compiler_options, jit_options=jit_options
         )
         self._A = create_matrix(self._a, kind=kind, restriction=(restriction, restriction))
         self._preconditioner = dolfinx.fem.form(
-            P, dtype=petsc4py.PETSc.ScalarType, form_compiler_options=form_compiler_options, jit_options=jit_options
+            P, dtype=petsc4py.PETSc.ScalarType,  # type: ignore[attr-defined]
+            form_compiler_options=form_compiler_options, jit_options=jit_options
         )
         self._P_mat = (
             create_matrix(self._preconditioner, kind=kind, restriction=(restriction, restriction))
@@ -1649,7 +1662,7 @@ class LinearProblem:
         )
 
         # For nest matrices kind can be a nested list.
-        kind = "nest" if self.A.getType() == petsc4py.PETSc.Mat.Type.NEST else kind
+        kind = "nest" if self.A.getType() == petsc4py.PETSc.Mat.Type.NEST else kind  # type: ignore[attr-defined]
         assert kind is None or isinstance(kind, str)
         self._b = create_vector(self.L, kind=kind, restriction=restriction)
         self._x = create_vector(self.L, kind=kind, restriction=restriction)
@@ -1665,7 +1678,7 @@ class LinearProblem:
 
         self.bcs = bcs
 
-        self._solver = petsc4py.PETSc.KSP().create(self.A.comm)
+        self._solver = petsc4py.PETSc.KSP().create(self.A.comm)  # type: ignore[attr-defined]
         self.solver.setOperators(self.A, self.P_mat)
 
         # Set options prefix for PETSc objects
@@ -1680,7 +1693,7 @@ class LinearProblem:
 
         # Set options on KSP only
         if petsc_options is not None:
-            opts = petsc4py.PETSc.Options()
+            opts = petsc4py.PETSc.Options()  # type: ignore[attr-defined]
             opts.prefixPush(self.solver.getOptionsPrefix())
 
             for k, v in petsc_options.items():
@@ -1762,22 +1775,30 @@ class LinearProblem:
                 bcs1 = dolfinx.fem.bcs_by_block(function_spaces[1], self.bcs)
                 apply_lifting(self.b, self.a, bcs=bcs1, restriction=self.restriction)
                 dolfinx.la.petsc._ghost_update(
-                    self.b, petsc4py.PETSc.InsertMode.ADD, petsc4py.PETSc.ScatterMode.REVERSE
+                    self.b, petsc4py.PETSc.InsertMode.ADD,  # type: ignore[attr-defined]
+                    petsc4py.PETSc.ScatterMode.REVERSE  # type: ignore[attr-defined]
                 )
                 bcs0 = dolfinx.fem.bcs_by_block(function_spaces[0], self.bcs)
                 set_bc(self.b, bcs0, restriction=self.restriction)
             else:  # single
                 apply_lifting(self.b, [self.a], bcs=[self.bcs], restriction=self.restriction)  # type: ignore[arg-type]
                 dolfinx.la.petsc._ghost_update(
-                    self.b, petsc4py.PETSc.InsertMode.ADD, petsc4py.PETSc.ScatterMode.REVERSE
+                    self.b, petsc4py.PETSc.InsertMode.ADD,  # type: ignore[attr-defined]
+                    petsc4py.PETSc.ScatterMode.REVERSE  # type: ignore[attr-defined]
                 )
                 set_bc(self.b, self.bcs, restriction=self.restriction)
         else:  # pragma: no cover
-            dolfinx.la.petsc._ghost_update(self.b, petsc4py.PETSc.InsertMode.ADD, petsc4py.PETSc.ScatterMode.REVERSE)
+            dolfinx.la.petsc._ghost_update(
+                self.b, petsc4py.PETSc.InsertMode.ADD,   # type: ignore[attr-defined]
+                petsc4py.PETSc.ScatterMode.REVERSE  # type: ignore[attr-defined]
+            )
 
         # Solve linear system and update ghost values in the solution
         self.solver.solve(self.b, self.x)
-        dolfinx.la.petsc._ghost_update(self.x, petsc4py.PETSc.InsertMode.INSERT, petsc4py.PETSc.ScatterMode.FORWARD)
+        dolfinx.la.petsc._ghost_update(
+            self.x, petsc4py.PETSc.InsertMode.INSERT,   # type: ignore[attr-defined]
+            petsc4py.PETSc.ScatterMode.FORWARD  # type: ignore[attr-defined]
+        )
         assign(self.x, self.u, self.restriction)
         return self.u
 
@@ -1797,22 +1818,22 @@ class LinearProblem:
         return self._preconditioner  # type: ignore[no-any-return]
 
     @property
-    def A(self) -> petsc4py.PETSc.Mat:  # type: ignore[no-any-unimported]
+    def A(self) -> petsc4py.PETSc.Mat:  # type: ignore[name-defined]
         """Left-hand side matrix."""
         return self._A
 
     @property
-    def P_mat(self) -> typing.Optional[petsc4py.PETSc.Mat]:  # type: ignore[no-any-unimported]
+    def P_mat(self) -> typing.Optional[petsc4py.PETSc.Mat]:  # type: ignore[name-defined]
         """Preconditioner matrix."""
         return self._P_mat
 
     @property
-    def b(self) -> petsc4py.PETSc.Vec:  # type: ignore[no-any-unimported]
+    def b(self) -> petsc4py.PETSc.Vec:  # type: ignore[name-defined]
         """Right-hand side vector."""
         return self._b
 
     @property
-    def x(self) -> petsc4py.PETSc.Vec:  # type: ignore[no-any-unimported]
+    def x(self) -> petsc4py.PETSc.Vec:  # type: ignore[name-defined]
         """
         Solution vector.
 
@@ -1823,7 +1844,7 @@ class LinearProblem:
         return self._x
 
     @property
-    def solver(self) -> petsc4py.PETSc.KSP:  # type: ignore[no-any-unimported]
+    def solver(self) -> petsc4py.PETSc.KSP:  # type: ignore[name-defined]
         """The PETSc KSP solver."""
         return self._solver
 
@@ -1847,24 +1868,28 @@ class LinearProblem:
 # -- High-level interface for SNES ---------------------------------------
 
 
-def assemble_residual(  # type: ignore[no-any-unimported]
+def assemble_residual(
     u: typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]],
     residual: DolfinxRank1FormsType, jacobian: DolfinxRank2FormsType,
     bcs: typing.Sequence[dolfinx.fem.DirichletBC],
     restriction: MultiphenicsxRank1RestrictionsType,
     restriction_x0: MultiphenicsxRank1RestrictionsType,
-    _snes: petsc4py.PETSc.SNES, x: petsc4py.PETSc.Vec, b: petsc4py.PETSc.Vec
+    _snes: petsc4py.PETSc.SNES, x: petsc4py.PETSc.Vec, b: petsc4py.PETSc.Vec  # type: ignore[name-defined]
 ) -> None:
     """Assemble the residual at ``x`` into the vector ``b``."""
     # Update input vector before assigning
-    dolfinx.la.petsc._ghost_update(x, petsc4py.PETSc.InsertMode.INSERT, petsc4py.PETSc.ScatterMode.FORWARD)
+    dolfinx.la.petsc._ghost_update(
+        x, petsc4py.PETSc.InsertMode.INSERT,   # type: ignore[attr-defined]
+        petsc4py.PETSc.ScatterMode.FORWARD  # type: ignore[attr-defined]
+    )
 
     # Copy the input vector into the `dolfinx.fem.Function` used in the forms
     assign(x, u, restriction)
 
     # Attach _dofmaps attribute if b contains a block vector
     if (
-        isinstance(residual, collections.abc.Sequence) and b.getType() != petsc4py.PETSc.Vec.Type.NEST
+        isinstance(residual, collections.abc.Sequence)
+        and b.getType() != petsc4py.PETSc.Vec.Type.NEST  # type: ignore[attr-defined]
         and (b.getAttr("_dofmaps") is None or x.getAttr("_dofmaps") is None)
     ):
         function_spaces = _get_block_function_spaces(residual)
@@ -1884,27 +1909,40 @@ def assemble_residual(  # type: ignore[no-any-unimported]
         bcs1 = dolfinx.fem.bcs_by_block(function_spaces[1], bcs)
         apply_lifting(
             b, jacobian, bcs=bcs1, x0=x, alpha=-1.0, restriction=restriction, restriction_x0=restriction_x0)
-        dolfinx.la.petsc._ghost_update(b, petsc4py.PETSc.InsertMode.ADD, petsc4py.PETSc.ScatterMode.REVERSE)
+        dolfinx.la.petsc._ghost_update(
+            b, petsc4py.PETSc.InsertMode.ADD,  # type: ignore[attr-defined]
+            petsc4py.PETSc.ScatterMode.REVERSE  # type: ignore[attr-defined]
+        )
         bcs0 = dolfinx.fem.bcs_by_block(function_spaces[0], bcs)
         set_bc(b, bcs0, x0=x, alpha=-1.0, restriction=restriction, restriction_x0=restriction_x0)
     else:  # single form
         apply_lifting(
             b, [jacobian], bcs=[bcs], x0=[x], alpha=-1.0, restriction=restriction, restriction_x0=[restriction_x0])
-        dolfinx.la.petsc._ghost_update(b, petsc4py.PETSc.InsertMode.ADD, petsc4py.PETSc.ScatterMode.REVERSE)
+        dolfinx.la.petsc._ghost_update(
+            b, petsc4py.PETSc.InsertMode.ADD,  # type: ignore[attr-defined]
+            petsc4py.PETSc.ScatterMode.REVERSE  # type: ignore[attr-defined]
+        )
         set_bc(b, bcs, x0=x, alpha=-1.0, restriction=restriction, restriction_x0=restriction_x0)
-    dolfinx.la.petsc._ghost_update(b, petsc4py.PETSc.InsertMode.INSERT, petsc4py.PETSc.ScatterMode.FORWARD)
+    dolfinx.la.petsc._ghost_update(
+        b, petsc4py.PETSc.InsertMode.INSERT,  # type: ignore[attr-defined]
+        petsc4py.PETSc.ScatterMode.FORWARD  # type: ignore[attr-defined]
+    )
 
 
-def assemble_jacobian(  # type: ignore[no-any-unimported]
+def assemble_jacobian(
     u: typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]],
     jacobian: DolfinxRank2FormsType, preconditioner: typing.Optional[DolfinxRank2FormsType],
     bcs: typing.Sequence[dolfinx.fem.DirichletBC],
     restriction: MultiphenicsxRank1RestrictionsType,
-    _snes: petsc4py.PETSc.SNES, x: petsc4py.PETSc.Vec, J: petsc4py.PETSc.Mat, P_mat: petsc4py.PETSc.Mat
+    _snes: petsc4py.PETSc.SNES, x: petsc4py.PETSc.Vec, J: petsc4py.PETSc.Mat,  # type: ignore[name-defined]
+    P_mat: petsc4py.PETSc.Mat  # type: ignore[name-defined]
 ) -> None:
     """Assemble the Jacobian and preconditioner at ``x`` into matrices ``J`` and ``P_mat``."""
     # Update input vector before assigning
-    dolfinx.la.petsc._ghost_update(x, petsc4py.PETSc.InsertMode.INSERT, petsc4py.PETSc.ScatterMode.FORWARD)
+    dolfinx.la.petsc._ghost_update(
+        x, petsc4py.PETSc.InsertMode.INSERT,  # type: ignore[attr-defined]
+        petsc4py.PETSc.ScatterMode.FORWARD  # type: ignore[attr-defined]
+    )
 
     # Copy the input vector into the `dolfinx.fem.Function` used in the forms
     assign(x, u, restriction)
@@ -1999,7 +2037,7 @@ class NonlinearProblem:
         """
         # Compile residual and Jacobian forms
         self._F = dolfinx.fem.form(
-            F, dtype=petsc4py.PETSc.ScalarType,
+            F, dtype=petsc4py.PETSc.ScalarType,  # type: ignore[attr-defined]
             form_compiler_options=form_compiler_options, jit_options=jit_options
         )
 
@@ -2007,13 +2045,13 @@ class NonlinearProblem:
             J = dolfinx.fem.forms.derivative_block(F, u)
 
         self._J = dolfinx.fem.form(
-            J, dtype=petsc4py.PETSc.ScalarType,
+            J, dtype=petsc4py.PETSc.ScalarType,  # type: ignore[attr-defined]
             form_compiler_options=form_compiler_options, jit_options=jit_options
         )
 
         if P is not None:  # pragma: no cover
             self._preconditioner = dolfinx.fem.form(
-                P, dtype=petsc4py.PETSc.ScalarType,
+                P, dtype=petsc4py.PETSc.ScalarType,  # type: ignore[attr-defined]
                 form_compiler_options=form_compiler_options, jit_options=jit_options
             )
         else:
@@ -2029,13 +2067,13 @@ class NonlinearProblem:
             self._P_mat = None
 
         # Determine the vector kind based on the matrix type
-        kind = "nest" if self._A.getType() == petsc4py.PETSc.Mat.Type.NEST else kind
+        kind = "nest" if self._A.getType() == petsc4py.PETSc.Mat.Type.NEST else kind  # type: ignore[attr-defined]
         assert kind is None or isinstance(kind, str)
         self._b = create_vector(self.F, kind=kind, restriction=restriction)
         self._x = create_vector(self.F, kind=kind, restriction=restriction)
 
         # Create the SNES solver and attach the corresponding Jacobian and esidual computation functions
-        self._snes = petsc4py.PETSc.SNES().create(self.A.comm)
+        self._snes = petsc4py.PETSc.SNES().create(self.A.comm)  # type: ignore[attr-defined]
         self.solver.setJacobian(
             functools.partial(assemble_jacobian, u, self.J, self.preconditioner, bcs, restriction),
             self.A, self.P_mat
@@ -2057,7 +2095,7 @@ class NonlinearProblem:
 
         # Set options for SNES only
         if petsc_options is not None:
-            opts = petsc4py.PETSc.Options()
+            opts = petsc4py.PETSc.Options()  # type: ignore[attr-defined]
             opts.prefixPush(self.solver.getOptionsPrefix())
 
             for k, v in petsc_options.items():
@@ -2117,7 +2155,10 @@ class NonlinearProblem:
 
         # Solve problem
         self.solver.solve(None, self.x)
-        dolfinx.la.petsc._ghost_update(self.x, petsc4py.PETSc.InsertMode.INSERT, petsc4py.PETSc.ScatterMode.FORWARD)
+        dolfinx.la.petsc._ghost_update(
+            self.x, petsc4py.PETSc.InsertMode.INSERT,  # type: ignore[attr-defined]
+            petsc4py.PETSc.ScatterMode.FORWARD  # type: ignore[attr-defined]
+        )
 
         # Copy solution back to function
         assign(self.x, self.u, restriction=self.restriction)
@@ -2139,22 +2180,22 @@ class NonlinearProblem:
         return self._preconditioner  # type: ignore[no-any-return]
 
     @property
-    def A(self) -> petsc4py.PETSc.Mat:  # type: ignore[no-any-unimported]
+    def A(self) -> petsc4py.PETSc.Mat:  # type: ignore[name-defined]
         """Jacobian matrix."""
         return self._A
 
     @property
-    def P_mat(self) -> typing.Optional[petsc4py.PETSc.Mat]:  # type: ignore[no-any-unimported]
+    def P_mat(self) -> typing.Optional[petsc4py.PETSc.Mat]:  # type: ignore[name-defined]
         """Preconditioner matrix."""
         return self._P_mat
 
     @property
-    def b(self) -> petsc4py.PETSc.Vec:  # type: ignore[no-any-unimported]
+    def b(self) -> petsc4py.PETSc.Vec:  # type: ignore[name-defined]
         """Residual vector."""
         return self._b
 
     @property
-    def x(self) -> petsc4py.PETSc.Vec:  # type: ignore[no-any-unimported]
+    def x(self) -> petsc4py.PETSc.Vec:  # type: ignore[name-defined]
         """
         Solution vector.
 
@@ -2165,7 +2206,7 @@ class NonlinearProblem:
         return self._x
 
     @property
-    def solver(self) -> petsc4py.PETSc.SNES:  # type: ignore[no-any-unimported]
+    def solver(self) -> petsc4py.PETSc.SNES:  # type: ignore[name-defined]
         """The SNES solver."""
         return self._snes
 

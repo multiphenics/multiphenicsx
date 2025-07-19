@@ -103,8 +103,6 @@ module = [
     "matplotlib",
     "matplotlib.*",
     "mpl_toolkits.*",
-    "petsc4py",
-    "petsc4py.PETSc",
     "plotly",
     "plotly.*",
     "scipy",
