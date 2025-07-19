@@ -63,58 +63,6 @@ MultiphenicsxRank2RestrictionsType = typing.Optional[typing.Union[  # type: igno
 ]]]
 
 
-def _get_block_function_spaces(block_form: typing.Sequence[typing.Any]) -> list[typing.Any]:
-    if isinstance(block_form[0], collections.abc.Sequence):
-        return _get_block_function_spaces_rank_2(block_form)
-    else:
-        return _get_block_function_spaces_rank_1(block_form)
-
-
-def _get_block_function_spaces_rank_1(
-    block_form: typing.Sequence[dolfinx.fem.Form]
-) -> list[dolfinx.fem.FunctionSpace]:
-    assert all(isinstance(block_form_, dolfinx.fem.Form) for block_form_ in block_form)
-    return [form.function_spaces[0] for form in block_form]
-
-
-def _get_block_function_spaces_rank_2(
-    block_form: typing.Sequence[typing.Sequence[dolfinx.fem.Form]]
-) -> list[list[dolfinx.fem.FunctionSpace]]:
-    assert all(isinstance(block_form_, typing.Sequence) for block_form_ in block_form)
-    assert all(
-        isinstance(form, dolfinx.fem.Form) or form is None for block_form_ in block_form for form in block_form_)
-    a = block_form
-    rows = len(a)
-    cols = len(a[0])
-    assert all(len(a_i) == cols for a_i in a)
-    assert all(
-        a[i][j] is None or a[i][j].rank == 2 for i in range(rows) for j in range(cols))
-    function_spaces_0 = list()
-    for i in range(rows):
-        function_spaces_0_i = None
-        for j in range(cols):
-            if a[i][j] is not None:
-                function_spaces_0_i = a[i][j].function_spaces[0]
-                break
-        assert function_spaces_0_i is not None
-        function_spaces_0.append(function_spaces_0_i)
-    function_spaces_1 = list()
-    for j in range(cols):
-        function_spaces_1_j = None
-        for i in range(rows):
-            if a[i][j] is not None:
-                function_spaces_1_j = a[i][j].function_spaces[1]
-                break
-        assert function_spaces_1_j is not None
-        function_spaces_1.append(function_spaces_1_j)
-    function_spaces = [function_spaces_0, function_spaces_1]
-    assert all(a[i][j] is None or a[i][j].function_spaces[0] == function_spaces[0][i]
-               for i in range(rows) for j in range(cols))
-    assert all(a[i][j] is None or a[i][j].function_spaces[1] == function_spaces[1][j]
-               for i in range(rows) for j in range(cols))
-    return function_spaces
-
-
 def _same_dofmap(  # type: ignore[no-any-unimported]
     dofmap1: typing.Union[dolfinx.fem.DofMap, dcpp.fem.DofMap],
     dofmap2: typing.Union[dolfinx.fem.DofMap, dcpp.fem.DofMap]
@@ -174,7 +122,7 @@ def create_vector(
         `restriction`. The vector is not initialised to zero.
     """
     if isinstance(L, collections.abc.Sequence):
-        function_spaces = _get_block_function_spaces(L)
+        function_spaces: list[dolfinx.fem.FunctionSpace] = dolfinx.fem.extract_function_spaces(L)  # type: ignore
         dofmaps = [function_space.dofmap for function_space in function_spaces]
         if restriction is None:
             index_maps = [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps]
@@ -255,7 +203,8 @@ def create_matrix(
         A PETSc matrix with a layout that is compatible with `a` and restriction `restriction`.
     """
     if isinstance(a, collections.abc.Sequence):
-        function_spaces = _get_block_function_spaces(a)
+        function_spaces: tuple[list[dolfinx.fem.FunctionSpace], list[dolfinx.fem.FunctionSpace]] = (  # type: ignore
+            dolfinx.fem.extract_function_spaces(a, 0), dolfinx.fem.extract_function_spaces(a, 1))
         rows, cols = len(function_spaces[0]), len(function_spaces[1])
         mesh = None
         for j in range(cols):
@@ -275,8 +224,8 @@ def create_matrix(
                 [function_spaces[0][i].dofmap.index_map_bs for i in range(rows)],
                 [function_spaces[1][j].dofmap.index_map_bs for j in range(cols)])
             dofmaps_list = (
-                [function_spaces[0][i].dofmap.map() for i in range(rows)],
-                [function_spaces[1][j].dofmap.map() for j in range(cols)])
+                [function_spaces[0][i].dofmap.map() for i in range(rows)],  # type: ignore[attr-defined]
+                [function_spaces[1][j].dofmap.map() for j in range(cols)])  # type: ignore[attr-defined]
             dofmaps_bounds = (
                 [np.arange(dofmaps_list[0][i].shape[0] + 1, dtype=np.uint64) * dofmaps_list[0][i].shape[1]
                  for i in range(rows)],
@@ -314,13 +263,14 @@ def create_matrix(
                     a_cpp, index_maps, index_maps_bs, dofmaps_list, dofmaps_bounds, kind)
     else:
         assert a.rank == 2
-        function_spaces = a.function_spaces
-        assert all(function_space.mesh == a.mesh for function_space in function_spaces)
+        function_spaces: tuple[dolfinx.fem.Function, dolfinx.fem.FunctionSpace] = (  # type: ignore[no-redef]
+            a.function_spaces)
+        assert all(function_space.mesh == a.mesh for function_space in function_spaces)  # type: ignore[attr-defined]
         if restriction is None:
             index_maps = [  # type: ignore[assignment]
-                function_space.dofmap.index_map for function_space in function_spaces]
+                function_space.dofmap.index_map for function_space in function_spaces]  # type: ignore[attr-defined]
             index_maps_bs = [  # type: ignore[assignment]
-                function_space.dofmap.index_map_bs for function_space in function_spaces]
+                function_space.dofmap.index_map_bs for function_space in function_spaces]  # type: ignore[attr-defined]
             dofmaps_list = [  # type: ignore[assignment]
                 function_space.dofmap.map() for function_space in function_spaces]  # type: ignore[attr-defined]
             dofmaps_bounds = [  # type: ignore[assignment]
@@ -741,7 +691,7 @@ def _(
         assert isinstance(L, collections.abc.Sequence)
         constants = [None] * len(L) if constants is None else constants
         coeffs = [None] * len(L) if coeffs is None else coeffs
-        function_spaces = _get_block_function_spaces(L)
+        function_spaces: list[dolfinx.fem.FunctionSpace] = dolfinx.fem.extract_function_spaces(L)  # type: ignore
         dofmaps = [function_space.dofmap for function_space in function_spaces]
         with NestVecSubVectorWrapper(b, dofmaps, restriction) as nest_b:
             for b_sub, L_sub, constant, coeff in zip(nest_b, L, constants, coeffs):
@@ -753,7 +703,7 @@ def _(
         coeffs = [
             {} if form is None else dcpp.fem.pack_coefficients(form._cpp_object)
             for form in L] if coeffs is None else coeffs
-        function_spaces = _get_block_function_spaces(L)
+        function_spaces: list[dolfinx.fem.FunctionSpace] = dolfinx.fem.extract_function_spaces(L)  # type: ignore
         dofmaps = [function_space.dofmap for function_space in function_spaces]
         assert all(
             _same_dofmap(b_dofmap, dofmap) for (b_dofmap, dofmap) in zip(b.getAttr("_dofmaps"), dofmaps))
@@ -1145,7 +1095,8 @@ def _(
 
     if A.getType() == petsc4py.PETSc.Mat.Type.NEST:  # type: ignore[attr-defined]
         assert isinstance(a, collections.abc.Sequence)
-        function_spaces = _get_block_function_spaces(a)
+        function_spaces: tuple[list[dolfinx.fem.FunctionSpace], list[dolfinx.fem.FunctionSpace]] = (  # type: ignore
+            dolfinx.fem.extract_function_spaces(a, 0), dolfinx.fem.extract_function_spaces(a, 1))
         dofmaps = (
             [function_space.dofmap for function_space in function_spaces[0]],
             [function_space.dofmap for function_space in function_spaces[1]])
@@ -1189,7 +1140,8 @@ def _(
         coeffs = [[  # type: ignore[misc]
             {} if form is None else dcpp.fem.pack_coefficients(form._cpp_object)
             for form in forms] for forms in a] if coeffs is None else coeffs
-        function_spaces = _get_block_function_spaces(a)
+        function_spaces: tuple[list[dolfinx.fem.FunctionSpace], list[dolfinx.fem.FunctionSpace]] = (  # type: ignore
+            dolfinx.fem.extract_function_spaces(a, 0), dolfinx.fem.extract_function_spaces(a, 1))
         dofmaps = (
             [function_space.dofmap for function_space in function_spaces[0]],
             [function_space.dofmap for function_space in function_spaces[1]])
@@ -1223,7 +1175,8 @@ def _(
     else:  # single form
         constants = dcpp.fem.pack_constants(a._cpp_object) if constants is None else constants
         coeffs = dcpp.fem.pack_coefficients(a._cpp_object) if coeffs is None else coeffs
-        function_spaces = a.function_spaces
+        function_spaces: tuple[dolfinx.fem.Function, dolfinx.fem.FunctionSpace] = (  # type: ignore[no-redef]
+            a.function_spaces)
         if restriction is None:
             # Assemble form
             dcpp.fem.petsc.assemble_matrix(A, a._cpp_object, constants, coeffs, bcs_cpp)
@@ -1235,7 +1188,7 @@ def _(
                 # Set diagonal value
                 dcpp.fem.petsc.insert_diagonal(A, function_spaces[0], bcs_cpp, diag)
         else:
-            dofmaps = (function_spaces[0].dofmap, function_spaces[1].dofmap)  # type: ignore[assignment]
+            dofmaps = (function_spaces[0].dofmap, function_spaces[1].dofmap)  # type: ignore[attr-defined]
 
             # Assemble form
             with MatSubMatrixWrapper(A, dofmaps, restriction) as A_sub:
@@ -1335,7 +1288,8 @@ def apply_lifting(
             {} if form is None else dcpp.fem.pack_coefficients(form._cpp_object)
             for form in forms] for forms in a] if coeffs is None else coeffs  # type: ignore[union-attr]
 
-        function_spaces = _get_block_function_spaces(a)
+        function_spaces: tuple[list[dolfinx.fem.FunctionSpace], list[dolfinx.fem.FunctionSpace]] = (  # type: ignore
+            dolfinx.fem.extract_function_spaces(a, 0), dolfinx.fem.extract_function_spaces(a, 1))
         dofmaps = [function_space.dofmap for function_space in function_spaces[0]]
         dofmaps_x0 = [function_space.dofmap for function_space in function_spaces[1]]
 
@@ -1771,7 +1725,8 @@ class LinearProblem:
         if self.bcs is not None:
             if isinstance(self.u, collections.abc.Sequence):  # block or nest
                 assert isinstance(self.a, collections.abc.Sequence)
-                function_spaces = _get_block_function_spaces(self.a)
+                function_spaces = (
+                    dolfinx.fem.extract_function_spaces(self.a, 0), dolfinx.fem.extract_function_spaces(self.a, 1))
                 bcs1 = dolfinx.fem.bcs_by_block(function_spaces[1], self.bcs)
                 apply_lifting(self.b, self.a, bcs=bcs1, restriction=self.restriction)
                 dolfinx.la.petsc._ghost_update(
@@ -1892,8 +1847,9 @@ def assemble_residual(
         and b.getType() != petsc4py.PETSc.Vec.Type.NEST  # type: ignore[attr-defined]
         and (b.getAttr("_dofmaps") is None or x.getAttr("_dofmaps") is None)
     ):
-        function_spaces = _get_block_function_spaces(residual)
-        dofmaps = [function_space.dofmap for function_space in function_spaces]
+        function_spaces_residual: list[dolfinx.fem.FunctionSpace] = (
+            dolfinx.fem.extract_function_spaces(residual))  # type: ignore[assignment]
+        dofmaps = [function_space.dofmap for function_space in function_spaces_residual]
         if b.getAttr("_dofmaps") is None:
             b.setAttr("_dofmaps", dofmaps)
         if x.getAttr("_dofmaps") is None:
@@ -1905,7 +1861,8 @@ def assemble_residual(
 
     # Apply lifting and set boundary conditions
     if isinstance(jacobian, collections.abc.Sequence):  # nest or block forms
-        function_spaces = _get_block_function_spaces(jacobian)
+        function_spaces: tuple[list[dolfinx.fem.FunctionSpace], list[dolfinx.fem.FunctionSpace]] = (  # type: ignore
+            dolfinx.fem.extract_function_spaces(jacobian, 0), dolfinx.fem.extract_function_spaces(jacobian, 1))
         bcs1 = dolfinx.fem.bcs_by_block(function_spaces[1], bcs)
         apply_lifting(
             b, jacobian, bcs=bcs1, x0=x, alpha=-1.0, restriction=restriction, restriction_x0=restriction_x0)
