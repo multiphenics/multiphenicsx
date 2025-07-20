@@ -1,0 +1,194 @@
+name: Release new version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version number for the release, without v prefix"
+      next_version:
+        description: "Version number for the next release, without v prefix and without dev"
+      dry_run:
+        description: "Dry-run: if 'no', publish to PyPI, create a tag and merge to the calling branch; if 'yes', do a dry-run where none of the above tasks are executed. If empty, its default value is 'yes' and a dry-run is carried out."
+
+jobs:
+  prepare_branches:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+      - name: Configure username and email
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Check consistency with current development version
+        run: |
+          python3 -m pip install --break-system-packages toml
+          DEV_VERSION=$(python3 -c 'import toml; print(toml.load("pyproject.toml")["project"]["version"])')
+          VERSION=${{ github.event.inputs.version }}
+          if [[ "${DEV_VERSION/dev/}" != "${VERSION}" ]]; then
+            echo "Current development version is ${DEV_VERSION}, while the requested version number for the upcoming release is ${VERSION}. The two must match, apart from 'dev', but they do not." && exit 1
+          fi
+        shell: bash
+      - name: Check consistency between version and next version
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          NEXT_VERSION=${{ github.event.inputs.next_version }}
+          IFS=. read -a VERSION_PARTS <<< ${VERSION}
+          if [[ "${#VERSION_PARTS[@]}" != "3" ]]; then
+            echo "Expected major.minor.micro format, got ${VERSION}" && exit
+          fi
+          NEXT_MAJOR_VERSION=$((${VERSION_PARTS[0]} + 1)).${VERSION_PARTS[1]}.${VERSION_PARTS[2]}
+          NEXT_MINOR_VERSION=${VERSION_PARTS[0]}.$((${VERSION_PARTS[1]} + 1)).${VERSION_PARTS[2]}
+          NEXT_MICRO_VERSION=${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$((${VERSION_PARTS[2]} + 1))
+          if [[ "${NEXT_VERSION}" != "${NEXT_MAJOR_VERSION}" && "${NEXT_VERSION}" != "${NEXT_MINOR_VERSION}" && "${NEXT_VERSION}" != "${NEXT_MICRO_VERSION}" ]]; then
+            echo "Expected next version to be either ${NEXT_MAJOR_VERSION}, ${NEXT_MINOR_VERSION} or ${NEXT_MICRO_VERSION}, while the requested version number for the next release is ${NEXT_VERSION}." && exit 1
+          fi
+        shell: bash
+      - name: Verify that there is no tag with the same version number
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          if [[ -n $(git ls-remote --tags origin v${VERSION}) ]]; then
+            echo "A v${VERSION} tag already exists" && exit 1
+          fi
+        shell: bash
+      - name: Delete existing branches
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          for BRANCH_NAME in pre${VERSION} v${VERSION} post${VERSION}; do
+            if [[ -n $(git branch --list ${BRANCH_NAME}) ]]; then
+              git branch -D ${BRANCH_NAME}
+            fi
+            if [[ -n $(git ls-remote --heads origin ${BRANCH_NAME}) ]]; then
+              git push origin -d ${BRANCH_NAME}
+            fi
+          done
+        shell: bash
+      - name: Prepare branch pre release
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          PRE_BRANCH_NAME=pre${VERSION}
+          git checkout -b ${PRE_BRANCH_NAME}
+          git push origin ${PRE_BRANCH_NAME}
+      - name: Prepare branch for release
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          VERSION_DASHES=${VERSION//./_}
+          RELEASE_BRANCH_NAME=v${VERSION}
+          git checkout -b ${RELEASE_BRANCH_NAME}
+          sed -i "s|version = \".*\"|version = \"${VERSION}\"|g" pyproject.toml
+          CI_AGAINST_VERSION=$(cat << EOF
+            test_${VERSION_DASHES}_installing_from_github:
+              uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v${VERSION}
+              with:
+                ref: v${VERSION}
+
+            test_${VERSION_DASHES}_installing_from_pypi_versioned:
+              uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v${VERSION}
+              with:
+                ref: v${VERSION}
+                index: PyPI
+                index_version: ${VERSION}
+                expected_index_version: ${VERSION}
+
+            test_${VERSION_DASHES}_installing_from_pypi_unversioned:
+              uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v${VERSION}
+              with:
+                ref: v${VERSION}
+                index: PyPI
+                expected_index_version: ${VERSION}
+
+            warn:
+          EOF
+          )
+          sed -i "s|  warn:|${CI_AGAINST_VERSION//$'\n'/\\n}|" .github/workflows/ci_against_releases.yml
+          git add .
+          git commit -m "Bump version to ${VERSION}"
+          git push origin ${RELEASE_BRANCH_NAME}
+        shell: bash
+      - name: Prepare branch post release
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          NEXT_VERSION=${{ github.event.inputs.next_version }}
+          POST_BRANCH_NAME=post${VERSION}
+          NEXT_DEV_VERSION=$(echo ${NEXT_VERSION} | awk -F. -v OFS=. '{$NF="dev"$NF;print}')
+          git checkout -b ${POST_BRANCH_NAME}
+          sed -i "s|version = \"${VERSION}\"|version = \"${NEXT_DEV_VERSION}\"|g" pyproject.toml
+          git add .
+          git commit -m "Reset version number to ${NEXT_DEV_VERSION} after release"
+          git push origin ${POST_BRANCH_NAME}
+
+  test_branch_pre_release_installing_from_github:
+    needs: [prepare_branches]
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@main
+    with:
+      ref: pre${{ github.event.inputs.version }}
+
+  test_branch_for_release_installing_from_github:
+    needs: [prepare_branches]
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@main
+    with:
+      ref: v${{ github.event.inputs.version }}
+
+  test_branch_post_release_installing_from_github:
+    needs: [prepare_branches]
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@main
+    with:
+      ref: post${{ github.event.inputs.version }}
+
+  publish_release_to_testpypi:
+    needs: [test_branch_pre_release_installing_from_github, test_branch_for_release_installing_from_github, test_branch_post_release_installing_from_github]
+    uses: multiphenics/multiphenicsx/.github/workflows/pypi.yml@main
+    with:
+      ref: v${{ github.event.inputs.version }}
+      index: TestPyPI
+    secrets:
+      TEST_PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
+
+  publish_release_to_pypi:
+    needs: [publish_release_to_testpypi]
+    if: github.event.inputs.dry_run == 'no'
+    uses: multiphenics/multiphenicsx/.github/workflows/pypi.yml@main
+    with:
+      ref: v${{ github.event.inputs.version }}
+      index: PyPI
+    secrets:
+      PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+
+  push_to_repo_and_cleanup:
+    needs: [publish_release_to_pypi]
+    if: github.event.inputs.dry_run == 'no'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+      - name: Delete branch pre release
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          PRE_BRANCH_NAME=pre${VERSION}
+          git push origin -d ${PRE_BRANCH_NAME}
+      - name: Replace branch for release with a tag
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          RELEASE_BRANCH_NAME=v${VERSION}
+          BACKUP_HEAD=$(git rev-parse HEAD)
+          git checkout ${RELEASE_BRANCH_NAME}
+          RELEASE_BRANCH_NAME_HEAD=$(git rev-parse HEAD)
+          git checkout ${BACKUP_HEAD}
+          git branch -D ${RELEASE_BRANCH_NAME}
+          git push origin -d ${RELEASE_BRANCH_NAME}
+          git tag ${RELEASE_BRANCH_NAME} ${RELEASE_BRANCH_NAME_HEAD}
+          git push origin ${RELEASE_BRANCH_NAME}
+      - name: Merge branch post release with the branch from which this workflow was called
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          POST_BRANCH_NAME=post${VERSION}
+          CALLING_BRANCH_NAME=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
+          git checkout ${POST_BRANCH_NAME}
+          git checkout ${CALLING_BRANCH_NAME}
+          git merge --ff-only ${POST_BRANCH_NAME}
+          git branch -D ${POST_BRANCH_NAME}
+          git push origin -d ${POST_BRANCH_NAME}
+          git push origin ${CALLING_BRANCH_NAME}
