@@ -140,7 +140,7 @@ jobs:
         run: |
           CPP_WRAPPER_LIBRARY=${{ matrix.cpp_wrapper_library }}
           if [[ "${CPP_WRAPPER_LIBRARY}" == "pybind11" ]]; then
-            conda install -c conda-forge cppimport gxx pybind11
+            conda install -c conda-forge cppimport gxx "pybind11<3"
           else
             conda install -c conda-forge cmake gxx nanobind ninja scikit-build-core wheel
           fi
