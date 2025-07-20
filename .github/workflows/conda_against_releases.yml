@@ -23,15 +23,13 @@ jobs:
           cat << EOF > ${MATRIX_SCRIPT_FILE}
           PETSC_SCALAR_TYPES_ARRAY=(${PETSC_SCALAR_TYPES})
           DOLFINX_VERSION="\${1}"
-          CPP_WRAPPER_LIBRARY="\${2}"
-          SUPPORTED_PYTHON_VERSIONS=(\${@:3})
+          SUPPORTED_PYTHON_VERSIONS=(\${@:2})
           for PYTHON_VERSION in "\${SUPPORTED_PYTHON_VERSIONS[@]}"; do
             for PETSC_SCALAR_TYPE in "\${PETSC_SCALAR_TYPES_ARRAY[@]}"; do
               echo -e "\t\t{" >> ${MATRIX_JSON_FILE}
               echo -e "\t\t\t\"dolfinx_version\": \"\${DOLFINX_VERSION}\"," >> ${MATRIX_JSON_FILE}
               echo -e "\t\t\t\"python_version\": \"\${PYTHON_VERSION}\"," >> ${MATRIX_JSON_FILE}
               echo -e "\t\t\t\"petsc_scalar_type\": \"\${PETSC_SCALAR_TYPE}\"," >> ${MATRIX_JSON_FILE}
-              echo -e "\t\t\t\"cpp_wrapper_library\": \"\${CPP_WRAPPER_LIBRARY}\"" >> ${MATRIX_JSON_FILE}
               echo -e "\t\t}," >> ${MATRIX_JSON_FILE}
             done
           done
@@ -41,57 +39,16 @@ jobs:
           touch ${MATRIX_JSON_FILE}
           echo -e "{" >> ${MATRIX_JSON_FILE}
           echo -e "\t\"include\": [" >> ${MATRIX_JSON_FILE}
-      - name: Add dolfinx 0.4.1 to matrix json file
-        run: |
-          DOLFINX_VERSION="0.4.1"
-          CPP_WRAPPER_LIBRARY="pybind11"
-          SUPPORTED_PYTHON_VERSIONS=("3.9")  # 3.10 is also supported, but is incompatible with nbvalx
-          bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${SUPPORTED_PYTHON_VERSIONS[@]}
-      - name: Add dolfinx 0.5.2 to matrix json file
-        run: |
-          DOLFINX_VERSION="0.5.2"
-          CPP_WRAPPER_LIBRARY="pybind11"
-          SUPPORTED_PYTHON_VERSIONS=("3.10")  # 3.9 is also supported, but is incompatible with nbvalx
-          bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${SUPPORTED_PYTHON_VERSIONS[@]}
-      - name: Add dolfinx 0.6.0 to matrix json file
-        run: |
-          # dolfinx v0.6.0 is currently untested, because both python 3.9 and 3.10 have random segfaults
-      - name: Add dolfinx 0.7.0 to matrix json file
-        run: |
-          DOLFINX_VERSION="0.7.0"
-          CPP_WRAPPER_LIBRARY="pybind11"
-          SUPPORTED_PYTHON_VERSIONS=("3.10" "3.11")  # 3.9 is also supported, but is incompatible with nbvalx
-          bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${SUPPORTED_PYTHON_VERSIONS[@]}
-      - name: Add dolfinx 0.7.1 to matrix json file
-        run: |
-          DOLFINX_VERSION="0.7.1"
-          CPP_WRAPPER_LIBRARY="pybind11"
-          SUPPORTED_PYTHON_VERSIONS=("3.10" "3.11")  # 3.9 is also supported, but is incompatible with nbvalx
-          bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${SUPPORTED_PYTHON_VERSIONS[@]}
-      - name: Add dolfinx 0.7.2 to matrix json file
-        run: |
-          DOLFINX_VERSION="0.7.2"
-          CPP_WRAPPER_LIBRARY="pybind11"
-          SUPPORTED_PYTHON_VERSIONS=("3.10" "3.11" "3.12")  # 3.9 is also supported, but is incompatible with nbvalx
-          bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${SUPPORTED_PYTHON_VERSIONS[@]}
-      - name: Add dolfinx 0.7.3 to matrix json file
-        run: |
-          DOLFINX_VERSION="0.7.3"
-          CPP_WRAPPER_LIBRARY="pybind11"
-          SUPPORTED_PYTHON_VERSIONS=("3.10" "3.11" "3.12")  # 3.9 is also supported, but is incompatible with nbvalx
-          bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${SUPPORTED_PYTHON_VERSIONS[@]}
       - name: Add dolfinx 0.8.0 to matrix json file
         run: |
           DOLFINX_VERSION="0.8.0"
-          CPP_WRAPPER_LIBRARY="nanobind"
           SUPPORTED_PYTHON_VERSIONS=("3.10" "3.11" "3.12")  # 3.9 is also supported, but is incompatible with nbvalx
-          bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${SUPPORTED_PYTHON_VERSIONS[@]}
+          bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${SUPPORTED_PYTHON_VERSIONS[@]}
       - name: Add dolfinx 0.9.0 to matrix json file
         run: |
           DOLFINX_VERSION="0.9.0"
-          CPP_WRAPPER_LIBRARY="nanobind"
           SUPPORTED_PYTHON_VERSIONS=("3.10" "3.11" "3.12" "3.13")  # 3.9 is also supported, but is incompatible with nbvalx
-          bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${SUPPORTED_PYTHON_VERSIONS[@]}
+          bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${SUPPORTED_PYTHON_VERSIONS[@]}
       - name: Finalize matrix json file
         run: |
           sed -i '$s/,//' ${MATRIX_JSON_FILE}
@@ -138,25 +95,16 @@ jobs:
           conda install -c conda-forge fenics-dolfinx=${{ matrix.dolfinx_version }} mpich petsc=*=${{ matrix.petsc_scalar_type }}*
       - name: Install multiphenicsx core dependencies
         run: |
-          CPP_WRAPPER_LIBRARY=${{ matrix.cpp_wrapper_library }}
-          if [[ "${CPP_WRAPPER_LIBRARY}" == "pybind11" ]]; then
-            conda install -c conda-forge cppimport gxx "pybind11<3"
-          else
-            conda install -c conda-forge cmake gxx nanobind ninja scikit-build-core wheel
-          fi
+          conda install -c conda-forge cmake gxx nanobind ninja scikit-build-core wheel
       - name: Install multiphenicsx test dependencies
         run: |
           sudo apt update
           sudo apt install xorg  # for gmsh, which will be pip install-ed by multiphenicsx
+          sudo apt install xvfb  # for pyvista, which will be pip install-ed by multiphenicsx
           conda install -c conda-forge jupyterlab scipy sympy
       - name: Install multiphenicsx
         run: |
-          CPP_WRAPPER_LIBRARY=${{ matrix.cpp_wrapper_library }}
-          if [[ "${CPP_WRAPPER_LIBRARY}" == "pybind11" ]]; then
-            python3 -m pip install .[tests,tutorials]
-          else
-            python3 -m pip install --check-build-dependencies --no-build-isolation .[tests,tutorials]
-          fi
+          python3 -m pip install --check-build-dependencies --no-build-isolation .[tests,tutorials]
       - name: Remove source directory to ensure that package from installation directory is used
         run: |
           rm -rf multiphenicsx
@@ -165,6 +113,8 @@ jobs:
           python3 -m pytest tests/unit
       - name: Run tutorials (serial)
         run: |
+          export DISPLAY=":99"
+          Xvfb $DISPLAY -screen 0 1024x768x24 > /dev/null 2>&1 &
           python3 -m pytest tutorials
       - name: Upload tutorials logs as an artifact in case of failure
         if: failure() || cancelled()

@@ -28,8 +28,7 @@ jobs:
           PYTHON_VERSION="\${4}"
           PIP_AND_SETUPTOOLS_TOO_OLD="\${5}"
           DOLFINX_VERSION="\${6}"
-          CPP_WRAPPER_LIBRARY="\${7}"
-          ADD_PPA="\${8}"
+          ADD_PPA="\${7}"
           for PETSC_SCALAR_TYPE in "\${PETSC_SCALAR_TYPES_ARRAY[@]}"; do
             echo -e "\t\t{" >> ${MATRIX_JSON_FILE}
             echo -e "\t\t\t\"container_os\": \"\${CONTAINER_OS}\"," >> ${MATRIX_JSON_FILE}
@@ -38,7 +37,6 @@ jobs:
             echo -e "\t\t\t\"python_version\": \"\${PYTHON_VERSION}\"," >> ${MATRIX_JSON_FILE}
             echo -e "\t\t\t\"pip_and_setuptools_too_old\": \${PIP_AND_SETUPTOOLS_TOO_OLD}," >> ${MATRIX_JSON_FILE}
             echo -e "\t\t\t\"dolfinx_version\": \"\${DOLFINX_VERSION}\"," >> ${MATRIX_JSON_FILE}
-            echo -e "\t\t\t\"cpp_wrapper_library\": \"\${CPP_WRAPPER_LIBRARY}\"," >> ${MATRIX_JSON_FILE}
             echo -e "\t\t\t\"add_ppa\": \${ADD_PPA}," >> ${MATRIX_JSON_FILE}
             echo -e "\t\t\t\"petsc_scalar_type\": \"\${PETSC_SCALAR_TYPE}\"" >> ${MATRIX_JSON_FILE}
             echo -e "\t\t}," >> ${MATRIX_JSON_FILE}
@@ -60,24 +58,23 @@ jobs:
           PYTHON_VERSION="3.10"
           PIP_AND_SETUPTOOLS_TOO_OLD="true"
           DOLFINX_VERSION="0.9.0"
-          CPP_WRAPPER_LIBRARY="nanobind"
           ADD_PPA="true"
-          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER_OS} ${CONTAINER_RELEASE} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${ADD_PPA}
+          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER_OS} ${CONTAINER_RELEASE} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${ADD_PPA}
       - name: Add ubuntu 22.10 (without ppa) to matrix json file
         run: |
-          echo "Skipped: ubuntu 22.10 has dolfinx v0.4.1, which fails every unit test for unknown reasons related to pybind11"
+          echo "Skipped: ubuntu 22.10 has dolfinx v0.4.1, which is too old"
       - name: Add ubuntu 22.10 (with ppa) to matrix json file
         run: |
           echo "Skipped: ubuntu 22.10 was removed from the ppa"
       - name: Add ubuntu 23.04 (without ppa) to matrix json file
         run: |
-          echo "Skipped: ubuntu 23.04 has dolfinx v0.5.2, which has a custom patch for dolfinx.mesh.Mesh wrapping that breaks plotting"
+          echo "Skipped: ubuntu 23.04 has dolfinx v0.5.2, which is too old"
       - name: Add ubuntu 23.04 (with ppa) to matrix json file
         run: |
           echo "Skipped: ubuntu 23.04 was removed from the ppa"
       - name: Add ubuntu 23.10 (without ppa) to matrix json file
         run: |
-          echo "Skipped: ubuntu 23.10 has dolfinx v0.6.0, which has a custom patch for dolfinx.mesh.Mesh wrapping that breaks plotting"
+          echo "Skipped: ubuntu 23.10 has dolfinx v0.6.0, which is too old"
       - name: Add ubuntu 23.10 (with ppa) to matrix json file
         run: |
           CONTAINER_OS="ubuntu"
@@ -86,9 +83,8 @@ jobs:
           PYTHON_VERSION="3.11"
           PIP_AND_SETUPTOOLS_TOO_OLD="false"
           DOLFINX_VERSION="0.8.0"
-          CPP_WRAPPER_LIBRARY="nanobind"
           ADD_PPA="true"
-          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER_OS} ${CONTAINER_RELEASE} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${ADD_PPA}
+          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER_OS} ${CONTAINER_RELEASE} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${ADD_PPA}
       - name: Add ubuntu 24.04 (without ppa) to matrix json file
         run: |
           echo "Skipped: ubuntu 24.04 does not have dolfinx"
@@ -100,9 +96,8 @@ jobs:
           PYTHON_VERSION="3.12"
           PIP_AND_SETUPTOOLS_TOO_OLD="false"
           DOLFINX_VERSION="0.9.0"
-          CPP_WRAPPER_LIBRARY="nanobind"
           ADD_PPA="true"
-          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER_OS} ${CONTAINER_RELEASE} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${ADD_PPA}
+          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER_OS} ${CONTAINER_RELEASE} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${ADD_PPA}
       - name: Add ubuntu 24.10 (without ppa) to matrix json file
         run: |
           echo "Skipped: ubuntu 24.10 does not have dolfinx"
@@ -114,12 +109,11 @@ jobs:
           PYTHON_VERSION="3.12"
           PIP_AND_SETUPTOOLS_TOO_OLD="false"
           DOLFINX_VERSION="0.9.0"
-          CPP_WRAPPER_LIBRARY="nanobind"
           ADD_PPA="true"
-          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER_OS} ${CONTAINER_RELEASE} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${ADD_PPA}
+          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER_OS} ${CONTAINER_RELEASE} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${ADD_PPA}
       - name: Add debian 12 to matrix json file
         run: |
-          echo "Skipped: debian 12 has dolfinx v0.5.2, which has a custom patch for dolfinx.mesh.Mesh wrapping that breaks plotting"
+          echo "Skipped: debian 12 has dolfinx v0.5.2, which is too old"
       - name: Add debian unstable to matrix json file
         run: |
           CONTAINER_OS="debian"
@@ -128,9 +122,8 @@ jobs:
           PYTHON_VERSION="3.13"
           PIP_AND_SETUPTOOLS_TOO_OLD="false"
           DOLFINX_VERSION="0.9.0"
-          CPP_WRAPPER_LIBRARY="nanobind"
           ADD_PPA="false"
-          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER_OS} ${CONTAINER_RELEASE} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${ADD_PPA}
+          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER_OS} ${CONTAINER_RELEASE} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${ADD_PPA}
       - name: Finalize matrix json file
         run: |
           sed -i '$s/,//' ${MATRIX_JSON_FILE}
@@ -228,27 +221,17 @@ jobs:
           python3 -m pip install --upgrade packaging pip setuptools wheel
       - name: Install multiphenicsx core dependencies
         run: |
-          CPP_WRAPPER_LIBRARY=${{ matrix.cpp_wrapper_library }}
-          if [[ "${CPP_WRAPPER_LIBRARY}" == "pybind11" ]]; then
-            apt install -y python3-pybind11
-          else
-            apt install -y python3-exceptiongroup python3-nanobind python3-pathspec python3-pyproject-metadata python3-scikit-build-core
-          fi
+          apt install -y python3-exceptiongroup python3-nanobind python3-pathspec python3-pyproject-metadata python3-scikit-build-core
         shell: bash
       - name: Install multiphenicsx test dependencies
         run: |
-          apt install -y python3-gmsh python3-matplotlib python3-scipy python3-sympy
+          apt install -y python3-gmsh python3-matplotlib python3-scipy python3-sympy xvfb
       - name: Remove externally managed marker
         run: |
           rm -f /usr/lib/python3.*/EXTERNALLY-MANAGED
       - name: Install multiphenicsx
         run: |
-          CPP_WRAPPER_LIBRARY=${{ matrix.cpp_wrapper_library }}
-          if [[ "${CPP_WRAPPER_LIBRARY}" == "pybind11" ]]; then
-            python3 -m pip install .[tests,tutorials]
-          else
-            python3 -m pip install --check-build-dependencies --no-build-isolation .[tests,tutorials]
-          fi
+          python3 -m pip install --check-build-dependencies --no-build-isolation .[tests,tutorials]
         shell: bash
       - name: Remove source directory to ensure that package from installation directory is used
         run: |
@@ -268,9 +251,13 @@ jobs:
         shell: bash
       - name: Run tutorials (serial)
         run: |
+          export DISPLAY=":99"
+          Xvfb $DISPLAY -screen 0 1024x768x24 > /dev/null 2>&1 &
           python3 -m pytest tutorials
       - name: Run tutorials (parallel)
         run: |
+          export DISPLAY=":99"
+          Xvfb $DISPLAY -screen 0 1024x768x24 > /dev/null 2>&1 &
           python3 -m pytest --np 3 tutorials
       - name: Upload tutorials logs as an artifact in case of failure
         if: failure() || cancelled()
