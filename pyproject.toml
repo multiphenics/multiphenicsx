@@ -72,12 +72,10 @@ tests = [
 tutorials = [
     "gmsh",
     "nbvalx[notebooks]",
-    "pyvista < 0.44.1",
     "scipy",
     "slepc4py",
     "sympy",
-    "viskex @ git+https://github.com/viskex/viskex.git@e286cfc",
-    "vtk < 9.4.0"
+    "viskex @ git+https://github.com/viskex/viskex.git@e286cfc"
 ]
 
 [tool.isort]
