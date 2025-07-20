@@ -10,7 +10,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "multiphenicsx"
-version = "0.3.dev1"
+version = "0.3.9"
 authors = [
     {name = "Francesco Ballarin", email = "francesco.ballarin@unicatt.it"},
 ]
@@ -75,7 +75,7 @@ tutorials = [
     "scipy",
     "slepc4py",
     "sympy",
-    "viskex @ git+https://github.com/viskex/viskex.git@main"
+    "viskex"
 ]
 
 [tool.isort]
