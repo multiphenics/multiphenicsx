@@ -26,6 +26,9 @@ jobs:
           ref: dolfinx-v0.8.0
       - name: Setup container
         run: |
+          export DEBIAN_FRONTEND="noninteractive"
+          apt update -y -q
+          apt install -y -qq xvfb
           . /usr/local/bin/dolfinx-${{ matrix.petsc_arch }}-mode
           echo "PETSC_ARCH=$PETSC_ARCH" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
@@ -99,9 +102,13 @@ jobs:
           pattern: "tutorials/**/*.ipynb"
       - name: Run tutorials (serial)
         run: |
+          export DISPLAY=":99"
+          Xvfb $DISPLAY -screen 0 1024x768x24 > /dev/null 2>&1 &
           python3 -m pytest tutorials
       - name: Run tutorials (parallel)
         run: |
+          export DISPLAY=":99"
+          Xvfb $DISPLAY -screen 0 1024x768x24 > /dev/null 2>&1 &
           python3 -m pytest --np 3 tutorials
       - name: Upload tutorials logs as an artifact in case of failure
         if: failure() || cancelled()
