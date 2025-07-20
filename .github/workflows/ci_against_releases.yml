@@ -6,27 +6,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  test_dolfinx_v0_4_1:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@dolfinx-v0.4.1
-
-  test_dolfinx_v0_5_2:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@dolfinx-v0.5.2
-
-  test_dolfinx_v0_6_0:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@dolfinx-v0.6.0
-
-  test_dolfinx_v0_7_0:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@dolfinx-v0.7.0
-
-  test_dolfinx_v0_7_1:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@dolfinx-v0.7.1
-
-  test_dolfinx_v0_7_2:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@dolfinx-v0.7.2
-
-  test_dolfinx_v0_7_3:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@dolfinx-v0.7.3
-
   test_dolfinx_v0_8_0:
     uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@dolfinx-v0.8.0
 
