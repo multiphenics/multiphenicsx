@@ -130,8 +130,7 @@ jobs:
           DOLFINX_VERSION="0.9.0"
           CPP_WRAPPER_LIBRARY="nanobind"
           ADD_PPA="false"
-          echo "Temporarily disabled because pypi does not provide wheels for vtk 9.3 compatible with python 3.13, and apt install python3-vtk9 does not get picked up by pip show vtk"
-          # bash ${MATRIX_SCRIPT_FILE} ${CONTAINER_OS} ${CONTAINER_RELEASE} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${ADD_PPA}
+          bash ${MATRIX_SCRIPT_FILE} ${CONTAINER_OS} ${CONTAINER_RELEASE} ${MOVED_TO_OLD_RELEASES} ${PYTHON_VERSION} ${PIP_AND_SETUPTOOLS_TOO_OLD} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${ADD_PPA}
       - name: Finalize matrix json file
         run: |
           sed -i '$s/,//' ${MATRIX_JSON_FILE}
