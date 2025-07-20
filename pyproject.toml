@@ -75,7 +75,7 @@ tutorials = [
     "scipy",
     "slepc4py",
     "sympy",
-    "viskex @ git+https://github.com/viskex/viskex.git@e286cfc"
+    "viskex @ git+https://github.com/viskex/viskex.git@main"
 ]
 
 [tool.isort]
