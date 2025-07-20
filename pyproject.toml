@@ -74,9 +74,7 @@ tutorials = [
     "nbvalx[notebooks]",
     "slepc4py",
     "sympy",
-    "pyvista < 0.43.5",
-    "viskex @ git+https://github.com/viskex/viskex.git@e77f91c",
-    "vtk < 9.4.0"
+    "viskex @ git+https://github.com/viskex/viskex.git@main"
 ]
 
 [tool.isort]
