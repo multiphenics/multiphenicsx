@@ -1,4 +1,4 @@
-name: multiphenicsx CI
+name: CI
 
 on:
   push:
@@ -22,8 +22,6 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: dolfinx-v0.9.0
       - name: Setup container
         run: |
           export DEBIAN_FRONTEND="noninteractive"
