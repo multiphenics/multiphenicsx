@@ -1,4 +1,4 @@
-name: multiphenicsx CI
+name: CI
 
 on:
   push:

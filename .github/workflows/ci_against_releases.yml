@@ -1,4 +1,4 @@
-name: multiphenicsx CI (against releases)
+name: CI (against releases)
 
 on:
   schedule:
