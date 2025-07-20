@@ -18,6 +18,7 @@ maintainers = [
     {name = "Francesco Ballarin", email = "francesco.ballarin@unicatt.it"},
 ]
 description = "Easy prototyping of multiphysics problems on conforming meshes in FEniCSx"
+readme = "README.md"
 license = {file = "COPYING"}
 requires-python = ">=3.9"
 classifiers = [
