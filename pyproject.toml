@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "fenics-dolfinx >=0.10.0.dev0, <0.11.0",
+    "fenics-dolfinx",
     "mpi4py",
     "nanobind >= 2.1.0",
     "petsc4py",
@@ -10,7 +10,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "multiphenicsx"
-version = "0.3.dev1"
+version = "0.4.dev0"
 authors = [
     {name = "Francesco Ballarin", email = "francesco.ballarin@unicatt.it"},
 ]
@@ -41,7 +41,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 dependencies = [
-    "fenics-dolfinx",
+    "fenics-dolfinx >= 0.10.0.dev0",
     "mpi4py",
     "numpy >= 1.21.0",
     "petsc4py"

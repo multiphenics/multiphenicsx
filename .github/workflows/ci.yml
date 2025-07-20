@@ -15,11 +15,29 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container: ghcr.io/fenics/dolfinx/dolfinx:nightly
     strategy:
       matrix:
-        petsc_arch: [real, complex]
+        include:
+          # - backend: dolfinx-v0.10.0-real
+          #   container: ghcr.io/fenics/dolfinx/dolfinx:v0.10.0
+          #   petsc_arch: real
+          # - backend: dolfinx-v0.10.0-complex
+          #   container: ghcr.io/fenics/dolfinx/dolfinx:v0.10.0
+          #   petsc_arch: complex
+          # - backend: dolfinx-stable-real
+          #   container: ghcr.io/fenics/dolfinx/dolfinx:stable
+          #   petsc_arch: real
+          # - backend: dolfinx-stable-complex
+          #   container: ghcr.io/fenics/dolfinx/dolfinx:stable
+          #   petsc_arch: complex
+          - backend: dolfinx-nightly-real
+            container: ghcr.io/fenics/dolfinx/dolfinx:nightly
+            petsc_arch: real
+          - backend: dolfinx-nightly-complex
+            container: ghcr.io/fenics/dolfinx/dolfinx:nightly
+            petsc_arch: complex
       fail-fast: false
+    container: ${{ matrix.container }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup container
