@@ -7,4 +7,4 @@
 
 Like all core **FEniCSx** components, **multiphenicsx** is freely available under the GNU LGPL, version 3.
 
-Visit [multiphenics.github.io](https://multiphenics.github.io/) for more information.
+Visit [multiphenics.github.io](https://multiphenics.github.io/) for installation instructions and additional information.
