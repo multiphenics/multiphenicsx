@@ -90,7 +90,7 @@ jobs:
         run: |
           DOLFINX_VERSION="0.9.0"
           CPP_WRAPPER_LIBRARY="nanobind"
-          SUPPORTED_PYTHON_VERSIONS=("3.10" "3.11" "3.12")  # 3.9 is also supported, but is incompatible with nbvalx. 3.13 is also supported, but some downstream packages are still missing.
+          SUPPORTED_PYTHON_VERSIONS=("3.10" "3.11" "3.12" "3.13")  # 3.9 is also supported, but is incompatible with nbvalx
           bash ${MATRIX_SCRIPT_FILE} ${DOLFINX_VERSION} ${CPP_WRAPPER_LIBRARY} ${SUPPORTED_PYTHON_VERSIONS[@]}
       - name: Finalize matrix json file
         run: |
