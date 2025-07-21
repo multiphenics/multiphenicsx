@@ -40,6 +40,7 @@ jobs:
   build_distributions:
     needs: [process_inputs]
     runs-on: ubuntu-latest
+    container: ghcr.io/fenics/dolfinx/dolfinx:nightly
     steps:
       - uses: actions/checkout@v4
         with:
@@ -50,7 +51,9 @@ jobs:
           DATETIME=$(date "+%Y%m%d%H%M%S")
           sed -i -r "s|version = \"(.*)\"|version = \"\19999${DATETIME}\"|g" pyproject.toml
       - name: Build distributions
-        run: pipx run build
+        run: |
+          python3 -m pip install --break-system-packages build cmake
+          python3 -m build --no-isolation
       - name: Determine distribution version
         id: determine_version
         run: |
@@ -63,13 +66,17 @@ jobs:
             echo "Found ${#WHEELS[@]} wheels, instead of one" && exit 1
           fi
         shell: bash
+      - name: Remove created wheels, and only leave source distribution
+        run: find dist -type f -name "*.whl" -delete
       - name: Upload distributions as an artifact
         uses: actions/upload-artifact@v4
         with:
           name: distributions-${{ steps.determine_version.outputs.version }}
           path: dist/
       - name: Verify distributions metadata
-        run: pipx run twine check dist/*
+        run: |
+          python3 -m pip install --break-system-packages twine
+          python3 -m twine check dist/*
     outputs:
       version: ${{ steps.determine_version.outputs.version }}
 
