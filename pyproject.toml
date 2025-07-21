@@ -142,4 +142,3 @@ convention = "numpy"
 [tool.scikit-build]
 cmake.source-dir = "multiphenicsx/cpp"
 wheel.packages = ["multiphenicsx"]
-sdist.exclude = ["*.cpp", "*.h", "CMakeLists.txt"]
