@@ -2,7 +2,7 @@
 requires = [
     "fenics-dolfinx",
     "mpi4py",
-    "nanobind >= 2.1.0",
+    "nanobind",
     "petsc4py",
     "scikit-build-core[pyproject]"
 ]
