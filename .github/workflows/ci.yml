@@ -9,8 +9,21 @@ on:
       - main
   schedule:
     - cron: "0 3 * * *"
-  workflow_call:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: "The branch, tag or SHA to checkout"
+        type: string
+      index:
+        description: "The package index, e.g. PyPI or TestPyPI, from which to install the package. If empty, the package will not be installed from any package index, but from the current git clone"
+        type: string
+      index_version:
+        description: "The version of the package to be installed from the package index. If empty, the latest compatible version will be installed. Only used when index is non empty."
+        type: string
+      expected_index_version:
+        description: "The expected version of the package when installed from the package index. If emtpy, no check is carried out. Only used when index is non empty."
+        type: string
 
 jobs:
   test:
@@ -22,6 +35,8 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
       - name: Setup container
         run: |
           export DEBIAN_FRONTEND="noninteractive"
@@ -34,10 +49,68 @@ jobs:
           echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
           echo "CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
           rm /dolfinx-env/lib/python3.12/site-packages/petsc4py/py.typed
-      - name: Install multiphenicsx
+      - name: Wait for package index availability (PyPI and TestPyPI only)
+        if: inputs.index != '' && inputs.index_version != ''
+        run: |
+          INDEX=${{ inputs.index }}
+          INDEX_VERSION=${{ inputs.index_version }}
+          PACKAGE_NAME="multiphenicsx"
+          if [[ "${INDEX}" == "TestPyPI" ]]; then
+            INDEX_URL=https://test.pypi.org
+          elif [[ "${INDEX}" == "PyPI" ]]; then
+            INDEX_URL=https://pypi.org
+          else
+            echo "Invalid package index" && exit 1
+          fi
+          COUNTER=0
+          INDEX_VERSION_FOUND=0
+          while [[ ${INDEX_VERSION_FOUND} -ne 1 ]]; do
+            python3 -m pip install --no-cache-dir --index-url ${INDEX_URL}/simple/ ${PACKAGE_NAME}==0 2> all_${PACKAGE_NAME}_versions || true
+            if grep -q ${INDEX_VERSION} all_${PACKAGE_NAME}_versions; then
+              INDEX_VERSION_FOUND=1
+            fi
+            [[ ${INDEX_VERSION_FOUND} -ne 1 && ${COUNTER} -eq 5 ]] && echo "Giving up on finding version ${INDEX_VERSION} on ${INDEX_URL}" && exit 1
+            [[ ${INDEX_VERSION_FOUND} -ne 1 ]] && echo "Cannot find version ${INDEX_VERSION} on ${INDEX_URL}, attempt ${COUNTER}: trying again after a short pause" && sleep 10
+            [[ ${INDEX_VERSION_FOUND} -eq 1 ]] && echo "Found version ${INDEX_VERSION} on ${INDEX_URL}, attempt ${COUNTER}"
+            COUNTER=$((COUNTER+1))
+          done
+        shell: bash
+      - name: Install multiphenicsx (PyPI and TestPyPI only)
+        if: inputs.index != ''
+        run: |
+          INDEX=${{ inputs.index }}
+          INDEX_VERSION=${{ inputs.index_version }}
+          EXPECTED_INDEX_VERSION=${{ inputs.expected_index_version }}
+          PACKAGE_NAME="multiphenicsx"
+          if [[ "${INDEX}" == "TestPyPI" ]]; then
+            INDEX_FLAGS="--no-cache-dir --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/"
+          elif [[ "${INDEX}" == "PyPI" ]]; then
+            INDEX_FLAGS="--no-cache-dir"
+          else
+            echo "Invalid package index" && exit 1
+          fi
+          if [[ -n "${INDEX_VERSION}" ]]; then
+            PACKAGE_VERSION="==${INDEX_VERSION}"
+            echo "Installing version ${INDEX_VERSION} from ${INDEX}"
+          else
+            PACKAGE_VERSION=""
+            echo "Installing latest compatible version from ${INDEX}"
+          fi
+          python3 -m pip install ${INDEX_FLAGS} --check-build-dependencies --no-build-isolation --config-settings=build-dir="build" --config-settings=cmake.build-type="Debug" --verbose ${PACKAGE_NAME}[docs,lint,tests,tutorials]${PACKAGE_VERSION}
+          if [[ -n "${EXPECTED_INDEX_VERSION}" ]]; then
+            ACTUAL_INDEX_VERSION=$(python3 -c 'import importlib.metadata; print(importlib.metadata.version("multiphenicsx"))')
+            if [[ "${ACTUAL_INDEX_VERSION}" != "${EXPECTED_INDEX_VERSION}" ]]; then
+              echo "Error: installed ${PACKAGE_NAME} version is ${ACTUAL_INDEX_VERSION}, while expected version is ${EXPECTED_INDEX_VERSION}"
+              exit 1
+            fi
+          fi
+        shell: bash
+      - name: Install multiphenicsx (git clone only)
+        if: inputs.index == ''
         run: |
           python3 -m pip install --check-build-dependencies --no-build-isolation --config-settings=build-dir="build" --config-settings=cmake.build-type="Debug" --verbose .[docs,lint,tests,tutorials]
-      - name: Clean build files
+      - name: Clean build files (git clone only)
+        if: inputs.index == ''
         run: |
           git config --global --add safe.directory $PWD
           git clean -xdf

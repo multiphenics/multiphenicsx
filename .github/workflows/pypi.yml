@@ -1,0 +1,143 @@
+name: "Publish on PyPI (internal: use 'Release new version' instead)"
+
+on:
+  schedule:
+    - cron: "0 3 * * MON"
+  workflow_dispatch:
+    inputs:
+      index:
+        description: "The package index, e.g. PyPI or TestPyPI. Defaults to TestPyPI. Be careful when choosing PyPI, because uploads there cannot be deleted"
+  workflow_call:
+    inputs:
+      ref:
+        description: "The branch, tag or SHA to checkout"
+        type: string
+      index:
+        description: "The package index, e.g. PyPI or TestPyPI. Defaults to TestPyPI. Be careful when choosing PyPI, because uploads there cannot be deleted"
+        type: string
+    secrets:
+      PYPI_TOKEN:
+        description: "Token that enables publishing to PyPI"
+      TEST_PYPI_TOKEN:
+        description: "Token that enables publishing to TestPyPI"
+
+jobs:
+  process_inputs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine package index
+        id: determine_index
+        run: |
+          if [[ -n "${{ (inputs || github.event.inputs).index }}" ]]; then
+            echo "index=${{ (inputs || github.event.inputs).index }}" >> ${GITHUB_OUTPUT}
+          else
+            echo "index=TestPyPI" >> ${GITHUB_OUTPUT}
+          fi
+        shell: bash
+    outputs:
+      index: ${{ steps.determine_index.outputs.index }}
+
+  build_distributions:
+    needs: [process_inputs]
+    runs-on: ubuntu-latest
+    container: ghcr.io/fenics/dolfinx/dolfinx:v0.9.0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - name: Add current date at the end of the version string (TestPyPI only)
+        if: needs.process_inputs.outputs.index == 'TestPyPI'
+        run: |
+          DATETIME=$(date "+%Y%m%d%H%M%S")
+          sed -i -r "s|version = \"(.*)\"|version = \"\19999${DATETIME}\"|g" pyproject.toml
+      - name: Build distributions
+        run: |
+          python3 -m pip install --break-system-packages build cmake "cffi<1.17"
+          python3 -m build --no-isolation
+      - name: Determine distribution version
+        id: determine_version
+        run: |
+          python3 -m pip install --break-system-packages wheel-filename
+          WHEELS=($(find dist -type f -name "*.whl"))
+          if [[ "${#WHEELS[@]}" == "1" ]]; then
+            VERSION=$(python3 -c "import wheel_filename; print(wheel_filename.parse_wheel_filename('${WHEELS[0]}').version)")
+            echo "version=${VERSION}" >> ${GITHUB_OUTPUT}
+          else
+            echo "Found ${#WHEELS[@]} wheels, instead of one" && exit 1
+          fi
+        shell: bash
+      - name: Remove created wheels, and only leave source distribution
+        run: find dist -type f -name "*.whl" -delete
+      - name: Upload distributions as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: distributions-${{ steps.determine_version.outputs.version }}
+          path: dist/
+      - name: Verify distributions metadata
+        run: |
+          python3 -m pip install --break-system-packages twine
+          python3 -m twine check dist/*
+    outputs:
+      version: ${{ steps.determine_version.outputs.version }}
+
+  publish:
+    needs: [process_inputs, build_distributions]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine package index token
+        id: determine_index_token
+        run: |
+          INDEX=${{ needs.process_inputs.outputs.index }}
+          if [[ "${INDEX}" == "PyPI" ]]; then
+            INDEX_TOKEN=${{ secrets.PYPI_TOKEN }}
+          elif [[ "${INDEX}" == "TestPyPI" ]]; then
+            INDEX_TOKEN=${{ secrets.TEST_PYPI_TOKEN }}
+          else
+            echo "Invalid package index" && exit 1
+          fi
+          if [[ -n "${INDEX_TOKEN}" ]]; then
+            echo "index_token=${INDEX_TOKEN}" >> ${GITHUB_OUTPUT}
+          else
+            echo "Missing package index token" && exit 1
+          fi
+      - name: Determine package index repository url
+        id: determine_index_repository_url
+        run: |
+          INDEX=${{ needs.process_inputs.outputs.index }}
+          if [[ "${INDEX}" == "PyPI" ]]; then
+            echo "index_repository_url=" >> ${GITHUB_OUTPUT}
+          elif [[ "${INDEX}" == "TestPyPI" ]]; then
+            echo "index_repository_url=https://test.pypi.org/legacy/" >> ${GITHUB_OUTPUT}
+          else
+            echo "Invalid package index" && exit 1
+          fi
+      - name: Report version and index which will be used
+        run: |
+          echo "Publishing version ${{ needs.build_distributions.outputs.version }} on ${{ needs.process_inputs.outputs.index }} (index repository URL: ${{ steps.determine_index_repository_url.outputs.index_repository_url }})."
+      - name: Download distributions from artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: distributions-${{ needs.build_distributions.outputs.version }}
+          path: dist
+      - name: Disallow publishing development versions (PyPI only)
+        if: needs.process_inputs.outputs.index == 'PyPI'
+        run: |
+          VERSION=${{ needs.build_distributions.outputs.version }}
+          if [[ ${VERSION} == *"dev"* ]]; then
+            echo "Cannot publish development version ${VERSION} on PyPI" && exit 1
+          fi
+        shell: bash
+      - name: Publish package distributions
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ steps.determine_index_token.outputs.index_token }}
+          repository-url: ${{ steps.determine_index_repository_url.outputs.index_repository_url }}
+
+  test:
+    needs: [process_inputs, build_distributions, publish]
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.3.9
+    with:
+      ref: ${{ inputs.ref }}
+      index: ${{ needs.process_inputs.outputs.index }}
+      index_version: ${{ needs.build_distributions.outputs.version }}
+      expected_index_version: ${{ needs.build_distributions.outputs.version }}
