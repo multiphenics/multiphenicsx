@@ -75,7 +75,7 @@ tutorials = [
     "scipy",
     "slepc4py",
     "sympy",
-    "viskex"
+    "viskex[backend-dolfinx]"
 ]
 
 [tool.isort]
