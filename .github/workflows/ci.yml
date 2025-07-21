@@ -114,7 +114,7 @@ jobs:
             PACKAGE_VERSION=""
             echo "Installing latest compatible version from ${INDEX}"
           fi
-          python3 -m pip install ${INDEX_FLAGS} --check-build-dependencies --no-build-isolation --config-settings=build-dir="build" --config-settings=cmake.build-type="Debug" --verbose ${PACKAGE_NAME}[docs,lint,tests,tutorials]${PACKAGE_VERSION}
+          python3 -m pip install ${INDEX_FLAGS} --no-build-isolation --config-settings=build-dir="build" --config-settings=cmake.build-type="Debug" --verbose ${PACKAGE_NAME}[docs,lint,tests,tutorials]${PACKAGE_VERSION}
           if [[ -n "${EXPECTED_INDEX_VERSION}" ]]; then
             ACTUAL_INDEX_VERSION=$(python3 -c 'import importlib.metadata; print(importlib.metadata.version("multiphenicsx"))')
             if [[ "${ACTUAL_INDEX_VERSION}" != "${EXPECTED_INDEX_VERSION}" ]]; then
