@@ -170,12 +170,6 @@ jobs:
         run: |
           python3 -m coverage combine .coverage*
           python3 -m coverage report --fail-under=100 --show-missing --skip-covered
-      - name: Generate tutorial files
-        run: |
-          NO_TESTS_COLLECTED=5
-          python3 -m pytest --ipynb-action=create-notebooks tutorials || (($?==$NO_TESTS_COLLECTED))
-          python3 -m pytest --ipynb-action=create-notebooks --np=2 tutorials || (($?==$NO_TESTS_COLLECTED))
-        shell: bash
       - name: Run ruff on tutorial files
         run: |
           python3 -m nbqa ruff .

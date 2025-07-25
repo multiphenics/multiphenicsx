@@ -68,13 +68,13 @@ lint = [
 ]
 tests = [
     "coverage[toml]",
-    "nbvalx[unit-tests]",
+    "nbvalx[unit-tests] >= 0.4.0",
     "pytest",
     "scipy"
 ]
 tutorials = [
     "gmsh",
-    "nbvalx[notebooks]",
+    "nbvalx[notebooks] >= 0.4.0",
     "scipy",
     "slepc4py",
     "sympy",
@@ -116,6 +116,10 @@ module = [
     "ufl"
 ]
 ignore_missing_imports = true
+
+[tool.nbqa.process_cells]
+mypy = ["register_current_parameters"]
+ruff = ["register_current_parameters"]
 
 [tool.pytest.ini_options]
 
