@@ -1630,7 +1630,7 @@ class LinearProblem:
         else:  # pragma: no cover
             self._u = u  # type: ignore[assignment]
 
-        self.bcs = bcs
+        self.bcs = [] if bcs is None else bcs
 
         self._solver = petsc4py.PETSc.KSP().create(self.A.comm)  # type: ignore[attr-defined]
         self.solver.setOperators(self.A, self.P_mat)
