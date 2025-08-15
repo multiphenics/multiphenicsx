@@ -1744,8 +1744,8 @@ class LinearProblem:
                 set_bc(self.b, self.bcs, restriction=self.restriction)
         else:  # pragma: no cover
             dolfinx.la.petsc._ghost_update(
-                self.b, petsc4py.PETSc.InsertMode.ADD,   # type: ignore[attr-defined]
-                petsc4py.PETSc.ScatterMode.REVERSE  # type: ignore[attr-defined]
+                self.b, petsc4py.PETSc.InsertMode.ADD,
+                petsc4py.PETSc.ScatterMode.REVERSE
             )
 
         # Solve linear system and update ghost values in the solution
