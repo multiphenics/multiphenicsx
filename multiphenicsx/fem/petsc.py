@@ -155,7 +155,7 @@ def create_vector(
             assert _same_dofmap(restriction.dofmap, dofmap)
             index_map = restriction.index_map
             index_map_bs = restriction.index_map_bs
-        return dolfinx.la.petsc.create_vector(index_map, index_map_bs)
+        return dolfinx.la.petsc.create_vector([(index_map, index_map_bs)])
 
 
 # -- Matrix instantiation ----------------------------------------------------

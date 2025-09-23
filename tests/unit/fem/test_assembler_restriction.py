@@ -494,7 +494,7 @@ def create_vector_from_dofmap(  # type: ignore[no-any-unimported]
 ) -> petsc4py.PETSc.Vec:  # type: ignore[name-defined]
     """Create a vector from a DofMap or DofMapRestriction, rather than a form."""
     # TODO remove this function and use upstream PR #3694 when ready
-    return dolfinx.la.petsc.create_vector(dofmap.index_map, dofmap.index_map_bs)
+    return dolfinx.la.petsc.create_vector([(dofmap.index_map, dofmap.index_map_bs)])
 
 
 def create_vector_from_dofmaps(  # type: ignore[no-any-unimported]

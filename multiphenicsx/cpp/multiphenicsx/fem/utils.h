@@ -74,22 +74,21 @@ dolfinx::la::SparsityPattern create_sparsity_pattern(
                                        index_maps_bs);
   for (auto integral_type : integral_types)
   {
-    std::vector<int> ids = a.integral_ids(integral_type);
     switch (integral_type)
     {
     case dolfinx::fem::IntegralType::cell:
-      for (int id : ids)
+      for (int i = 0; i < a.num_integrals(integral_type, 0); ++i)
       {
         multiphenicsx::fem::sparsitybuild::cells(
-            pattern, a.domain_arg(integral_type, 0, id, 0), dofmaps_list,
+            pattern, a.domain_arg(integral_type, 0, i, 0), dofmaps_list,
             dofmaps_bounds);
       }
       break;
     case dolfinx::fem::IntegralType::interior_facet:
-      for (int id : ids)
+      for (int i = 0; i < a.num_integrals(integral_type, 0); ++i)
       {
         std::span<const std::int32_t> facets
-            = a.domain_arg(integral_type, 0, id, 0);
+            = a.domain_arg(integral_type, 0, i, 0);
         std::vector<std::int32_t> f;
         f.reserve(facets.size() / 2);
         for (std::size_t i = 0; i < facets.size(); i += 4)
@@ -99,10 +98,10 @@ dolfinx::la::SparsityPattern create_sparsity_pattern(
       }
       break;
     case dolfinx::fem::IntegralType::exterior_facet:
-      for (int id : ids)
+      for (int i = 0; i < a.num_integrals(integral_type, 0); ++i)
       {
         std::span<const std::int32_t> facets
-            = a.domain_arg(integral_type, 0, id, 0);
+            = a.domain_arg(integral_type, 0, i, 0);
         std::vector<std::int32_t> cells;
         cells.reserve(facets.size() / 2);
         for (std::size_t i = 0; i < facets.size(); i += 2)
