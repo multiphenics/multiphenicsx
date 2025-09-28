@@ -489,30 +489,6 @@ def assert_matrix_equal(
         assert np.allclose(restricted_matrix_global, restricted_matrix_global_expected)
 
 
-def create_vector_from_dofmap(  # type: ignore[no-any-unimported]
-    dofmap: typing.Union[dolfinx.fem.DofMap, dolfinx.cpp.fem.DofMap, multiphenicsx.fem.DofMapRestriction]
-) -> petsc4py.PETSc.Vec:  # type: ignore[name-defined]
-    """Create a vector from a DofMap or DofMapRestriction, rather than a form."""
-    # TODO remove this function and use upstream PR #3694 when ready
-    return dolfinx.la.petsc.create_vector([(dofmap.index_map, dofmap.index_map_bs)])
-
-
-def create_vector_from_dofmaps(  # type: ignore[no-any-unimported]
-    dofmaps: list[
-        typing.Union[dolfinx.fem.DofMap, dolfinx.cpp.fem.DofMap, multiphenicsx.fem.DofMapRestriction]],
-    vec_type: str
-) -> petsc4py.PETSc.Vec:  # type: ignore[name-defined]
-    """Create a vector from two DofMap or DofMapRestriction, rather than a form."""
-    # TODO remove this function and use upstream PR #3694 when ready
-    if vec_type == "mpi":
-        return dolfinx.cpp.fem.petsc.create_vector_block(
-            [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps])
-    elif vec_type == "nest":
-        return dolfinx.cpp.fem.petsc.create_vector_nest(
-            [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps])
-    else:
-        raise RuntimeError("Invalid vector type")
-
 def attach_attributes_to_solution_block_vector(
     solution: petsc4py.PETSc.Vec, fem_module: types.ModuleType,   # type: ignore[name-defined]
     block_linear_form: dolfinx.fem.Form
@@ -568,8 +544,12 @@ def test_plain_vector_assembly_with_restriction(
     # BC application for linear problems
     unrestricted_vector_linear = unrestricted_fem_module.petsc.assemble_vector(
         linear_form, kind=vec_type)
-    unrestricted_fem_module.petsc.apply_lifting(
-        unrestricted_vector_linear, [bilinear_form], [bcs])
+    if vec_type == "mpi":
+        unrestricted_fem_module.petsc.apply_lifting(
+            unrestricted_vector_linear, [[bilinear_form]], [bcs])
+    else:
+        unrestricted_fem_module.petsc.apply_lifting(
+            unrestricted_vector_linear, [bilinear_form], [bcs])
     dolfinx.la.petsc._ghost_update(
         unrestricted_vector_linear, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[attr-defined]
         scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[attr-defined]
@@ -587,8 +567,8 @@ def test_plain_vector_assembly_with_restriction(
     unrestricted_vector_linear.destroy()
     restricted_vector_linear.destroy()
     # BC application for nonlinear problems
-    unrestricted_solution = create_vector_from_dofmap(V.dofmap)
-    restricted_solution = create_vector_from_dofmap(dofmap_restriction)
+    unrestricted_solution = unrestricted_fem_module.petsc.create_vector(V, kind=vec_type)
+    restricted_solution = restricted_fem_module.petsc.create_vector(V, kind=vec_type, restriction=dofmap_restriction)
     bc_vector = get_function(V).x.petsc_vec
     with unrestricted_solution.localForm() as unrestricted_solution_local, \
             bc_vector.localForm() as function_local:
@@ -601,8 +581,12 @@ def test_plain_vector_assembly_with_restriction(
             restricted_solution_wrapper[:] = unrestricted_solution_local
     unrestricted_vector_nonlinear = unrestricted_fem_module.petsc.assemble_vector(
         linear_form, kind=vec_type)
-    unrestricted_fem_module.petsc.apply_lifting(
-        unrestricted_vector_nonlinear, [bilinear_form], [bcs], [unrestricted_solution])
+    if vec_type == "mpi":
+        unrestricted_fem_module.petsc.apply_lifting(
+            unrestricted_vector_nonlinear, [[bilinear_form]], [bcs], unrestricted_solution)
+    else:
+        unrestricted_fem_module.petsc.apply_lifting(
+            unrestricted_vector_nonlinear, [bilinear_form], [bcs], [unrestricted_solution])
     dolfinx.la.petsc._ghost_update(
         unrestricted_vector_nonlinear, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[attr-defined]
         scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[attr-defined]
@@ -698,8 +682,8 @@ def test_block_nest_vector_assembly_with_restriction(
     unrestricted_vector_linear.destroy()
     restricted_vector_linear.destroy()
     # Assembly for nonlinear problems
-    unrestricted_solution = create_vector_from_dofmaps([V_.dofmap for V_ in V], vec_type)
-    restricted_solution = create_vector_from_dofmaps(dofmap_restriction, vec_type)
+    unrestricted_solution = unrestricted_fem_module.petsc.create_vector(V, kind=vec_type)
+    restricted_solution = restricted_fem_module.petsc.create_vector(V, kind=vec_type, restriction=dofmap_restriction)
     if vec_type == "mpi":
         attach_attributes_to_solution_block_vector(unrestricted_solution, unrestricted_fem_module, block_linear_form)
         if unrestricted_fem_module == dolfinx.fem:

@@ -83,34 +83,35 @@ def _same_dofmap(  # type: ignore[no-any-unimported]
 # -- Vector instantiation ----------------------------------------------------
 
 def create_vector(
-    L: DolfinxRank1FormsType, kind: DolfinxVectorKindType = None,
+    V: typing.Union[dolfinx.fem.FunctionSpace, typing.Sequence[dolfinx.fem.FunctionSpace]],
+    kind: DolfinxVectorKindType = None,
     restriction: MultiphenicsxRank1RestrictionsType = None
 ) -> petsc4py.PETSc.Vec:  # type: ignore[name-defined]
     """
-    Create a PETSc vector that is compatible with a linear form(s) and a restriction.
+    Create a PETSc vector that is compatible with function space(s) and restriction(s).
 
     Three cases are supported:
 
-    1. For a single linear form ``L``, if ``kind`` is ``None`` or is
+    1. For a single function space ``V``, if ``kind`` is ``None`` or is
        ``PETSc.Vec.Type.MPI``, a ghosted PETSc vector which is
-       compatible with ``L`` is created.
+       compatible with ``V`` is created.
 
-    2. If ``L`` is a sequence of linear forms and ``kind`` is ``None``
+    2. If ``V`` is a sequence of function spaces and ``kind`` is ``None``
        or is ``PETSc.Vec.Type.MPI``, a ghosted PETSc vector which is
-       compatible with ``L`` is created. The created vector ``b`` is
+       compatible with ``V`` is created. The created vector ``b`` is
        initialized such that on each MPI process ``b = [b_0, b_1, ...,
        b_n, b_0g, b_1g, ..., b_ng]``, where ``b_i`` are the entries
-       associated with the 'owned' degrees-of-freedom for ``L[i]`` and
-       ``b_ig`` are the 'unowned' (ghost) entries for ``L[i]``.
+       associated with the 'owned' degrees-of-freedom for ``V[i]`` and
+       ``b_ig`` are the 'unowned' (ghost) entries for ``V[i]``.
 
-    3. If ``L`` is a sequence of linear forms and ``kind`` is
+    3. If ``V`` is a sequence of function spaces and ``kind`` is
        ``PETSc.Vec.Type.NEST``, a PETSc nested vector (a 'nest' of
-       ghosted PETSc vectors) which is compatible with ``L`` is created.
+       ghosted PETSc vectors) which is compatible with ``V`` is created.
 
     Parameters
     ----------
-    L
-        Linear form or a sequence of linear forms.
+    V
+        Function space or a sequence of function spaces.
     kind
         PETSc vector type (``VecType``) to create.
     restriction
@@ -118,12 +119,11 @@ def create_vector(
 
     Returns
     -------
-        A PETSc vector with a layout that is compatible with ``L`` and restriction
-        `restriction`. The vector is not initialised to zero.
+        A PETSc vector with a layout that is compatible with ``V`` and restriction
+        ``restriction``. The vector is not initialised to zero.
     """
-    if isinstance(L, collections.abc.Sequence):
-        function_spaces: list[dolfinx.fem.FunctionSpace] = dolfinx.fem.extract_function_spaces(L)  # type: ignore
-        dofmaps = [function_space.dofmap for function_space in function_spaces]
+    if isinstance(V, collections.abc.Sequence):
+        dofmaps = [function_space.dofmap for function_space in V]
         if restriction is None:
             index_maps = [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps]
         else:
@@ -146,7 +146,7 @@ def create_vector(
             )
     else:
         assert kind is None or kind == petsc4py.PETSc.Vec.Type.MPI  # type: ignore[attr-defined]
-        dofmap = L.function_spaces[0].dofmap
+        dofmap = V.dofmap
         if restriction is None:
             index_map = dofmap.index_map
             index_map_bs = dofmap.index_map_bs
@@ -155,7 +155,10 @@ def create_vector(
             assert _same_dofmap(restriction.dofmap, dofmap)
             index_map = restriction.index_map
             index_map_bs = restriction.index_map_bs
-        return dolfinx.la.petsc.create_vector([(index_map, index_map_bs)])
+        b = dolfinx.la.petsc.create_vector([(index_map, index_map_bs)])
+        if kind == petsc4py.PETSc.Vec.Type.MPI:  # type: ignore[attr-defined]
+            b.setAttr("_dofmaps", [dofmap])
+        return b
 
 
 # -- Matrix instantiation ----------------------------------------------------
@@ -634,7 +637,7 @@ def assemble_vector(
     -----
     The returned vector is not finalised, i.e. ghost values are not accumulated on the owning processes.
     """
-    b = create_vector(L, kind, restriction)
+    b = create_vector(dolfinx.fem.extract_function_spaces(L), kind, restriction)  # type: ignore[arg-type]
     dolfinx.la.petsc._zero_vector(b)
     return assemble_vector(b, L, constants, coeffs, restriction)  # type: ignore[arg-type]
 
@@ -1618,8 +1621,9 @@ class LinearProblem:
         # For nest matrices kind can be a nested list.
         kind = "nest" if self.A.getType() == petsc4py.PETSc.Mat.Type.NEST else kind  # type: ignore[attr-defined]
         assert kind is None or isinstance(kind, str)
-        self._b = create_vector(self.L, kind=kind, restriction=restriction)
-        self._x = create_vector(self.L, kind=kind, restriction=restriction)
+        function_spaces: list[dolfinx.fem.FunctionSpace] = dolfinx.fem.extract_function_spaces(self.L)  # type: ignore
+        self._b = create_vector(function_spaces, kind=kind, restriction=restriction)
+        self._x = create_vector(function_spaces, kind=kind, restriction=restriction)
 
         if u is None:
             # Extract function space for unknown from the right hand side of the equation.
@@ -2026,8 +2030,9 @@ class NonlinearProblem:
         # Determine the vector kind based on the matrix type
         kind = "nest" if self._A.getType() == petsc4py.PETSc.Mat.Type.NEST else kind  # type: ignore[attr-defined]
         assert kind is None or isinstance(kind, str)
-        self._b = create_vector(self.F, kind=kind, restriction=restriction)
-        self._x = create_vector(self.F, kind=kind, restriction=restriction)
+        function_spaces: list[dolfinx.fem.FunctionSpace] = dolfinx.fem.extract_function_spaces(self.F)  # type: ignore
+        self._b = create_vector(function_spaces, kind=kind, restriction=restriction)
+        self._x = create_vector(function_spaces, kind=kind, restriction=restriction)
 
         # Create the SNES solver and attach the corresponding Jacobian and esidual computation functions
         self._snes = petsc4py.PETSc.SNES().create(self.A.comm)  # type: ignore[attr-defined]
