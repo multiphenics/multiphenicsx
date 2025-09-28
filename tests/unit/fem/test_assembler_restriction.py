@@ -524,7 +524,7 @@ def attach_attributes_to_solution_block_vector(
     else:
         # multiphenicsx.fem.petsc assembly expects block vector to have an additional _dofmaps attribute
         function_spaces: list[dolfinx.fem.FunctionSpace] = dolfinx.fem.extract_function_spaces(
-            block_linear_form)  # type: ignore[arg-type, assignment]
+            block_linear_form)  # type: ignore[assignment]
         dofmaps = [function_space.dofmap for function_space in function_spaces]
         solution.setAttr("_dofmaps", dofmaps)
 
