@@ -25,47 +25,36 @@ import ufl
 
 from multiphenicsx.cpp import cpp_library as mcpp
 
-UflRank1FormsType = typing.Union[  # type: ignore[no-any-unimported]
-    ufl.Form, typing.Sequence[ufl.Form]
-]
-UflRank2FormsType = typing.Union[  # type: ignore[no-any-unimported]
-    ufl.Form, typing.Sequence[typing.Sequence[ufl.Form]]
-]
-DolfinxRank1FormsType = typing.Union[
-    dolfinx.fem.Form, typing.Sequence[dolfinx.fem.Form]
-]
-DolfinxRank2FormsType = typing.Union[
-    dolfinx.fem.Form, typing.Sequence[typing.Sequence[dolfinx.fem.Form]]
-]
-DolfinxVectorKindType = typing.Optional[str]
-DolfinxMatrixKindType = typing.Optional[typing.Union[str, typing.Sequence[typing.Sequence[str]]]]
-DolfinxConstantsType_Base = npt.NDArray[petsc4py.PETSc.ScalarType]  # type: ignore[name-defined]
-DolfinxConstantsType = typing.Optional[
-    typing.Union[DolfinxConstantsType_Base, typing.Sequence[typing.Optional[DolfinxConstantsType_Base]]]
-]
-DolfinxCoefficientsType_Base = dict[  # type: ignore[no-any-unimported]
+UflRank1FormsType: typing.TypeAlias = ufl.Form | typing.Sequence[ufl.Form]  # type: ignore[no-any-unimported]
+UflRank2FormsType: typing.TypeAlias = ufl.Form | typing.Sequence[typing.Sequence[ufl.Form]]  # type: ignore[no-any-unimported]
+DolfinxRank1FormsType: typing.TypeAlias = dolfinx.fem.Form | typing.Sequence[dolfinx.fem.Form]
+DolfinxRank2FormsType: typing.TypeAlias = dolfinx.fem.Form | typing.Sequence[typing.Sequence[dolfinx.fem.Form]]
+DolfinxVectorKindType: typing.TypeAlias = str | None
+DolfinxMatrixKindType: typing.TypeAlias = str | typing.Sequence[typing.Sequence[str]] | None
+DolfinxConstantsType_Base: typing.TypeAlias = npt.NDArray[petsc4py.PETSc.ScalarType]  # type: ignore[name-defined]
+DolfinxConstantsType: typing.TypeAlias = (
+    DolfinxConstantsType_Base | None | typing.Sequence[DolfinxConstantsType_Base | None]
+)
+DolfinxCoefficientsType_Base: typing.TypeAlias = dict[  # type: ignore[no-any-unimported]
     tuple[dolfinx.fem.IntegralType, int],
     npt.NDArray[petsc4py.PETSc.ScalarType]  # type: ignore[name-defined]
 ]
-DolfinxCoefficientsType = typing.Optional[
-    typing.Union[DolfinxCoefficientsType_Base, typing.Sequence[typing.Optional[DolfinxCoefficientsType_Base]]]
-]
-MultiphenicsxRank1RestrictionsType = typing.Optional[typing.Union[  # type: ignore[no-any-unimported]
-    typing.Optional[mcpp.fem.DofMapRestriction],
-    typing.Optional[typing.Sequence[mcpp.fem.DofMapRestriction]]
-]]
-MultiphenicsxRank2RestrictionsType = typing.Optional[typing.Union[  # type: ignore[no-any-unimported]
-    typing.Optional[tuple[mcpp.fem.DofMapRestriction, mcpp.fem.DofMapRestriction]],
-    typing.Optional[tuple[
-        typing.Sequence[mcpp.fem.DofMapRestriction],
-        typing.Sequence[mcpp.fem.DofMapRestriction]
-    ]
-]]]
+DolfinxCoefficientsType: typing.TypeAlias = (
+    DolfinxCoefficientsType_Base | None | typing.Sequence[DolfinxCoefficientsType_Base | None]
+)
+MultiphenicsxRank1RestrictionsType: typing.TypeAlias = (  # type: ignore[no-any-unimported]
+    mcpp.fem.DofMapRestriction | typing.Sequence[mcpp.fem.DofMapRestriction] | None
+)
+MultiphenicsxRank2RestrictionsType: typing.TypeAlias = (  # type: ignore[no-any-unimported]
+    tuple[mcpp.fem.DofMapRestriction, mcpp.fem.DofMapRestriction] |
+    tuple[typing.Sequence[mcpp.fem.DofMapRestriction], typing.Sequence[mcpp.fem.DofMapRestriction]]
+    | None
+)
 
 
 def _same_dofmap(  # type: ignore[no-any-unimported]
-    dofmap1: typing.Union[dolfinx.fem.DofMap, dcpp.fem.DofMap],
-    dofmap2: typing.Union[dolfinx.fem.DofMap, dcpp.fem.DofMap]
+    dofmap1: dolfinx.fem.DofMap | dcpp.fem.DofMap,
+    dofmap2: dolfinx.fem.DofMap | dcpp.fem.DofMap
 ) -> bool:
     try:
         dofmap1 = dofmap1._cpp_object
@@ -83,7 +72,7 @@ def _same_dofmap(  # type: ignore[no-any-unimported]
 # -- Vector instantiation ----------------------------------------------------
 
 def create_vector(
-    V: typing.Union[dolfinx.fem.FunctionSpace, typing.Sequence[dolfinx.fem.FunctionSpace]],
+    V: dolfinx.fem.FunctionSpace | typing.Sequence[dolfinx.fem.FunctionSpace],
     kind: DolfinxVectorKindType = None,
     restriction: MultiphenicsxRank1RestrictionsType = None
 ) -> petsc4py.PETSc.Vec:  # type: ignore[name-defined]
@@ -302,9 +291,9 @@ def _VecSubVectorWrapperBase(CppWrapperClass: type) -> type:
 
         def __init__(
             self, b: petsc4py.PETSc.Vec, unrestricted_index_set: petsc4py.PETSc.IS,  # type: ignore[name-defined]
-            restricted_index_set: typing.Optional[petsc4py.PETSc.IS] = None,  # type: ignore[name-defined]
-            unrestricted_to_restricted: typing.Optional[dict[int, int]] = None,
-            unrestricted_to_restricted_bs: typing.Optional[int] = None
+            restricted_index_set: petsc4py.PETSc.IS | None = None,  # type: ignore[name-defined]
+            unrestricted_to_restricted: dict[int, int] | None = None,
+            unrestricted_to_restricted_bs: int | None = None
         ) -> None:
             if restricted_index_set is None:
                 assert unrestricted_to_restricted is None
@@ -348,8 +337,8 @@ def VecSubVectorWrapperBase(_VecSubVectorWrapperClass: type) -> type:
         """Wrap a PETSc Vec object."""
 
         def __init__(  # type: ignore[no-any-unimported]
-            self, b: typing.Union[petsc4py.PETSc.Vec, None], dofmap: dcpp.fem.DofMap,  # type: ignore[name-defined]
-            restriction: typing.Optional[mcpp.fem.DofMapRestriction] = None,
+            self, b: petsc4py.PETSc.Vec | None, dofmap: dcpp.fem.DofMap,  # type: ignore[name-defined]
+            restriction: mcpp.fem.DofMapRestriction | None = None,
             ghosted: bool = True
         ) -> None:
             if b is None:
@@ -385,8 +374,7 @@ def VecSubVectorWrapperBase(_VecSubVectorWrapperClass: type) -> type:
                     self._unrestricted_to_restricted = unrestricted_to_restricted
                     self._unrestricted_to_restricted_bs = unrestricted_to_restricted_bs
 
-        def __enter__(self) -> typing.Optional[  # type: ignore[name-defined]
-                npt.NDArray[petsc4py.PETSc.ScalarType]]:
+        def __enter__(self) -> npt.NDArray[petsc4py.PETSc.ScalarType] | None:  # type: ignore[name-defined]
             """Return Vec content when entering the context."""
             if self._wrapper is not None:
                 return self._wrapper.__enter__()  # type: ignore[no-any-return]
@@ -420,9 +408,9 @@ def BlockVecSubVectorWrapperBase(_VecSubVectorWrapperClass: type) -> type:
         """Wrap a PETSc Vec object with multiple blocks."""
 
         def __init__(  # type: ignore[no-any-unimported]
-            self, b: typing.Union[petsc4py.PETSc.Vec, None],  # type: ignore[name-defined]
+            self, b: petsc4py.PETSc.Vec | None,  # type: ignore[name-defined]
             dofmaps: typing.Sequence[dcpp.fem.DofMap],
-            restriction: typing.Optional[typing.Sequence[mcpp.fem.DofMapRestriction]] = None,
+            restriction: typing.Sequence[mcpp.fem.DofMapRestriction] | None = None,
             ghosted: bool = True
         ) -> None:
             self._b = b
@@ -461,8 +449,8 @@ def BlockVecSubVectorWrapperBase(_VecSubVectorWrapperClass: type) -> type:
                     self._unrestricted_to_restricted = unrestricted_to_restricted
                     self._unrestricted_to_restricted_bs = unrestricted_to_restricted_bs
 
-        def __iter__(self) -> typing.Optional[  # type: ignore[name-defined, return]
-                typing.Iterator[npt.NDArray[petsc4py.PETSc.ScalarType]]]:
+        def __iter__(self) -> typing.Iterator[  # type: ignore[name-defined, return]
+                npt.NDArray[petsc4py.PETSc.ScalarType]] | None:
             """Iterate over blocks."""
             with contextlib.ExitStack() as wrapper_stack:
                 for index in range(self._len):
@@ -516,11 +504,9 @@ def NestVecSubVectorWrapperBase(VecSubVectorWrapperClass: type) -> type:
 
         def __init__(  # type: ignore[no-any-unimported]
             self,
-            b: typing.Union[  # type: ignore[name-defined]
-                petsc4py.PETSc.Vec, typing.Sequence[petsc4py.PETSc.Vec], None
-            ],
+            b: petsc4py.PETSc.Vec | typing.Sequence[petsc4py.PETSc.Vec] | None,  # type: ignore[name-defined]
             dofmaps: typing.Sequence[dcpp.fem.DofMap],
-            restriction: typing.Optional[typing.Sequence[mcpp.fem.DofMapRestriction]] = None,
+            restriction: typing.Sequence[mcpp.fem.DofMapRestriction] | None = None,
             ghosted: bool = True
         ) -> None:
             if b is not None:
@@ -538,8 +524,8 @@ def NestVecSubVectorWrapperBase(VecSubVectorWrapperClass: type) -> type:
             self._restriction = restriction
             self._ghosted = ghosted
 
-        def __iter__(self) -> typing.Optional[  # type: ignore[name-defined, return]
-                typing.Iterator[npt.NDArray[petsc4py.PETSc.ScalarType]]]:
+        def __iter__(self) -> typing.Iterator[  # type: ignore[name-defined, return]
+                npt.NDArray[petsc4py.PETSc.ScalarType]] | None:
             """Iterate over blocks."""
             with contextlib.ExitStack() as wrapper_stack:
                 for index, b_index in enumerate(self._b):
@@ -734,11 +720,9 @@ class _MatSubMatrixWrapper:
     def __init__(
         self, A: petsc4py.PETSc.Mat,   # type: ignore[name-defined]
         unrestricted_index_sets: tuple[petsc4py.PETSc.IS, petsc4py.PETSc.IS],  # type: ignore[name-defined]
-        restricted_index_sets: typing.Optional[  # type: ignore[name-defined]
-            tuple[petsc4py.PETSc.IS, petsc4py.PETSc.IS]
-        ] = None,
-        unrestricted_to_restricted: typing.Optional[tuple[dict[int, int], dict[int, int]]] = None,
-        unrestricted_to_restricted_bs: typing.Optional[tuple[int, int]] = None
+        restricted_index_sets: tuple[petsc4py.PETSc.IS, petsc4py.PETSc.IS] | None = None,  # type: ignore[name-defined]
+        unrestricted_to_restricted: tuple[dict[int, int], dict[int, int]] | None = None,
+        unrestricted_to_restricted_bs: tuple[int, int] | None = None
     ) -> None:
         if restricted_index_sets is None:
             assert unrestricted_to_restricted is None
@@ -750,7 +734,7 @@ class _MatSubMatrixWrapper:
                 restricted_index_sets,
                 unrestricted_to_restricted,
                 unrestricted_to_restricted_bs)
-        self._cpp_object_mat: typing.Optional[petsc4py.PETSc.Mat] = None  # type: ignore[name-defined]
+        self._cpp_object_mat: petsc4py.PETSc.Mat | None = None  # type: ignore[name-defined]
 
     def __enter__(self) -> petsc4py.PETSc.Mat:  # type: ignore[name-defined]
         """Return submatrix content."""
@@ -772,7 +756,7 @@ class MatSubMatrixWrapper:
 
     def __init__(  # type: ignore[no-any-unimported]
         self, A: petsc4py.PETSc.Mat, dofmaps: tuple[dcpp.fem.DofMap, dcpp.fem.DofMap],  # type: ignore[name-defined]
-        restriction: typing.Optional[tuple[mcpp.fem.DofMapRestriction, mcpp.fem.DofMapRestriction]] = None
+        restriction: tuple[mcpp.fem.DofMapRestriction, mcpp.fem.DofMapRestriction] | None = None
     ) -> None:
         assert len(dofmaps) == 2
         if restriction is None:  # pragma: no cover
@@ -843,8 +827,9 @@ class BlockMatSubMatrixWrapper:
     def __init__(  # type: ignore[no-any-unimported]
         self, A: petsc4py.PETSc.Mat,  # type: ignore[name-defined]
         dofmaps: tuple[typing.Sequence[dcpp.fem.DofMap], typing.Sequence[dcpp.fem.DofMap]],
-        restriction: typing.Optional[
-            tuple[typing.Sequence[mcpp.fem.DofMapRestriction], typing.Sequence[mcpp.fem.DofMapRestriction]]] = None
+        restriction: tuple[
+            typing.Sequence[mcpp.fem.DofMapRestriction], typing.Sequence[mcpp.fem.DofMapRestriction]
+        ] | None = None
     ) -> None:
         self._A = A
         assert len(dofmaps) == 2
@@ -939,8 +924,9 @@ class NestMatSubMatrixWrapper:
     def __init__(  # type: ignore[no-any-unimported]
         self, A: petsc4py.PETSc.Mat,   # type: ignore[name-defined]
         dofmaps: tuple[typing.Sequence[dcpp.fem.DofMap], typing.Sequence[dcpp.fem.DofMap]],
-        restriction: typing.Optional[
-            tuple[typing.Sequence[mcpp.fem.DofMapRestriction], typing.Sequence[mcpp.fem.DofMapRestriction]]] = None
+        restriction: tuple[
+            typing.Sequence[mcpp.fem.DofMapRestriction], typing.Sequence[mcpp.fem.DofMapRestriction]
+        ] | None = None
     ) -> None:
         self._A = A
         self._dofmaps = dofmaps
@@ -985,7 +971,7 @@ class NestMatSubMatrixWrapper:
 @functools.singledispatch
 def assemble_matrix(
     a: DolfinxRank2FormsType,
-    bcs: typing.Optional[typing.Sequence[dolfinx.fem.DirichletBC]] = None, diag: float = 1.0,
+    bcs: typing.Sequence[dolfinx.fem.DirichletBC] | None = None, diag: float = 1.0,
     constants: DolfinxConstantsType = None, coeffs: DolfinxCoefficientsType = None,
     kind: DolfinxMatrixKindType = None, restriction: MultiphenicsxRank2RestrictionsType = None
 ) -> petsc4py.PETSc.Mat:  # type: ignore[name-defined]
@@ -1057,7 +1043,7 @@ def assemble_matrix(
 @assemble_matrix.register
 def _(
     A: petsc4py.PETSc.Mat, a: DolfinxRank2FormsType,  # type: ignore[name-defined]
-    bcs: typing.Optional[typing.Sequence[dolfinx.fem.DirichletBC]] = None, diag: float = 1.0,
+    bcs: typing.Sequence[dolfinx.fem.DirichletBC] | None = None, diag: float = 1.0,
     constants: DolfinxConstantsType = None, coeffs: DolfinxCoefficientsType = None,
     restriction: MultiphenicsxRank2RestrictionsType = None
 ) -> petsc4py.PETSc.Mat:  # type: ignore[name-defined]
@@ -1212,11 +1198,10 @@ def _(
 
 def apply_lifting(
     b: petsc4py.PETSc.Vec,  # type: ignore[name-defined]
-    a: typing.Union[typing.Sequence[dolfinx.fem.Form], typing.Sequence[typing.Sequence[dolfinx.fem.Form]]],
-    bcs: typing.Optional[
-        typing.Union[typing.Sequence[dolfinx.fem.DirichletBC],
-        typing.Sequence[typing.Sequence[dolfinx.fem.DirichletBC]]]] = None,
-    x0: typing.Optional[typing.Sequence[petsc4py.PETSc.Vec]] = None,  # type: ignore[name-defined]
+    a: typing.Sequence[dolfinx.fem.Form] | typing.Sequence[typing.Sequence[dolfinx.fem.Form]],
+    bcs: typing.Sequence[dolfinx.fem.DirichletBC] | typing.Sequence[typing.Sequence[dolfinx.fem.DirichletBC]]
+         | None = None,
+    x0: typing.Sequence[petsc4py.PETSc.Vec] | None = None,  # type: ignore[name-defined]
     alpha: float = 1.0,
     constants: DolfinxConstantsType = None, coeffs: DolfinxCoefficientsType = None,
     restriction: MultiphenicsxRank1RestrictionsType = None,
@@ -1323,10 +1308,8 @@ def apply_lifting(
 
 def set_bc(
     b: petsc4py.PETSc.Vec,  # type: ignore[name-defined]
-    bcs: typing.Union[
-        typing.Sequence[dolfinx.fem.DirichletBC],
-        typing.Sequence[typing.Sequence[dolfinx.fem.DirichletBC]]],
-    x0: typing.Optional[petsc4py.PETSc.Vec] = None,  # type: ignore[name-defined]
+    bcs: typing.Sequence[dolfinx.fem.DirichletBC] | typing.Sequence[typing.Sequence[dolfinx.fem.DirichletBC]],
+    x0: petsc4py.PETSc.Vec | None = None,  # type: ignore[name-defined]
     alpha: float = 1.0,
     restriction: MultiphenicsxRank1RestrictionsType = None,
     restriction_x0: MultiphenicsxRank1RestrictionsType = None
@@ -1429,7 +1412,7 @@ def set_bc(
 
 @functools.singledispatch
 def assign(
-    u: typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]],
+    u: dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function],
     x: petsc4py.PETSc.Vec, restriction: MultiphenicsxRank1RestrictionsType = None  # type: ignore[name-defined]
 ) -> None:
     """
@@ -1468,7 +1451,7 @@ def assign(
 @assign.register
 def _(
     x: petsc4py.PETSc.Vec,  # type: ignore[name-defined]
-    u: typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]],
+    u: dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function],
     restriction: MultiphenicsxRank1RestrictionsType = None
 ) -> None:
     """
@@ -1522,12 +1505,12 @@ class LinearProblem:
 
     def __init__(
         self, a: UflRank2FormsType, L: UflRank1FormsType, *, petsc_options_prefix: str,
-        bcs: typing.Optional[typing.Sequence[dolfinx.fem.DirichletBC]] = None,
-        u: typing.Optional[typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]]] = None,
-        P: typing.Optional[UflRank2FormsType] = None, kind: DolfinxMatrixKindType = None,
-        petsc_options: typing.Optional[dict[str, typing.Any]] = None,
-        form_compiler_options: typing.Optional[dict[str, typing.Any]] = None,
-        jit_options: typing.Optional[dict[str, typing.Any]] = None,
+        bcs: typing.Sequence[dolfinx.fem.DirichletBC] | None = None,
+        u: dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function] | None = None,
+        P: UflRank2FormsType | None = None, kind: DolfinxMatrixKindType = None,
+        petsc_options: dict[str, typing.Any] | None = None,
+        form_compiler_options: dict[str, typing.Any] | None = None,
+        jit_options: dict[str, typing.Any] | None = None,
         restriction: MultiphenicsxRank1RestrictionsType = None
     ) -> None:
         """
@@ -1688,7 +1671,7 @@ class LinearProblem:
         if self._P_mat is not None:  # pragma: no cover
             self._P_mat.destroy()
 
-    def solve(self) -> typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]]:
+    def solve(self) -> dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function]:
         """
         Solve the problem.
 
@@ -1782,7 +1765,7 @@ class LinearProblem:
         return self._A
 
     @property
-    def P_mat(self) -> typing.Optional[petsc4py.PETSc.Mat]:  # type: ignore[name-defined]
+    def P_mat(self) -> petsc4py.PETSc.Mat | None:  # type: ignore[name-defined]
         """Preconditioner matrix."""
         return self._P_mat
 
@@ -1808,7 +1791,7 @@ class LinearProblem:
         return self._solver
 
     @property
-    def u(self) -> typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]]:
+    def u(self) -> dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function]:
         """
         Solution function(s).
 
@@ -1828,7 +1811,7 @@ class LinearProblem:
 
 
 def assemble_residual(
-    u: typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]],
+    u: dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function],
     residual: DolfinxRank1FormsType, jacobian: DolfinxRank2FormsType,
     bcs: typing.Sequence[dolfinx.fem.DirichletBC],
     restriction: MultiphenicsxRank1RestrictionsType,
@@ -1891,8 +1874,8 @@ def assemble_residual(
 
 
 def assemble_jacobian(
-    u: typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]],
-    jacobian: DolfinxRank2FormsType, preconditioner: typing.Optional[DolfinxRank2FormsType],
+    u: dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function],
+    jacobian: DolfinxRank2FormsType, preconditioner: DolfinxRank2FormsType | None,
     bcs: typing.Sequence[dolfinx.fem.DirichletBC],
     restriction: MultiphenicsxRank1RestrictionsType,
     _snes: petsc4py.PETSc.SNES, x: petsc4py.PETSc.Vec, J: petsc4py.PETSc.Mat,  # type: ignore[name-defined]
@@ -1932,14 +1915,14 @@ class NonlinearProblem:
     def __init__(
         self,
         F: UflRank1FormsType,
-        u: typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]], *,
+        u: dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function], *,
         petsc_options_prefix: str,
-        bcs: typing.Optional[typing.Sequence[dolfinx.fem.DirichletBC]] = None,
-        J: typing.Optional[UflRank2FormsType] = None, P: typing.Optional[UflRank2FormsType] = None,
+        bcs: typing.Sequence[dolfinx.fem.DirichletBC] | None = None,
+        J: UflRank2FormsType | None = None, P: UflRank2FormsType | None = None,
         kind: DolfinxMatrixKindType = None,
-        petsc_options: typing.Optional[dict[str, typing.Any]] = None,
-        form_compiler_options: typing.Optional[dict[str, typing.Any]] = None,
-        jit_options: typing.Optional[dict[str, typing.Any]] = None,
+        petsc_options: dict[str, typing.Any] | None = None,
+        form_compiler_options: dict[str, typing.Any] | None = None,
+        jit_options: dict[str, typing.Any] | None = None,
         restriction: MultiphenicsxRank1RestrictionsType = None
     ) -> None:
         """
@@ -2094,7 +2077,7 @@ class NonlinearProblem:
         if self._P_mat is not None:  # pragma: no cover
             self._P_mat.destroy()
 
-    def solve(self) -> typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]]:
+    def solve(self) -> dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function]:
         """
         Solve the problem.
 
@@ -2137,7 +2120,7 @@ class NonlinearProblem:
         return self._J  # type: ignore[no-any-return]
 
     @property
-    def preconditioner(self) -> typing.Optional[DolfinxRank2FormsType]:
+    def preconditioner(self) -> DolfinxRank2FormsType | None:
         """The compiled preconditioner."""
         return self._preconditioner  # type: ignore[no-any-return]
 
@@ -2147,7 +2130,7 @@ class NonlinearProblem:
         return self._A
 
     @property
-    def P_mat(self) -> typing.Optional[petsc4py.PETSc.Mat]:  # type: ignore[name-defined]
+    def P_mat(self) -> petsc4py.PETSc.Mat | None:  # type: ignore[name-defined]
         """Preconditioner matrix."""
         return self._P_mat
 
@@ -2173,7 +2156,7 @@ class NonlinearProblem:
         return self._snes
 
     @property
-    def u(self) -> typing.Union[dolfinx.fem.Function, typing.Sequence[dolfinx.fem.Function]]:
+    def u(self) -> dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function]:
         """
         Solution function(s).
 

@@ -18,7 +18,7 @@ FunctionSpaceGeneratorType = typing.Callable[[dolfinx.mesh.Mesh], dolfinx.fem.Fu
 
 
 def ActiveDofs(
-    V: dolfinx.fem.FunctionSpace, subdomain: typing.Optional[SubdomainType]
+    V: dolfinx.fem.FunctionSpace, subdomain: SubdomainType | None
 ) -> npt.NDArray[np.int32]:
     """Define a list of active dofs."""
     if subdomain is not None:
@@ -55,7 +55,7 @@ def FacetsAll() -> SubdomainType:
 
 
 def FacetsSubDomain(
-    X: typing.Optional[float] = None, Y: typing.Optional[float] = None,
+    X: float | None = None, Y: float | None = None,
     on_boundary: bool = False
 ) -> SubdomainType:
     """Define a subdomain of codimension 1 marking a subset of the facets in the mesh."""
