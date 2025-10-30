@@ -40,7 +40,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 dependencies = [
-    "fenics-dolfinx >= 0.10.0.dev0",
+    "fenics-dolfinx >= 0.10.0",
     "mpi4py",
     "numpy >= 1.21.0",
     "petsc4py"
