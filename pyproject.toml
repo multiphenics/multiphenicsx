@@ -10,7 +10,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "multiphenicsx"
-version = "0.4.dev0"
+version = "0.4.0"
 authors = [
     {name = "Francesco Ballarin", email = "francesco.ballarin@unicatt.it"},
 ]
