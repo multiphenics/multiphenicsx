@@ -6,6 +6,18 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Test latest released version on PyPI against the workflow on the current main branch.
+  # If main becomes incompatible with the latest version on PyPI then temporarily
+  # comment out this test, and restore it on the next PyPI release.
+
+  test_main_branch_against_latest_release_from_pypi:
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@main
+    with:
+      ref: main
+      index: PyPI
+
+  # Test released versions on github or PyPI against the workflow on the corresponding git tag.
+
   test_0_3_8_installing_from_github:
     uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.3.8
     with:
