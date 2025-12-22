@@ -60,7 +60,7 @@ jobs:
           python3 -m pip install --break-system-packages wheel-filename
           WHEELS=($(find dist -type f -name "*.whl"))
           if [[ "${#WHEELS[@]}" == "1" ]]; then
-            VERSION=$(python3 -c "import wheel_filename; print(wheel_filename.parse_wheel_filename('${WHEELS[0]}').version)")
+            VERSION=$(python3 -c "import wheel_filename; print(wheel_filename.WheelFilename.parse('${WHEELS[0]}').version)")
             echo "version=${VERSION}" >> ${GITHUB_OUTPUT}
           else
             echo "Found ${#WHEELS[@]} wheels, instead of one" && exit 1
