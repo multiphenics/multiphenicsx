@@ -19,62 +19,62 @@ jobs:
   # Test released versions on github or PyPI against the workflow on the corresponding git tag.
 
   test_0_3_8_installing_from_github:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.3.8
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.3.8.post0
     with:
-      ref: v0.3.8
+      ref: v0.3.8.post0
 
   test_0_3_8_installing_from_pypi_versioned:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.3.8
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.3.8.post0
     with:
-      ref: v0.3.8
+      ref: v0.3.8.post0
       index: PyPI
       index_version: 0.3.8
       expected_index_version: 0.3.8
 
   test_0_3_8_installing_from_pypi_unversioned:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.3.8
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.3.8.post0
     with:
-      ref: v0.3.8
+      ref: v0.3.8.post0
       index: PyPI
       expected_index_version: 0.3.8
 
   test_0_3_9_installing_from_github:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.3.9
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.3.9.post0
     with:
-      ref: v0.3.9
+      ref: v0.3.9.post0
 
   test_0_3_9_installing_from_pypi_versioned:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.3.9
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.3.9.post0
     with:
-      ref: v0.3.9
+      ref: v0.3.9.post0
       index: PyPI
       index_version: 0.3.9
       expected_index_version: 0.3.9
 
   test_0_3_9_installing_from_pypi_unversioned:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.3.9
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.3.9.post0
     with:
-      ref: v0.3.9
+      ref: v0.3.9.post0
       index: PyPI
       expected_index_version: 0.3.9
 
   test_0_4_0_installing_from_github:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.4.0
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.4.0.post0
     with:
-      ref: v0.4.0
+      ref: v0.4.0.post0
 
   test_0_4_0_installing_from_pypi_versioned:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.4.0
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.4.0.post0
     with:
-      ref: v0.4.0
+      ref: v0.4.0.post0
       index: PyPI
       index_version: 0.4.0
       expected_index_version: 0.4.0
 
   test_0_4_0_installing_from_pypi_unversioned:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.4.0
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.4.0.post0
     with:
-      ref: v0.4.0
+      ref: v0.4.0.post0
       index: PyPI
       expected_index_version: 0.4.0
 
