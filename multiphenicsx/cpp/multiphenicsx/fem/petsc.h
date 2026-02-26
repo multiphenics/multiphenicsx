@@ -167,8 +167,7 @@ Mat create_matrix_block(
     // TODO: avoid concatenating the same maps twice in case that V[0]
     // == V[1].
     const std::vector<std::reference_wrapper<const dolfinx::common::IndexMap>>&
-        index_map
-        = index_maps[d];
+        index_map = index_maps[d];
     const std::vector<int>& index_map_bs = index_maps_bs[d];
     std::vector<PetscInt>& _map = _maps[d];
 
