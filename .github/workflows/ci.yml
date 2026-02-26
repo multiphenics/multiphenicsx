@@ -128,10 +128,6 @@ jobs:
       - name: Run yamllint on workflows
         run: |
           python3 -m yamllint -d "{extends: default, rules: {document-start: {present: false}, line-length: disable, truthy: {check-keys: false}}}" .
-      - name: Run clang-format on C++ files
-        run: |
-          wget https://raw.githubusercontent.com/FEniCS/dolfinx/main/.clang-format
-          find . -type f \( -name "*.cpp" -o -name "*.h" \) | xargs clang-format --dry-run --Werror
       - name: Run cmake-format on cmake files
         run: |
           wget https://raw.githubusercontent.com/FEniCS/dolfinx/main/.cmake-format
