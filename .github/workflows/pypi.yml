@@ -115,7 +115,7 @@ jobs:
         run: |
           echo "Publishing version ${{ needs.build_distributions.outputs.version }} on ${{ needs.process_inputs.outputs.index }} (index repository URL: ${{ steps.determine_index_repository_url.outputs.index_repository_url }})."
       - name: Download distributions from artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: distributions-${{ needs.build_distributions.outputs.version }}
           path: dist
