@@ -191,7 +191,7 @@ jobs:
           VISKEX_PYVISTA_BACKEND="static" python3 -m pytest --np 3 tutorials
       - name: Upload tutorials logs as an artifact in case of failure
         if: failure() || cancelled()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: "tutorials-logs-${{ matrix.petsc_arch }}"
           path: |
