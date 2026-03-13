@@ -52,7 +52,7 @@ jobs:
       fail-fast: false
     container: ${{ matrix.container }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.ref }}
       - name: Setup container
