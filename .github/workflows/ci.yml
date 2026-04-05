@@ -34,7 +34,7 @@ jobs:
         petsc_arch: [real, complex]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
         with:
           ref: ${{ inputs.ref }}
       - name: Setup container
@@ -164,7 +164,7 @@ jobs:
         run: |
           python3 -m nbqa mypy .
       - name: Check for stray outputs, counts and metadata in tutorial files
-        uses: RBniCS/check-jupyter-metadata-action@main
+        uses: RBniCS/check-jupyter-metadata-action@6df653e5d45f7620d888c6a1bd85d07b4f903045  # v1.0.0
         with:
           pattern: "tutorials/**/*.ipynb"
       - name: Run tutorials (serial)
@@ -175,7 +175,7 @@ jobs:
           VISKEX_PYVISTA_BACKEND="static" python3 -m pytest --np 3 tutorials
       - name: Upload tutorials logs as an artifact in case of failure
         if: failure() || cancelled()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: "tutorials-logs-${{ matrix.petsc_arch }}"
           path: |
