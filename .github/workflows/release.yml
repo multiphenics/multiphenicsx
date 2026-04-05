@@ -120,25 +120,25 @@ jobs:
 
   test_branch_pre_release_installing_from_github:
     needs: [prepare_branches]
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@main
+    uses: ./.github/workflows/ci.yml
     with:
       ref: pre${{ github.event.inputs.version }}
 
   test_branch_for_release_installing_from_github:
     needs: [prepare_branches]
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@main
+    uses: ./.github/workflows/ci.yml
     with:
       ref: v${{ github.event.inputs.version }}
 
   test_branch_post_release_installing_from_github:
     needs: [prepare_branches]
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@main
+    uses: ./.github/workflows/ci.yml
     with:
       ref: post${{ github.event.inputs.version }}
 
   publish_release_to_testpypi:
     needs: [test_branch_pre_release_installing_from_github, test_branch_for_release_installing_from_github, test_branch_post_release_installing_from_github]
-    uses: multiphenics/multiphenicsx/.github/workflows/pypi.yml@main
+    uses: ./.github/workflows/pypi.yml
     with:
       ref: v${{ github.event.inputs.version }}
       index: TestPyPI
@@ -148,7 +148,7 @@ jobs:
   publish_release_to_pypi:
     needs: [publish_release_to_testpypi]
     if: github.event.inputs.dry_run == 'no'
-    uses: multiphenics/multiphenicsx/.github/workflows/pypi.yml@main
+    uses: ./.github/workflows/pypi.yml
     with:
       ref: v${{ github.event.inputs.version }}
       index: PyPI

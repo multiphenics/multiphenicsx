@@ -135,7 +135,7 @@ jobs:
 
   test:
     needs: [process_inputs, build_distributions, publish]
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@main
+    uses: ./.github/workflows/ci.yml
     with:
       ref: ${{ inputs.ref }}
       index: ${{ needs.process_inputs.outputs.index }}
