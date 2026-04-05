@@ -52,7 +52,7 @@ jobs:
       fail-fast: false
     container: ${{ matrix.container }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           ref: ${{ inputs.ref }}
       - name: Setup container
@@ -180,7 +180,7 @@ jobs:
         run: |
           python3 -m nbqa mypy .
       - name: Check for stray outputs, counts and metadata in tutorial files
-        uses: RBniCS/check-jupyter-metadata-action@main
+        uses: RBniCS/check-jupyter-metadata-action@6df653e5d45f7620d888c6a1bd85d07b4f903045  # v1.0.0
         with:
           pattern: "tutorials/**/*.ipynb"
       - name: Run tutorials (serial)
@@ -191,7 +191,7 @@ jobs:
           VISKEX_PYVISTA_BACKEND="static" python3 -m pytest --np 3 tutorials
       - name: Upload tutorials logs as an artifact in case of failure
         if: failure() || cancelled()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f  # v7.0.0
         with:
           name: "tutorials-logs-${{ matrix.petsc_arch }}"
           path: |
@@ -203,7 +203,7 @@ jobs:
     if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main' && github.event_name == 'schedule'
     steps:
       - name: Warn if scheduled workflow is about to be disabled
-        uses: fem-on-colab/warn-workflow-about-to-be-disabled-action@main
+        uses: fem-on-colab/warn-workflow-about-to-be-disabled-action@58c6022d9aeb22accfa8df9bf5b58c3d8867208c  # v1.0.0
         with:
           workflow-filename: ci.yml
           days-elapsed: 55

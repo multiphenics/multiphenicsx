@@ -84,7 +84,7 @@ jobs:
     if: github.repository == 'multiphenics/multiphenicsx' && github.ref == 'refs/heads/main' && github.event_name == 'schedule'
     steps:
       - name: Warn if scheduled workflow is about to be disabled
-        uses: fem-on-colab/warn-workflow-about-to-be-disabled-action@main
+        uses: fem-on-colab/warn-workflow-about-to-be-disabled-action@58c6022d9aeb22accfa8df9bf5b58c3d8867208c  # v1.0.0
         with:
           workflow-filename: ci_against_releases.yml
           days-elapsed: 55
