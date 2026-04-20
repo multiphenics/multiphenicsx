@@ -33,9 +33,9 @@ DirichletBCsGeneratorType = typing.Callable[[dolfinx.fem.FunctionSpace], list[do
 DirichletBCsPairGeneratorType = typing.Callable[
     [dolfinx.fem.FunctionSpace, dolfinx.fem.FunctionSpace], list[list[dolfinx.fem.DirichletBC]]]
 ApplySetDirichletBCsNonlinearArgumentsType = typing.Callable[
-    [petsc4py.PETSc.Vec, petsc4py.PETSc.Vec, list[multiphenicsx.fem.DofMapRestriction]],  # type: ignore[name-defined]
+    [petsc4py.PETSc.Vec, petsc4py.PETSc.Vec, list[multiphenicsx.fem.DofMapRestriction]],
     tuple[
-        petsc4py.PETSc.Vec, list[multiphenicsx.fem.DofMapRestriction] | None  # type: ignore[name-defined]
+        petsc4py.PETSc.Vec, list[multiphenicsx.fem.DofMapRestriction] | None
     ]]
 DofMapRestrictionsType = multiphenicsx.fem.DofMapRestriction | list[multiphenicsx.fem.DofMapRestriction]
 
@@ -98,12 +98,12 @@ def get_function(
 
     shape = V.ufl_element().reference_value_shape
     if len(shape) == 0:
-        def f(x: npt.NDArray[np.float64]) -> npt.NDArray[  # type: ignore[name-defined]
+        def f(x: npt.NDArray[np.float64]) -> npt.NDArray[  # type: ignore[valid-type]
                 petsc4py.PETSc.ScalarType]:
             x = preprocess_x(x)
             return 2 * x[0] + 4 * x[1] * x[1]  # type: ignore[no-any-return]
     elif len(shape) == 1 and shape[0] == 2:
-        def f(x: npt.NDArray[np.float64]) -> npt.NDArray[  # type: ignore[name-defined]
+        def f(x: npt.NDArray[np.float64]) -> npt.NDArray[  # type: ignore[valid-type]
                 petsc4py.PETSc.ScalarType]:
             x = preprocess_x(x)
             return np.stack([
@@ -111,7 +111,7 @@ def get_function(
                 3 * x[0] + 5 * x[1] * x[1]
             ], axis=0)
     elif len(shape) == 1 and shape[0] == 3:
-        def f(x: npt.NDArray[np.float64]) -> npt.NDArray[  # type: ignore[name-defined]
+        def f(x: npt.NDArray[np.float64]) -> npt.NDArray[  # type: ignore[valid-type]
                 petsc4py.PETSc.ScalarType]:
             x = preprocess_x(x)
             return np.stack([
@@ -404,7 +404,7 @@ def get_global_restricted_to_unrestricted(
         raise RuntimeError("Invalid argument provided to gather_global_restriction_map")
 
 
-def to_numpy_vector(vec: petsc4py.PETSc.Vec) -> npt.NDArray[  # type: ignore[name-defined]
+def to_numpy_vector(vec: petsc4py.PETSc.Vec) -> npt.NDArray[  # type: ignore[valid-type]
         petsc4py.PETSc.ScalarType]:
     """Convert distributed PETSc Vec to a dense allgather-ed numpy array."""
     local_np_vec = vec.getArray()
@@ -412,7 +412,7 @@ def to_numpy_vector(vec: petsc4py.PETSc.Vec) -> npt.NDArray[  # type: ignore[nam
     return np.hstack(comm.allgather(local_np_vec))
 
 
-def to_numpy_matrix(mat: petsc4py.PETSc.Mat) -> npt.NDArray[  # type: ignore[name-defined]
+def to_numpy_matrix(mat: petsc4py.PETSc.Mat) -> npt.NDArray[  # type: ignore[valid-type]
         petsc4py.PETSc.ScalarType]:
     """Convert distributed PETSc Mat to a dense allgather-ed numpy matrix."""
     ai, aj, av = mat.getValuesCSR()
@@ -422,7 +422,7 @@ def to_numpy_matrix(mat: petsc4py.PETSc.Mat) -> npt.NDArray[  # type: ignore[nam
 
 
 def assert_vector_equal(
-    unrestricted_vector: petsc4py.PETSc.Vec, restricted_vector: petsc4py.PETSc.Vec,  # type: ignore[name-defined]
+    unrestricted_vector: petsc4py.PETSc.Vec, restricted_vector: petsc4py.PETSc.Vec,
     dofmap_restriction: DofMapRestrictionsType
 ) -> None:
     """
@@ -447,7 +447,7 @@ def assert_vector_equal(
 
 
 def assert_matrix_equal(
-    unrestricted_matrix: petsc4py.PETSc.Mat, restricted_matrix: petsc4py.PETSc.Mat,  # type: ignore[name-defined]
+    unrestricted_matrix: petsc4py.PETSc.Mat, restricted_matrix: petsc4py.PETSc.Mat,
     dofmap_restriction: tuple[DofMapRestrictionsType, DofMapRestrictionsType]
 ) -> None:
     """
@@ -457,7 +457,7 @@ def assert_matrix_equal(
     restriction argument and the matrix resulting from the assembly of the same bilinear form with empty
     restriction argument accompanied by a postprocessing which manually removes discarded rows/cols
     """
-    if unrestricted_matrix.getType() == petsc4py.PETSc.Mat.Type.NEST:  # type: ignore[attr-defined]
+    if unrestricted_matrix.getType() == petsc4py.PETSc.Mat.Type.NEST:
         row_is, col_is = unrestricted_matrix.getNestISs()
         for i in range(len(row_is)):
             for j in range(len(col_is)):
@@ -488,7 +488,7 @@ def assert_matrix_equal(
 
 
 def attach_attributes_to_solution_block_vector(
-    solution: petsc4py.PETSc.Vec, fem_module: types.ModuleType,   # type: ignore[name-defined]
+    solution: petsc4py.PETSc.Vec, fem_module: types.ModuleType,
     block_linear_form: dolfinx.fem.Form
 ) -> None:
     """Attach the expected attributes to manually created block vectors."""
@@ -529,13 +529,13 @@ def test_plain_vector_assembly_with_restriction(
     unrestricted_vector = unrestricted_fem_module.petsc.assemble_vector(
         linear_form, kind=vec_type)
     dolfinx.la.petsc._ghost_update(
-        unrestricted_vector, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[attr-defined]
-        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[attr-defined]
+        unrestricted_vector, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[arg-type]
+        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[arg-type]
     restricted_vector = restricted_fem_module.petsc.assemble_vector(
         linear_form, kind=vec_type, restriction=dofmap_restriction)
     dolfinx.la.petsc._ghost_update(
-        restricted_vector, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[attr-defined]
-        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[attr-defined]
+        restricted_vector, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[arg-type]
+        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[arg-type]
     assert_vector_equal(unrestricted_vector, restricted_vector, dofmap_restriction)
     unrestricted_vector.destroy()
     restricted_vector.destroy()
@@ -549,15 +549,15 @@ def test_plain_vector_assembly_with_restriction(
         unrestricted_fem_module.petsc.apply_lifting(
             unrestricted_vector_linear, [bilinear_form], [bcs])
     dolfinx.la.petsc._ghost_update(
-        unrestricted_vector_linear, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[attr-defined]
-        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[attr-defined]
+        unrestricted_vector_linear, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[arg-type]
+        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[arg-type]
     restricted_vector_linear = restricted_fem_module.petsc.assemble_vector(
         linear_form, kind=vec_type, restriction=dofmap_restriction)
     restricted_fem_module.petsc.apply_lifting(
         restricted_vector_linear, [bilinear_form], [bcs], restriction=dofmap_restriction)
     dolfinx.la.petsc._ghost_update(
-        restricted_vector_linear, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[attr-defined]
-        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[attr-defined]
+        restricted_vector_linear, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[arg-type]
+        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[arg-type]
     assert_vector_equal(unrestricted_vector_linear, restricted_vector_linear, dofmap_restriction)
     unrestricted_fem_module.petsc.set_bc(unrestricted_vector_linear, bcs)
     restricted_fem_module.petsc.set_bc(restricted_vector_linear, bcs, restriction=dofmap_restriction)
@@ -586,8 +586,8 @@ def test_plain_vector_assembly_with_restriction(
         unrestricted_fem_module.petsc.apply_lifting(
             unrestricted_vector_nonlinear, [bilinear_form], [bcs], [unrestricted_solution])
     dolfinx.la.petsc._ghost_update(
-        unrestricted_vector_nonlinear, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[attr-defined]
-        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[attr-defined]
+        unrestricted_vector_nonlinear, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[arg-type]
+        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[arg-type]
     restricted_vector_nonlinear = restricted_fem_module.petsc.assemble_vector(
         linear_form, kind=vec_type, restriction=dofmap_restriction)
     x0_arg, restriction_x0_arg = apply_set_dirichlet_bcs_nonlinear_arguments(
@@ -601,8 +601,8 @@ def test_plain_vector_assembly_with_restriction(
         restricted_vector_nonlinear, [bilinear_form], [bcs], x0=x0_arg_list, restriction=dofmap_restriction,
         restriction_x0=restriction_x0_arg_list)
     dolfinx.la.petsc._ghost_update(
-        restricted_vector_nonlinear, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[attr-defined]
-        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[attr-defined]
+        restricted_vector_nonlinear, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[arg-type]
+        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[arg-type]
     assert_vector_equal(unrestricted_vector_nonlinear, restricted_vector_nonlinear, dofmap_restriction)
     unrestricted_fem_module.petsc.set_bc(unrestricted_vector_nonlinear, bcs, unrestricted_solution)
     restricted_fem_module.petsc.set_bc(
@@ -646,13 +646,13 @@ def test_block_nest_vector_assembly_with_restriction(
     unrestricted_vector = unrestricted_fem_module.petsc.assemble_vector(
         block_linear_form, kind=vec_type)
     dolfinx.la.petsc._ghost_update(
-        unrestricted_vector, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[attr-defined]
-        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[attr-defined]
+        unrestricted_vector, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[arg-type]
+        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[arg-type]
     restricted_vector = restricted_fem_module.petsc.assemble_vector(
         block_linear_form, kind=vec_type, restriction=dofmap_restriction)
     dolfinx.la.petsc._ghost_update(
-        restricted_vector, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[attr-defined]
-        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[attr-defined]
+        restricted_vector, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[arg-type]
+        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[arg-type]
     assert_vector_equal(unrestricted_vector, restricted_vector, dofmap_restriction)
     unrestricted_vector.destroy()
     restricted_vector.destroy()
@@ -662,15 +662,15 @@ def test_block_nest_vector_assembly_with_restriction(
     unrestricted_fem_module.petsc.apply_lifting(
         unrestricted_vector_linear, block_bilinear_form, bcs)
     dolfinx.la.petsc._ghost_update(
-        unrestricted_vector_linear, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[attr-defined]
-        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[attr-defined]
+        unrestricted_vector_linear, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[arg-type]
+        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[arg-type]
     restricted_vector_linear = restricted_fem_module.petsc.assemble_vector(
         block_linear_form, kind=vec_type, restriction=dofmap_restriction)
     restricted_fem_module.petsc.apply_lifting(
         restricted_vector_linear, block_bilinear_form, bcs, restriction=dofmap_restriction)
     dolfinx.la.petsc._ghost_update(
-        restricted_vector_linear, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[attr-defined]
-        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[attr-defined]
+        restricted_vector_linear, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[arg-type]
+        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[arg-type]
     assert_vector_equal(unrestricted_vector_linear, restricted_vector_linear, dofmap_restriction)
     unrestricted_fem_module.petsc.set_bc(
         unrestricted_vector_linear, bcs)
@@ -711,8 +711,8 @@ def test_block_nest_vector_assembly_with_restriction(
     unrestricted_fem_module.petsc.apply_lifting(
         unrestricted_vector_nonlinear, block_bilinear_form, bcs, unrestricted_solution)
     dolfinx.la.petsc._ghost_update(
-        unrestricted_vector_nonlinear, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[attr-defined]
-        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[attr-defined]
+        unrestricted_vector_nonlinear, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[arg-type]
+        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[arg-type]
     restricted_vector_nonlinear = restricted_fem_module.petsc.assemble_vector(
         block_linear_form, kind=vec_type, restriction=dofmap_restriction)
     x0_arg, restriction_x0_arg = apply_set_dirichlet_bcs_nonlinear_arguments(
@@ -721,8 +721,8 @@ def test_block_nest_vector_assembly_with_restriction(
         restricted_vector_nonlinear, block_bilinear_form, bcs, x0=x0_arg, restriction=dofmap_restriction,
         restriction_x0=restriction_x0_arg)
     dolfinx.la.petsc._ghost_update(
-        restricted_vector_nonlinear, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[attr-defined]
-        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[attr-defined]
+        restricted_vector_nonlinear, insert_mode=petsc4py.PETSc.InsertMode.ADD,  # type: ignore[arg-type]
+        scatter_mode=petsc4py.PETSc.ScatterMode.REVERSE)  # type: ignore[arg-type]
     assert_vector_equal(unrestricted_vector_nonlinear, restricted_vector_nonlinear, dofmap_restriction)
     unrestricted_fem_module.petsc.set_bc(
         unrestricted_vector_nonlinear, bcs, unrestricted_solution)
