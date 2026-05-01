@@ -492,14 +492,15 @@ def attach_attributes_to_solution_block_vector(
     block_linear_form: dolfinx.fem.Form
 ) -> None:
     """Attach the expected attributes to manually created block vectors."""
+    function_spaces: list[dolfinx.fem.FunctionSpace] = dolfinx.fem.extract_function_spaces(
+        block_linear_form)  # type: ignore[assignment]
+    dofmaps = [function_space.dofmap for function_space in function_spaces]
     if fem_module == dolfinx.fem:
         # dolfinx.fem.petsc assembly expects block vector to have an additional _blocks attribute
-        dolfinx.fem.petsc._assign_block_data(block_linear_form, solution)  # type: ignore[attr-defined]
+        maps = ((dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps)
+        dolfinx.la.petsc._assign_block_data(maps, solution)
     else:
         # multiphenicsx.fem.petsc assembly expects block vector to have an additional _dofmaps attribute
-        function_spaces: list[dolfinx.fem.FunctionSpace] = dolfinx.fem.extract_function_spaces(
-            block_linear_form)  # type: ignore[assignment]
-        dofmaps = [function_space.dofmap for function_space in function_spaces]
         solution.setAttr("_dofmaps", dofmaps)
 
 
