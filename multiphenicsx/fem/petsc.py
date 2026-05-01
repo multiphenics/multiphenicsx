@@ -1811,12 +1811,12 @@ class LinearProblem:
 
 
 def assemble_residual(
+    _snes: petsc4py.PETSc.SNES, x: petsc4py.PETSc.Vec, b: petsc4py.PETSc.Vec,
     u: dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function],
     residual: DolfinxRank1FormsType, jacobian: DolfinxRank2FormsType,
     bcs: typing.Sequence[dolfinx.fem.DirichletBC],
     restriction: MultiphenicsxRank1RestrictionsType,
-    restriction_x0: MultiphenicsxRank1RestrictionsType,
-    _snes: petsc4py.PETSc.SNES, x: petsc4py.PETSc.Vec, b: petsc4py.PETSc.Vec
+    restriction_x0: MultiphenicsxRank1RestrictionsType
 ) -> None:
     """Assemble the residual at ``x`` into the vector ``b``."""
     # Update input vector before assigning
@@ -1874,12 +1874,12 @@ def assemble_residual(
 
 
 def assemble_jacobian(
+    _snes: petsc4py.PETSc.SNES, x: petsc4py.PETSc.Vec, J: petsc4py.PETSc.Mat,
+    P_mat: petsc4py.PETSc.Mat,
     u: dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function],
     jacobian: DolfinxRank2FormsType, preconditioner: DolfinxRank2FormsType | None,
     bcs: typing.Sequence[dolfinx.fem.DirichletBC],
     restriction: MultiphenicsxRank1RestrictionsType,
-    _snes: petsc4py.PETSc.SNES, x: petsc4py.PETSc.Vec, J: petsc4py.PETSc.Mat,
-    P_mat: petsc4py.PETSc.Mat
 ) -> None:
     """Assemble the Jacobian and preconditioner at ``x`` into matrices ``J`` and ``P_mat``."""
     # Update input vector before assigning
@@ -2019,14 +2019,23 @@ class NonlinearProblem:
 
         # Create the SNES solver and attach the corresponding Jacobian and esidual computation functions
         self._snes = petsc4py.PETSc.SNES().create(self.A.comm)
-        self.solver.setJacobian(
-            functools.partial(assemble_jacobian, u, self.J, self.preconditioner, bcs, restriction),
-            self.A, self.P_mat
-        )
-        self.solver.setFunction(
-            functools.partial(assemble_residual, u, self.F, self.J, bcs, restriction, restriction),
-            self.b
-        )
+        jacobian_ctx = {
+            "u": self.u,
+            "jacobian": self.J,
+            "preconditioner": self.preconditioner,
+            "bcs": bcs,
+            "restriction": restriction
+        }
+        self.solver.setJacobian(assemble_jacobian, self.A, self.P_mat, kargs=jacobian_ctx)  # type: ignore
+        function_ctx = {
+            "u": self.u,
+            "residual": self.F,
+            "jacobian": self.J,
+            "bcs": bcs,
+            "restriction": restriction,
+            "restriction_x0": restriction
+        }
+        self.solver.setFunction(assemble_residual, self.b, kargs=function_ctx)  # type: ignore
 
         # Set options prefix for PETSc objects
         if petsc_options_prefix == "":  # pragma: no cover
