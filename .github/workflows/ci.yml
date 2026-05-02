@@ -43,12 +43,6 @@ jobs:
           - backend: dolfinx-stable-complex
             container: ghcr.io/fenics/dolfinx/dolfinx:stable
             petsc_arch: complex
-          - backend: dolfinx-nightly-real
-            container: ghcr.io/fenics/dolfinx/dolfinx:nightly
-            petsc_arch: real
-          - backend: dolfinx-nightly-complex
-            container: ghcr.io/fenics/dolfinx/dolfinx:nightly
-            petsc_arch: complex
       fail-fast: false
     container:
       image: ${{ matrix.container }}
