@@ -10,15 +10,17 @@ import typing
 import basix.ufl
 import dolfinx.fem
 import dolfinx.mesh
+import dolfinx.typing
 import numpy as np
 import numpy.typing as npt
 
 SubdomainType = typing.Callable[[npt.NDArray[np.float64]], npt.NDArray[np.bool_]]
-FunctionSpaceGeneratorType = typing.Callable[[dolfinx.mesh.Mesh], dolfinx.fem.FunctionSpace]
+FunctionSpaceGeneratorType = typing.Callable[
+    [dolfinx.mesh.Mesh[dolfinx.typing.Real]], dolfinx.fem.FunctionSpace[dolfinx.typing.Real]]
 
 
 def ActiveDofs(
-    V: dolfinx.fem.FunctionSpace, subdomain: SubdomainType | None
+    V: dolfinx.fem.FunctionSpace[dolfinx.typing.Real], subdomain: SubdomainType | None
 ) -> npt.NDArray[np.int32]:
     """Define a list of active dofs."""
     if subdomain is not None:
@@ -80,8 +82,8 @@ def FacetsSubDomain(
 
 
 def TaylorHoodFunctionSpace(
-    mesh: dolfinx.mesh.Mesh, family_degree: tuple[str, int]
-) -> dolfinx.fem.FunctionSpace:
+    mesh: dolfinx.mesh.Mesh[dolfinx.typing.Real], family_degree: tuple[str, int]
+) -> dolfinx.fem.FunctionSpace[dolfinx.typing.Real]:
     """Define a mixed function space."""
     (family, degree) = family_degree
     V_element = basix.ufl.element(family, mesh.basix_cell(), degree + 1, shape=(mesh.geometry.dim, ))

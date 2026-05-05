@@ -15,6 +15,7 @@ import dolfinx.fem.petsc
 import dolfinx.la
 import dolfinx.la.petsc
 import dolfinx.mesh
+import dolfinx.typing
 import mpi4py.MPI
 import numpy as np
 import numpy.typing as npt
@@ -29,9 +30,13 @@ import multiphenicsx.fem.petsc
 import common  # isort: skip
 
 PreprocessXType = typing.Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]
-DirichletBCsGeneratorType = typing.Callable[[dolfinx.fem.FunctionSpace], list[dolfinx.fem.DirichletBC]]
+DirichletBCsGeneratorType = typing.Callable[
+    [dolfinx.fem.FunctionSpace[dolfinx.typing.Real]], list[dolfinx.fem.DirichletBC[dolfinx.typing.Scalar]]]
 DirichletBCsPairGeneratorType = typing.Callable[
-    [dolfinx.fem.FunctionSpace, dolfinx.fem.FunctionSpace], list[list[dolfinx.fem.DirichletBC]]]
+    [
+        dolfinx.fem.FunctionSpace[dolfinx.typing.Real],
+        dolfinx.fem.FunctionSpace[dolfinx.typing.Real]
+    ], list[list[dolfinx.fem.DirichletBC[dolfinx.typing.Scalar]]]]
 ApplySetDirichletBCsNonlinearArgumentsType = typing.Callable[
     [petsc4py.PETSc.Vec, petsc4py.PETSc.Vec, list[multiphenicsx.fem.DofMapRestriction]],
     tuple[
@@ -41,7 +46,7 @@ DofMapRestrictionsType = multiphenicsx.fem.DofMapRestriction | list[multiphenics
 
 
 @pytest.fixture
-def mesh() -> dolfinx.mesh.Mesh:
+def mesh() -> dolfinx.mesh.Mesh[dolfinx.typing.Real]:
     """Generate a unit square mesh for use in tests in this file."""
     return dolfinx.mesh.create_unit_square(mpi4py.MPI.COMM_WORLD, 4, 4)
 
@@ -71,7 +76,7 @@ def get_subdomains_pairs() -> tuple[
     )
 
 
-def get_function_spaces() -> tuple[common.FunctionSpaceGeneratorType, ...]:
+def get_function_spaces() -> tuple[common.FunctionSpaceGeneratorType[dolfinx.typing.Real], ...]:
     """Generate function space parametrization for tests on vectors and matrices."""
     return (
         lambda mesh: dolfinx.fem.functionspace(mesh, ("Lagrange", 1)),
@@ -80,8 +85,10 @@ def get_function_spaces() -> tuple[common.FunctionSpaceGeneratorType, ...]:
     )
 
 
-def get_function_spaces_pairs() -> typing.Iterator[
-        tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType]]:
+def get_function_spaces_pairs() -> typing.Iterator[tuple[  # type: ignore[valid-type]
+    common.FunctionSpaceGeneratorType[petsc4py.PETSc.RealType],
+    common.FunctionSpaceGeneratorType[petsc4py.PETSc.RealType]
+]]:
     """Generate function space parametrization for tests on block/nest vectors and matrices."""
     for i in get_function_spaces():
         for j in get_function_spaces():
@@ -89,12 +96,13 @@ def get_function_spaces_pairs() -> typing.Iterator[
 
 
 def get_function(
-    V: dolfinx.fem.FunctionSpace, preprocess_x: PreprocessXType | None = None
-) -> dolfinx.fem.Function:
+    V: dolfinx.fem.FunctionSpace[dolfinx.typing.Real], preprocess_x: PreprocessXType | None = None
+) -> dolfinx.fem.Function[dolfinx.typing.Scalar]:
     """Generate function employed in form definition."""
     if preprocess_x is None:
         def preprocess_x(x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
             return x
+    assert preprocess_x is not None
 
     shape = V.ufl_element().reference_value_shape
     if len(shape) == 0:
@@ -135,22 +143,24 @@ def get_function(
 
 
 def get_function_pair(
-    V1: dolfinx.fem.FunctionSpace, V2: dolfinx.fem.FunctionSpace
-) -> list[dolfinx.fem.Function]:
+    V1: dolfinx.fem.FunctionSpace[dolfinx.typing.Real], V2: dolfinx.fem.FunctionSpace[dolfinx.typing.Real]
+) -> list[dolfinx.fem.Function[dolfinx.typing.Scalar]]:
     """Generate functions employed in block form definition."""
     u1 = get_function(V1)
     u2 = get_function(V2, lambda x: np.flip(x, axis=1))
     return [u1, u2]
 
 
-def get_linear_form(V: dolfinx.fem.FunctionSpace) -> dolfinx.fem.Form:
+def get_linear_form(V: dolfinx.fem.FunctionSpace[dolfinx.typing.Real]) -> dolfinx.fem.Form[dolfinx.typing.Scalar]:
     """Generate linear forms employed in the vector test case."""
     v = ufl.TestFunction(V)
     f = get_function(V)
     return dolfinx.fem.form(ufl.inner(f, v) * ufl.dx)  # type: ignore[no-any-return]
 
 
-def get_block_linear_form(V1: dolfinx.fem.FunctionSpace, V2: dolfinx.fem.FunctionSpace) -> dolfinx.fem.Form:
+def get_block_linear_form(
+    V1: dolfinx.fem.FunctionSpace[dolfinx.typing.Real], V2: dolfinx.fem.FunctionSpace[dolfinx.typing.Real]
+) -> dolfinx.fem.Form[dolfinx.typing.Scalar]:
     """Generate two-by-one block linear forms employed in the block/nest vector test cases."""
     v1, v2 = ufl.TestFunction(V1), ufl.TestFunction(V2)
     assert V1.mesh == V2.mesh
@@ -158,7 +168,7 @@ def get_block_linear_form(V1: dolfinx.fem.FunctionSpace, V2: dolfinx.fem.Functio
     return dolfinx.fem.form([ufl.inner(f1, v1) * ufl.dx, ufl.inner(f2, v2) * ufl.dx])  # type: ignore[no-any-return]
 
 
-def get_bilinear_form(V: dolfinx.fem.FunctionSpace) -> dolfinx.fem.Form:
+def get_bilinear_form(V: dolfinx.fem.FunctionSpace[dolfinx.typing.Real]) -> dolfinx.fem.Form[dolfinx.typing.Scalar]:
     """Generate bilinear forms employed in the matrix test case."""
     u = ufl.TrialFunction(V)
     v = ufl.TestFunction(V)
@@ -171,7 +181,9 @@ def get_bilinear_form(V: dolfinx.fem.FunctionSpace) -> dolfinx.fem.Form:
     return dolfinx.fem.form(form)  # type: ignore[no-any-return]
 
 
-def get_block_bilinear_form(V1: dolfinx.fem.FunctionSpace, V2: dolfinx.fem.FunctionSpace) -> dolfinx.fem.Form:
+def get_block_bilinear_form(
+    V1: dolfinx.fem.FunctionSpace[dolfinx.typing.Real], V2: dolfinx.fem.FunctionSpace[dolfinx.typing.Real]
+) -> dolfinx.fem.Form[dolfinx.typing.Scalar]:
     """Generate two-by-two block bilinear forms employed in the block/nest matrix test cases."""
     u1, u2 = ufl.TrialFunction(V1), ufl.TrialFunction(V2)
     v1, v2 = ufl.TestFunction(V1), ufl.TestFunction(V2)
@@ -260,7 +272,8 @@ def get_mat_types(plain: bool) -> tuple[str | list[list[str]] | None, ...]:
 
 
 def locate_boundary_dofs(
-    V: dolfinx.fem.FunctionSpace, collapsed_V: dolfinx.fem.FunctionSpace | None = None
+    V: dolfinx.fem.FunctionSpace[dolfinx.typing.Real],
+    collapsed_V: dolfinx.fem.FunctionSpace[dolfinx.typing.Real] | None = None
 ) -> npt.NDArray[np.int32]:
     """Locate DOFs on the boundary."""
     entities_dim = V.mesh.topology.dim - 1
@@ -272,9 +285,13 @@ def locate_boundary_dofs(
         return dolfinx.fem.locate_dofs_topological((V, collapsed_V), entities_dim, entities)
 
 
-def get_boundary_conditions(offset: int = 0) -> tuple[DirichletBCsGeneratorType, ...]:
+def get_boundary_conditions(offset: int = 0) -> tuple[  # type: ignore[valid-type]
+    DirichletBCsGeneratorType[petsc4py.PETSc.RealType, petsc4py.PETSc.ScalarType], ...
+]:
     """Generate boundary conditions employed in the non-block/nest test cases."""
-    def _get_boundary_conditions(V: dolfinx.fem.FunctionSpace) -> list[dolfinx.fem.DirichletBC]:
+    def _get_boundary_conditions(
+        V: dolfinx.fem.FunctionSpace[petsc4py.PETSc.RealType]  # type: ignore[valid-type]
+    ) -> list[dolfinx.fem.DirichletBC[petsc4py.PETSc.ScalarType]]:  # type: ignore[valid-type]
         num_sub_elements = V.ufl_element().num_sub_elements
         if num_sub_elements == 0:
             bc1_fun = dolfinx.fem.Function(V)
@@ -301,7 +318,9 @@ def get_boundary_conditions(offset: int = 0) -> tuple[DirichletBCsGeneratorType,
             _get_boundary_conditions)
 
 
-def get_boundary_conditions_pairs() -> tuple[DirichletBCsPairGeneratorType, ...]:
+def get_boundary_conditions_pairs() -> tuple[  # type: ignore[valid-type]
+    DirichletBCsPairGeneratorType[petsc4py.PETSc.RealType, petsc4py.PETSc.ScalarType], ...
+]:
     """Generate boundary conditions employed in the block/nest test cases."""
     return (lambda _, __: [[], []],
             lambda V1, _: [get_boundary_conditions(offset=0)[1](V1), []],
@@ -489,10 +508,10 @@ def assert_matrix_equal(
 
 def attach_attributes_to_solution_block_vector(
     solution: petsc4py.PETSc.Vec, fem_module: types.ModuleType,
-    block_linear_form: dolfinx.fem.Form
+    block_linear_form: dolfinx.fem.Form[dolfinx.typing.Scalar]
 ) -> None:
     """Attach the expected attributes to manually created block vectors."""
-    function_spaces: list[dolfinx.fem.FunctionSpace] = dolfinx.fem.extract_function_spaces(
+    function_spaces: list[dolfinx.fem.FunctionSpace] = dolfinx.fem.extract_function_spaces(  # type: ignore[type-arg]
         block_linear_form)  # type: ignore[assignment]
     dofmaps = [function_space.dofmap for function_space in function_spaces]
     if fem_module == dolfinx.fem:
@@ -513,8 +532,9 @@ def attach_attributes_to_solution_block_vector(
 @pytest.mark.parametrize("restricted_fem_module", (multiphenicsx.fem, ))
 @pytest.mark.parametrize("vec_type", get_vec_types(True))
 def test_plain_vector_assembly_with_restriction(
-    mesh: dolfinx.mesh.Mesh, subdomain: common.SubdomainType | None,
-    FunctionSpace: common.FunctionSpaceGeneratorType, dirichlet_bcs: DirichletBCsGeneratorType,
+    mesh: dolfinx.mesh.Mesh[dolfinx.typing.Real], subdomain: common.SubdomainType | None,
+    FunctionSpace: common.FunctionSpaceGeneratorType[dolfinx.typing.Real],
+    dirichlet_bcs: DirichletBCsGeneratorType[dolfinx.typing.Real, dolfinx.typing.Scalar],
     apply_set_dirichlet_bcs_nonlinear_arguments: ApplySetDirichletBCsNonlinearArgumentsType,
     unrestricted_fem_module: types.ModuleType, restricted_fem_module: types.ModuleType,
     vec_type: str
@@ -626,10 +646,12 @@ def test_plain_vector_assembly_with_restriction(
 @pytest.mark.parametrize("restricted_fem_module", (multiphenicsx.fem, ))
 @pytest.mark.parametrize("vec_type", get_vec_types(False))
 def test_block_nest_vector_assembly_with_restriction(
-    mesh: dolfinx.mesh.Mesh,
+    mesh: dolfinx.mesh.Mesh[dolfinx.typing.Real],
     subdomains: tuple[common.SubdomainType | None, common.SubdomainType | None],
-    FunctionSpaces: tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType],
-    dirichlet_bcs: DirichletBCsPairGeneratorType,
+    FunctionSpaces: tuple[
+        common.FunctionSpaceGeneratorType[dolfinx.typing.Real],
+        common.FunctionSpaceGeneratorType[dolfinx.typing.Real]],
+    dirichlet_bcs: DirichletBCsPairGeneratorType[dolfinx.typing.Real, dolfinx.typing.Scalar],
     apply_set_dirichlet_bcs_nonlinear_arguments: ApplySetDirichletBCsNonlinearArgumentsType,
     unrestricted_fem_module: types.ModuleType, restricted_fem_module: types.ModuleType,
     vec_type: str
@@ -744,8 +766,9 @@ def test_block_nest_vector_assembly_with_restriction(
 @pytest.mark.parametrize("restricted_fem_module", (multiphenicsx.fem, ))
 @pytest.mark.parametrize("mat_type", get_mat_types(True))
 def test_plain_matrix_assembly_with_restriction(
-    mesh: dolfinx.mesh.Mesh, subdomain: common.SubdomainType | None,
-    FunctionSpace: common.FunctionSpaceGeneratorType, dirichlet_bcs: DirichletBCsGeneratorType,
+    mesh: dolfinx.mesh.Mesh[dolfinx.typing.Real], subdomain: common.SubdomainType | None,
+    FunctionSpace: common.FunctionSpaceGeneratorType[dolfinx.typing.Real],
+    dirichlet_bcs: DirichletBCsGeneratorType[dolfinx.typing.Real, dolfinx.typing.Scalar],
     unrestricted_fem_module: types.ModuleType, restricted_fem_module: types.ModuleType, mat_type: str
 ) -> None:
     """Test assembly of a single bilinear form with restrictions."""
@@ -771,10 +794,13 @@ def test_plain_matrix_assembly_with_restriction(
 @pytest.mark.parametrize("restricted_fem_module", (multiphenicsx.fem, ))
 @pytest.mark.parametrize("mat_type", get_mat_types(False))
 def test_block_nest_matrix_assembly_with_restriction(
-    mesh: dolfinx.mesh.Mesh,
+    mesh: dolfinx.mesh.Mesh[dolfinx.typing.Real],
     subdomains: tuple[common.SubdomainType | None, common.SubdomainType | None],
-    FunctionSpaces: tuple[common.FunctionSpaceGeneratorType, common.FunctionSpaceGeneratorType],
-    dirichlet_bcs: DirichletBCsPairGeneratorType, unrestricted_fem_module: types.ModuleType,
+    FunctionSpaces: tuple[
+        common.FunctionSpaceGeneratorType[dolfinx.typing.Real],
+        common.FunctionSpaceGeneratorType[dolfinx.typing.Real]],
+    dirichlet_bcs: DirichletBCsPairGeneratorType[dolfinx.typing.Real, dolfinx.typing.Scalar],
+    unrestricted_fem_module: types.ModuleType,
     restricted_fem_module: types.ModuleType, mat_type: str
 ) -> None:
     """Test block/nest assembly of a two-by-two block bilinear form with restrictions."""

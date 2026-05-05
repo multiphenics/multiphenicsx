@@ -9,6 +9,7 @@
 import dolfinx.fem
 import dolfinx.fem.petsc
 import dolfinx.mesh
+import dolfinx.typing
 import mpi4py.MPI
 import numpy as np
 import petsc4py.PETSc
@@ -36,7 +37,7 @@ petsc_options_nonlinear = {
 }
 
 @pytest.fixture
-def mesh() -> dolfinx.mesh.Mesh:
+def mesh() -> dolfinx.mesh.Mesh[dolfinx.typing.Real]:
     """Generate a unit square mesh for use in tests in this file."""
     return dolfinx.mesh.create_unit_square(mpi4py.MPI.COMM_WORLD, 4, 4)
 
@@ -52,7 +53,7 @@ def get_subdomains() -> tuple[common.SubdomainType | None, ...]:
 
 
 def active_measure(  # type: ignore[no-any-unimported]
-    mesh: dolfinx.mesh.Mesh, subdomain: common.SubdomainType | None
+    mesh: dolfinx.mesh.Mesh[dolfinx.typing.Real], subdomain: common.SubdomainType | None
 ) -> ufl.Measure:
     """Return a measure which is active on the provided subdomain."""
     if subdomain is not None:
@@ -70,7 +71,7 @@ def active_measure(  # type: ignore[no-any-unimported]
 @pytest.mark.parametrize("subdomain", get_subdomains())
 @pytest.mark.parametrize("kind", [None, "mpi"])
 def test_plain_linear_solver(
-    mesh: dolfinx.mesh.Mesh, subdomain: common.SubdomainType | None,
+    mesh: dolfinx.mesh.Mesh[dolfinx.typing.Real], subdomain: common.SubdomainType | None,
     kind: str | None
 ) -> None:
     """Test solution of a linear problem with single form with restrictions."""
@@ -112,7 +113,7 @@ def test_plain_linear_solver(
 @pytest.mark.parametrize("subdomain", get_subdomains())
 @pytest.mark.parametrize("kind", ["mpi", "nest", [["aij", None], [None, "baij"]]])
 def test_block_nest_linear_solver(
-    mesh: dolfinx.mesh.Mesh, subdomain: common.SubdomainType | None,
+    mesh: dolfinx.mesh.Mesh[dolfinx.typing.Real], subdomain: common.SubdomainType | None,
     kind: str | list[list[str]] | None
 ) -> None:
     """Test solution of a linear problem with single form with restrictions."""
@@ -157,7 +158,7 @@ def test_block_nest_linear_solver(
 @pytest.mark.parametrize("subdomain", get_subdomains())
 @pytest.mark.parametrize("kind", [None, "mpi"])
 def test_plain_nonlinear_solver(
-    mesh: dolfinx.mesh.Mesh, subdomain: common.SubdomainType | None,
+    mesh: dolfinx.mesh.Mesh[dolfinx.typing.Real], subdomain: common.SubdomainType | None,
     kind: str | None
 ) -> None:
     """Test solution of a nonlinear problem with single form with restrictions."""
@@ -201,7 +202,7 @@ def test_plain_nonlinear_solver(
 @pytest.mark.parametrize("subdomain", get_subdomains())
 @pytest.mark.parametrize("kind", ["mpi", "nest", [["aij", None], [None, "baij"]]])
 def test_block_nest_nonlinear_solver(
-    mesh: dolfinx.mesh.Mesh, subdomain: common.SubdomainType | None,
+    mesh: dolfinx.mesh.Mesh[dolfinx.typing.Real], subdomain: common.SubdomainType | None,
     kind: str | list[list[str]] | None
 ) -> None:
     """Test solution of a nonlinear problem with single form with restrictions."""

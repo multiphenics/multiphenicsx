@@ -8,6 +8,7 @@
 
 import dolfinx.fem
 import dolfinx.mesh
+import dolfinx.typing
 import mpi4py.MPI
 import numpy as np
 import pytest
@@ -18,7 +19,7 @@ import common  # isort: skip
 
 
 @pytest.fixture
-def mesh() -> dolfinx.mesh.Mesh:
+def mesh() -> dolfinx.mesh.Mesh[dolfinx.typing.Real]:
     """Generate a unit square mesh for use in tests in this file."""
     return dolfinx.mesh.create_unit_square(mpi4py.MPI.COMM_WORLD, 4, 4)
 
@@ -39,7 +40,7 @@ def get_subdomains() -> tuple[common.SubdomainType, ...]:
     )
 
 
-def get_function_spaces() -> tuple[common.FunctionSpaceGeneratorType, ...]:
+def get_function_spaces() -> tuple[common.FunctionSpaceGeneratorType[dolfinx.typing.Real], ...]:
     """Generate function space parametrization."""
     return (
         lambda mesh: dolfinx.fem.functionspace(mesh, ("Lagrange", 1)),
@@ -54,7 +55,8 @@ def get_function_spaces() -> tuple[common.FunctionSpaceGeneratorType, ...]:
 
 
 def assert_dofmap_restriction_is_subset_of_dofmap(
-    mesh: dolfinx.mesh.Mesh, dofmap: dolfinx.fem.DofMap, dofmap_restriction: multiphenicsx.fem.DofMapRestriction
+    mesh: dolfinx.mesh.Mesh[dolfinx.typing.Real], dofmap: dolfinx.fem.DofMap,
+    dofmap_restriction: multiphenicsx.fem.DofMapRestriction
 ) -> None:
     """Run checks on DofMapRestriction in the case where restriction is a strict subset of the available dofs."""
     # Get local dimensions
@@ -80,7 +82,8 @@ def assert_dofmap_restriction_is_subset_of_dofmap(
 
 
 def assert_dofmap_restriction_is_same_as_dofmap(
-    mesh: dolfinx.mesh.Mesh, dofmap: dolfinx.fem.DofMap, dofmap_restriction: multiphenicsx.fem.DofMapRestriction
+    mesh: dolfinx.mesh.Mesh[dolfinx.typing.Real], dofmap: dolfinx.fem.DofMap,
+    dofmap_restriction: multiphenicsx.fem.DofMapRestriction
 ) -> None:
     """Run stricter checks on DofMapRestriction in the case where restriction actually contains all available dofs."""
     # Assert that local dimensions are the same
@@ -121,7 +124,8 @@ def assert_dofmap_restriction_is_same_as_dofmap(
 
 @pytest.mark.parametrize("FunctionSpace", get_function_spaces())
 def test_dofmap_restriction_is_same_as_dofmap(
-    mesh: dolfinx.mesh.Mesh, FunctionSpace: common.FunctionSpaceGeneratorType
+    mesh: dolfinx.mesh.Mesh[dolfinx.typing.Real],
+    FunctionSpace: common.FunctionSpaceGeneratorType[dolfinx.typing.Real]
 ) -> None:
     """Test for DofMapRestriction in the case where restriction actually contains all available dofs."""
     V = FunctionSpace(mesh)
@@ -133,7 +137,9 @@ def test_dofmap_restriction_is_same_as_dofmap(
 @pytest.mark.parametrize("subdomain", get_subdomains())
 @pytest.mark.parametrize("FunctionSpace", get_function_spaces())
 def test_dofmap_restriction_is_subset_of_dofmap(
-    mesh: dolfinx.mesh.Mesh, subdomain: common.SubdomainType, FunctionSpace: common.FunctionSpaceGeneratorType
+    mesh: dolfinx.mesh.Mesh[dolfinx.typing.Real],
+    subdomain: common.SubdomainType,
+    FunctionSpace: common.FunctionSpaceGeneratorType[dolfinx.typing.Real]
 ) -> None:
     """Test for DofMapRestriction in the case where restriction is a strict subset of the available dofs."""
     V = FunctionSpace(mesh)

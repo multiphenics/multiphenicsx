@@ -18,6 +18,7 @@ import dolfinx.fem.forms
 import dolfinx.fem.petsc
 import dolfinx.la
 import dolfinx.la.petsc
+import dolfinx.typing
 import numpy as np
 import numpy.typing as npt
 import petsc4py.PETSc
@@ -27,8 +28,10 @@ from multiphenicsx.cpp import cpp_library as mcpp
 
 UflRank1FormsType: typing.TypeAlias = ufl.Form | typing.Sequence[ufl.Form]  # type: ignore[no-any-unimported]
 UflRank2FormsType: typing.TypeAlias = ufl.Form | typing.Sequence[typing.Sequence[ufl.Form]]  # type: ignore[no-any-unimported]
-DolfinxRank1FormsType: typing.TypeAlias = dolfinx.fem.Form | typing.Sequence[dolfinx.fem.Form]
-DolfinxRank2FormsType: typing.TypeAlias = dolfinx.fem.Form | typing.Sequence[typing.Sequence[dolfinx.fem.Form]]
+DolfinxRank1FormsType: typing.TypeAlias = dolfinx.fem.Form[dolfinx.typing.Scalar] | typing.Sequence[
+    dolfinx.fem.Form[dolfinx.typing.Scalar]]
+DolfinxRank2FormsType: typing.TypeAlias = dolfinx.fem.Form[dolfinx.typing.Scalar] | typing.Sequence[
+    typing.Sequence[dolfinx.fem.Form[dolfinx.typing.Scalar]]]
 DolfinxVectorKindType: typing.TypeAlias = str | None
 DolfinxMatrixKindType: typing.TypeAlias = str | typing.Sequence[typing.Sequence[str]] | None
 DolfinxConstantsType_Base: typing.TypeAlias = npt.NDArray[petsc4py.PETSc.ScalarType]  # type: ignore[valid-type]
@@ -72,7 +75,8 @@ def _same_dofmap(  # type: ignore[no-any-unimported]
 # -- Vector instantiation ----------------------------------------------------
 
 def create_vector(
-    V: dolfinx.fem.FunctionSpace | typing.Sequence[dolfinx.fem.FunctionSpace],
+    V: dolfinx.fem.FunctionSpace[dolfinx.typing.Real] | typing.Sequence[
+        dolfinx.fem.FunctionSpace[dolfinx.typing.Real]],
     kind: DolfinxVectorKindType = None,
     restriction: MultiphenicsxRank1RestrictionsType = None
 ) -> petsc4py.PETSc.Vec:
@@ -153,7 +157,7 @@ def create_vector(
 # -- Matrix instantiation ----------------------------------------------------
 
 def create_matrix(
-    a: DolfinxRank2FormsType, kind: DolfinxMatrixKindType = None,
+    a: DolfinxRank2FormsType[dolfinx.typing.Scalar], kind: DolfinxMatrixKindType = None,
     restriction: MultiphenicsxRank2RestrictionsType = None
 ) -> petsc4py.PETSc.Mat:
     """
@@ -255,7 +259,7 @@ def create_matrix(
                     a_cpp, index_maps, index_maps_bs, dofmaps_list, dofmaps_bounds, kind)
     else:
         assert a.rank == 2
-        function_spaces: tuple[dolfinx.fem.Function, dolfinx.fem.FunctionSpace] = (  # type: ignore[no-redef]
+        function_spaces: tuple[dolfinx.fem.FunctionSpace, dolfinx.fem.FunctionSpace] = (  # type: ignore[no-redef, type-arg]
             a.function_spaces)
         assert all(function_space.mesh == a.mesh for function_space in function_spaces)  # type: ignore[attr-defined]
         if restriction is None:
@@ -566,7 +570,8 @@ NestVecSubVectorWrapper = NestVecSubVectorWrapperBase(VecSubVectorWrapper)
 
 @functools.singledispatch
 def assemble_vector(
-    L: DolfinxRank1FormsType, constants: DolfinxConstantsType = None, coeffs: DolfinxCoefficientsType = None,
+    L: DolfinxRank1FormsType[dolfinx.typing.Scalar],
+    constants: DolfinxConstantsType = None, coeffs: DolfinxCoefficientsType = None,
     kind: DolfinxVectorKindType = None, restriction: MultiphenicsxRank1RestrictionsType = None
 ) -> petsc4py.PETSc.Vec:
     """
@@ -631,7 +636,7 @@ def assemble_vector(
 
 @assemble_vector.register
 def _(  # type: ignore[misc]
-    b: petsc4py.PETSc.Vec, L: DolfinxRank1FormsType,
+    b: petsc4py.PETSc.Vec, L: DolfinxRank1FormsType[dolfinx.typing.Scalar],
     constants: DolfinxConstantsType = None, coeffs: DolfinxCoefficientsType = None,
     restriction: MultiphenicsxRank1RestrictionsType = None
 ) -> petsc4py.PETSc.Vec:
@@ -970,8 +975,8 @@ class NestMatSubMatrixWrapper:
 
 @functools.singledispatch
 def assemble_matrix(
-    a: DolfinxRank2FormsType,
-    bcs: typing.Sequence[dolfinx.fem.DirichletBC] | None = None, diag: float = 1.0,
+    a: DolfinxRank2FormsType[dolfinx.typing.Scalar],
+    bcs: typing.Sequence[dolfinx.fem.DirichletBC[dolfinx.typing.Scalar]] | None = None, diag: float = 1.0,
     constants: DolfinxConstantsType = None, coeffs: DolfinxCoefficientsType = None,
     kind: DolfinxMatrixKindType = None, restriction: MultiphenicsxRank2RestrictionsType = None
 ) -> petsc4py.PETSc.Mat:
@@ -1042,8 +1047,8 @@ def assemble_matrix(
 
 @assemble_matrix.register
 def _(  # type: ignore[misc]
-    A: petsc4py.PETSc.Mat, a: DolfinxRank2FormsType,
-    bcs: typing.Sequence[dolfinx.fem.DirichletBC] | None = None, diag: float = 1.0,
+    A: petsc4py.PETSc.Mat, a: DolfinxRank2FormsType[dolfinx.typing.Scalar],
+    bcs: typing.Sequence[dolfinx.fem.DirichletBC[dolfinx.typing.Scalar]] | None = None, diag: float = 1.0,
     constants: DolfinxConstantsType = None, coeffs: DolfinxCoefficientsType = None,
     restriction: MultiphenicsxRank2RestrictionsType = None
 ) -> petsc4py.PETSc.Mat:
@@ -1164,7 +1169,7 @@ def _(  # type: ignore[misc]
     else:  # single form
         constants = dcpp.fem.pack_constants(a._cpp_object) if constants is None else constants
         coeffs = dcpp.fem.pack_coefficients(a._cpp_object) if coeffs is None else coeffs
-        function_spaces: tuple[dolfinx.fem.Function, dolfinx.fem.FunctionSpace] = (  # type: ignore[no-redef]
+        function_spaces: tuple[dolfinx.fem.FunctionSpace, dolfinx.fem.FunctionSpace] = (  # type: ignore[no-redef, type-arg]
             a.function_spaces)
         if restriction is None:
             # Assemble form
@@ -1198,8 +1203,10 @@ def _(  # type: ignore[misc]
 
 def apply_lifting(
     b: petsc4py.PETSc.Vec,
-    a: typing.Sequence[dolfinx.fem.Form] | typing.Sequence[typing.Sequence[dolfinx.fem.Form]],
-    bcs: typing.Sequence[dolfinx.fem.DirichletBC] | typing.Sequence[typing.Sequence[dolfinx.fem.DirichletBC]]
+    a: typing.Sequence[dolfinx.fem.Form[dolfinx.typing.Scalar]] | typing.Sequence[
+        typing.Sequence[dolfinx.fem.Form[dolfinx.typing.Scalar]]],
+    bcs: typing.Sequence[dolfinx.fem.DirichletBC[dolfinx.typing.Scalar]] | typing.Sequence[
+        typing.Sequence[dolfinx.fem.DirichletBC[dolfinx.typing.Scalar]]]
          | None = None,
     x0: typing.Sequence[petsc4py.PETSc.Vec] | None = None,
     alpha: float = 1.0,
@@ -1308,7 +1315,8 @@ def apply_lifting(
 
 def set_bc(
     b: petsc4py.PETSc.Vec,
-    bcs: typing.Sequence[dolfinx.fem.DirichletBC] | typing.Sequence[typing.Sequence[dolfinx.fem.DirichletBC]],
+    bcs: typing.Sequence[dolfinx.fem.DirichletBC[dolfinx.typing.Scalar]] | typing.Sequence[
+        typing.Sequence[dolfinx.fem.DirichletBC[dolfinx.typing.Scalar]]],
     x0: petsc4py.PETSc.Vec | None = None,
     alpha: float = 1.0,
     restriction: MultiphenicsxRank1RestrictionsType = None,
@@ -1412,7 +1420,7 @@ def set_bc(
 
 @functools.singledispatch
 def assign(
-    u: dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function],
+    u: dolfinx.fem.Function[dolfinx.typing.Scalar] | typing.Sequence[dolfinx.fem.Function[dolfinx.typing.Scalar]],
     x: petsc4py.PETSc.Vec, restriction: MultiphenicsxRank1RestrictionsType = None
 ) -> None:
     """
@@ -1451,7 +1459,7 @@ def assign(
 @assign.register
 def _(  # type: ignore[misc]
     x: petsc4py.PETSc.Vec,
-    u: dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function],
+    u: dolfinx.fem.Function[dolfinx.typing.Scalar] | typing.Sequence[dolfinx.fem.Function[dolfinx.typing.Scalar]],
     restriction: MultiphenicsxRank1RestrictionsType = None
 ) -> None:
     """
@@ -1505,8 +1513,9 @@ class LinearProblem:
 
     def __init__(
         self, a: UflRank2FormsType, L: UflRank1FormsType, *, petsc_options_prefix: str,
-        bcs: typing.Sequence[dolfinx.fem.DirichletBC] | None = None,
-        u: dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function] | None = None,
+        bcs: typing.Sequence[dolfinx.fem.DirichletBC[dolfinx.typing.Scalar]] | None = None,
+        u: dolfinx.fem.Function[dolfinx.typing.Scalar] | typing.Sequence[
+            dolfinx.fem.Function[dolfinx.typing.Scalar]] | None = None,
         P: UflRank2FormsType | None = None, kind: DolfinxMatrixKindType = None,
         petsc_options: dict[str, typing.Any] | None = None,
         form_compiler_options: dict[str, typing.Any] | None = None,
@@ -1617,7 +1626,7 @@ class LinearProblem:
         else:  # pragma: no cover
             self._u = u  # type: ignore[assignment]
 
-        self.bcs = [] if bcs is None else bcs
+        self.bcs: typing.Sequence[dolfinx.fem.DirichletBC[dolfinx.typing.Scalar]] = [] if bcs is None else bcs  # type: ignore[assignment]
 
         self._solver = petsc4py.PETSc.KSP().create(self.A.comm)
         self.solver.setOperators(self.A, self.P_mat)
@@ -1671,7 +1680,9 @@ class LinearProblem:
         if self._P_mat is not None:  # pragma: no cover
             self._P_mat.destroy()
 
-    def solve(self) -> dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function]:
+    def solve(self) -> dolfinx.fem.Function[dolfinx.typing.Scalar] | typing.Sequence[
+        dolfinx.fem.Function[dolfinx.typing.Scalar]
+    ]:
         """
         Solve the problem.
 
@@ -1715,7 +1726,7 @@ class LinearProblem:
                 function_spaces = (
                     dolfinx.fem.extract_function_spaces(self.a, 0), dolfinx.fem.extract_function_spaces(self.a, 1))
                 bcs1 = dolfinx.fem.bcs_by_block(function_spaces[1], self.bcs)
-                apply_lifting(self.b, self.a, bcs=bcs1, restriction=self.restriction)
+                apply_lifting(self.b, self.a, bcs=bcs1, restriction=self.restriction)  # type: ignore[misc]
                 dolfinx.la.petsc._ghost_update(
                     self.b, petsc4py.PETSc.InsertMode.ADD,  # type: ignore[arg-type]
                     petsc4py.PETSc.ScatterMode.REVERSE  # type: ignore[arg-type]
@@ -1723,7 +1734,7 @@ class LinearProblem:
                 bcs0 = dolfinx.fem.bcs_by_block(function_spaces[0], self.bcs)
                 set_bc(self.b, bcs0, restriction=self.restriction)
             else:  # single
-                apply_lifting(self.b, [self.a], bcs=[self.bcs], restriction=self.restriction)  # type: ignore[arg-type]
+                apply_lifting(self.b, [self.a], bcs=[self.bcs], restriction=self.restriction)  # type: ignore[arg-type, list-item]
                 dolfinx.la.petsc._ghost_update(
                     self.b, petsc4py.PETSc.InsertMode.ADD,  # type: ignore[arg-type]
                     petsc4py.PETSc.ScatterMode.REVERSE  # type: ignore[arg-type]
@@ -1745,17 +1756,17 @@ class LinearProblem:
         return self.u
 
     @property
-    def L(self) -> DolfinxRank1FormsType:
+    def L(self) -> DolfinxRank1FormsType[dolfinx.typing.Scalar]:
         """The compiled linear form representing the left-hand side."""
         return self._L  # type: ignore[no-any-return]
 
     @property
-    def a(self) -> DolfinxRank2FormsType:
+    def a(self) -> DolfinxRank2FormsType[dolfinx.typing.Scalar]:
         """The compiled bilinear form representing the right-hand side."""
         return self._a  # type: ignore[no-any-return]
 
     @property
-    def preconditioner(self) -> DolfinxRank2FormsType:  # pragma: no cover
+    def preconditioner(self) -> DolfinxRank2FormsType[dolfinx.typing.Scalar]:  # pragma: no cover
         """The compiled bilinear form representing the preconditioner."""
         return self._preconditioner  # type: ignore[no-any-return]
 
@@ -1791,7 +1802,9 @@ class LinearProblem:
         return self._solver
 
     @property
-    def u(self) -> dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function]:
+    def u(self) -> dolfinx.fem.Function[dolfinx.typing.Scalar] | typing.Sequence[
+        dolfinx.fem.Function[dolfinx.typing.Scalar]
+    ]:
         """
         Solution function(s).
 
@@ -1812,9 +1825,12 @@ class LinearProblem:
 
 def assemble_residual(
     _snes: petsc4py.PETSc.SNES, x: petsc4py.PETSc.Vec, b: petsc4py.PETSc.Vec,
-    u: dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function],
-    residual: DolfinxRank1FormsType, jacobian: DolfinxRank2FormsType,
-    bcs: typing.Sequence[dolfinx.fem.DirichletBC],
+    u: dolfinx.fem.Function[dolfinx.typing.Scalar] | typing.Sequence[
+        dolfinx.fem.Function[dolfinx.typing.Scalar]
+    ],
+    residual: DolfinxRank1FormsType[dolfinx.typing.Scalar],
+    jacobian: DolfinxRank2FormsType[dolfinx.typing.Scalar],
+    bcs: typing.Sequence[dolfinx.fem.DirichletBC[dolfinx.typing.Scalar]],
     restriction: MultiphenicsxRank1RestrictionsType,
     restriction_x0: MultiphenicsxRank1RestrictionsType
 ) -> None:
@@ -1834,7 +1850,7 @@ def assemble_residual(
         and b.getType() != petsc4py.PETSc.Vec.Type.NEST
         and (b.getAttr("_dofmaps") is None or x.getAttr("_dofmaps") is None)
     ):
-        function_spaces_residual: list[dolfinx.fem.FunctionSpace] = (
+        function_spaces_residual: list[dolfinx.fem.FunctionSpace] = (  # type: ignore[type-arg]
             dolfinx.fem.extract_function_spaces(residual))  # type: ignore[assignment]
         dofmaps = [function_space.dofmap for function_space in function_spaces_residual]
         if b.getAttr("_dofmaps") is None:
@@ -1876,9 +1892,10 @@ def assemble_residual(
 def assemble_jacobian(
     _snes: petsc4py.PETSc.SNES, x: petsc4py.PETSc.Vec, J: petsc4py.PETSc.Mat,
     P_mat: petsc4py.PETSc.Mat,
-    u: dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function],
-    jacobian: DolfinxRank2FormsType, preconditioner: DolfinxRank2FormsType | None,
-    bcs: typing.Sequence[dolfinx.fem.DirichletBC],
+    u: dolfinx.fem.Function[dolfinx.typing.Scalar] | typing.Sequence[dolfinx.fem.Function[dolfinx.typing.Scalar]],
+    jacobian: DolfinxRank2FormsType[dolfinx.typing.Scalar],
+    preconditioner: DolfinxRank2FormsType[dolfinx.typing.Scalar] | None,
+    bcs: typing.Sequence[dolfinx.fem.DirichletBC[dolfinx.typing.Scalar]],
     restriction: MultiphenicsxRank1RestrictionsType,
 ) -> None:
     """Assemble the Jacobian and preconditioner at ``x`` into matrices ``J`` and ``P_mat``."""
@@ -1915,9 +1932,10 @@ class NonlinearProblem:
     def __init__(
         self,
         F: UflRank1FormsType,
-        u: dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function], *,
+        u: dolfinx.fem.Function[dolfinx.typing.Scalar] | typing.Sequence[dolfinx.fem.Function[dolfinx.typing.Scalar]],
+        *,
         petsc_options_prefix: str,
-        bcs: typing.Sequence[dolfinx.fem.DirichletBC] | None = None,
+        bcs: typing.Sequence[dolfinx.fem.DirichletBC[dolfinx.typing.Scalar]] | None = None,
         J: UflRank2FormsType | None = None, P: UflRank2FormsType | None = None,
         kind: DolfinxMatrixKindType = None,
         petsc_options: dict[str, typing.Any] | None = None,
@@ -2001,10 +2019,10 @@ class NonlinearProblem:
         else:
             self._preconditioner = None
 
-        self._u = u
+        self._u = u  # type: ignore[var-annotated]
         bcs = [] if bcs is None else bcs
 
-        self._A = create_matrix(self.J, kind=kind, restriction=(restriction, restriction))
+        self._A = create_matrix(self.J, kind=kind, restriction=(restriction, restriction))  # type: ignore[arg-type]
         if self._preconditioner is not None:  # pragma: no cover
             self._P_mat = create_matrix(self._preconditioner, kind=kind, restriction=(restriction, restriction))
         else:
@@ -2086,7 +2104,9 @@ class NonlinearProblem:
         if self._P_mat is not None:  # pragma: no cover
             self._P_mat.destroy()
 
-    def solve(self) -> dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function]:
+    def solve(self) -> dolfinx.fem.Function[dolfinx.typing.Scalar] | typing.Sequence[
+        dolfinx.fem.Function[dolfinx.typing.Scalar]
+    ]:
         """
         Solve the problem.
 
@@ -2119,17 +2139,17 @@ class NonlinearProblem:
         return self.u
 
     @property
-    def F(self) -> DolfinxRank1FormsType:
+    def F(self) -> DolfinxRank1FormsType[dolfinx.typing.Scalar]:
         """The compiled residual."""
         return self._F  # type: ignore[no-any-return]
 
     @property
-    def J(self) -> DolfinxRank2FormsType:
+    def J(self) -> DolfinxRank2FormsType[dolfinx.typing.Scalar]:
         """The compiled Jacobian."""
         return self._J  # type: ignore[no-any-return]
 
     @property
-    def preconditioner(self) -> DolfinxRank2FormsType | None:
+    def preconditioner(self) -> DolfinxRank2FormsType[dolfinx.typing.Scalar] | None:
         """The compiled preconditioner."""
         return self._preconditioner  # type: ignore[no-any-return]
 
@@ -2165,7 +2185,9 @@ class NonlinearProblem:
         return self._snes
 
     @property
-    def u(self) -> dolfinx.fem.Function | typing.Sequence[dolfinx.fem.Function]:
+    def u(self) -> dolfinx.fem.Function[dolfinx.typing.Scalar] | typing.Sequence[
+        dolfinx.fem.Function[dolfinx.typing.Scalar]
+    ]:
         """
         Solution function(s).
 
@@ -2173,7 +2195,7 @@ class NonlinearProblem:
         -----
         The function(s) do not share memory with the solution vector ``x``.
         """
-        return self._u
+        return self._u  # type: ignore[no-any-return]
 
     @property
     def restriction(self) -> MultiphenicsxRank1RestrictionsType:
