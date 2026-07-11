@@ -10,11 +10,15 @@ jobs:
   # If main becomes incompatible with the latest version on PyPI then temporarily
   # comment out this test, and restore it on the next PyPI release.
 
-  test_main_branch_against_latest_release_from_pypi:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@main
-    with:
-      ref: main
-      index: PyPI
+  # Temporarily commented out since 24a25b1, because current dolfinx nightly uses
+  # a namespaced target for dolfinx::dolfinx, while the previous multiphenicsx release
+  # assumed a plain target named dolfinx
+
+  # test_main_branch_against_latest_release_from_pypi:
+  #   uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@main
+  #   with:
+  #     ref: main
+  #     index: PyPI
 
   # Test released versions on github or PyPI against the workflow on the corresponding git tag.
 
@@ -79,22 +83,22 @@ jobs:
       expected_index_version: 0.4.0
 
   test_0_4_1_installing_from_github:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.4.1
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.4.1.post0
     with:
-      ref: v0.4.1
+      ref: v0.4.1.post0
 
   test_0_4_1_installing_from_pypi_versioned:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.4.1
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.4.1.post0
     with:
-      ref: v0.4.1
+      ref: v0.4.1.post0
       index: PyPI
       index_version: 0.4.1
       expected_index_version: 0.4.1
 
   test_0_4_1_installing_from_pypi_unversioned:
-    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.4.1
+    uses: multiphenics/multiphenicsx/.github/workflows/ci.yml@v0.4.1.post0
     with:
-      ref: v0.4.1
+      ref: v0.4.1.post0
       index: PyPI
       expected_index_version: 0.4.1
 
