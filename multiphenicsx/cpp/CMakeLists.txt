@@ -110,7 +110,11 @@ nanobind_add_module(
 )
 
 # Add DOLFINx C++ libraries
-target_link_libraries(multiphenicsx_cpp PRIVATE dolfinx)
+if(DOLFINX_VERSION VERSION_GREATER_EQUAL "0.12.0.0")
+  target_link_libraries(multiphenicsx_cpp PRIVATE dolfinx::dolfinx)
+else()
+  target_link_libraries(multiphenicsx_cpp PRIVATE dolfinx)
+endif()
 
 # Add DOLFINx python, petsc4py and mpi4py include directories (with DOLFINx C++
 # ones already being added by target_link_libraries)
