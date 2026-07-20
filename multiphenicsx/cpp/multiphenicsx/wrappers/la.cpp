@@ -6,6 +6,7 @@
 
 #include <array>
 #include <dolfinx/common/IndexMap.h>
+#include <dolfinx/common/version.h>
 #include <dolfinx_wrappers/caster_petsc.h>
 #include <memory>
 #include <multiphenicsx/la/petsc.h>
@@ -22,10 +23,12 @@
 
 namespace nb = nanobind;
 
+#if (DOLFINX_VERSION_MAJOR == 0 && DOLFINX_VERSION_MINOR <= 11)
 namespace nanobind::detail
 {
 PETSC_CASTER_MACRO(IS, IS, is);
 } // namespace nanobind::detail
+#endif
 
 namespace multiphenicsx_wrappers
 {
