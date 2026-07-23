@@ -1725,13 +1725,13 @@ class LinearProblem:
                 assert isinstance(self.a, collections.abc.Sequence)
                 function_spaces = (
                     dolfinx.fem.extract_function_spaces(self.a, 0), dolfinx.fem.extract_function_spaces(self.a, 1))
-                bcs1 = dolfinx.fem.bcs_by_block(function_spaces[1], self.bcs)
+                bcs1 = dolfinx.fem.bcs_by_block(function_spaces[1], self.bcs)  # type: ignore[arg-type, unused-ignore]
                 apply_lifting(self.b, self.a, bcs=bcs1, restriction=self.restriction)  # type: ignore[misc]
                 dolfinx.la.petsc._ghost_update(
                     self.b, petsc4py.PETSc.InsertMode.ADD,  # type: ignore[arg-type]
                     petsc4py.PETSc.ScatterMode.REVERSE  # type: ignore[arg-type]
                 )
-                bcs0 = dolfinx.fem.bcs_by_block(function_spaces[0], self.bcs)
+                bcs0 = dolfinx.fem.bcs_by_block(function_spaces[0], self.bcs)  # type: ignore[arg-type, unused-ignore]
                 set_bc(self.b, bcs0, restriction=self.restriction)
             else:  # single
                 apply_lifting(self.b, [self.a], bcs=[self.bcs], restriction=self.restriction)  # type: ignore[arg-type, list-item]
