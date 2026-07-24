@@ -36,14 +36,14 @@ DolfinxVectorKindType: typing.TypeAlias = str | None
 DolfinxMatrixKindType: typing.TypeAlias = str | typing.Sequence[typing.Sequence[str]] | None
 DolfinxConstantsType_Base: typing.TypeAlias = npt.NDArray[petsc4py.PETSc.ScalarType]  # type: ignore[valid-type]
 DolfinxConstantsType: typing.TypeAlias = (
-    DolfinxConstantsType_Base | None | typing.Sequence[DolfinxConstantsType_Base | None]
+    DolfinxConstantsType_Base | typing.Sequence[DolfinxConstantsType_Base | None] | None
 )
 DolfinxCoefficientsType_Base: typing.TypeAlias = dict[  # type: ignore[no-any-unimported]
     tuple[dolfinx.fem.IntegralType, int],
     npt.NDArray[petsc4py.PETSc.ScalarType]  # type: ignore[valid-type]
 ]
 DolfinxCoefficientsType: typing.TypeAlias = (
-    DolfinxCoefficientsType_Base | None | typing.Sequence[DolfinxCoefficientsType_Base | None]
+    DolfinxCoefficientsType_Base | typing.Sequence[DolfinxCoefficientsType_Base | None] | None
 )
 MultiphenicsxRank1RestrictionsType: typing.TypeAlias = (  # type: ignore[no-any-unimported]
     mcpp.fem.DofMapRestriction | typing.Sequence[mcpp.fem.DofMapRestriction] | None
