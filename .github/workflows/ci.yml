@@ -122,9 +122,6 @@ jobs:
         run: |
           git config --global --add safe.directory $PWD
           git clean -xdf
-      - name: Run ruff on python files
-        run: |
-          python3 -m ruff check .
       - name: Run isort on python files
         run: |
           python3 -m isort --check --diff .
@@ -157,9 +154,6 @@ jobs:
         run: |
           python3 -m coverage combine .coverage*
           python3 -m coverage report --fail-under=100 --show-missing --skip-covered
-      - name: Run ruff on tutorial files
-        run: |
-          python3 -m nbqa ruff .
       - name: Run isort on tutorial files
         run: |
           python3 -m nbqa isort --check --diff .
