@@ -198,6 +198,7 @@ def create_matrix(
     :
         A PETSc matrix with a layout that is compatible with `a` and restriction `restriction`.
     """
+    kind = None if kind == petsc4py.PETSc.Vec.Type.MPI else kind
     if isinstance(a, collections.abc.Sequence):
         function_spaces: tuple[list[dolfinx.fem.FunctionSpace], list[dolfinx.fem.FunctionSpace]] = (  # type: ignore
             dolfinx.fem.extract_function_spaces(a, 0), dolfinx.fem.extract_function_spaces(a, 1))
