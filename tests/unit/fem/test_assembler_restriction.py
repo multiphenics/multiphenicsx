@@ -239,7 +239,7 @@ def get_block_bilinear_form(
             block_form[1][0] = sum(
                 f2[i % shape_2[0]] * ufl.inner(u1[i % shape_1[0]], v2[i % shape_2[0]])
                 for i in range(max(shape_1[0], shape_2[0]))) * ufl.dx
-    return dolfinx.fem.form(block_form)  # type: ignore[no-any-return]
+    return dolfinx.fem.form(block_form)  # type: ignore[no-any-return, return-value, unused-ignore]
 
 
 def get_vec_types(plain: bool) -> tuple[str | None, ...]:
@@ -282,7 +282,7 @@ def locate_boundary_dofs(
     if collapsed_V is None:
         return dolfinx.fem.locate_dofs_topological(V, entities_dim, entities)
     else:
-        return dolfinx.fem.locate_dofs_topological((V, collapsed_V), entities_dim, entities)
+        return dolfinx.fem.locate_dofs_topological((V, collapsed_V), entities_dim, entities)  # type: ignore[return-value, unused-ignore]
 
 
 def get_boundary_conditions(offset: int = 0) -> tuple[  # type: ignore[valid-type]

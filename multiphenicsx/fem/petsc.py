@@ -38,7 +38,7 @@ DolfinxConstantsType_Base: typing.TypeAlias = npt.NDArray[petsc4py.PETSc.ScalarT
 DolfinxConstantsType: typing.TypeAlias = (
     DolfinxConstantsType_Base | typing.Sequence[DolfinxConstantsType_Base | None] | None
 )
-DolfinxCoefficientsType_Base: typing.TypeAlias = dict[  # type: ignore[no-any-unimported]
+DolfinxCoefficientsType_Base: typing.TypeAlias = dict[  # type: ignore[no-any-unimported, unused-ignore]
     tuple[dolfinx.fem.IntegralType, int],
     npt.NDArray[petsc4py.PETSc.ScalarType]  # type: ignore[valid-type]
 ]
@@ -55,17 +55,17 @@ MultiphenicsxRank2RestrictionsType: typing.TypeAlias = (  # type: ignore[no-any-
 )
 
 
-def _same_dofmap(  # type: ignore[no-any-unimported]
+def _same_dofmap(  # type: ignore[no-any-unimported, unused-ignore]
     dofmap1: dolfinx.fem.DofMap | dcpp.fem.DofMap,
     dofmap2: dolfinx.fem.DofMap | dcpp.fem.DofMap
 ) -> bool:
     try:
-        dofmap1 = dofmap1._cpp_object
+        dofmap1 = dofmap1._cpp_object  # type: ignore[union-attr, unused-ignore]
     except AttributeError:
         pass
 
     try:
-        dofmap2 = dofmap2._cpp_object
+        dofmap2 = dofmap2._cpp_object  # type: ignore[union-attr, unused-ignore]
     except AttributeError:
         pass
 
@@ -126,11 +126,11 @@ def create_vector(
                 _same_dofmap(restriction_.dofmap, dofmap) for (restriction_, dofmap) in zip(restriction, dofmaps))
             index_maps = [(restriction_.index_map, restriction_.index_map_bs) for restriction_ in restriction]
         if kind == petsc4py.PETSc.Vec.Type.NEST:
-            return dcpp.fem.petsc.create_vector_nest(index_maps)  # type: ignore[no-any-return]
+            return dcpp.fem.petsc.create_vector_nest(index_maps)  # type: ignore[no-any-return, unused-ignore]
         elif kind == petsc4py.PETSc.Vec.Type.MPI:
             b = dcpp.fem.petsc.create_vector_block(index_maps)
             b.setAttr("_dofmaps", dofmaps)
-            return b  # type: ignore[no-any-return]
+            return b  # type: ignore[no-any-return, unused-ignore]
         else:  # pragma: no cover
             raise NotImplementedError(
                 "Vector type must be specified for blocked/nested assembly."
@@ -704,7 +704,7 @@ def _(  # type: ignore[misc]
             _same_dofmap(b_dofmap, dofmap) for (b_dofmap, dofmap) in zip(b.getAttr("_dofmaps"), dofmaps))  # type: ignore[call-overload]
         with BlockVecSubVectorWrapper(b, dofmaps, restriction) as block_b:
             for b_sub, L_sub, constant, coeff in zip(block_b, L, constants, coeffs):
-                dcpp.fem.assemble_vector(b_sub, L_sub._cpp_object, constant, coeff)
+                dcpp.fem.assemble_vector(b_sub, L_sub._cpp_object, constant, coeff)  # type: ignore[arg-type, unused-ignore]
     else:  # single form
         if restriction is None:
             with b.localForm() as b_local:
@@ -1104,13 +1104,13 @@ def _(  # type: ignore[misc]
             {} if form is None else dcpp.fem.pack_coefficients(form._cpp_object)
             for form in forms] for forms in a] if coeffs is None else coeffs
 
-        with NestMatSubMatrixWrapper(A, dofmaps, restriction) as nest_A:
+        with NestMatSubMatrixWrapper(A, dofmaps, restriction) as nest_A:  # type: ignore[arg-type, unused-ignore]
             for i, j, A_sub in nest_A:
                 a_sub = a[i][j]
                 if a_sub is not None:
                     const_sub = constants[i][j]  # type: ignore[index]
                     coeff_sub = coeffs[i][j]  # type: ignore[index]
-                    dcpp.fem.petsc.assemble_matrix(A_sub, a_sub._cpp_object, const_sub, coeff_sub, bcs_cpp)
+                    dcpp.fem.petsc.assemble_matrix(A_sub, a_sub._cpp_object, const_sub, coeff_sub, bcs_cpp)  # type: ignore[arg-type, unused-ignore]
                 elif i == j:  # pragma: no cover
                     for bc in bcs_cpp:
                         if function_spaces[0][i].contains(bc.function_space):
@@ -1122,12 +1122,12 @@ def _(  # type: ignore[misc]
         A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)  # type: ignore[arg-type]
 
         # Set diagonal value
-        with NestMatSubMatrixWrapper(A, dofmaps, restriction) as nest_A:
+        with NestMatSubMatrixWrapper(A, dofmaps, restriction) as nest_A:  # type: ignore[arg-type, unused-ignore]
             for i, j, A_sub in nest_A:
                 if function_spaces[0][i] is function_spaces[1][j]:
                     a_sub = a[i][j]
                     if a_sub is not None:
-                        dcpp.fem.petsc.insert_diagonal(A_sub, function_spaces[0][i], bcs_cpp, diag)
+                        dcpp.fem.petsc.insert_diagonal(A_sub, function_spaces[0][i], bcs_cpp, diag)  # type: ignore[arg-type, unused-ignore]
     elif isinstance(a, collections.abc.Sequence):  # block matrix
         constants = [[  # type: ignore[misc]
             np.array([], dtype=petsc4py.PETSc.ScalarType) if form is None else dcpp.fem.pack_constants(form._cpp_object)
@@ -1142,13 +1142,13 @@ def _(  # type: ignore[misc]
             [function_space.dofmap for function_space in function_spaces[1]])
 
         # Assemble form
-        with BlockMatSubMatrixWrapper(A, dofmaps, restriction) as block_A:
+        with BlockMatSubMatrixWrapper(A, dofmaps, restriction) as block_A:  # type: ignore[arg-type, unused-ignore]
             for i, j, A_sub in block_A:
                 a_sub = a[i][j]
                 if a_sub is not None:
                     const_sub = constants[i][j]  # type: ignore[index]
                     coeff_sub = coeffs[i][j]  # type: ignore[index]
-                    dcpp.fem.petsc.assemble_matrix(A_sub, a_sub._cpp_object, const_sub, coeff_sub, bcs_cpp, True)
+                    dcpp.fem.petsc.assemble_matrix(A_sub, a_sub._cpp_object, const_sub, coeff_sub, bcs_cpp, True)  # type: ignore[arg-type, unused-ignore]
                 elif i == j:  # pragma: no cover
                     for bc in bcs_cpp:
                         if function_spaces[0][i].contains(bc.function_space):
@@ -1160,12 +1160,12 @@ def _(  # type: ignore[misc]
         A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)  # type: ignore[arg-type]
 
         # Set diagonal
-        with BlockMatSubMatrixWrapper(A, dofmaps, restriction) as block_A:
+        with BlockMatSubMatrixWrapper(A, dofmaps, restriction) as block_A:  # type: ignore[arg-type, unused-ignore]
             for i, j, A_sub in block_A:
                 if function_spaces[0][i] is function_spaces[1][j]:
                     a_sub = a[i][j]
                     if a_sub is not None:
-                        dcpp.fem.petsc.insert_diagonal(A_sub, function_spaces[0][i], bcs_cpp, diag)
+                        dcpp.fem.petsc.insert_diagonal(A_sub, function_spaces[0][i], bcs_cpp, diag)  # type: ignore[arg-type, unused-ignore]
 
     else:  # single form
         constants = dcpp.fem.pack_constants(a._cpp_object) if constants is None else constants
@@ -1174,28 +1174,28 @@ def _(  # type: ignore[misc]
             a.function_spaces)
         if restriction is None:
             # Assemble form
-            dcpp.fem.petsc.assemble_matrix(A, a._cpp_object, constants, coeffs, bcs_cpp)
+            dcpp.fem.petsc.assemble_matrix(A, a._cpp_object, constants, coeffs, bcs_cpp)  # type: ignore[arg-type, unused-ignore]
 
             if function_spaces[0] is function_spaces[1]:
                 # Flush to enable switch from add to set in the matrix
                 A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)  # type: ignore[arg-type]
 
                 # Set diagonal value
-                dcpp.fem.petsc.insert_diagonal(A, function_spaces[0], bcs_cpp, diag)
+                dcpp.fem.petsc.insert_diagonal(A, function_spaces[0], bcs_cpp, diag)  # type: ignore[arg-type, unused-ignore]
         else:
             dofmaps = (function_spaces[0].dofmap, function_spaces[1].dofmap)  # type: ignore[attr-defined]
 
             # Assemble form
-            with MatSubMatrixWrapper(A, dofmaps, restriction) as A_sub:
-                dcpp.fem.petsc.assemble_matrix(A_sub, a._cpp_object, constants, coeffs, bcs_cpp)
+            with MatSubMatrixWrapper(A, dofmaps, restriction) as A_sub:  # type: ignore[arg-type, unused-ignore]
+                dcpp.fem.petsc.assemble_matrix(A_sub, a._cpp_object, constants, coeffs, bcs_cpp)  # type: ignore[arg-type, unused-ignore]
 
             if function_spaces[0] is function_spaces[1]:
                 # Flush to enable switch from add to set in the matrix
                 A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)  # type: ignore[arg-type]
 
                 # Set diagonal value
-                with MatSubMatrixWrapper(A, dofmaps, restriction) as A_sub:
-                    dcpp.fem.petsc.insert_diagonal(A_sub, function_spaces[0], bcs_cpp, diag)
+                with MatSubMatrixWrapper(A, dofmaps, restriction) as A_sub:  # type: ignore[arg-type, unused-ignore]
+                    dcpp.fem.petsc.insert_diagonal(A_sub, function_spaces[0], bcs_cpp, diag)  # type: ignore[arg-type, unused-ignore]
 
     return A
 
@@ -1285,7 +1285,7 @@ def apply_lifting(
             for form in forms] for forms in a] if coeffs is None else coeffs  # type: ignore[union-attr]
 
         function_spaces: tuple[list[dolfinx.fem.FunctionSpace], list[dolfinx.fem.FunctionSpace]] = (  # type: ignore
-            dolfinx.fem.extract_function_spaces(a, 0), dolfinx.fem.extract_function_spaces(a, 1))
+            dolfinx.fem.extract_function_spaces(a, 0), dolfinx.fem.extract_function_spaces(a, 1))  # type: ignore[arg-type, unused-ignore]
         dofmaps = [function_space.dofmap for function_space in function_spaces[0]]
         dofmaps_x0 = [function_space.dofmap for function_space in function_spaces[1]]
 
@@ -1759,17 +1759,17 @@ class LinearProblem:
     @property
     def L(self) -> DolfinxRank1FormsType[dolfinx.typing.Scalar]:
         """The compiled linear form representing the left-hand side."""
-        return self._L  # type: ignore[no-any-return]
+        return self._L  # type: ignore[no-any-return, return-value, unused-ignore]
 
     @property
     def a(self) -> DolfinxRank2FormsType[dolfinx.typing.Scalar]:
         """The compiled bilinear form representing the right-hand side."""
-        return self._a  # type: ignore[no-any-return]
+        return self._a  # type: ignore[no-any-return, unused-ignore]
 
     @property
     def preconditioner(self) -> DolfinxRank2FormsType[dolfinx.typing.Scalar]:  # pragma: no cover
         """The compiled bilinear form representing the preconditioner."""
-        return self._preconditioner  # type: ignore[no-any-return]
+        return self._preconditioner  # type: ignore[no-any-return, unused-ignore]
 
     @property
     def A(self) -> petsc4py.PETSc.Mat:
@@ -2018,7 +2018,7 @@ class NonlinearProblem:
                 form_compiler_options=form_compiler_options, jit_options=jit_options
             )
         else:
-            self._preconditioner = None
+            self._preconditioner = None  # type: ignore[assignment, unused-ignore]
 
         self._u = u  # type: ignore[var-annotated]
         bcs = [] if bcs is None else bcs
@@ -2027,7 +2027,7 @@ class NonlinearProblem:
         if self._preconditioner is not None:  # pragma: no cover
             self._P_mat = create_matrix(self._preconditioner, kind=kind, restriction=(restriction, restriction))
         else:
-            self._P_mat = None  # type: ignore[assignment]
+            self._P_mat = None  # type: ignore[assignment, unused-ignore]
 
         # Determine the vector kind based on the matrix type
         kind = "nest" if self._A.getType() == petsc4py.PETSc.Mat.Type.NEST else kind
@@ -2142,17 +2142,17 @@ class NonlinearProblem:
     @property
     def F(self) -> DolfinxRank1FormsType[dolfinx.typing.Scalar]:
         """The compiled residual."""
-        return self._F  # type: ignore[no-any-return]
+        return self._F  # type: ignore[no-any-return, return-value, unused-ignore]
 
     @property
     def J(self) -> DolfinxRank2FormsType[dolfinx.typing.Scalar]:
         """The compiled Jacobian."""
-        return self._J  # type: ignore[no-any-return]
+        return self._J  # type: ignore[no-any-return, unused-ignore]
 
     @property
     def preconditioner(self) -> DolfinxRank2FormsType[dolfinx.typing.Scalar] | None:
         """The compiled preconditioner."""
-        return self._preconditioner  # type: ignore[no-any-return]
+        return self._preconditioner  # type: ignore[no-any-return, unused-ignore]
 
     @property
     def A(self) -> petsc4py.PETSc.Mat:
