@@ -17,14 +17,14 @@ from multiphenicsx.cpp import cpp_library as mcpp
 class DofMapRestriction(mcpp.fem.DofMapRestriction):  # type: ignore[misc, no-any-unimported]
     """Restriction of a DofMap to a list of active degrees of freedom."""
 
-    def __init__(  # type: ignore[no-any-unimported, unused-ignore]
+    def __init__(
         self,
         dofmap: dcpp.fem.DofMap | dolfinx.fem.DofMap,
         restriction: npt.NDArray[np.int32]
     ) -> None:
         # Extract cpp dofmap
         try:
-            _dofmap = dofmap._cpp_object  # type: ignore[union-attr, unused-ignore]
+            _dofmap = dofmap._cpp_object  # type: ignore[union-attr]
         except AttributeError:  # pragma: no cover
             _dofmap = dofmap
         super().__init__(_dofmap, restriction)
