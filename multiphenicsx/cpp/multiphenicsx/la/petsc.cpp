@@ -176,7 +176,7 @@ MatSubMatrixWrapper::MatSubMatrixWrapper(
   std::array<ISLocalToGlobalMapping, 2> petsc_local_to_global_matrix;
   common::petsc::check(
       MatGetLocalToGlobalMapping(A, &petsc_local_to_global_matrix[0],
-                                  &petsc_local_to_global_matrix[1]),
+                                 &petsc_local_to_global_matrix[1]),
       "MatGetLocalToGlobalMapping");
 
   // Allocate data for submatrix local-to-global maps in an STL vector
@@ -185,15 +185,14 @@ MatSubMatrixWrapper::MatSubMatrixWrapper(
   {
     PetscInt unrestricted_is_size;
     common::petsc::check(
-      ISBlockGetLocalSize(unrestricted_index_sets[i],
-                &unrestricted_is_size),
-      "ISBlockGetLocalSize");
+        ISBlockGetLocalSize(unrestricted_index_sets[i], &unrestricted_is_size),
+        "ISBlockGetLocalSize");
     stl_local_to_global_submatrix[i].resize(unrestricted_is_size);
 
     const PetscInt* restricted_indices;
     common::petsc::check(
-      ISBlockGetIndices(restricted_index_sets[i], &restricted_indices),
-      "ISBlockGetIndices");
+        ISBlockGetIndices(restricted_index_sets[i], &restricted_indices),
+        "ISBlockGetIndices");
 
     std::vector<PetscInt> restricted_local_index(1);
     std::vector<PetscInt> restricted_global_index(1);
@@ -224,8 +223,8 @@ MatSubMatrixWrapper::MatSubMatrixWrapper(
     }
 
     common::petsc::check(
-      ISBlockRestoreIndices(restricted_index_sets[i], &restricted_indices),
-      "ISBlockRestoreIndices");
+        ISBlockRestoreIndices(restricted_index_sets[i], &restricted_indices),
+        "ISBlockRestoreIndices");
   }
 
   // Get communicator from submatrix object
@@ -238,11 +237,11 @@ MatSubMatrixWrapper::MatSubMatrixWrapper(
   for (std::size_t i = 0; i < 2; ++i)
   {
     common::petsc::check(
-      ISLocalToGlobalMappingCreate(
-        comm, bs[i], stl_local_to_global_submatrix[i].size(),
-        stl_local_to_global_submatrix[i].data(), PETSC_COPY_VALUES,
-        &petsc_local_to_global_submatrix[i]),
-      "ISLocalToGlobalMappingCreate");
+        ISLocalToGlobalMappingCreate(
+            comm, bs[i], stl_local_to_global_submatrix[i].size(),
+            stl_local_to_global_submatrix[i].data(), PETSC_COPY_VALUES,
+            &petsc_local_to_global_submatrix[i]),
+        "ISLocalToGlobalMappingCreate");
   }
 
   // Set submatrix local-to-global maps
@@ -255,8 +254,8 @@ MatSubMatrixWrapper::MatSubMatrixWrapper(
   for (std::size_t i = 0; i < 2; ++i)
   {
     common::petsc::check(
-      ISLocalToGlobalMappingDestroy(&petsc_local_to_global_submatrix[i]),
-      "ISLocalToGlobalMappingDestroy");
+        ISLocalToGlobalMappingDestroy(&petsc_local_to_global_submatrix[i]),
+        "ISLocalToGlobalMappingDestroy");
   }
 }
 //-----------------------------------------------------------------------------
@@ -330,9 +329,9 @@ VecSubVectorReadWrapper::VecSubVectorReadWrapper(
 {
   // Get number of entries to extract from x
   PetscInt restricted_is_size;
-  common::petsc::check(ISGetLocalSize(restricted_index_set,
-                                      &restricted_is_size),
-                       "ISGetLocalSize");
+  common::petsc::check(
+      ISGetLocalSize(restricted_index_set, &restricted_is_size),
+      "ISGetLocalSize");
 
   // Get indices of entries to extract from x
   const PetscInt* restricted_indices;
@@ -368,9 +367,9 @@ VecSubVectorReadWrapper::VecSubVectorReadWrapper(
 
   // Get number of entries to be stored in _content
   PetscInt unrestricted_is_size;
-  common::petsc::check(ISGetLocalSize(unrestricted_index_set,
-                                      &unrestricted_is_size),
-                       "ISGetLocalSize");
+  common::petsc::check(
+      ISGetLocalSize(unrestricted_index_set, &unrestricted_is_size),
+      "ISGetLocalSize");
 
   // Assign vector content to an STL vector indexed with respect to the
   // unrestricted index set
@@ -423,9 +422,9 @@ VecSubVectorWrapper::VecSubVectorWrapper(
 {
   // Get number of entries stored in _content
   PetscInt unrestricted_is_size;
-  common::petsc::check(ISGetLocalSize(unrestricted_index_set,
-                                      &unrestricted_is_size),
-                       "ISGetLocalSize");
+  common::petsc::check(
+      ISGetLocalSize(unrestricted_index_set, &unrestricted_is_size),
+      "ISGetLocalSize");
 
   // Fill in _restricted_to_unrestricted attribute
   for (PetscInt unrestricted_index = 0;
@@ -457,8 +456,7 @@ void VecSubVectorWrapper::restore()
 {
   // Get indices of entries to restore in x
   const PetscInt* restricted_indices;
-  common::petsc::check(ISGetIndices(_is, &restricted_indices),
-                       "ISGetIndices");
+  common::petsc::check(ISGetIndices(_is, &restricted_indices), "ISGetIndices");
 
   // Restrict values from content attribute
   std::vector<PetscScalar> restricted_values(
