@@ -130,7 +130,7 @@ def get_function(
     u = dolfinx.fem.Function(V)
     try:
         u.interpolate(f)
-    except RuntimeError:
+    except ValueError:
         assert len(shape) == 1
 
         assert isinstance(V.ufl_element(), basix.ufl._MixedElement)
