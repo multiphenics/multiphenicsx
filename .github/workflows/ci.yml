@@ -167,7 +167,7 @@ jobs:
           COVERAGE_FILE=.coverage_unit_serial python3 -m coverage run --source=multiphenicsx -m pytest tests/unit
       - name: Run unit tests (parallel)
         run: |
-          COVERAGE_FILE=.coverage_unit_parallel mpirun -n 3 python3 -m coverage run --source=multiphenicsx --parallel-mode -m pytest tests/unit
+          COVERAGE_FILE=.coverage_unit_parallel PRTE_MCA_rmaps_default_mapping_policy=":oversubscribe" mpirun -n 3 python3 -m coverage run --source=multiphenicsx --parallel-mode -m pytest tests/unit
       - name: Combine coverage reports
         run: |
           python3 -m coverage combine .coverage*
@@ -190,7 +190,7 @@ jobs:
           VISKEX_PYVISTA_BACKEND="static" python3 -m pytest tutorials
       - name: Run tutorials (parallel)
         run: |
-          VISKEX_PYVISTA_BACKEND="static" python3 -m pytest --np 3 tutorials
+          VISKEX_PYVISTA_BACKEND="static" PRTE_MCA_rmaps_default_mapping_policy=":oversubscribe" python3 -m pytest --np 3 tutorials
       - name: Upload tutorials logs as an artifact in case of failure
         if: failure() || cancelled()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
