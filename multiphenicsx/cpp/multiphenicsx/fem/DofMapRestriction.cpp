@@ -26,9 +26,10 @@ DofMapRestriction::DofMapRestriction(
                              { return d >= dofmap_owned_size; });
 #endif
   // Compute index map
-  auto [index_submap, submap_to_map] = dolfinx::common::create_sub_index_map(
-      *dofmap->index_map, restriction, dolfinx::common::IndexMapOrder::preserve,
-      false);
+  auto [index_submap, submap_to_map, _owners_changed]
+      = dolfinx::common::create_sub_index_map(
+          *dofmap->index_map, restriction,
+          dolfinx::common::IndexMapOrder::preserve);
   assert(index_submap.size_local()
          == restriction_end_owned - restriction.begin());
   assert(static_cast<int>(submap_to_map.size())
