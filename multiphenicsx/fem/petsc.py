@@ -1110,7 +1110,7 @@ def _(  # type: ignore[misc]
                 if a_sub is not None:
                     const_sub = constants[i][j]  # type: ignore[index]
                     coeff_sub = coeffs[i][j]  # type: ignore[index]
-                    dcpp.fem.petsc.assemble_matrix(A_sub, a_sub._cpp_object, const_sub, coeff_sub, bcs_cpp)  # type: ignore[arg-type]
+                    dcpp.fem.petsc.assemble_matrix(A_sub, a_sub._cpp_object, const_sub, coeff_sub, bcs_cpp, False)  # type: ignore[arg-type]
                 elif i == j:  # pragma: no cover
                     for bc in bcs_cpp:
                         if function_spaces[0][i].contains(bc.function_space):
@@ -1174,7 +1174,7 @@ def _(  # type: ignore[misc]
             a.function_spaces)
         if restriction is None:
             # Assemble form
-            dcpp.fem.petsc.assemble_matrix(A, a._cpp_object, constants, coeffs, bcs_cpp)  # type: ignore[arg-type]
+            dcpp.fem.petsc.assemble_matrix(A, a._cpp_object, constants, coeffs, bcs_cpp, False)  # type: ignore[arg-type]
 
             if function_spaces[0] is function_spaces[1]:
                 # Flush to enable switch from add to set in the matrix
@@ -1187,7 +1187,7 @@ def _(  # type: ignore[misc]
 
             # Assemble form
             with MatSubMatrixWrapper(A, dofmaps, restriction) as A_sub:  # type: ignore[arg-type]
-                dcpp.fem.petsc.assemble_matrix(A_sub, a._cpp_object, constants, coeffs, bcs_cpp)  # type: ignore[arg-type]
+                dcpp.fem.petsc.assemble_matrix(A_sub, a._cpp_object, constants, coeffs, bcs_cpp, False)  # type: ignore[arg-type]
 
             if function_spaces[0] is function_spaces[1]:
                 # Flush to enable switch from add to set in the matrix
