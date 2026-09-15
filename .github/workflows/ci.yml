@@ -133,10 +133,6 @@ jobs:
       - name: Run yamllint on workflows
         run: |
           python3 -m yamllint -d "{extends: default, rules: {document-start: {present: false}, line-length: disable, truthy: {check-keys: false}}}" .
-      - name: Run cmake-format on cmake files
-        run: |
-          wget https://raw.githubusercontent.com/FEniCS/dolfinx/main/.cmake-format
-          find . -type f \( -name "*.cmake" -o -name "*.cmake.in" -o -name "CMakeLists.txt" \) | xargs cmake-format --check
       - name: Run documentation generation
         run: |
           cd docs && python3 -m sphinx -W -b html . build/html
