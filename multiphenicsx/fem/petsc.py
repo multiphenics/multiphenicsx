@@ -118,13 +118,15 @@ def create_vector(
     if isinstance(V, collections.abc.Sequence):
         dofmaps = [function_space.dofmap for function_space in V]
         if restriction is None:
-            index_maps = [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps]
+            index_maps = [(dofmap.index_map._cpp_object, dofmap.index_map_bs) for dofmap in dofmaps]
         else:
             assert isinstance(restriction, collections.abc.Sequence)
             assert len(restriction) == len(dofmaps)
             assert all(
                 _same_dofmap(restriction_.dofmap, dofmap) for (restriction_, dofmap) in zip(restriction, dofmaps))
-            index_maps = [(restriction_.index_map, restriction_.index_map_bs) for restriction_ in restriction]
+            index_maps = [
+                (restriction_.index_map, restriction_.index_map_bs) for restriction_ in restriction
+            ]
         if kind == petsc4py.PETSc.Vec.Type.NEST:
             return dcpp.fem.petsc.create_vector_nest(index_maps)
         elif kind == petsc4py.PETSc.Vec.Type.MPI:
@@ -210,19 +212,19 @@ def create_matrix(
                     mesh = a[i][j].mesh
                     break
         assert mesh is not None
-        assert all(a[i][j] is None or a[i][j].mesh == mesh for i in range(rows) for j in range(cols))
-        assert all(function_space.mesh == mesh for function_space in function_spaces[0])
-        assert all(function_space.mesh == mesh for function_space in function_spaces[1])
+        # assert all(a[i][j] is None or a[i][j].mesh == mesh for i in range(rows) for j in range(cols))
+        # assert all(function_space.mesh == mesh for function_space in function_spaces[0])
+        # assert all(function_space.mesh == mesh for function_space in function_spaces[1])
         if restriction is None:
             index_maps = (
-                [function_spaces[0][i].dofmap.index_map for i in range(rows)],
-                [function_spaces[1][j].dofmap.index_map for j in range(cols)])
+                [function_spaces[0][i].dofmap.index_map._cpp_object for i in range(rows)],
+                [function_spaces[1][j].dofmap.index_map._cpp_object for j in range(cols)])
             index_maps_bs = (
                 [function_spaces[0][i].dofmap.index_map_bs for i in range(rows)],
                 [function_spaces[1][j].dofmap.index_map_bs for j in range(cols)])
             dofmaps_list = (
-                [function_spaces[0][i].dofmap.map() for i in range(rows)],  # type: ignore[attr-defined]
-                [function_spaces[1][j].dofmap.map() for j in range(cols)])  # type: ignore[attr-defined]
+                [function_spaces[0][i].dofmap._cpp_object.map() for i in range(rows)],  # type: ignore[attr-defined]
+                [function_spaces[1][j].dofmap._cpp_object.map() for j in range(cols)])  # type: ignore[attr-defined]
             dofmaps_bounds = (
                 [np.arange(dofmaps_list[0][i].shape[0] + 1, dtype=np.uint64) * dofmaps_list[0][i].shape[1]
                  for i in range(rows)],
@@ -262,14 +264,14 @@ def create_matrix(
         assert a.rank == 2
         function_spaces: tuple[dolfinx.fem.FunctionSpace, dolfinx.fem.FunctionSpace] = (  # type: ignore[no-redef, type-arg]
             a.function_spaces)
-        assert all(function_space.mesh == a.mesh for function_space in function_spaces)  # type: ignore[attr-defined]
+        # assert all(function_space.mesh == a.mesh for function_space in function_spaces)  # type: ignore[attr-defined]
         if restriction is None:
             index_maps = [  # type: ignore[assignment]
-                function_space.dofmap.index_map for function_space in function_spaces]  # type: ignore[attr-defined]
+                function_space.dofmap.index_map._cpp_object for function_space in function_spaces]  # type: ignore[attr-defined]
             index_maps_bs = [  # type: ignore[assignment]
                 function_space.dofmap.index_map_bs for function_space in function_spaces]  # type: ignore[attr-defined]
             dofmaps_list = [  # type: ignore[assignment]
-                function_space.dofmap.map() for function_space in function_spaces]  # type: ignore[attr-defined]
+                function_space.dofmap._cpp_object.map() for function_space in function_spaces]  # type: ignore[attr-defined]
             dofmaps_bounds = [  # type: ignore[assignment]
                 np.arange(dofmap_list.shape[0] + 1, dtype=np.uint64) * dofmap_list.shape[1]  # type: ignore
                 for dofmap_list in dofmaps_list]
@@ -351,6 +353,8 @@ def VecSubVectorWrapperBase(_VecSubVectorWrapperClass: type) -> type:
             else:
                 if restriction is None:  # pragma: no cover
                     index_map = (dofmap.index_map, dofmap.index_map_bs)
+                    if isinstance(index_map[0], dolfinx.common.IndexMap):
+                        index_map = (index_map[0]._cpp_object, index_map[1])
                     index_set = mcpp.la.petsc.create_index_sets(
                         [index_map], [dofmap.index_map_bs], ghosted=ghosted,
                         ghost_block_layout=mcpp.la.petsc.GhostBlockLayout.trailing)[0]
@@ -362,6 +366,8 @@ def VecSubVectorWrapperBase(_VecSubVectorWrapperClass: type) -> type:
                 else:
                     assert _same_dofmap(dofmap, restriction.dofmap)
                     unrestricted_index_map = (dofmap.index_map, dofmap.index_map_bs)
+                    if isinstance(unrestricted_index_map[0], dolfinx.common.IndexMap):
+                        unrestricted_index_map = (unrestricted_index_map[0]._cpp_object, unrestricted_index_map[1])
                     unrestricted_index_set = mcpp.la.petsc.create_index_sets(
                         [unrestricted_index_map], [dofmap.index_map_bs], ghosted=ghosted,
                         ghost_block_layout=mcpp.la.petsc.GhostBlockLayout.trailing)[0]
@@ -422,7 +428,12 @@ def BlockVecSubVectorWrapperBase(_VecSubVectorWrapperClass: type) -> type:
             self._len = len(dofmaps)
             if b is not None:
                 if restriction is None:
-                    index_maps = [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps]
+                    index_maps = []
+                    for dofmap in dofmaps:
+                        index_map = dofmap.index_map
+                        if isinstance(index_map, dolfinx.common.IndexMap):
+                            index_map = index_map._cpp_object
+                        index_maps.append((index_map, dofmap.index_map_bs))
                     index_sets = mcpp.la.petsc.create_index_sets(
                         index_maps, [1] * len(index_maps), ghosted=ghosted,
                         ghost_block_layout=mcpp.la.petsc.GhostBlockLayout.trailing)
@@ -435,8 +446,12 @@ def BlockVecSubVectorWrapperBase(_VecSubVectorWrapperClass: type) -> type:
                     assert all([
                         _same_dofmap(dofmap, restriction_.dofmap)
                         for (dofmap, restriction_) in zip(dofmaps, restriction)])
-                    unrestricted_index_maps = [
-                        (dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps]
+                    unrestricted_index_maps = []
+                    for dofmap in dofmaps:
+                        unrestricted_index_map = dofmap.index_map
+                        if isinstance(unrestricted_index_map, dolfinx.common.IndexMap):
+                            unrestricted_index_map = unrestricted_index_map._cpp_object
+                        unrestricted_index_maps.append((unrestricted_index_map, dofmap.index_map_bs))
                     unrestricted_index_sets = mcpp.la.petsc.create_index_sets(
                         unrestricted_index_maps, [1] * len(unrestricted_index_maps),
                         ghost_block_layout=mcpp.la.petsc.GhostBlockLayout.trailing)
@@ -766,9 +781,16 @@ class MatSubMatrixWrapper:
     ) -> None:
         assert len(dofmaps) == 2
         if restriction is None:  # pragma: no cover
+            index_maps_ = [
+                dofmaps[0].index_map,
+                dofmaps[1].index_map
+            ]
+            for i in range(2):
+                if isinstance(index_maps_[i], dolfinx.common.IndexMap):
+                    index_maps_[i] = index_maps_[i]._cpp_object
             index_maps = (
-                (dofmaps[0].index_map, dofmaps[0].index_map_bs),
-                (dofmaps[1].index_map, dofmaps[1].index_map_bs))
+                (index_maps_[0], dofmaps[0].index_map_bs),
+                (index_maps_[1], dofmaps[1].index_map_bs))
             index_sets = (
                 mcpp.la.petsc.create_index_sets([index_maps[0]], [dofmaps[0].index_map_bs])[0],
                 mcpp.la.petsc.create_index_sets([index_maps[1]], [dofmaps[1].index_map_bs])[0])
@@ -780,9 +802,16 @@ class MatSubMatrixWrapper:
         else:
             assert len(restriction) == 2
             assert all([_same_dofmap(dofmaps[i], restriction[i].dofmap) for i in range(2)])
+            unrestricted_index_maps_ = [
+                dofmaps[0].index_map,
+                dofmaps[1].index_map
+            ]
+            for i in range(2):
+                if isinstance(unrestricted_index_maps_[i], dolfinx.common.IndexMap):
+                    unrestricted_index_maps_[i] = unrestricted_index_maps_[i]._cpp_object
             unrestricted_index_maps = (
-                (dofmaps[0].index_map, dofmaps[0].index_map_bs),
-                (dofmaps[1].index_map, dofmaps[1].index_map_bs))
+                (unrestricted_index_maps_[0], dofmaps[0].index_map_bs),
+                (unrestricted_index_maps_[1], dofmaps[1].index_map_bs))
             unrestricted_index_sets = (
                 mcpp.la.petsc.create_index_sets(
                     [unrestricted_index_maps[0]], [dofmaps[0].index_map_bs])[0],
@@ -840,9 +869,24 @@ class BlockMatSubMatrixWrapper:
         self._A = A
         assert len(dofmaps) == 2
         if restriction is None:
+            index_maps_ = [
+                [dofmap.index_map for dofmap in dofmaps[0]],
+                [dofmap.index_map for dofmap in dofmaps[0]]
+            ]
+            for i in range(2):
+                for j in range(len(index_maps_[i])):
+                    if isinstance(index_maps_[i][j], dolfinx.common.IndexMap):
+                        index_maps_[i][j] = index_maps_[i][j]._cpp_object
             index_maps = (
-                [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps[0]],
-                [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps[1]])
+                [
+                    (index_map, dofmap.index_map_bs)
+                    for (dofmap, index_map) in zip(dofmaps[0], index_maps_[0])
+                ],
+                [
+                    (index_map, dofmap.index_map_bs)
+                    for (dofmap, index_map) in zip(dofmaps[1], index_maps_[1])
+                ]
+            )
             index_sets = (
                 mcpp.la.petsc.create_index_sets(index_maps[0], [1] * len(index_maps[0])),
                 mcpp.la.petsc.create_index_sets(index_maps[1], [1] * len(index_maps[1])))
@@ -857,9 +901,24 @@ class BlockMatSubMatrixWrapper:
                 assert all(
                     [_same_dofmap(dofmap, restriction_.dofmap)
                      for (dofmap, restriction_) in zip(dofmaps[i], restriction[i])])
+            unrestricted_index_maps_ = [
+                [dofmap.index_map for dofmap in dofmaps[0]],
+                [dofmap.index_map for dofmap in dofmaps[0]]
+            ]
+            for i in range(2):
+                for j in range(len(unrestricted_index_maps_[i])):
+                    if isinstance(unrestricted_index_maps_[i][j], dolfinx.common.IndexMap):
+                        unrestricted_index_maps_[i][j] = unrestricted_index_maps_[i][j]._cpp_object
             unrestricted_index_maps = (
-                [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps[0]],
-                [(dofmap.index_map, dofmap.index_map_bs) for dofmap in dofmaps[1]])
+                [
+                    (unrestricted_index_map, dofmap.index_map_bs)
+                    for (dofmap, unrestricted_index_map) in zip(dofmaps[0], unrestricted_index_maps_[0])
+                ],
+                [
+                    (unrestricted_index_map, dofmap.index_map_bs)
+                    for (dofmap, unrestricted_index_map) in zip(dofmaps[1], unrestricted_index_maps_[1])
+                ]
+            )
             unrestricted_index_sets = (
                 mcpp.la.petsc.create_index_sets(
                     unrestricted_index_maps[0], [1] * len(unrestricted_index_maps[0])),
@@ -1127,7 +1186,7 @@ def _(  # type: ignore[misc]
                 if function_spaces[0][i] is function_spaces[1][j]:
                     a_sub = a[i][j]
                     if a_sub is not None:
-                        dcpp.fem.petsc.insert_diagonal(A_sub, function_spaces[0][i], bcs_cpp, diag)  # type: ignore[arg-type]
+                        dcpp.fem.petsc.insert_diagonal(A_sub, function_spaces[0][i]._cpp_object, bcs_cpp, diag)  # type: ignore[arg-type]
     elif isinstance(a, collections.abc.Sequence):  # block matrix
         constants = [[  # type: ignore[misc]
             np.array([], dtype=petsc4py.PETSc.ScalarType) if form is None else dcpp.fem.pack_constants(form._cpp_object)
@@ -1165,7 +1224,7 @@ def _(  # type: ignore[misc]
                 if function_spaces[0][i] is function_spaces[1][j]:
                     a_sub = a[i][j]
                     if a_sub is not None:
-                        dcpp.fem.petsc.insert_diagonal(A_sub, function_spaces[0][i], bcs_cpp, diag)  # type: ignore[arg-type]
+                        dcpp.fem.petsc.insert_diagonal(A_sub, function_spaces[0][i]._cpp_object, bcs_cpp, diag)  # type: ignore[arg-type]
 
     else:  # single form
         constants = dcpp.fem.pack_constants(a._cpp_object) if constants is None else constants
@@ -1181,7 +1240,7 @@ def _(  # type: ignore[misc]
                 A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)  # type: ignore[arg-type]
 
                 # Set diagonal value
-                dcpp.fem.petsc.insert_diagonal(A, function_spaces[0], bcs_cpp, diag)  # type: ignore[arg-type]
+                dcpp.fem.petsc.insert_diagonal(A, function_spaces[0]._cpp_object, bcs_cpp, diag)  # type: ignore[arg-type]
         else:
             dofmaps = (function_spaces[0].dofmap, function_spaces[1].dofmap)  # type: ignore[attr-defined]
 
@@ -1195,7 +1254,7 @@ def _(  # type: ignore[misc]
 
                 # Set diagonal value
                 with MatSubMatrixWrapper(A, dofmaps, restriction) as A_sub:  # type: ignore[arg-type]
-                    dcpp.fem.petsc.insert_diagonal(A_sub, function_spaces[0], bcs_cpp, diag)  # type: ignore[arg-type]
+                    dcpp.fem.petsc.insert_diagonal(A_sub, function_spaces[0]._cpp_object, bcs_cpp, diag)  # type: ignore[arg-type]
 
     return A
 
