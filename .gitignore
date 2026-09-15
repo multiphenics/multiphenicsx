@@ -5,7 +5,6 @@
 *.egg-info
 *.py[cod]
 .clang-format
-.cmake-format
 .coverage*
 .eggs
 .pytest_cache
