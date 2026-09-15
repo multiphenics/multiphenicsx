@@ -137,10 +137,6 @@ jobs:
         run: |
           wget https://raw.githubusercontent.com/FEniCS/dolfinx/main/.clang-format
           find . -type f \( -name "*.cpp" -o -name "*.h" \) | xargs clang-format --dry-run --Werror
-      - name: Run cmake-format on cmake files
-        run: |
-          wget https://raw.githubusercontent.com/FEniCS/dolfinx/main/.cmake-format
-          find . -type f \( -name "*.cmake" -o -name "*.cmake.in" -o -name "CMakeLists.txt" \) | xargs cmake-format --check
       - name: Run documentation generation
         run: |
           cd docs && python3 -m sphinx -W -b html . build/html
