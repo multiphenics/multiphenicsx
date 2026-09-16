@@ -7,6 +7,8 @@
 .clang-format
 .coverage*
 .eggs
+.mypy_cache
 .pytest_cache
+.vscode
 build
 dist
