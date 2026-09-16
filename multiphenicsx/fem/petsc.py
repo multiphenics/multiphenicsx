@@ -1171,11 +1171,12 @@ def _(  # type: ignore[misc]
                     coeff_sub = coeffs[i][j]  # type: ignore[index]
                     dcpp.fem.petsc.assemble_matrix(A_sub, a_sub._cpp_object, const_sub, coeff_sub, bcs_cpp, False)  # type: ignore[arg-type]
                 elif i == j:  # pragma: no cover
-                    for bc in bcs_cpp:
-                        if function_spaces[0][i].contains(bc.function_space):
-                            raise RuntimeError(
-                                f"Diagonal sub-block ({i}, {j}) cannot be 'None' and have DirichletBC applied."
-                                " Consider assembling a zero block.")
+                    if bcs is not None:
+                        for bc in bcs:
+                            if function_spaces[0][i].contains(bc.function_space):
+                                raise RuntimeError(
+                                    f"Diagonal sub-block ({i}, {j}) cannot be 'None' and have DirichletBC applied."
+                                    " Consider assembling a zero block.")
 
         # Flush to enable switch from add to set in the matrix
         A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)  # type: ignore[arg-type]
@@ -1209,11 +1210,12 @@ def _(  # type: ignore[misc]
                     coeff_sub = coeffs[i][j]  # type: ignore[index]
                     dcpp.fem.petsc.assemble_matrix(A_sub, a_sub._cpp_object, const_sub, coeff_sub, bcs_cpp, True)  # type: ignore[arg-type]
                 elif i == j:  # pragma: no cover
-                    for bc in bcs_cpp:
-                        if function_spaces[0][i].contains(bc.function_space):
-                            raise RuntimeError(
-                                f"Diagonal sub-block ({i}, {j}) cannot be 'None' and have DirichletBC applied."
-                                " Consider assembling a zero block.")
+                    if bcs is not None:
+                        for bc in bcs:
+                            if function_spaces[0][i].contains(bc.function_space):
+                                raise RuntimeError(
+                                    f"Diagonal sub-block ({i}, {j}) cannot be 'None' and have DirichletBC applied."
+                                    " Consider assembling a zero block.")
 
         # Flush to enable switch from add to set in the matrix
         A.assemble(petsc4py.PETSc.Mat.AssemblyType.FLUSH)  # type: ignore[arg-type]
